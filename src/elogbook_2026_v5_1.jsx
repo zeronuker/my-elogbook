@@ -266,7 +266,7 @@ export default function ELogbook2026() {
                 <col style={{ width: 44 }} />
                 <col style={{ width: 44 }} />
                 <col style={{ width: 44 }} />
-                <col style={{ width: 52 }} />
+                <col style={{ width: 44 }} />
               </colgroup>
 
               {/* ── THEAD: two rows matching screen3 ── */}
