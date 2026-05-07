@@ -110,7 +110,7 @@ export default function ELogbook2026() {
     { key: "type",      label: "TYPE",                 width: 80,  group: "AIRCRAFT" },
     { key: "markings",  label: "MARKINGS",             width: 80,  group: "AIRCRAFT" },
     { key: "captain",   label: "CAPTAIN",              width: 80,  group: null },
-    { key: "cap",       label: "HOLDER\nOPERATING\nCAPACITY", width: 70, group: null },
+ { key: "cap", label: "HOLDER\nOPERATING\nCAPACITY", width: 70, group: null, type: "select", options: ["","P1","P2","P1 U/S"] },
     { key: "sectors",   label: "SECTORS",              width: 80,  group: null },
     { key: "departure", label: "DEPARTURE",            width: 72,  group: null },
     { key: "arrival",   label: "ARRIVAL",              width: 72,  group: null },
@@ -359,9 +359,30 @@ export default function ELogbook2026() {
                               fontWeight: isAutoCalc ? 700 : 400,
                             }}
                           >
-                            {isEditing ? (
-                              <input
-                                autoFocus
+                            {col.key === "cap" ? (
+  <select
+    value={row[col.key] || ""}
+    onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+    style={{
+      background: "transparent",
+      border: "none",
+      color: "#c8d6e5",
+      fontFamily: "'Courier New', monospace",
+      fontSize: 11,
+      width: "100%",
+      cursor: "pointer",
+      outline: "none",
+    }}
+  >
+    {["","P1","P2","P1 U/S"].map(opt => (
+      <option key={opt} value={opt} style={{ background: "#0d1520" }}>
+        {opt || "—"}
+      </option>
+    ))}
+  </select>
+) : isEditing ? (
+  <input
+    autoFocus
                                 defaultValue={row[col.key]}
                                 onBlur={e => {
                                   updateCell(rowIdx, col.key, e.target.value);
