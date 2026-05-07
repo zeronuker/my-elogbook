@@ -66,9 +66,73 @@ function toHHMM(mins) {
 }
 
 function calcTotal(row) {
+  const ft = calcFlightTimes(row);
   const sum = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"]
-    .reduce((acc, k) => acc + parseHHMM(row[k]), 0);
+    .reduce((acc, k) => acc + parseHHMM(ft[k]), 0);
   return sum ? toHHMM(sum) : "";
+}
+
+// Day time: 0730–1930 (in minutes from midnight)
+// Night time: everything outside that window
+// Handles overnight flights (STA < STD crosses midnight)
+function calcDayNight(std, sta) {
+  if (!std || !sta) return { day: 0, night: 0 };
+
+  const toMins = t => {
+    const [h, m] = t.trim().split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  const DAY_START = toMins("07:30");  // 450
+  const DAY_END   = toMins("19:30");  // 1170
+  const FULL_DAY  = 24 * 60;         // 1440
+
+  let stdM = toMins(std);
+  let staM = toMins(sta);
+
+  // Handle overnight: if STA <= STD, add 24h to STA
+  if (staM <= stdM) staM += FULL_DAY;
+
+  const totalMins = staM - stdM;
+
+  // Calculate day minutes: intersection of [stdM, staM] with [DAY_START, DAY_END]
+  // For overnight flights, also check [DAY_START + 1440, DAY_END + 1440]
+  let dayMins = 0;
+
+  // First day window
+  dayMins += Math.max(0, Math.min(staM, DAY_END) - Math.max(stdM, DAY_START));
+
+  // Second day window (for overnight flights that extend into next day's daytime)
+  if (staM > FULL_DAY) {
+    dayMins += Math.max(0, Math.min(staM, DAY_END + FULL_DAY) - Math.max(stdM, DAY_START + FULL_DAY));
+  }
+
+  dayMins = Math.max(0, dayMins);
+  const nightMins = Math.max(0, totalMins - dayMins);
+
+  return { day: dayMins, night: nightMins };
+}
+
+// Returns computed day/night values based on STD, STA and capacity
+function calcFlightTimes(row) {
+  const { day, night } = calcDayNight(row.std, row.sta);
+  const cap = row.cap;
+  const result = { dayP1: "", dayP1US: "", dayP2: "", nightP1: "", nightP1US: "", nightP2: "" };
+
+  if (!cap || (!day && !night)) return result;
+
+  if (cap === "P1") {
+    result.dayP1   = day   ? toHHMM(day)   : "";
+    result.nightP1 = night ? toHHMM(night) : "";
+  } else if (cap === "P2") {
+    result.dayP2   = day   ? toHHMM(day)   : "";
+    result.nightP2 = night ? toHHMM(night) : "";
+  } else if (cap === "P1 U/S") {
+    result.dayP1US   = day   ? toHHMM(day)   : "";
+    result.nightP1US = night ? toHHMM(night) : "";
+  }
+
+  return result;
 }
 
 function sumColumn(rows, key) {
@@ -127,15 +191,16 @@ export default function ELogbook2026() {
     { key: "total",     label: "TOTAL",                       minWidth: 42,  group: null },
   ];
 
-  const timeCols = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"];
+  const timeCols = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total","std","sta"];
+  const autoCalcCols = ["total","dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"];
 
   const totalsRow = {
-    dayP1:     sumColumn(rows, "dayP1"),
-    dayP1US:   sumColumn(rows, "dayP1US"),
-    dayP2:     sumColumn(rows, "dayP2"),
-    nightP1:   sumColumn(rows, "nightP1"),
-    nightP1US: sumColumn(rows, "nightP1US"),
-    nightP2:   sumColumn(rows, "nightP2"),
+    dayP1:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP1), 0)) || "00:00",
+    dayP1US:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP1US), 0)) || "00:00",
+    dayP2:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP2), 0)) || "00:00",
+    nightP1:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP1), 0)) || "00:00",
+    nightP1US: toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP1US), 0)) || "00:00",
+    nightP2:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP2), 0)) || "00:00",
     total:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcTotal(r)), 0)) || "00:00",
   };
 
@@ -323,6 +388,7 @@ export default function ELogbook2026() {
               <tbody>
                 {rows.map((row, rowIdx) => {
                   const computedTotal = calcTotal(row);
+                  const computedFT = calcFlightTimes(row);
                   const isEven = rowIdx % 2 === 0;
                   return (
                     <tr
@@ -341,8 +407,13 @@ export default function ELogbook2026() {
                       {columns.map(col => {
                         const isEditing = editingCell?.rowIdx === rowIdx && editingCell?.field === col.key;
                         const isTime = timeCols.includes(col.key);
-                        const isAutoCalc = col.key === "total";
-                        const displayVal = isAutoCalc ? (computedTotal || "") : (row[col.key] || "");
+                        const isAutoCalc = autoCalcCols.includes(col.key);
+
+                        // Get display value: auto-calc cols use computed values
+                        let displayVal = "";
+                        if (col.key === "total") displayVal = computedTotal || "";
+                        else if (isAutoCalc) displayVal = computedFT[col.key] || "";
+                        else displayVal = row[col.key] || "";
 
                         return (
                           <td
@@ -518,12 +589,12 @@ export default function ELogbook2026() {
                       const key = `${i}-${selectedYear}`;
                       const mRows = data[key] || makeMonthRows(i, selectedYear);
                       const filled = mRows.filter(r => r.date || r.type || r.sectors).length;
-                      const dp1  = sumColumn(mRows, "dayP1");
-                      const dp1u = sumColumn(mRows, "dayP1US");
-                      const dp2  = sumColumn(mRows, "dayP2");
-                      const np1  = sumColumn(mRows, "nightP1");
-                      const np1u = sumColumn(mRows, "nightP1US");
-                      const np2  = sumColumn(mRows, "nightP2");
+                      const dp1  = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP1), 0)) || "00:00";
+                      const dp1u = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP1US), 0)) || "00:00";
+                      const dp2  = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP2), 0)) || "00:00";
+                      const np1  = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP1), 0)) || "00:00";
+                      const np1u = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP1US), 0)) || "00:00";
+                      const np2  = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP2), 0)) || "00:00";
                       const tot  = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcTotal(r)), 0)) || "00:00";
                       const isSelected = i === selectedMonth;
                       return (
@@ -565,7 +636,7 @@ export default function ELogbook2026() {
                         const total = toHHMM(
                           MONTHS.reduce((acc, _, i) => {
                             const mRows = data[`${i}-${selectedYear}`] || makeMonthRows(i, selectedYear);
-                            return acc + parseHHMM(sumColumn(mRows, k));
+                            return acc + mRows.reduce((a2, r) => a2 + parseHHMM(calcFlightTimes(r)[k]), 0);
                           }, 0)
                         );
                         return (
