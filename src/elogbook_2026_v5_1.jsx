@@ -343,7 +343,7 @@ export default function ELogbook2026() {
                         return (
                           <td
                             key={col.key}
-                            onClick={() => !isAutoCalc && setEditingCell({ rowIdx, field: col.key })}
+                            onClick={() => !isAutoCalc && col.key !== "cap" && setEditingCell({ rowIdx, field: col.key })}
                             style={{
                               ...tdStyle,
                               textAlign: isTime ? "center" : "left",
@@ -353,34 +353,34 @@ export default function ELogbook2026() {
                                 : col.key.startsWith("night") ? "#5a96b8"
                                 : "#9bbcd4",
                               background: isAutoCalc ? "rgba(79,195,247,0.04)" : "transparent",
-                              cursor: isAutoCalc ? "default" : "text",
+                              cursor: isAutoCalc ? "default" : col.key === "cap" ? "pointer" : "text",
                               padding: isEditing ? "0" : "5px 7px",
                               minWidth: col.width,
                               fontWeight: isAutoCalc ? 700 : 400,
                             }}
                           >
                             {col.key === "cap" ? (
-  <select
-    value={row[col.key] || ""}
-    onChange={e => updateCell(rowIdx, col.key, e.target.value)}
-    style={{
-      background: "transparent",
-      border: "none",
-      color: "#c8d6e5",
-      fontFamily: "'Courier New', monospace",
-      fontSize: 11,
-      width: "100%",
-      cursor: "pointer",
-      outline: "none",
-    }}
-  >
-    {["","P1","P2","P1 U/S"].map(opt => (
-      <option key={opt} value={opt} style={{ background: "#0d1520" }}>
-        {opt || "—"}
-      </option>
-    ))}
-  </select>
-) : isEditing ? (
+                              <select
+                                value={row[col.key] || ""}
+                                onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+                                style={{
+                                  background: "transparent",
+                                  border: "none",
+                                  color: "#c8d6e5",
+                                  fontFamily: "'Courier New', monospace",
+                                  fontSize: 11,
+                                  width: "100%",
+                                  cursor: "pointer",
+                                  outline: "none",
+                                }}
+                              >
+                                {["", "P1", "P2", "P1 U/S"].map(opt => (
+                                  <option key={opt} value={opt} style={{ background: "#0d1520" }}>
+                                    {opt || "—"}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : isEditing ? (
   <input
     autoFocus
                                 defaultValue={row[col.key]}
