@@ -106,24 +106,27 @@ export default function ELogbook2026() {
     setEditingCell(null);
   };
 
-  // Column definitions
+  // Column definitions — widths based on character count × 7px + 10px padding
+  // # =2ch=24, DATE=10ch=80, TYPE=9ch=73, MARKINGS=7ch=59, CAPTAIN=10ch=80,
+  // CAP=60(dropdown), DEP=5ch=45, ARR=5ch=45, STD=5ch=45, STA=5ch=45,
+  // time cols=5ch=45, TOTAL=5ch=45
   const columns = [
-    { key: "date",      label: "DATE",                 width: 72,  group: null },
-    { key: "type",      label: "TYPE",                 width: 68,  group: "AIRCRAFT" },
-    { key: "markings",  label: "MARKINGS",             width: 68,  group: "AIRCRAFT" },
-    { key: "captain",   label: "CAPTAIN",              width: 68,  group: null },
-    { key: "cap",       label: "HOLDER\nOPERATING\nCAPACITY", width: 62, group: null, type: "select", options: ["","P1","P2","P1 U/S"] },
-    { key: "departure", label: "DEP",                  width: 52,  group: "SECTORS" },
-    { key: "arrival",   label: "ARR",                  width: 52,  group: "SECTORS" },
-    { key: "std",       label: "STD",                  width: 52,  group: null },
-    { key: "sta",       label: "STA",                  width: 52,  group: null },
-    { key: "dayP1",     label: "P1",                   width: 48,  group: "DAY" },
-    { key: "dayP1US",   label: "P1 U/S",               width: 48,  group: "DAY" },
-    { key: "dayP2",     label: "P2",                   width: 48,  group: "DAY" },
-    { key: "nightP1",   label: "P1",                   width: 48,  group: "NIGHT" },
-    { key: "nightP1US", label: "P1 U/S",               width: 48,  group: "NIGHT" },
-    { key: "nightP2",   label: "P2",                   width: 48,  group: "NIGHT" },
-    { key: "total",     label: "TOTAL",                width: 56,  group: null },
+    { key: "date",      label: "DATE",                        width: 80,  group: null },
+    { key: "type",      label: "TYPE",                        width: 73,  group: "AIRCRAFT" },
+    { key: "markings",  label: "MARKINGS",                    width: 59,  group: "AIRCRAFT" },
+    { key: "captain",   label: "CAPTAIN",                     width: 80,  group: null, wrap: true },
+    { key: "cap",       label: "HOLDER\nOPERATING\nCAPACITY", width: 60,  group: null, type: "select", options: ["","P1","P2","P1 U/S"] },
+    { key: "departure", label: "DEP",                         width: 45,  group: "SECTORS" },
+    { key: "arrival",   label: "ARR",                         width: 45,  group: "SECTORS" },
+    { key: "std",       label: "STD",                         width: 45,  group: null },
+    { key: "sta",       label: "STA",                         width: 45,  group: null },
+    { key: "dayP1",     label: "P1",                          width: 45,  group: "DAY" },
+    { key: "dayP1US",   label: "P1 U/S",                      width: 45,  group: "DAY" },
+    { key: "dayP2",     label: "P2",                          width: 45,  group: "DAY" },
+    { key: "nightP1",   label: "P1",                          width: 45,  group: "NIGHT" },
+    { key: "nightP1US", label: "P1 U/S",                      width: 45,  group: "NIGHT" },
+    { key: "nightP2",   label: "P2",                          width: 45,  group: "NIGHT" },
+    { key: "total",     label: "TOTAL",                       width: 45,  group: null },
   ];
 
   const timeCols = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"];
@@ -247,26 +250,27 @@ export default function ELogbook2026() {
             <table style={{
               width: "100%",
               borderCollapse: "collapse",
-              fontSize: 10,
+              fontSize: 11,
               tableLayout: "fixed",
             }}>
               <colgroup>
-                <col style={{ width: 28 }} />
-                <col style={{ width: 70 }} />
-                <col style={{ width: 62 }} />
-                <col style={{ width: 62 }} />
-                <col style={{ width: 62 }} />
-                <col style={{ width: 60 }} />
-                <col style={{ width: 52 }} />
-                <col style={{ width: 52 }} />
-                <col style={{ width: 52 }} />
-                <col style={{ width: 52 }} />
-                <col style={{ width: 44 }} />
-                <col style={{ width: 44 }} />
-                <col style={{ width: 44 }} />
-                <col style={{ width: 44 }} />
-                <col style={{ width: 44 }} />
-                <col style={{ width: 44 }} />
+                <col style={{ width: 24 }} />  {/* # — 2ch */}
+                <col style={{ width: 80 }} />  {/* DATE — 10ch */}
+                <col style={{ width: 73 }} />  {/* TYPE — 9ch */}
+                <col style={{ width: 59 }} />  {/* MARKINGS — 7ch */}
+                <col style={{ width: 80 }} />  {/* CAPTAIN — 10ch */}
+                <col style={{ width: 60 }} />  {/* CAP — dropdown */}
+                <col style={{ width: 45 }} />  {/* DEP — 5ch */}
+                <col style={{ width: 45 }} />  {/* ARR — 5ch */}
+                <col style={{ width: 45 }} />  {/* STD — 5ch */}
+                <col style={{ width: 45 }} />  {/* STA — 5ch */}
+                <col style={{ width: 45 }} />  {/* DAY P1 — 5ch */}
+                <col style={{ width: 45 }} />  {/* DAY P1 U/S — 5ch */}
+                <col style={{ width: 45 }} />  {/* DAY P2 — 5ch */}
+                <col style={{ width: 45 }} />  {/* NIGHT P1 — 5ch */}
+                <col style={{ width: 45 }} />  {/* NIGHT P1 U/S — 5ch */}
+                <col style={{ width: 45 }} />  {/* NIGHT P2 — 5ch */}
+                <col style={{ width: 45 }} />  {/* TOTAL — 5ch */}
               </colgroup>
 
               {/* ── THEAD: two rows matching screen3 ── */}
@@ -293,7 +297,7 @@ export default function ELogbook2026() {
                     <span style={{ display: "block" }}>CAPACITY</span>
                   </th>
 
-                  {/* SECTORS group — spans DEP + ARR */}
+                  {/* SECTORS group */}
                   <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 9, letterSpacing: "0.15em" }}>
                     SECTORS
                   </th>
@@ -378,6 +382,8 @@ export default function ELogbook2026() {
                               padding: isEditing ? "0" : "5px 7px",
                               minWidth: col.width,
                               fontWeight: isAutoCalc ? 700 : 400,
+                              whiteSpace: col.wrap ? "normal" : "nowrap",
+                              wordBreak: col.wrap ? "break-word" : "normal",
                             }}
                           >
                             {col.key === "cap" ? (
