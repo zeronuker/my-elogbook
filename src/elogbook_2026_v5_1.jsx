@@ -1,4 +1,7 @@
-﻿import { useState } from "react";
+import { useState, useEffect } from "react";
+import { db, auth, googleProvider } from "./firebase";
+import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -141,11 +144,119 @@ function sumColumn(rows, key) {
 }
 
 export default function ELogbook2026() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(0);
   const [selectedYear, setSelectedYear] = useState(2026);
   const [data, setData] = useState(initialData);
-  const [editingCell, setEditingCell] = useState(null); // {rowIdx, field}
+  const [editingCell, setEditingCell] = useState(null);
   const [activeTab, setActiveTab] = useState("logbook");
+  const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
+
+  // ── Auth listener ──
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      setAuthLoading(false);
+      if (u) await loadData(u.uid);
+    });
+    return unsub;
+  }, []);
+
+  // ── Load data from Firestore ──
+  const loadData = async (uid) => {
+    try {
+      const ref = doc(db, "users", uid, "logbook", "data");
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        setData(snap.data().logbookData);
+      }
+    } catch (e) {
+      console.error("Load error:", e);
+    }
+  };
+
+  // ── Save data to Firestore ──
+  const saveData = async () => {
+    if (!user) return;
+    setSaveStatus("saving");
+    try {
+      const ref = doc(db, "users", user.uid, "logbook", "data");
+      await setDoc(ref, { logbookData: data, updatedAt: new Date().toISOString() });
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    } catch (e) {
+      console.error("Save error:", e);
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    }
+  };
+
+  // ── Google Sign In ──
+  const handleSignIn = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (e) {
+      console.error("Sign in error:", e);
+    }
+  };
+
+  // ── Sign Out ──
+  const handleSignOut = async () => {
+    await signOut(auth);
+    setData(initialData());
+  };
+
+  // ── Loading screen ──
+  if (authLoading) {
+    return (
+      <div style={{ background: "#0a0d12", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", color: "#4fc3f7" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 24, marginBottom: 12 }}>✈</div>
+          <div style={{ fontSize: 11, letterSpacing: "0.2em" }}>LOADING eLOGBOOK...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Login screen ──
+  if (!user) {
+    return (
+      <div style={{ background: "#0a0d12", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", color: "#c8d6e5" }}>
+        <div style={{ textAlign: "center", padding: 40, border: "1px solid #1e3a5f", borderRadius: 8, background: "#0d1520", maxWidth: 380 }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>✈</div>
+          <div style={{ fontSize: 13, letterSpacing: "0.2em", color: "#4fc3f7", marginBottom: 4 }}>eLOGBOOK V5.1</div>
+          <div style={{ fontSize: 10, color: "#5a7a9a", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
+          <div style={{ fontSize: 9, color: "#3a5a7a", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
+          <button
+            onClick={handleSignIn}
+            style={{
+              background: "linear-gradient(135deg, #0d2a3a, #0a1f30)",
+              border: "1px solid #4fc3f7",
+              borderRadius: 6,
+              color: "#4fc3f7",
+              fontFamily: "'Courier New', monospace",
+              fontSize: 11,
+              letterSpacing: "0.15em",
+              padding: "12px 28px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              margin: "0 auto",
+              boxShadow: "0 0 16px rgba(79,195,247,0.2)",
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.5 26.8 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.6l6.2 5.2C36.9 40.2 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+            SIGN IN WITH GOOGLE
+          </button>
+          <div style={{ fontSize: 9, color: "#2a4a6a", marginTop: 20 }}>
+            Your logbook data is private and linked to your Google account
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const monthKey = `${selectedMonth}-${selectedYear}`;
   const rows = data[monthKey] || makeMonthRows(selectedMonth, selectedYear);
@@ -237,8 +348,16 @@ export default function ELogbook2026() {
             </div>
           </div>
 
-          {/* Month + Year selectors */}
+          {/* Right side: user info + period selector */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+            {/* User info + sign out */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {user.photoURL && <img src={user.photoURL} alt="avatar" style={{ width: 22, height: 22, borderRadius: "50%", border: "1px solid #1e3a5f" }} />}
+              <span style={{ fontSize: 9, color: "#4a6a8a", letterSpacing: "0.1em" }}>{user.displayName || user.email}</span>
+              <button onClick={handleSignOut} style={{ background: "transparent", border: "1px solid #1e3a5f", borderRadius: 3, color: "#3a6a8a", fontFamily: "'Courier New', monospace", fontSize: 8, padding: "2px 8px", cursor: "pointer", letterSpacing: "0.1em" }}>
+                SIGN OUT
+              </button>
+            </div>
             <div style={{ fontSize: 9, color: "#4a6a8a", letterSpacing: "0.15em" }}>SELECT PERIOD</div>
             <div style={{ display: "flex", gap: 8 }}>
               <select
@@ -548,21 +667,25 @@ export default function ELogbook2026() {
             {/* Save button */}
             <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
               <button
-                onClick={() => {}}
+                onClick={saveData}
+                disabled={saveStatus === "saving"}
                 style={{
-                  background: "linear-gradient(135deg, #0d2a3a, #0a1f30)",
-                  border: "1px solid #4fc3f7",
+                  background: saveStatus === "saved" ? "linear-gradient(135deg, #0d3a1a, #0a2a12)"
+                            : saveStatus === "error"  ? "linear-gradient(135deg, #3a0d0d, #2a0a0a)"
+                            : "linear-gradient(135deg, #0d2a3a, #0a1f30)",
+                  border: `1px solid ${saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7"}`,
                   borderRadius: 4,
-                  color: "#4fc3f7",
+                  color: saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7",
                   fontFamily: "'Courier New', monospace",
                   fontSize: 10,
                   letterSpacing: "0.15em",
                   padding: "6px 20px",
-                  cursor: "pointer",
-                  boxShadow: "0 0 8px rgba(79,195,247,0.2)",
+                  cursor: saveStatus === "saving" ? "wait" : "pointer",
+                  boxShadow: `0 0 8px rgba(79,195,247,0.2)`,
+                  opacity: saveStatus === "saving" ? 0.7 : 1,
                 }}
               >
-                💾 SAVE NOW
+                {saveStatus === "saving" ? "⏳ SAVING..." : saveStatus === "saved" ? "✅ SAVED!" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}
               </button>
             </div>
           </div>
