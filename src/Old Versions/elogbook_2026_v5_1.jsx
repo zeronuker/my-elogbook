@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -149,9 +149,9 @@ export default function ELogbook2026() {
         borderBottom: "1px solid #1e3a5f",
         padding: "18px 24px 0",
       }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
-          <div style={{ flex: 1 }}>
-  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <span style={{ fontSize: 20, color: "#4fc3f7" }}>✈</span>
               <span style={{ fontSize: 11, letterSpacing: "0.25em", color: "#4fc3f7", textTransform: "uppercase" }}>
                 eLOGBOOK V5.1 · CAAM / MCAR 2016
