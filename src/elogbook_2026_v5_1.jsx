@@ -153,7 +153,7 @@ export default function ELogbook2026() {
           <div style={{ flex: 1, textAlign: "left" }}>
   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <span style={{ fontSize: 20, color: "#4fc3f7" }}>✈</span>
-              <span style={{ fontSize: 11, letterSpacing: "0.25em", color: "#4fc3f7", textTransform: "uppercase" }}>
+              <span style={{ fontSize: 11, letterSpacing: "0.25em", color: "#4fc3f7" }}>
                 eLOGBOOK V5.1 · CAAM / MCAR 2016
               </span>
             </div>
@@ -281,10 +281,10 @@ export default function ELogbook2026() {
                   <th rowSpan={2} style={thStyle}>SECTORS</th>
 
                   {/* DEPARTURE rowspan */}
-                  <th rowSpan={2} style={thStyle}>DEPARTURE</th>
+                  <th rowSpan={2} style={thStyle}>STD</th>
 
                   {/* ARRIVAL rowspan */}
-                  <th rowSpan={2} style={thStyle}>ARRIVAL</th>
+                  <th rowSpan={2} style={thStyle}>STA</th>
 
                   {/* DAY group */}
                   <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 9, letterSpacing: "0.15em" }}>
@@ -305,6 +305,9 @@ export default function ELogbook2026() {
                   {/* AIRCRAFT sub */}
                   <th style={thSubStyle}>TYPE</th>
                   <th style={thSubStyle}>MARKINGS</th>
+                  {/* SECTORS sub */}
+                  <th style={thSubStyle}>DEPARTURE</th>
+                  <th style={thSubStyle}>ARRIVAL</th>
                   {/* DAY sub */}
                   <th style={{ ...thSubStyle, color: "#c8a800" }}>P1</th>
                   <th style={{ ...thSubStyle, color: "#c8a800" }}>P1 U/S</th>
