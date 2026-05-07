@@ -112,8 +112,8 @@ export default function ELogbook2026() {
     { key: "captain",   label: "CAPTAIN",              width: 80,  group: null },
  { key: "cap", label: "HOLDER\nOPERATING\nCAPACITY", width: 70, group: null, type: "select", options: ["","P1","P2","P1 U/S"] },
     { key: "sectors",   label: "SECTORS",              width: 80,  group: null },
-    { key: "departure", label: "DEPARTURE",            width: 72,  group: null },
-    { key: "arrival",   label: "ARRIVAL",              width: 72,  group: null },
+    { key: "departure", label: "STD",                  width: 58,  group: null },
+    { key: "arrival",   label: "STA",                  width: 58,  group: null },
     { key: "dayP1",     label: "P1",                   width: 56,  group: "DAY" },
     { key: "dayP1US",   label: "P1 U/S",               width: 56,  group: "DAY" },
     { key: "dayP2",     label: "P2",                   width: 56,  group: "DAY" },
@@ -290,8 +290,10 @@ export default function ELogbook2026() {
                     <span style={{ display: "block" }}>CAPACITY</span>
                   </th>
 
-                  {/* SECTORS rowspan */}
-                  <th rowSpan={2} style={thStyle}>SECTORS</th>
+                   {/* SECTORS group */}
+                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 9, letterSpacing: "0.15em" }}>
+                    SECTORS
+                  </th>
 
                   {/* DEPARTURE rowspan */}
                   <th rowSpan={2} style={thStyle}>DEPARTURE</th>
@@ -318,6 +320,10 @@ export default function ELogbook2026() {
                   {/* AIRCRAFT sub */}
                   <th style={thSubStyle}>TYPE</th>
                   <th style={thSubStyle}>MARKINGS</th>
+                  {/* SECTORS sub */}
+                  <th style={thSubStyle}>NO.</th>
+                  <th style={thSubStyle}>DEP</th>
+                  <th style={thSubStyle}>ARR</th>
                   {/* DAY sub */}
                   <th style={{ ...thSubStyle, color: "#c8a800" }}>P1</th>
                   <th style={{ ...thSubStyle, color: "#c8a800" }}>P1 U/S</th>
