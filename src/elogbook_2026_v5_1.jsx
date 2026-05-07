@@ -14,6 +14,8 @@ const EMPTY_ROW = () => ({
   sectors: "",
   departure: "",
   arrival: "",
+  std: "",
+  sta: "",
   dayP1: "",
   dayP1US: "",
   dayP2: "",
@@ -104,23 +106,24 @@ export default function ELogbook2026() {
     setEditingCell(null);
   };
 
-  // Column definitions matching screen3 headers
+  // Column definitions
   const columns = [
-    { key: "date",      label: "DATE",                 width: 90,  group: null },
-    { key: "type",      label: "TYPE",                 width: 80,  group: "AIRCRAFT" },
-    { key: "markings",  label: "MARKINGS",             width: 80,  group: "AIRCRAFT" },
-    { key: "captain",   label: "CAPTAIN",              width: 80,  group: null },
- { key: "cap", label: "HOLDER\nOPERATING\nCAPACITY", width: 70, group: null, type: "select", options: ["","P1","P2","P1 U/S"] },
-    { key: "sectors",   label: "SECTORS",              width: 80,  group: null },
-    { key: "departure", label: "STD",                  width: 58,  group: null },
-    { key: "arrival",   label: "STA",                  width: 58,  group: null },
-    { key: "dayP1",     label: "P1",                   width: 56,  group: "DAY" },
-    { key: "dayP1US",   label: "P1 U/S",               width: 56,  group: "DAY" },
-    { key: "dayP2",     label: "P2",                   width: 56,  group: "DAY" },
-    { key: "nightP1",   label: "P1",                   width: 56,  group: "NIGHT" },
-    { key: "nightP1US", label: "P1 U/S",               width: 56,  group: "NIGHT" },
-    { key: "nightP2",   label: "P2",                   width: 56,  group: "NIGHT" },
-    { key: "total",     label: "TOTAL",                width: 64,  group: null },
+    { key: "date",      label: "DATE",                 width: 72,  group: null },
+    { key: "type",      label: "TYPE",                 width: 68,  group: "AIRCRAFT" },
+    { key: "markings",  label: "MARKINGS",             width: 68,  group: "AIRCRAFT" },
+    { key: "captain",   label: "CAPTAIN",              width: 68,  group: null },
+    { key: "cap",       label: "HOLDER\nOPERATING\nCAPACITY", width: 62, group: null, type: "select", options: ["","P1","P2","P1 U/S"] },
+    { key: "departure", label: "DEP",                  width: 52,  group: "SECTORS" },
+    { key: "arrival",   label: "ARR",                  width: 52,  group: "SECTORS" },
+    { key: "std",       label: "STD",                  width: 52,  group: null },
+    { key: "sta",       label: "STA",                  width: 52,  group: null },
+    { key: "dayP1",     label: "P1",                   width: 48,  group: "DAY" },
+    { key: "dayP1US",   label: "P1 U/S",               width: 48,  group: "DAY" },
+    { key: "dayP2",     label: "P2",                   width: 48,  group: "DAY" },
+    { key: "nightP1",   label: "P1",                   width: 48,  group: "NIGHT" },
+    { key: "nightP1US", label: "P1 U/S",               width: 48,  group: "NIGHT" },
+    { key: "nightP2",   label: "P2",                   width: 48,  group: "NIGHT" },
+    { key: "total",     label: "TOTAL",                width: 56,  group: null },
   ];
 
   const timeCols = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"];
@@ -254,10 +257,10 @@ export default function ELogbook2026() {
                 <col style={{ width: 62 }} />
                 <col style={{ width: 62 }} />
                 <col style={{ width: 60 }} />
-                <col style={{ width: 46 }} />
-                <col style={{ width: 58 }} />
-                <col style={{ width: 58 }} />
-                <col style={{ width: 44 }} />
+                <col style={{ width: 52 }} />
+                <col style={{ width: 52 }} />
+                <col style={{ width: 52 }} />
+                <col style={{ width: 52 }} />
                 <col style={{ width: 44 }} />
                 <col style={{ width: 44 }} />
                 <col style={{ width: 44 }} />
@@ -290,14 +293,16 @@ export default function ELogbook2026() {
                     <span style={{ display: "block" }}>CAPACITY</span>
                   </th>
 
-                  {/* SECTORS rowspan */}
-                  <th rowSpan={2} style={thStyle}>SECTORS</th>
+                  {/* SECTORS group — spans DEP + ARR */}
+                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 9, letterSpacing: "0.15em" }}>
+                    SECTORS
+                  </th>
 
-                  {/* DEPARTURE rowspan */}
-                  <th rowSpan={2} style={thStyle}>DEPARTURE</th>
+                  {/* STD rowspan */}
+                  <th rowSpan={2} style={thStyle}>STD</th>
 
-                  {/* ARRIVAL rowspan */}
-                  <th rowSpan={2} style={thStyle}>ARRIVAL</th>
+                  {/* STA rowspan */}
+                  <th rowSpan={2} style={thStyle}>STA</th>
 
                   {/* DAY group */}
                   <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 9, letterSpacing: "0.15em" }}>
@@ -318,6 +323,9 @@ export default function ELogbook2026() {
                   {/* AIRCRAFT sub */}
                   <th style={thSubStyle}>TYPE</th>
                   <th style={thSubStyle}>MARKINGS</th>
+                  {/* SECTORS sub */}
+                  <th style={thSubStyle}>DEP</th>
+                  <th style={thSubStyle}>ARR</th>
                   {/* DAY sub */}
                   <th style={{ ...thSubStyle, color: "#c8a800" }}>P1</th>
                   <th style={{ ...thSubStyle, color: "#c8a800" }}>P1 U/S</th>
@@ -356,7 +364,7 @@ export default function ELogbook2026() {
                         return (
                           <td
                             key={col.key}
-                            onClick={() => !isAutoCalc && setEditingCell({ rowIdx, field: col.key })}
+                            onClick={() => !isAutoCalc && col.key !== "cap" && setEditingCell({ rowIdx, field: col.key })}
                             style={{
                               ...tdStyle,
                               textAlign: isTime ? "center" : "left",
@@ -366,34 +374,34 @@ export default function ELogbook2026() {
                                 : col.key.startsWith("night") ? "#5a96b8"
                                 : "#9bbcd4",
                               background: isAutoCalc ? "rgba(79,195,247,0.04)" : "transparent",
-                              cursor: isAutoCalc ? "default" : "text",
+                              cursor: isAutoCalc ? "default" : col.key === "cap" ? "pointer" : "text",
                               padding: isEditing ? "0" : "5px 7px",
                               minWidth: col.width,
                               fontWeight: isAutoCalc ? 700 : 400,
                             }}
                           >
                             {col.key === "cap" ? (
-  <select
-    value={row[col.key] || ""}
-    onChange={e => updateCell(rowIdx, col.key, e.target.value)}
-    style={{
-      background: "transparent",
-      border: "none",
-      color: "#c8d6e5",
-      fontFamily: "'Courier New', monospace",
-      fontSize: 11,
-      width: "100%",
-      cursor: "pointer",
-      outline: "none",
-    }}
-  >
-    {["","P1","P2","P1 U/S"].map(opt => (
-      <option key={opt} value={opt} style={{ background: "#0d1520" }}>
-        {opt || "—"}
-      </option>
-    ))}
-  </select>
-) : isEditing ? (
+                              <select
+                                value={row[col.key] || ""}
+                                onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+                                style={{
+                                  background: "transparent",
+                                  border: "none",
+                                  color: "#c8d6e5",
+                                  fontFamily: "'Courier New', monospace",
+                                  fontSize: 11,
+                                  width: "100%",
+                                  cursor: "pointer",
+                                  outline: "none",
+                                }}
+                              >
+                                {["","P1","P2","P1 U/S"].map(opt => (
+                                  <option key={opt} value={opt} style={{ background: "#0d1520" }}>
+                                    {opt || "—"}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : isEditing ? (
   <input
     autoFocus
                                 defaultValue={row[col.key]}
@@ -436,7 +444,7 @@ export default function ELogbook2026() {
 
                 {/* ── TOTALS ROW ── */}
                 <tr style={{ background: "#0b1828", borderTop: "2px solid #1e3a5f" }}>
-                  <td colSpan={9} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 10, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
+                  <td colSpan={10} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 10, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
                     MONTHLY TOTALS →
                   </td>
                   {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].map(k => (
