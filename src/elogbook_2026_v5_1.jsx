@@ -246,12 +246,8 @@ export default function ELogbook2026() {
               borderCollapse: "collapse",
               fontSize: 11,
               minWidth: 1020,
-              tableLayout: "fixed",
+              tableLayout: "auto",
             }}>
-              <colgroup>
-                <col style={{ width: 32 }} />
-                {columns.map(c => <col key={c.key} style={{ width: c.width }} />)}
-              </colgroup>
 
               {/* ── THEAD: two rows matching screen3 ── */}
               <thead>
