@@ -398,12 +398,36 @@ export default function ELogbook2026() {
                                   setEditingCell(null);
                                 }}
                                 onKeyDown={e => {
-                                  if (e.key === "Enter" || e.key === "Tab") {
-                                    updateCell(rowIdx, col.key, e.target.value);
-                                    setEditingCell(null);
-                                  }
-                                  if (e.key === "Escape") setEditingCell(null);
-                                }}
+  if (e.key === "Tab") {
+    e.preventDefault();
+    updateCell(rowIdx, col.key, e.target.value);
+
+    // Define the order of tabbable columns (skip "total" as it's auto-calc)
+    const tabbableCols = columns
+      .filter(c => c.key !== "total" && c.type !== "select")
+      .map(c => c.key);
+
+    const currentIdx = tabbableCols.indexOf(col.key);
+
+    if (currentIdx < tabbableCols.length - 1) {
+      // Move to next cell in same row
+      setEditingCell({ rowIdx, field: tabbableCols[currentIdx + 1] });
+    } else {
+      // End of row — move to first tabbable cell in next row
+      const nextRowIdx = rowIdx + 1;
+      if (nextRowIdx < rows.length) {
+        setEditingCell({ rowIdx: nextRowIdx, field: tabbableCols[0] });
+      } else {
+        setEditingCell(null);
+      }
+    }
+  }
+  if (e.key === "Enter") {
+    updateCell(rowIdx, col.key, e.target.value);
+    setEditingCell(null);
+  }
+  if (e.key === "Escape") setEditingCell(null);
+}}
                                 style={{
                                   width: "100%",
                                   background: "#0f2035",
