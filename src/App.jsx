@@ -1,4 +1,4 @@
-import ELogbook from './elogbook_v4_sample'
+import ELogbook from './elogbook_2026_v5_1'
 
 export default function App() {
   return <ELogbook />
