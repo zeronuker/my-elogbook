@@ -277,14 +277,16 @@ export default function ELogbook2026() {
                     <span style={{ display: "block" }}>CAPACITY</span>
                   </th>
 
-                  {/* SECTORS rowspan */}
-                  <th rowSpan={2} style={thStyle}>SECTORS</th>
+                  {/* SECTORS group — spans DEPARTURE + ARRIVAL */}
+                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 9, letterSpacing: "0.15em" }}>
+                    SECTORS
+                  </th>
 
                   {/* DEPARTURE rowspan */}
-                  <th rowSpan={2} style={thStyle}>STD</th>
+                  <th rowSpan={2} style={thStyle}>DEPARTURE</th>
 
                   {/* ARRIVAL rowspan */}
-                  <th rowSpan={2} style={thStyle}>STA</th>
+                  <th rowSpan={2} style={thStyle}>ARRIVAL</th>
 
                   {/* DAY group */}
                   <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 9, letterSpacing: "0.15em" }}>
@@ -307,7 +309,7 @@ export default function ELogbook2026() {
                   <th style={thSubStyle}>MARKINGS</th>
                   {/* SECTORS sub */}
                   <th style={thSubStyle}>DEPARTURE</th>
-                  <th style={thSubStyle}>ARRIVAL</th>
+                  <th style={thSubStyle}>ARRIVALS</th>                  
                   {/* DAY sub */}
                   <th style={{ ...thSubStyle, color: "#c8a800" }}>P1</th>
                   <th style={{ ...thSubStyle, color: "#c8a800" }}>P1 U/S</th>
