@@ -290,10 +290,8 @@ export default function ELogbook2026() {
                     <span style={{ display: "block" }}>CAPACITY</span>
                   </th>
 
-                   {/* SECTORS group */}
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 9, letterSpacing: "0.15em" }}>
-                    SECTORS
-                  </th>
+                  {/* SECTORS rowspan */}
+                  <th rowSpan={2} style={thStyle}>SECTORS</th>
 
                   {/* DEPARTURE rowspan */}
                   <th rowSpan={2} style={thStyle}>DEPARTURE</th>
@@ -320,10 +318,6 @@ export default function ELogbook2026() {
                   {/* AIRCRAFT sub */}
                   <th style={thSubStyle}>TYPE</th>
                   <th style={thSubStyle}>MARKINGS</th>
-                  {/* SECTORS sub */}
-                  <th style={thSubStyle}>NO.</th>
-                  <th style={thSubStyle}>DEP</th>
-                  <th style={thSubStyle}>ARR</th>
                   {/* DAY sub */}
                   <th style={{ ...thSubStyle, color: "#c8a800" }}>P1</th>
                   <th style={{ ...thSubStyle, color: "#c8a800" }}>P1 U/S</th>
