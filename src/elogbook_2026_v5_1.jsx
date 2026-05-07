@@ -153,7 +153,7 @@ export default function ELogbook2026() {
           <div style={{ flex: 1, textAlign: "left" }}>
   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <span style={{ fontSize: 20, color: "#4fc3f7" }}>✈</span>
-              <span style={{ fontSize: 11, letterSpacing: "0.25em", color: "#4fc3f7" }}>
+              <span style={{ fontSize: 11, letterSpacing: "0.25em", color: "#4fc3f7", textTransform: "uppercase" }}>
                 eLOGBOOK V5.1 · CAAM / MCAR 2016
               </span>
             </div>
@@ -244,10 +244,27 @@ export default function ELogbook2026() {
             <table style={{
               width: "100%",
               borderCollapse: "collapse",
-              fontSize: 11,
-              minWidth: 1020,
-              tableLayout: "auto",
+              fontSize: 10,
+              tableLayout: "fixed",
             }}>
+              <colgroup>
+                <col style={{ width: 28 }} />
+                <col style={{ width: 70 }} />
+                <col style={{ width: 62 }} />
+                <col style={{ width: 62 }} />
+                <col style={{ width: 62 }} />
+                <col style={{ width: 60 }} />
+                <col style={{ width: 46 }} />
+                <col style={{ width: 58 }} />
+                <col style={{ width: 58 }} />
+                <col style={{ width: 44 }} />
+                <col style={{ width: 44 }} />
+                <col style={{ width: 44 }} />
+                <col style={{ width: 44 }} />
+                <col style={{ width: 44 }} />
+                <col style={{ width: 44 }} />
+                <col style={{ width: 52 }} />
+              </colgroup>
 
               {/* ── THEAD: two rows matching screen3 ── */}
               <thead>
@@ -344,7 +361,7 @@ export default function ELogbook2026() {
                         return (
                           <td
                             key={col.key}
-                            onClick={() => !isAutoCalc && col.key !== "cap" && setEditingCell({ rowIdx, field: col.key })}
+                            onClick={() => !isAutoCalc && setEditingCell({ rowIdx, field: col.key })}
                             style={{
                               ...tdStyle,
                               textAlign: isTime ? "center" : "left",
@@ -354,34 +371,34 @@ export default function ELogbook2026() {
                                 : col.key.startsWith("night") ? "#5a96b8"
                                 : "#9bbcd4",
                               background: isAutoCalc ? "rgba(79,195,247,0.04)" : "transparent",
-                              cursor: isAutoCalc ? "default" : col.key === "cap" ? "pointer" : "text",
+                              cursor: isAutoCalc ? "default" : "text",
                               padding: isEditing ? "0" : "5px 7px",
                               minWidth: col.width,
                               fontWeight: isAutoCalc ? 700 : 400,
                             }}
                           >
                             {col.key === "cap" ? (
-                              <select
-                                value={row[col.key] || ""}
-                                onChange={e => updateCell(rowIdx, col.key, e.target.value)}
-                                style={{
-                                  background: "transparent",
-                                  border: "none",
-                                  color: "#c8d6e5",
-                                  fontFamily: "'Courier New', monospace",
-                                  fontSize: 11,
-                                  width: "100%",
-                                  cursor: "pointer",
-                                  outline: "none",
-                                }}
-                              >
-                                {["", "P1", "P2", "P1 U/S"].map(opt => (
-                                  <option key={opt} value={opt} style={{ background: "#0d1520" }}>
-                                    {opt || "—"}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : isEditing ? (
+  <select
+    value={row[col.key] || ""}
+    onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+    style={{
+      background: "transparent",
+      border: "none",
+      color: "#c8d6e5",
+      fontFamily: "'Courier New', monospace",
+      fontSize: 11,
+      width: "100%",
+      cursor: "pointer",
+      outline: "none",
+    }}
+  >
+    {["","P1","P2","P1 U/S"].map(opt => (
+      <option key={opt} value={opt} style={{ background: "#0d1520" }}>
+        {opt || "—"}
+      </option>
+    ))}
+  </select>
+) : isEditing ? (
   <input
     autoFocus
                                 defaultValue={row[col.key]}
