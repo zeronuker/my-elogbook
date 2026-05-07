@@ -150,7 +150,7 @@ export default function ELogbook2026() {
         padding: "18px 24px 0",
       }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, textAlign: "left" }}>
   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <span style={{ fontSize: 20, color: "#4fc3f7" }}>✈</span>
               <span style={{ fontSize: 11, letterSpacing: "0.25em", color: "#4fc3f7", textTransform: "uppercase" }}>
