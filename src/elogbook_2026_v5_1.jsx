@@ -508,54 +508,61 @@ export default function ELogbook2026() {
         {/* ── LOGBOOK TAB ── */}
         {activeTab === "logbook" && (
           <div style={{ overflowX: "auto" }}>
-          <div style={{
+
+            {/* Table + side-buttons flex wrapper — defined first so info bar can match width */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 0 }}>
+
+            {/* Info bar sits above the table only, same width as table */}
+            <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+            <div style={{
               background: "rgba(79,195,247,0.06)",
               border: "1px solid rgba(79,195,247,0.18)",
               borderLeft: "3px solid #4fc3f7",
               borderRadius: "0 4px 4px 0",
-              padding: "8px 14px",
+              padding: "7px 14px",
               marginBottom: 14,
               fontSize: 10,
               color: "#7ab8d4",
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
+              gap: 10,
+              overflow: "hidden",
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                {/* Auto-save status indicator on the LEFT */}
-                {saveStatus === "saving" && (
-                  <span style={{ display: "flex", alignItems: "center", gap: 5, color: "#f5c542", fontWeight: 700, letterSpacing: "0.1em", animation: "pulse 1s infinite" }}>
-                    <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⏳</span> SAVING...
-                  </span>
-                )}
-                {saveStatus === "saved" && (
-                  <span style={{ display: "flex", alignItems: "center", gap: 5, color: "#4fc77a", fontWeight: 700, letterSpacing: "0.1em" }}>
-                    ✅ SAVED
-                  </span>
-                )}
-                {saveStatus === "error" && (
-                  <span style={{ display: "flex", alignItems: "center", gap: 5, color: "#f74f4f", fontWeight: 700, letterSpacing: "0.1em" }}>
-                    ❌ SAVE ERROR
-                  </span>
-                )}
-                {saveStatus === "idle" && (
-                  <span style={{ color: "#3a5a7a", fontSize: 9, letterSpacing: "0.08em" }}>AUTO-SAVE: 5 MIN</span>
-                )}
-              </div>
-              <div>
+              {/* Auto-save icon — only shown when active */}
+              {saveStatus === "saving" && (
+                <span title="Auto-saving..." style={{ display: "flex", alignItems: "center", gap: 4, color: "#f5c542", fontWeight: 700, flexShrink: 0 }}>
+                  <svg style={{ animation: "spin 1s linear infinite" }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  <span style={{ fontSize: 9, letterSpacing: "0.1em" }}>SAVING...</span>
+                </span>
+              )}
+              {saveStatus === "saved" && (
+                <span title="Saved" style={{ display: "flex", alignItems: "center", gap: 4, color: "#4fc77a", fontWeight: 700, flexShrink: 0 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  <span style={{ fontSize: 9, letterSpacing: "0.1em" }}>SAVED</span>
+                </span>
+              )}
+              {saveStatus === "error" && (
+                <span title="Save error" style={{ display: "flex", alignItems: "center", gap: 4, color: "#f74f4f", fontWeight: 700, flexShrink: 0 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <span style={{ fontSize: 9, letterSpacing: "0.1em" }}>SAVE ERROR</span>
+                </span>
+              )}
+              <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 <span style={{ color: "#4fc3f7", fontWeight: 700 }}>
                   {MONTHS[selectedMonth].toUpperCase()} {selectedYear} —
                 </span>
                 {" "}Click any cell to enter data. Time fields format: HH:MM (e.g. 02:30). TOTAL auto-calculates from Day + Night columns. ({rows.length} rows)
               </div>
-            </div>
-
-            {/* Table + side-buttons flex wrapper */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 0 }}>
+            </div>{/* close info bar div */}
 
             <table style={{
-              flex: "1 1 auto",
+              width: "100%",
               borderCollapse: "collapse",
               fontSize: 11,
               tableLayout: "auto",
@@ -842,6 +849,7 @@ export default function ELogbook2026() {
                 </tr>
               </tbody>
             </table>
+            </div>{/* end flex: "1 1 auto" table wrapper */}
 
             {/* ── Side action buttons (outside table) ── */}
             <div style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
@@ -858,7 +866,6 @@ export default function ELogbook2026() {
                       gap: 4,
                       height: 29,
                       padding: "0 6px",
-                      borderBottom: "1px solid #0f1820",
                     }}
                   >
                     {/* Delete / clear row */}
