@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -324,14 +324,14 @@ export default function ELogbook2026() {
   };
 
   const deleteRow = (rowIdx) => {
-  setData(prev => {
-    const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
-    const newRows = current.filter((_, i) => i !== rowIdx);
-    // Keep at least 1 row so the table is never empty
-    const finalRows = newRows.length > 0 ? newRows : [{ id: 1, ...EMPTY_ROW() }];
-    return { ...prev, [monthKey]: finalRows };
-  });
-};
+    setData(prev => {
+      const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
+      const newRows = current.map((r, i) =>
+        i === rowIdx ? { id: r.id, ...EMPTY_ROW() } : r
+      );
+      return { ...prev, [monthKey]: newRows };
+    });
+  };
 
   const addSector = () => {
     setData(prev => {
@@ -538,10 +538,10 @@ export default function ELogbook2026() {
         {activeTab === "logbook" && (
           <div style={{ overflowX: "auto" }}>
 
-            {/* Outer flex: table + (no side panel now) */}
+            {/* Table + side-buttons flex wrapper — defined first so info bar can match width */}
             <div style={{ display: "flex", alignItems: "flex-start", gap: 0 }}>
 
-            {/* Info bar + table wrapper */}
+            {/* Info bar sits above the table only, same width as table */}
             <div style={{ flex: "1 1 auto", minWidth: 0 }}>
             <div style={{
               background: "rgba(79,195,247,0.06)",
@@ -650,9 +650,6 @@ export default function ELogbook2026() {
 
                   {/* TOTAL rowspan */}
                   <th rowSpan={2} style={thStyle}>TOTAL</th>
-
-                  {/* DEL + ADD col */}
-                  <th rowSpan={2} style={{ ...thStyle, color: "#1a2a3a", minWidth: 36 }}></th>
                 </tr>
 
                 {/* Row 2: sub-headers */}
@@ -762,25 +759,27 @@ export default function ELogbook2026() {
                                 key={col.key}
                                 style={{
                                   ...tdStyle,
-                                  background: capStyle ? capStyle.bg : "transparent",
-                                  borderLeft: capStyle ? `2px solid ${capStyle.border}` : undefined,
+                                  background: "transparent",
                                   minWidth: col.minWidth,
                                   padding: "2px 4px",
+                                  textAlign: "center",
                                 }}
                               >
                                 <select
                                   value={row[col.key] || ""}
                                   onChange={e => updateCell(rowIdx, col.key, e.target.value)}
                                   style={{
-                                    background: "transparent",
-                                    border: "none",
+                                    background: capStyle ? capStyle.bg : "transparent",
+                                    border: capStyle ? `1px solid ${capStyle.border}` : "none",
+                                    borderRadius: 4,
                                     color: capStyle ? capStyle.color : "#7ab8d4",
                                     fontFamily: "'Courier New', monospace",
                                     fontSize: 11,
                                     fontWeight: capStyle ? 700 : 400,
-                                    width: "100%",
+                                    width: "auto",
                                     cursor: "pointer",
                                     outline: "none",
+                                    padding: "2px 4px",
                                   }}
                                 >
                                   {["","P1","P2","P1 U/S"].map(opt => (
@@ -864,51 +863,6 @@ export default function ELogbook2026() {
                         }
                         return cells;
                       })()}
-
-                      {/* Delete + Add Sector td — always last cell in row */}
-                      <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px", whiteSpace: "nowrap" }}>
-                        <button
-                          onClick={() => deleteRow(rowIdx)}
-                          title="Clear this row"
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            color: "#2a1a1a",
-                            cursor: "pointer",
-                            fontSize: 13,
-                            padding: "2px 3px",
-                            borderRadius: 3,
-                            lineHeight: 1,
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.color = "#c0392b"}
-                          onMouseLeave={e => e.currentTarget.style.color = "#2a1a1a"}
-                        >✕</button>
-                        {isLastRow && (
-                          <button
-                            onClick={addSector}
-                            title="Add sector row"
-                            style={{
-                              background: "rgba(39,174,96,0.15)",
-                              border: "1px solid #27ae60",
-                              borderRadius: "50%",
-                              color: "#27ae60",
-                              cursor: "pointer",
-                              fontSize: 14,
-                              width: 20,
-                              height: 20,
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              lineHeight: 1,
-                              padding: 0,
-                              fontWeight: 700,
-                              marginLeft: 2,
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = "rgba(39,174,96,0.3)"}
-                            onMouseLeave={e => e.currentTarget.style.background = "rgba(39,174,96,0.15)"}
-                          >+</button>
-                        )}
-                      </td>
                     </tr>
                   );
                 })}
@@ -933,39 +887,106 @@ export default function ELogbook2026() {
                       {totalsRow[k]}
                     </td>
                   ))}
-                  <td style={tdStyle} />
-                </tr>
-
-                {/* ── SAVE NOW row inside table ── */}
-                <tr style={{ background: "#0a0d12" }}>
-                  <td colSpan={18} style={{ padding: "8px 10px", borderTop: "1px solid #0f1820", textAlign: "right" }}>
-                    <button
-                      onClick={saveData}
-                      disabled={saveStatus === "saving"}
-                      style={{
-                        background: saveStatus === "saved" ? "linear-gradient(135deg, #0d3a1a, #0a2a12)"
-                                  : saveStatus === "error"  ? "linear-gradient(135deg, #3a0d0d, #2a0a0a)"
-                                  : "linear-gradient(135deg, #0d2a3a, #0a1f30)",
-                        border: `1px solid ${saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7"}`,
-                        borderRadius: 4,
-                        color: saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7",
-                        fontFamily: "'Courier New', monospace",
-                        fontSize: 10,
-                        letterSpacing: "0.15em",
-                        padding: "6px 20px",
-                        cursor: saveStatus === "saving" ? "wait" : "pointer",
-                        boxShadow: "0 0 8px rgba(79,195,247,0.2)",
-                        opacity: saveStatus === "saving" ? 0.7 : 1,
-                      }}
-                    >
-                      {saveStatus === "saving" ? "⏳ SAVING..." : saveStatus === "saved" ? "✅ SAVED!" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}
-                    </button>
-                  </td>
                 </tr>
               </tbody>
             </table>
             </div>{/* end flex: "1 1 auto" table wrapper */}
+
+            {/* ── Side action buttons (outside table) ── */}
+            <div style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
+              {/* Spacer matching the two thead rows height */}
+              <div style={{ height: 54 }} />
+              {rows.map((row, rowIdx) => {
+                const isLastRow = rowIdx === rows.length - 1;
+                return (
+                  <div
+                    key={row.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      height: 29,
+                      padding: "0 6px",
+                    }}
+                  >
+                    {/* Delete / clear row */}
+                    <button
+                      onClick={() => deleteRow(rowIdx)}
+                      title="Clear this row"
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#2a1a1a",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        padding: "2px 3px",
+                        borderRadius: 3,
+                        lineHeight: 1,
+                        flexShrink: 0,
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.color = "#c0392b"}
+                      onMouseLeave={e => e.currentTarget.style.color = "#2a1a1a"}
+                    >
+                      ✕
+                    </button>
+                    {/* Add Sector — last row only */}
+                    {isLastRow && (
+                      <button
+                        onClick={addSector}
+                        title="Add sector row"
+                        style={{
+                          background: "transparent",
+                          border: "1px solid #1e3a5f",
+                          borderRadius: 3,
+                          color: "#4fc3f7",
+                          cursor: "pointer",
+                          fontSize: 9,
+                          padding: "2px 6px",
+                          lineHeight: 1,
+                          fontFamily: "'Courier New', monospace",
+                          letterSpacing: "0.05em",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,195,247,0.1)"; e.currentTarget.style.borderColor = "#4fc3f7"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#1e3a5f"; }}
+                      >
+                        + SECTOR
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
             </div>{/* end outer flex wrapper */}
+
+            {/* Save button — below table, right-aligned to table width via the flex child constraint */}
+            <div style={{ display: "flex" }}>
+              <div style={{ flex: "1 1 auto", display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+                <button
+                  onClick={saveData}
+                  disabled={saveStatus === "saving"}
+                  style={{
+                    background: saveStatus === "saved" ? "linear-gradient(135deg, #0d3a1a, #0a2a12)"
+                              : saveStatus === "error"  ? "linear-gradient(135deg, #3a0d0d, #2a0a0a)"
+                              : "linear-gradient(135deg, #0d2a3a, #0a1f30)",
+                    border: `1px solid ${saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7"}`,
+                    borderRadius: 4,
+                    color: saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7",
+                    fontFamily: "'Courier New', monospace",
+                    fontSize: 10,
+                    letterSpacing: "0.15em",
+                    padding: "6px 20px",
+                    cursor: saveStatus === "saving" ? "wait" : "pointer",
+                    boxShadow: `0 0 8px rgba(79,195,247,0.2)`,
+                    opacity: saveStatus === "saving" ? 0.7 : 1,
+                  }}
+                >
+                  {saveStatus === "saving" ? "⏳ SAVING..." : saveStatus === "saved" ? "✅ SAVED!" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
