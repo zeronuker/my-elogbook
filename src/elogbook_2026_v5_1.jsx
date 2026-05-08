@@ -146,8 +146,8 @@ function sumColumn(rows, key) {
 export default function ELogbook2026() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState(0);
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [data, setData] = useState(initialData);
   const [editingCell, setEditingCell] = useState(null);
   const [activeTab, setActiveTab] = useState("logbook");
@@ -271,6 +271,16 @@ export default function ELogbook2026() {
     });
   };
 
+  const deleteRow = (rowIdx) => {
+    setData(prev => {
+      const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
+      const newRows = current.map((r, i) =>
+        i === rowIdx ? { id: r.id, ...EMPTY_ROW() } : r
+      );
+      return { ...prev, [monthKey]: newRows };
+    });
+  };
+
   const handleMonthChange = (newMonthIdx) => {
     setSelectedMonth(newMonthIdx);
     setEditingCell(null);
@@ -291,8 +301,8 @@ export default function ELogbook2026() {
     { key: "cap",       label: "HOLDER\nOPERATING\nCAPACITY", minWidth: 58,  group: null, type: "select", options: ["","P1","P2","P1 U/S"] },
     { key: "departure", label: "DEP",                         minWidth: 30,  group: "SECTORS" },
     { key: "arrival",   label: "ARR",                         minWidth: 30,  group: "SECTORS" },
-    { key: "std",       label: "STD",                         minWidth: 38,  group: null },
-    { key: "sta",       label: "STA",                         minWidth: 38,  group: null },
+    { key: "std",       label: "STD\n(UTC)",                  minWidth: 38,  group: null },
+    { key: "sta",       label: "STA\n(UTC)",                  minWidth: 38,  group: null },
     { key: "dayP1",     label: "P1",                          minWidth: 30,  group: "DAY" },
     { key: "dayP1US",   label: "P1 U/S",                      minWidth: 42,  group: "DAY" },
     { key: "dayP2",     label: "P2",                          minWidth: 30,  group: "DAY" },
@@ -378,6 +388,46 @@ export default function ELogbook2026() {
                   <option key={y} value={y}>{y}</option>
                 ))}
               </select>
+            </div>
+            {/* Icon toolbar */}
+            <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+              {/* Refresh */}
+              <button
+                onClick={() => loadData(user.uid)}
+                title="Refresh data"
+                style={iconBtnStyle}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+              </button>
+              {/* Export (dummy) */}
+              <button
+                onClick={() => {}}
+                title="Export (coming soon)"
+                style={iconBtnStyle}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </button>
+              {/* Settings (dummy) */}
+              <button
+                onClick={() => {}}
+                title="Settings (coming soon)"
+                style={iconBtnStyle}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </button>
+            </div>
+        </div>
+
             </div>
           </div>
         </div>
@@ -466,10 +516,16 @@ export default function ELogbook2026() {
                   </th>
 
                   {/* STD rowspan */}
-                  <th rowSpan={2} style={thStyle}>STD</th>
+                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                    <span style={{ display: "block" }}>STD</span>
+                    <span style={{ display: "block", fontSize: 7, color: "#2a5a7a" }}>(UTC)</span>
+                  </th>
 
                   {/* STA rowspan */}
-                  <th rowSpan={2} style={thStyle}>STA</th>
+                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                    <span style={{ display: "block" }}>STA</span>
+                    <span style={{ display: "block", fontSize: 7, color: "#2a5a7a" }}>(UTC)</span>
+                  </th>
 
                   {/* DAY group */}
                   <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 9, letterSpacing: "0.15em" }}>
@@ -483,6 +539,9 @@ export default function ELogbook2026() {
 
                   {/* TOTAL rowspan */}
                   <th rowSpan={2} style={thStyle}>TOTAL</th>
+
+                  {/* DELETE col */}
+                  <th rowSpan={2} style={{ ...thStyle, color: "#3a2a2a" }}>DEL</th>
                 </tr>
 
                 {/* Row 2: sub-headers */}
@@ -640,6 +699,28 @@ export default function ELogbook2026() {
                           </td>
                         );
                       })}
+
+                      {/* Delete row button */}
+                      <td style={{ ...tdStyle, textAlign: "center", padding: "3px 6px" }}>
+                        <button
+                          onClick={() => deleteRow(rowIdx)}
+                          title="Clear this row"
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "#3a2a2a",
+                            cursor: "pointer",
+                            fontSize: 13,
+                            padding: "2px 4px",
+                            borderRadius: 3,
+                            lineHeight: 1,
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.color = "#c0392b"}
+                          onMouseLeave={e => e.currentTarget.style.color = "#3a2a2a"}
+                        >
+                          ✕
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -807,6 +888,19 @@ export default function ELogbook2026() {
     </div>
   );
 }
+
+const iconBtnStyle = {
+  background: "transparent",
+  border: "1px solid #1e3a5f",
+  borderRadius: 4,
+  color: "#3a6a8a",
+  cursor: "pointer",
+  padding: "5px 7px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  transition: "color 0.15s, border-color 0.15s",
+};
 
 const selectStyle = {
   background: "#0d1520",
