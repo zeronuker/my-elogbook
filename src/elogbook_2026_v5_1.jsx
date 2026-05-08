@@ -908,7 +908,29 @@ export default function ELogbook2026() {
                       {totalsRow[k]}
                     </td>
                   ))}
-                  <td style={tdStyle} />
+                  <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px" }}>
+                    <button
+                      onClick={addSector}
+                      title="Add sector row"
+                      style={{
+                        background: "rgba(39,174,96,0.15)",
+                        border: "1px solid #27ae60",
+                        borderRadius: "50%",
+                        color: "#27ae60",
+                        cursor: "pointer",
+                        fontSize: 16,
+                        width: 22,
+                        height: 22,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 0,
+                        fontWeight: 700,
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(39,174,96,0.3)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "rgba(39,174,96,0.15)"}
+                    >+</button>
+                  </td>
                 </tr>
 
                 {/* ── SAVE NOW row ── */}
@@ -940,31 +962,6 @@ export default function ELogbook2026() {
               </tbody>
             </table>
             </div>{/* end flex: "1 1 auto" table wrapper */}
-
-            {/* Add sector button — floats below table on the right */}
-            <div style={{ display: "flex", justifyContent: "flex-start", marginTop: 8 }}>
-              <button
-                onClick={addSector}
-                title="Add sector row"
-                style={{
-                  background: "rgba(39,174,96,0.15)",
-                  border: "1px solid #27ae60",
-                  borderRadius: "50%",
-                  color: "#27ae60",
-                  cursor: "pointer",
-                  fontSize: 18,
-                  width: 28,
-                  height: 28,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: 0,
-                  fontWeight: 700,
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(39,174,96,0.3)"}
-                onMouseLeave={e => e.currentTarget.style.background = "rgba(39,174,96,0.15)"}
-              >+</button>
-            </div>
 
             </div>{/* end outer flex wrapper */}
           </div>
