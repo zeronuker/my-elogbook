@@ -426,9 +426,6 @@ export default function ELogbook2026() {
                 </svg>
               </button>
             </div>
-        </div>
-
-            </div>
           </div>
         </div>
 
