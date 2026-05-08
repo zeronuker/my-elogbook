@@ -35,9 +35,8 @@ function getDaysInMonth(monthIdx, year) {
   return new Date(year, monthIdx + 1, 0).getDate();
 }
 
-function makeMonthRows(monthIdx, year) {
-  const days = getDaysInMonth(monthIdx, year);
-  return Array.from({ length: days }, (_, idx) => ({ id: idx + 1, ...EMPTY_ROW() }));
+function makeMonthRows(monthIdx, year, count = 15) {
+  return Array.from({ length: count }, (_, idx) => ({ id: idx + 1, ...EMPTY_ROW() }));
 }
 
 const initialData = () => {
@@ -152,6 +151,7 @@ export default function ELogbook2026() {
   const [editingCell, setEditingCell] = useState(null);
   const [activeTab, setActiveTab] = useState("logbook");
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
+  const [refreshStatus, setRefreshStatus] = useState("idle"); // idle | refreshing | refreshed
 
   // ── Auth listener ──
   useEffect(() => {
@@ -163,6 +163,16 @@ export default function ELogbook2026() {
     return unsub;
   }, []);
 
+  // ── Auto-save every 5 minutes after login ──
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      saveData();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, data]);
+
   // ── Load data from Firestore ──
   const loadData = async (uid) => {
     try {
@@ -173,6 +183,19 @@ export default function ELogbook2026() {
       }
     } catch (e) {
       console.error("Load error:", e);
+    }
+  };
+
+  // ── Refresh with animation ──
+  const refreshData = async () => {
+    if (!user || refreshStatus === "refreshing") return;
+    setRefreshStatus("refreshing");
+    try {
+      await loadData(user.uid);
+      setRefreshStatus("refreshed");
+      setTimeout(() => setRefreshStatus("idle"), 2500);
+    } catch (e) {
+      setRefreshStatus("idle");
     }
   };
 
@@ -281,6 +304,14 @@ export default function ELogbook2026() {
     });
   };
 
+  const addSector = () => {
+    setData(prev => {
+      const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
+      const newId = (current[current.length - 1]?.id || current.length) + 1;
+      return { ...prev, [monthKey]: [...current, { id: newId, ...EMPTY_ROW() }] };
+    });
+  };
+
   const handleMonthChange = (newMonthIdx) => {
     setSelectedMonth(newMonthIdx);
     setEditingCell(null);
@@ -332,6 +363,10 @@ export default function ELogbook2026() {
       fontFamily: "'Courier New', Courier, monospace",
       color: "#c8d6e5",
     }}>
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
 
       {/* ── HEADER ── */}
       <div style={{
@@ -389,15 +424,28 @@ export default function ELogbook2026() {
                 ))}
               </select>
             </div>
-            {/* Icon toolbar */}
-            <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
+              {/* Refresh status label */}
+              {refreshStatus === "refreshing" && (
+                <span style={{ fontSize: 9, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
+              )}
+              {refreshStatus === "refreshed" && (
+                <span style={{ fontSize: 9, color: "#4fc77a", letterSpacing: "0.1em", fontWeight: 700 }}>✓ REFRESHED</span>
+              )}
               {/* Refresh */}
               <button
-                onClick={() => loadData(user.uid)}
-                title="Refresh data"
-                style={iconBtnStyle}
+                onClick={refreshData}
+                title="Refresh data from cloud"
+                style={{
+                  ...iconBtnStyle,
+                  color: refreshStatus === "refreshed" ? "#4fc77a" : refreshStatus === "refreshing" ? "#f5c542" : "#3a6a8a",
+                  borderColor: refreshStatus === "refreshed" ? "#4fc77a" : refreshStatus === "refreshing" ? "#f5c542" : "#1e3a5f",
+                }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ animation: refreshStatus === "refreshing" ? "spin 1s linear infinite" : "none" }}
+                >
                   <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
                   <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                 </svg>
@@ -460,7 +508,7 @@ export default function ELogbook2026() {
         {/* ── LOGBOOK TAB ── */}
         {activeTab === "logbook" && (
           <div style={{ overflowX: "auto" }}>
-            <div style={{
+          <div style={{
               background: "rgba(79,195,247,0.06)",
               border: "1px solid rgba(79,195,247,0.18)",
               borderLeft: "3px solid #4fc3f7",
@@ -469,11 +517,38 @@ export default function ELogbook2026() {
               marginBottom: 14,
               fontSize: 10,
               color: "#7ab8d4",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
             }}>
-              <span style={{ color: "#4fc3f7", fontWeight: 700 }}>
-                {MONTHS[selectedMonth].toUpperCase()} {selectedYear} —
-              </span>
-              {" "}Click any cell to enter data. Time fields format: HH:MM (e.g. 02:30). TOTAL auto-calculates from Day + Night columns. ({rows.length} days)
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {/* Auto-save status indicator on the LEFT */}
+                {saveStatus === "saving" && (
+                  <span style={{ display: "flex", alignItems: "center", gap: 5, color: "#f5c542", fontWeight: 700, letterSpacing: "0.1em", animation: "pulse 1s infinite" }}>
+                    <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⏳</span> SAVING...
+                  </span>
+                )}
+                {saveStatus === "saved" && (
+                  <span style={{ display: "flex", alignItems: "center", gap: 5, color: "#4fc77a", fontWeight: 700, letterSpacing: "0.1em" }}>
+                    ✅ SAVED
+                  </span>
+                )}
+                {saveStatus === "error" && (
+                  <span style={{ display: "flex", alignItems: "center", gap: 5, color: "#f74f4f", fontWeight: 700, letterSpacing: "0.1em" }}>
+                    ❌ SAVE ERROR
+                  </span>
+                )}
+                {saveStatus === "idle" && (
+                  <span style={{ color: "#3a5a7a", fontSize: 9, letterSpacing: "0.08em" }}>AUTO-SAVE: 5 MIN</span>
+                )}
+              </div>
+              <div>
+                <span style={{ color: "#4fc3f7", fontWeight: 700 }}>
+                  {MONTHS[selectedMonth].toUpperCase()} {selectedYear} —
+                </span>
+                {" "}Click any cell to enter data. Time fields format: HH:MM (e.g. 02:30). TOTAL auto-calculates from Day + Night columns. ({rows.length} rows)
+              </div>
             </div>
 
             <table style={{
@@ -565,6 +640,21 @@ export default function ELogbook2026() {
                   const computedTotal = calcTotal(row);
                   const computedFT = calcFlightTimes(row);
                   const isEven = rowIdx % 2 === 0;
+                  const isLastRow = rowIdx === rows.length - 1;
+
+                  // HOC validation: if STD and STA are filled but cap is not selected
+                  const hasStdSta = row.std && row.sta;
+                  const hasCap = row.cap && ["P1","P2","P1 U/S"].includes(row.cap);
+                  const needsCapWarning = hasStdSta && !hasCap;
+
+                  // HOC color scheme
+                  const capColors = {
+                    "P1":    { color: "#22c55e", bg: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.3)" },
+                    "P2":    { color: "#eab308", bg: "rgba(234,179,8,0.12)",  border: "rgba(234,179,8,0.3)" },
+                    "P1 U/S":{ color: "#ef4444", bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.3)" },
+                  };
+                  const capStyle = capColors[row.cap] || null;
+
                   return (
                     <tr
                       key={row.id}
@@ -583,12 +673,54 @@ export default function ELogbook2026() {
                         const isEditing = editingCell?.rowIdx === rowIdx && editingCell?.field === col.key;
                         const isTime = timeCols.includes(col.key);
                         const isAutoCalc = autoCalcCols.includes(col.key);
+                        const isDayNightCol = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"].includes(col.key);
 
                         // Get display value: auto-calc cols use computed values
                         let displayVal = "";
                         if (col.key === "total") displayVal = computedTotal || "";
                         else if (isAutoCalc) displayVal = computedFT[col.key] || "";
                         else displayVal = row[col.key] || "";
+
+                        // HOC validation warning for day/night columns
+                        const showHocWarning = isDayNightCol && needsCapWarning;
+
+                        // Cap cell color styling
+                        if (col.key === "cap") {
+                          return (
+                            <td
+                              key={col.key}
+                              style={{
+                                ...tdStyle,
+                                background: capStyle ? capStyle.bg : "transparent",
+                                border: capStyle ? `1px solid ${capStyle.border}` : undefined,
+                                minWidth: col.minWidth,
+                                padding: "2px 4px",
+                              }}
+                            >
+                              <select
+                                value={row[col.key] || ""}
+                                onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+                                style={{
+                                  background: "transparent",
+                                  border: "none",
+                                  color: capStyle ? capStyle.color : "#7ab8d4",
+                                  fontFamily: "'Courier New', monospace",
+                                  fontSize: 11,
+                                  fontWeight: capStyle ? 700 : 400,
+                                  width: "100%",
+                                  cursor: "pointer",
+                                  outline: "none",
+                                }}
+                              >
+                                {["","P1","P2","P1 U/S"].map(opt => (
+                                  <option key={opt} value={opt} style={{ background: "#0d1520", color: "#c8d6e5" }}>
+                                    {opt || "—"}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                          );
+                        }
 
                         return (
                           <td
@@ -597,44 +729,29 @@ export default function ELogbook2026() {
                             style={{
                               ...tdStyle,
                               textAlign: isTime ? "center" : "left",
-                              color: isAutoCalc
-                                ? "#4fc3f7"
+                              color: showHocWarning ? "#f97316"
+                                : isAutoCalc ? "#4fc3f7"
                                 : col.key.startsWith("day") ? "#c8a800"
                                 : col.key.startsWith("night") ? "#5a96b8"
                                 : "#9bbcd4",
-                              background: isAutoCalc ? "rgba(79,195,247,0.04)" : "transparent",
-                              cursor: isAutoCalc ? "default" : col.key === "cap" ? "pointer" : "text",
-                              padding: isEditing ? "0" : "5px 7px",
-                              minWidth: col.minWidth,
+                              background: showHocWarning ? "rgba(249,115,22,0.06)"
+                                : isAutoCalc ? "rgba(79,195,247,0.04)" : "transparent",
+                              cursor: isAutoCalc ? "default" : "text",
+                              padding: isEditing ? "0" : showHocWarning ? "4px 5px" : "5px 7px",
+                              minWidth: showHocWarning ? 120 : col.minWidth,
                               width: col.fixedWidth ? col.fixedWidth : undefined,
                               maxWidth: col.fixedWidth ? col.fixedWidth : undefined,
                               fontWeight: isAutoCalc ? 700 : 400,
-                              whiteSpace: col.wrap ? "normal" : "nowrap",
-                              wordBreak: col.wrap ? "break-word" : "normal",
-                              overflow: col.wrap ? "visible" : "hidden",
+                              whiteSpace: showHocWarning ? "normal" : col.wrap ? "normal" : "nowrap",
+                              wordBreak: showHocWarning ? "break-word" : col.wrap ? "break-word" : "normal",
+                              overflow: showHocWarning ? "visible" : col.wrap ? "visible" : "hidden",
+                              fontSize: showHocWarning ? 8 : 11,
                             }}
                           >
-                            {col.key === "cap" ? (
-                              <select
-                                value={row[col.key] || ""}
-                                onChange={e => updateCell(rowIdx, col.key, e.target.value)}
-                                style={{
-                                  background: "transparent",
-                                  border: "none",
-                                  color: "#c8d6e5",
-                                  fontFamily: "'Courier New', monospace",
-                                  fontSize: 11,
-                                  width: "100%",
-                                  cursor: "pointer",
-                                  outline: "none",
-                                }}
-                              >
-                                {["","P1","P2","P1 U/S"].map(opt => (
-                                  <option key={opt} value={opt} style={{ background: "#0d1520" }}>
-                                    {opt || "—"}
-                                  </option>
-                                ))}
-                              </select>
+                            {showHocWarning ? (
+                              <span style={{ opacity: 0.85, lineHeight: 1.3 }}>
+                                HOLDER OPERATING CAPACITY required to auto calculate
+                              </span>
                             ) : isEditing ? (
   <input
     autoFocus
@@ -647,19 +764,13 @@ export default function ELogbook2026() {
   if (e.key === "Tab") {
     e.preventDefault();
     updateCell(rowIdx, col.key, e.target.value);
-
-    // Define the order of tabbable columns (skip "total" as it's auto-calc)
     const tabbableCols = columns
       .filter(c => c.key !== "total" && c.type !== "select")
       .map(c => c.key);
-
     const currentIdx = tabbableCols.indexOf(col.key);
-
     if (currentIdx < tabbableCols.length - 1) {
-      // Move to next cell in same row
       setEditingCell({ rowIdx, field: tabbableCols[currentIdx + 1] });
     } else {
-      // End of row — move to first tabbable cell in next row
       const nextRowIdx = rowIdx + 1;
       if (nextRowIdx < rows.length) {
         setEditingCell({ rowIdx: nextRowIdx, field: tabbableCols[0] });
@@ -697,8 +808,8 @@ export default function ELogbook2026() {
                         );
                       })}
 
-                      {/* Delete row button */}
-                      <td style={{ ...tdStyle, textAlign: "center", padding: "3px 6px" }}>
+                      {/* Delete row button + Add Sector on last row */}
+                      <td style={{ ...tdStyle, textAlign: "center", padding: "3px 6px", whiteSpace: "nowrap" }}>
                         <button
                           onClick={() => deleteRow(rowIdx)}
                           title="Clear this row"
@@ -717,6 +828,29 @@ export default function ELogbook2026() {
                         >
                           ✕
                         </button>
+                        {isLastRow && (
+                          <button
+                            onClick={addSector}
+                            title="Add sector row"
+                            style={{
+                              background: "transparent",
+                              border: "1px solid #1e3a5f",
+                              borderRadius: 3,
+                              color: "#4fc3f7",
+                              cursor: "pointer",
+                              fontSize: 11,
+                              padding: "2px 5px",
+                              marginLeft: 4,
+                              lineHeight: 1,
+                              fontFamily: "'Courier New', monospace",
+                              letterSpacing: "0.05em",
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,195,247,0.1)"; e.currentTarget.style.borderColor = "#4fc3f7"; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#1e3a5f"; }}
+                          >
+                            + SECTOR
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
