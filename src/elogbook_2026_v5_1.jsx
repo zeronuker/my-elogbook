@@ -808,10 +808,7 @@ export default function ELogbook2026() {
                                   : col.key.startsWith("night") ? "#5a96b8"
                                   : "#9bbcd4",
                                 background: isAutoCalc
-                                  ? (col.key === "dayP1" || col.key === "nightP1" ? "rgba(34,197,94,0.05)"
-                                    : col.key === "dayP2" || col.key === "nightP2" ? "rgba(234,179,8,0.05)"
-                                    : col.key === "dayP1US" || col.key === "nightP1US" ? "rgba(239,68,68,0.05)"
-                                    : "rgba(79,195,247,0.04)") // total
+                                  ? (col.key === "total" ? "rgba(79,195,247,0.04)" : "transparent")
                                   : "transparent",
                                 cursor: isAutoCalc ? "default" : "text",
                                 padding: isEditing ? "0" : "5px 7px",
@@ -891,30 +888,6 @@ export default function ELogbook2026() {
                 </tr>
               </tbody>
             </table>
-            {/* Save button — right-aligned within table width */}
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
-              <button
-                onClick={saveData}
-                disabled={saveStatus === "saving"}
-                style={{
-                  background: saveStatus === "saved" ? "linear-gradient(135deg, #0d3a1a, #0a2a12)"
-                            : saveStatus === "error"  ? "linear-gradient(135deg, #3a0d0d, #2a0a0a)"
-                            : "linear-gradient(135deg, #0d2a3a, #0a1f30)",
-                  border: `1px solid ${saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7"}`,
-                  borderRadius: 4,
-                  color: saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7",
-                  fontFamily: "'Courier New', monospace",
-                  fontSize: 10,
-                  letterSpacing: "0.15em",
-                  padding: "6px 20px",
-                  cursor: saveStatus === "saving" ? "wait" : "pointer",
-                  boxShadow: `0 0 8px rgba(79,195,247,0.2)`,
-                  opacity: saveStatus === "saving" ? 0.7 : 1,
-                }}
-              >
-                {saveStatus === "saving" ? "⏳ SAVING..." : saveStatus === "saved" ? "✅ SAVED!" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}
-              </button>
-            </div>
             </div>{/* end flex: "1 1 auto" table wrapper */}
 
             {/* ── Side action buttons (outside table) ── */}
@@ -984,7 +957,34 @@ export default function ELogbook2026() {
               })}
             </div>
 
-            </div>{/* end flex wrapper */}
+            </div>{/* end outer flex wrapper */}
+
+            {/* Save button — below table, right-aligned to table width via the flex child constraint */}
+            <div style={{ display: "flex" }}>
+              <div style={{ flex: "1 1 auto", display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+                <button
+                  onClick={saveData}
+                  disabled={saveStatus === "saving"}
+                  style={{
+                    background: saveStatus === "saved" ? "linear-gradient(135deg, #0d3a1a, #0a2a12)"
+                              : saveStatus === "error"  ? "linear-gradient(135deg, #3a0d0d, #2a0a0a)"
+                              : "linear-gradient(135deg, #0d2a3a, #0a1f30)",
+                    border: `1px solid ${saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7"}`,
+                    borderRadius: 4,
+                    color: saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7",
+                    fontFamily: "'Courier New', monospace",
+                    fontSize: 10,
+                    letterSpacing: "0.15em",
+                    padding: "6px 20px",
+                    cursor: saveStatus === "saving" ? "wait" : "pointer",
+                    boxShadow: `0 0 8px rgba(79,195,247,0.2)`,
+                    opacity: saveStatus === "saving" ? 0.7 : 1,
+                  }}
+                >
+                  {saveStatus === "saving" ? "⏳ SAVING..." : saveStatus === "saved" ? "✅ SAVED!" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
