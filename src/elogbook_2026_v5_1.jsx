@@ -551,8 +551,11 @@ export default function ELogbook2026() {
               </div>
             </div>
 
+            {/* Table + side-buttons flex wrapper */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 0 }}>
+
             <table style={{
-              width: "100%",
+              flex: "1 1 auto",
               borderCollapse: "collapse",
               fontSize: 11,
               tableLayout: "auto",
@@ -611,9 +614,6 @@ export default function ELogbook2026() {
 
                   {/* TOTAL rowspan */}
                   <th rowSpan={2} style={thStyle}>TOTAL</th>
-
-                  {/* DELETE col */}
-                  <th rowSpan={2} style={{ ...thStyle, color: "#3a2a2a" }}>DEL</th>
                 </tr>
 
                 {/* Row 2: sub-headers */}
@@ -669,189 +669,156 @@ export default function ELogbook2026() {
                       <td style={{ ...tdStyle, color: "#2a4a6a", textAlign: "center", fontSize: 9 }}>{rowIdx + 1}</td>
 
                       {/* All data columns */}
-                      {columns.map(col => {
-                        const isEditing = editingCell?.rowIdx === rowIdx && editingCell?.field === col.key;
-                        const isTime = timeCols.includes(col.key);
-                        const isAutoCalc = autoCalcCols.includes(col.key);
-                        const isDayNightCol = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"].includes(col.key);
+                      {(() => {
+                        const cells = [];
+                        let skipAutoCalc = false;
 
-                        // Get display value: auto-calc cols use computed values
-                        let displayVal = "";
-                        if (col.key === "total") displayVal = computedTotal || "";
-                        else if (isAutoCalc) displayVal = computedFT[col.key] || "";
-                        else displayVal = row[col.key] || "";
+                        for (let ci = 0; ci < columns.length; ci++) {
+                          const col = columns[ci];
+                          const isEditing = editingCell?.rowIdx === rowIdx && editingCell?.field === col.key;
+                          const isTime = timeCols.includes(col.key);
+                          const isAutoCalc = autoCalcCols.includes(col.key);
 
-                        // HOC validation warning for day/night columns
-                        const showHocWarning = isDayNightCol && needsCapWarning;
-
-                        // Cap cell color styling
-                        if (col.key === "cap") {
-                          return (
-                            <td
-                              key={col.key}
-                              style={{
-                                ...tdStyle,
-                                background: capStyle ? capStyle.bg : "transparent",
-                                border: capStyle ? `1px solid ${capStyle.border}` : undefined,
-                                minWidth: col.minWidth,
-                                padding: "2px 4px",
-                              }}
-                            >
-                              <select
-                                value={row[col.key] || ""}
-                                onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+                          // HOC warning: render a single colspan=7 cell starting at dayP1
+                          if (needsCapWarning && col.key === "dayP1") {
+                            skipAutoCalc = true;
+                            cells.push(
+                              <td
+                                key="hoc-warning"
+                                colSpan={7}
                                 style={{
-                                  background: "transparent",
-                                  border: "none",
-                                  color: capStyle ? capStyle.color : "#7ab8d4",
-                                  fontFamily: "'Courier New', monospace",
-                                  fontSize: 11,
-                                  fontWeight: capStyle ? 700 : 400,
-                                  width: "100%",
-                                  cursor: "pointer",
-                                  outline: "none",
+                                  ...tdStyle,
+                                  background: "rgba(249,115,22,0.06)",
+                                  borderLeft: "2px solid rgba(249,115,22,0.4)",
+                                  textAlign: "center",
+                                  color: "#f97316",
+                                  fontSize: 9,
+                                  fontStyle: "italic",
+                                  letterSpacing: "0.05em",
+                                  padding: "5px 10px",
+                                  whiteSpace: "nowrap",
                                 }}
                               >
-                                {["","P1","P2","P1 U/S"].map(opt => (
-                                  <option key={opt} value={opt} style={{ background: "#0d1520", color: "#c8d6e5" }}>
-                                    {opt || "—"}
-                                  </option>
-                                ))}
-                              </select>
+                                ⚠ HOLDER OPERATING CAPACITY required to auto calculate
+                              </td>
+                            );
+                            continue;
+                          }
+
+                          // Skip the remaining auto-calc cols after colspan warning
+                          if (skipAutoCalc && ["dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].includes(col.key)) {
+                            continue;
+                          }
+
+                          // Get display value
+                          let displayVal = "";
+                          if (col.key === "total") displayVal = computedTotal || "";
+                          else if (isAutoCalc) displayVal = computedFT[col.key] || "";
+                          else displayVal = row[col.key] || "";
+
+                          // Cap cell with color coding
+                          if (col.key === "cap") {
+                            cells.push(
+                              <td
+                                key={col.key}
+                                style={{
+                                  ...tdStyle,
+                                  background: capStyle ? capStyle.bg : "transparent",
+                                  borderLeft: capStyle ? `2px solid ${capStyle.border}` : undefined,
+                                  minWidth: col.minWidth,
+                                  padding: "2px 4px",
+                                }}
+                              >
+                                <select
+                                  value={row[col.key] || ""}
+                                  onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+                                  style={{
+                                    background: "transparent",
+                                    border: "none",
+                                    color: capStyle ? capStyle.color : "#7ab8d4",
+                                    fontFamily: "'Courier New', monospace",
+                                    fontSize: 11,
+                                    fontWeight: capStyle ? 700 : 400,
+                                    width: "100%",
+                                    cursor: "pointer",
+                                    outline: "none",
+                                  }}
+                                >
+                                  {["","P1","P2","P1 U/S"].map(opt => (
+                                    <option key={opt} value={opt} style={{ background: "#0d1520", color: "#c8d6e5" }}>
+                                      {opt || "—"}
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+                            );
+                            continue;
+                          }
+
+                          // Regular cell
+                          cells.push(
+                            <td
+                              key={col.key}
+                              onClick={() => !isAutoCalc && setEditingCell({ rowIdx, field: col.key })}
+                              style={{
+                                ...tdStyle,
+                                textAlign: isTime ? "center" : "left",
+                                color: isAutoCalc ? "#4fc3f7"
+                                  : col.key.startsWith("day") ? "#c8a800"
+                                  : col.key.startsWith("night") ? "#5a96b8"
+                                  : "#9bbcd4",
+                                background: isAutoCalc ? "rgba(79,195,247,0.04)" : "transparent",
+                                cursor: isAutoCalc ? "default" : "text",
+                                padding: isEditing ? "0" : "5px 7px",
+                                minWidth: col.minWidth,
+                                width: col.fixedWidth ? col.fixedWidth : undefined,
+                                maxWidth: col.fixedWidth ? col.fixedWidth : undefined,
+                                fontWeight: isAutoCalc ? 700 : 400,
+                                whiteSpace: col.wrap ? "normal" : "nowrap",
+                                wordBreak: col.wrap ? "break-word" : "normal",
+                                overflow: col.wrap ? "visible" : "hidden",
+                              }}
+                            >
+                              {isEditing ? (
+                                <input
+                                  autoFocus
+                                  defaultValue={row[col.key]}
+                                  onBlur={e => { updateCell(rowIdx, col.key, e.target.value); setEditingCell(null); }}
+                                  onKeyDown={e => {
+                                    if (e.key === "Tab") {
+                                      e.preventDefault();
+                                      updateCell(rowIdx, col.key, e.target.value);
+                                      const tabbableCols = columns.filter(c => c.key !== "total" && c.type !== "select").map(c => c.key);
+                                      const currentIdx = tabbableCols.indexOf(col.key);
+                                      if (currentIdx < tabbableCols.length - 1) {
+                                        setEditingCell({ rowIdx, field: tabbableCols[currentIdx + 1] });
+                                      } else {
+                                        const nextRowIdx = rowIdx + 1;
+                                        if (nextRowIdx < rows.length) setEditingCell({ rowIdx: nextRowIdx, field: tabbableCols[0] });
+                                        else setEditingCell(null);
+                                      }
+                                    }
+                                    if (e.key === "Enter") { updateCell(rowIdx, col.key, e.target.value); setEditingCell(null); }
+                                    if (e.key === "Escape") setEditingCell(null);
+                                  }}
+                                  style={{
+                                    width: "100%", background: "#0f2035", border: "none",
+                                    borderBottom: "1px solid #4fc3f7", color: "#e8f4fd",
+                                    fontFamily: "'Courier New', monospace", fontSize: 11,
+                                    padding: "5px 7px", outline: "none", boxSizing: "border-box",
+                                  }}
+                                  placeholder={isTime ? "00:00" : ""}
+                                />
+                              ) : (
+                                <span style={{ opacity: displayVal ? 1 : 0.2 }}>
+                                  {displayVal || (isTime ? "—" : "—")}
+                                </span>
+                              )}
                             </td>
                           );
                         }
-
-                        return (
-                          <td
-                            key={col.key}
-                            onClick={() => !isAutoCalc && col.key !== "cap" && setEditingCell({ rowIdx, field: col.key })}
-                            style={{
-                              ...tdStyle,
-                              textAlign: isTime ? "center" : "left",
-                              color: showHocWarning ? "#f97316"
-                                : isAutoCalc ? "#4fc3f7"
-                                : col.key.startsWith("day") ? "#c8a800"
-                                : col.key.startsWith("night") ? "#5a96b8"
-                                : "#9bbcd4",
-                              background: showHocWarning ? "rgba(249,115,22,0.06)"
-                                : isAutoCalc ? "rgba(79,195,247,0.04)" : "transparent",
-                              cursor: isAutoCalc ? "default" : "text",
-                              padding: isEditing ? "0" : showHocWarning ? "4px 5px" : "5px 7px",
-                              minWidth: showHocWarning ? 120 : col.minWidth,
-                              width: col.fixedWidth ? col.fixedWidth : undefined,
-                              maxWidth: col.fixedWidth ? col.fixedWidth : undefined,
-                              fontWeight: isAutoCalc ? 700 : 400,
-                              whiteSpace: showHocWarning ? "normal" : col.wrap ? "normal" : "nowrap",
-                              wordBreak: showHocWarning ? "break-word" : col.wrap ? "break-word" : "normal",
-                              overflow: showHocWarning ? "visible" : col.wrap ? "visible" : "hidden",
-                              fontSize: showHocWarning ? 8 : 11,
-                            }}
-                          >
-                            {showHocWarning ? (
-                              <span style={{ opacity: 0.85, lineHeight: 1.3 }}>
-                                HOLDER OPERATING CAPACITY required to auto calculate
-                              </span>
-                            ) : isEditing ? (
-  <input
-    autoFocus
-                                defaultValue={row[col.key]}
-                                onBlur={e => {
-                                  updateCell(rowIdx, col.key, e.target.value);
-                                  setEditingCell(null);
-                                }}
-                                onKeyDown={e => {
-  if (e.key === "Tab") {
-    e.preventDefault();
-    updateCell(rowIdx, col.key, e.target.value);
-    const tabbableCols = columns
-      .filter(c => c.key !== "total" && c.type !== "select")
-      .map(c => c.key);
-    const currentIdx = tabbableCols.indexOf(col.key);
-    if (currentIdx < tabbableCols.length - 1) {
-      setEditingCell({ rowIdx, field: tabbableCols[currentIdx + 1] });
-    } else {
-      const nextRowIdx = rowIdx + 1;
-      if (nextRowIdx < rows.length) {
-        setEditingCell({ rowIdx: nextRowIdx, field: tabbableCols[0] });
-      } else {
-        setEditingCell(null);
-      }
-    }
-  }
-  if (e.key === "Enter") {
-    updateCell(rowIdx, col.key, e.target.value);
-    setEditingCell(null);
-  }
-  if (e.key === "Escape") setEditingCell(null);
-}}
-                                style={{
-                                  width: "100%",
-                                  background: "#0f2035",
-                                  border: "none",
-                                  borderBottom: "1px solid #4fc3f7",
-                                  color: "#e8f4fd",
-                                  fontFamily: "'Courier New', monospace",
-                                  fontSize: 11,
-                                  padding: "5px 7px",
-                                  outline: "none",
-                                  boxSizing: "border-box",
-                                }}
-                                placeholder={isTime ? "00:00" : ""}
-                              />
-                            ) : (
-                              <span style={{ opacity: displayVal ? 1 : 0.2 }}>
-                                {displayVal || (isTime ? "—" : "—")}
-                              </span>
-                            )}
-                          </td>
-                        );
-                      })}
-
-                      {/* Delete row button + Add Sector on last row */}
-                      <td style={{ ...tdStyle, textAlign: "center", padding: "3px 6px", whiteSpace: "nowrap" }}>
-                        <button
-                          onClick={() => deleteRow(rowIdx)}
-                          title="Clear this row"
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            color: "#3a2a2a",
-                            cursor: "pointer",
-                            fontSize: 13,
-                            padding: "2px 4px",
-                            borderRadius: 3,
-                            lineHeight: 1,
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.color = "#c0392b"}
-                          onMouseLeave={e => e.currentTarget.style.color = "#3a2a2a"}
-                        >
-                          ✕
-                        </button>
-                        {isLastRow && (
-                          <button
-                            onClick={addSector}
-                            title="Add sector row"
-                            style={{
-                              background: "transparent",
-                              border: "1px solid #1e3a5f",
-                              borderRadius: 3,
-                              color: "#4fc3f7",
-                              cursor: "pointer",
-                              fontSize: 11,
-                              padding: "2px 5px",
-                              marginLeft: 4,
-                              lineHeight: 1,
-                              fontFamily: "'Courier New', monospace",
-                              letterSpacing: "0.05em",
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,195,247,0.1)"; e.currentTarget.style.borderColor = "#4fc3f7"; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#1e3a5f"; }}
-                          >
-                            + SECTOR
-                          </button>
-                        )}
-                      </td>
+                        return cells;
+                      })()}
                     </tr>
                   );
                 })}
@@ -875,6 +842,76 @@ export default function ELogbook2026() {
                 </tr>
               </tbody>
             </table>
+
+            {/* ── Side action buttons (outside table) ── */}
+            <div style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
+              {/* Spacer matching the two thead rows height */}
+              <div style={{ height: 54 }} />
+              {rows.map((row, rowIdx) => {
+                const isLastRow = rowIdx === rows.length - 1;
+                return (
+                  <div
+                    key={row.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      height: 29,
+                      padding: "0 6px",
+                      borderBottom: "1px solid #0f1820",
+                    }}
+                  >
+                    {/* Delete / clear row */}
+                    <button
+                      onClick={() => deleteRow(rowIdx)}
+                      title="Clear this row"
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#2a1a1a",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        padding: "2px 3px",
+                        borderRadius: 3,
+                        lineHeight: 1,
+                        flexShrink: 0,
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.color = "#c0392b"}
+                      onMouseLeave={e => e.currentTarget.style.color = "#2a1a1a"}
+                    >
+                      ✕
+                    </button>
+                    {/* Add Sector — last row only */}
+                    {isLastRow && (
+                      <button
+                        onClick={addSector}
+                        title="Add sector row"
+                        style={{
+                          background: "transparent",
+                          border: "1px solid #1e3a5f",
+                          borderRadius: 3,
+                          color: "#4fc3f7",
+                          cursor: "pointer",
+                          fontSize: 9,
+                          padding: "2px 6px",
+                          lineHeight: 1,
+                          fontFamily: "'Courier New', monospace",
+                          letterSpacing: "0.05em",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,195,247,0.1)"; e.currentTarget.style.borderColor = "#4fc3f7"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#1e3a5f"; }}
+                      >
+                        + SECTOR
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            </div>{/* end flex wrapper */}
 
             {/* Save button */}
             <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
