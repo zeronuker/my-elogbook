@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -324,14 +324,14 @@ export default function ELogbook2026() {
   };
 
   const deleteRow = (rowIdx) => {
-    setData(prev => {
-      const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
-      const newRows = current.map((r, i) =>
-        i === rowIdx ? { id: r.id, ...EMPTY_ROW() } : r
-      );
-      return { ...prev, [monthKey]: newRows };
-    });
-  };
+  setData(prev => {
+    const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
+    const newRows = current.filter((_, i) => i !== rowIdx);
+    // Keep at least 1 row so the table is never empty
+    const finalRows = newRows.length > 0 ? newRows : [{ id: 1, ...EMPTY_ROW() }];
+    return { ...prev, [monthKey]: finalRows };
+  });
+};
 
   const addSector = () => {
     setData(prev => {
