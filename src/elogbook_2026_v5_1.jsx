@@ -326,10 +326,9 @@ export default function ELogbook2026() {
   const deleteRow = (rowIdx) => {
     setData(prev => {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
-      const newRows = current.map((r, i) =>
-        i === rowIdx ? { id: r.id, ...EMPTY_ROW() } : r
-      );
-      return { ...prev, [monthKey]: newRows };
+      const newRows = current.filter((_, i) => i !== rowIdx);
+      const finalRows = newRows.length > 0 ? newRows : [{ id: 1, ...EMPTY_ROW() }];
+      return { ...prev, [monthKey]: finalRows };
     });
   };
 
@@ -761,25 +760,27 @@ export default function ELogbook2026() {
                                 key={col.key}
                                 style={{
                                   ...tdStyle,
-                                  background: capStyle ? capStyle.bg : "transparent",
-                                  borderLeft: capStyle ? `2px solid ${capStyle.border}` : undefined,
+                                  background: "transparent",
                                   minWidth: col.minWidth,
                                   padding: "2px 4px",
+                                  textAlign: "center",
                                 }}
                               >
                                 <select
                                   value={row[col.key] || ""}
                                   onChange={e => updateCell(rowIdx, col.key, e.target.value)}
                                   style={{
-                                    background: "transparent",
-                                    border: "none",
+                                    background: capStyle ? capStyle.bg : "transparent",
+                                    border: capStyle ? `1px solid ${capStyle.border}` : "none",
+                                    borderRadius: 4,
                                     color: capStyle ? capStyle.color : "#7ab8d4",
                                     fontFamily: "'Courier New', monospace",
                                     fontSize: 11,
                                     fontWeight: capStyle ? 700 : 400,
-                                    width: "100%",
+                                    width: "auto",
                                     cursor: "pointer",
                                     outline: "none",
+                                    padding: "2px 6px",
                                   }}
                                 >
                                   {["","P1","P2","P1 U/S"].map(opt => (
