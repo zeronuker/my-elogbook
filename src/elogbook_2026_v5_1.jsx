@@ -15,6 +15,7 @@ const EMPTY_ROW = () => ({
   markings: "",
   captain: "",
   cap: "",
+  pilotFlying: "",
   sectors: "",
   departure: "",
   arrival: "",
@@ -83,6 +84,16 @@ function toHHMM(mins) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+}
+
+// Returns true if the HH:MM time falls within civil day hours (07:30–19:30 UTC).
+// Used to classify takeoffs (by STD) and landings (by STA) as day or night.
+function isTimeInDay(hhmm) {
+  if (!hhmm || !hhmm.trim()) return true; // default to day when unknown
+  const DAY_START = 7 * 60 + 30;  // 07:30 = 450 min
+  const DAY_END   = 19 * 60 + 30; // 19:30 = 1170 min
+  const mins = parseHHMM(hhmm) % (24 * 60);
+  return mins >= DAY_START && mins <= DAY_END;
 }
 
 function calcTotal(row) {
@@ -164,6 +175,9 @@ function getAllSectors(data, dutyBufferMins = 90) {
         flightMins,
         dutyMins: flightMins + dutyBufferMins,
         type: (row.type || "").trim().toUpperCase(),
+        pilotFlying:  row.pilotFlying === "YES",
+        isDayTakeoff: isTimeInDay(row.std),
+        isDayLanding: isTimeInDay(row.sta),
       });
     });
   });
@@ -236,7 +250,7 @@ const FTL_POPUPS = {
     para:  "MCAR 2016 PART 8 · SUBPART A",
     title: "TAKEOFF & LANDING RECENCY — 3 WITHIN 90 DAYS",
     body:  `A pilot shall not act as <strong style="color:#c8d6e5">Pilot-in-Command</strong> (or co-pilot performing the duties of PIC) unless they have carried out, as pilot flying, <span style="color:#4fc3f7">at least 3 takeoffs and 3 landings</span> in the <span style="color:#4fc3f7">preceding 90 days</span> on an aircraft of the same type.<br><br><strong style="color:#c8d6e5">Day and Night recency are tracked separately.</strong> A night takeoff or landing is one that occurs between the end of evening civil twilight and the beginning of morning civil twilight.`,
-    note:  `Recency is <span style="color:#4fc3f7">type-specific</span>. Takeoffs and landings on a B737 do not count toward A320 recency. The T/O &amp; LDG checkbox column (coming soon) will mark sectors where the pilot was Pilot Flying.`,
+    note:  `Recency is <span style="color:#4fc3f7">type-specific</span>. Takeoffs and landings on a B737 do not count toward A320 recency. Use the <strong style="color:#c8d6e5">PILOT FLYING</strong> checkbox in the logbook to mark sectors where you were the handling pilot — each checked sector counts as 1 T/O and 1 LDG. Day/night is determined by STD (takeoff) and STA (landing) UTC times against civil twilight (07:30–19:30).`,
   },
   "rec-autoland": {
     para:  "MCAR 2016 PART 8 · SUBPART A",
@@ -478,8 +492,9 @@ export default function ELogbook2026() {
     { key: "type",      label: "TYPE",                        minWidth: 36,  group: "AIRCRAFT" },
     { key: "markings",  label: "MARKINGS",                    minWidth: 58,  group: "AIRCRAFT" },
     { key: "captain",   label: "CAPTAIN",                     minWidth: 60, fixedWidth: 60, wrap: true, group: null },
-    { key: "cap",       label: "HOLDER\nOPERATING\nCAPACITY", minWidth: 58,  group: null, type: "select", options: ["","P1","P2","P1 U/S"] },
-    { key: "departure", label: "DEP",                         minWidth: 30,  group: "SECTORS" },
+    { key: "cap",         label: "HOLDER\nOPERATING\nCAPACITY", minWidth: 58, group: null, type: "select", options: ["","P1","P2","P1 U/S"] },
+    { key: "pilotFlying", label: "PILOT\nFLYING",              minWidth: 46, group: null, type: "checkbox" },
+    { key: "departure",   label: "DEP",                         minWidth: 30, group: "SECTORS" },
     { key: "arrival",   label: "ARR",                         minWidth: 30,  group: "SECTORS" },
     { key: "std",       label: "STD\n(UTC)",                  minWidth: 38,  group: null },
     { key: "sta",       label: "STA\n(UTC)",                  minWidth: 38,  group: null },
@@ -551,6 +566,42 @@ export default function ELogbook2026() {
 
   // Unique aircraft types found in logbook for recency dropdown
   const aircraftTypes = [...new Set(allSectors.map(s => s.type).filter(Boolean))].sort();
+
+  // ── Takeoff & Landing Recency computation ────────────────────────────────
+  const cutoff90 = new Date(today);
+  cutoff90.setDate(today.getDate() - 90);
+  cutoff90.setHours(0, 0, 0, 0);
+
+  // All PF sectors for selected type, sorted ascending (no date limit — needed for expiry calc)
+  const allPfForType = recencyType
+    ? allSectors
+        .filter(s => s.type === recencyType && s.pilotFlying && s.date <= today)
+        .sort((a, b) => a.date - b.date)
+    : [];
+
+  // Sectors within the rolling 90-day window
+  const pf90 = allPfForType.filter(s => s.date > cutoff90);
+
+  const dayTakeoffs90   = pf90.filter(s =>  s.isDayTakeoff).length;
+  const nightTakeoffs90 = pf90.filter(s => !s.isDayTakeoff).length;
+  const dayLandings90   = pf90.filter(s =>  s.isDayLanding).length;
+  const nightLandings90 = pf90.filter(s => !s.isDayLanding).length;
+
+  // Expiry = date of 3rd-most-recent event + 90 days (when it would fall out of the window)
+  const getRecencyExpiry = (arr) => {
+    if (arr.length < 3) return null;
+    const exp = new Date(arr[arr.length - 3].date);
+    exp.setDate(exp.getDate() + 90);
+    return exp;
+  };
+
+  const dayTOExpiry    = getRecencyExpiry(allPfForType.filter(s =>  s.isDayTakeoff));
+  const nightTOExpiry  = getRecencyExpiry(allPfForType.filter(s => !s.isDayTakeoff));
+  const dayLdgExpiry   = getRecencyExpiry(allPfForType.filter(s =>  s.isDayLanding));
+  const nightLdgExpiry = getRecencyExpiry(allPfForType.filter(s => !s.isDayLanding));
+
+  const fmtRecencyDate = (d) =>
+    d ? d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase() : null;
 
   // ── Render helper: FTL/Duty limit card ────────────────────────────────────
   const renderLimitCard = (l) => {
@@ -866,6 +917,10 @@ export default function ELogbook2026() {
                     <span style={{ display: "block" }}>OPERATING</span>
                     <span style={{ display: "block" }}>CAPACITY</span>
                   </th>
+                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4, color: "#4fc3f7" }}>
+                    <span style={{ display: "block" }}>PILOT</span>
+                    <span style={{ display: "block" }}>FLYING</span>
+                  </th>
                   <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 9, letterSpacing: "0.15em" }}>SECTORS</th>
                   <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
                     <span style={{ display: "block" }}>STD</span>
@@ -945,6 +1000,27 @@ export default function ELogbook2026() {
                           else if (isAutoCalc) displayVal = computedFT[col.key] || "";
                           else displayVal = row[col.key] || "";
 
+                          if (col.key === "pilotFlying") {
+                            const isPF = row.pilotFlying === "YES";
+                            cells.push(
+                              <td key={col.key} style={{ ...tdStyle, textAlign: "center", padding: "4px", minWidth: col.minWidth }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isPF}
+                                  onChange={e => updateCell(rowIdx, "pilotFlying", e.target.checked ? "YES" : "")}
+                                  title="Pilot Flying (marks T/O & LDG for recency)"
+                                  style={{
+                                    accentColor: "#4fc3f7",
+                                    width: 15, height: 15,
+                                    cursor: "pointer",
+                                    verticalAlign: "middle",
+                                  }}
+                                />
+                              </td>
+                            );
+                            continue;
+                          }
+
                           if (col.key === "cap") {
                             cells.push(
                               <td key={col.key} style={{ ...tdStyle, background: "transparent", minWidth: col.minWidth, padding: "2px 4px", textAlign: "center" }}>
@@ -1014,7 +1090,7 @@ export default function ELogbook2026() {
                                     if (e.key === "Tab") {
                                       e.preventDefault();
                                       updateCell(rowIdx, col.key, e.target.value);
-                                      const tabbableCols = columns.filter(c => c.key !== "total" && c.type !== "select").map(c => c.key);
+                                      const tabbableCols = columns.filter(c => c.key !== "total" && c.type !== "select" && c.type !== "checkbox").map(c => c.key);
                                       const currentIdx = tabbableCols.indexOf(col.key);
                                       if (currentIdx < tabbableCols.length - 1) {
                                         setEditingCell({ rowIdx, field: tabbableCols[currentIdx + 1] });
@@ -1060,7 +1136,7 @@ export default function ELogbook2026() {
 
                 {/* ── TOTALS ROW ── */}
                 <tr style={{ background: "#0b1828", borderTop: "2px solid #1e3a5f" }}>
-                  <td colSpan={10} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 10, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
+                  <td colSpan={11} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 10, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
                     MONTHLY TOTALS →
                   </td>
                   {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].map(k => (
@@ -1096,7 +1172,7 @@ export default function ELogbook2026() {
 
                 {/* ── SAVE NOW ROW ── */}
                 <tr style={{ background: "#0a0d12" }}>
-                  <td colSpan={19} style={{ padding: "8px 10px", borderTop: "1px solid #0f1820", textAlign: "right" }}>
+                  <td colSpan={20} style={{ padding: "8px 10px", borderTop: "1px solid #0f1820", textAlign: "right" }}>
                     <button
                       onClick={saveData}
                       disabled={saveStatus === "saving"}
@@ -1313,14 +1389,14 @@ export default function ELogbook2026() {
                   : <option disabled>NO AIRCRAFT IN LOGBOOK</option>
                 }
               </select>
-              {recencyType && (
+              {recencyType && pf90.length > 0 && (
                 <div style={{
                   fontSize: 8, letterSpacing: "0.12em", fontWeight: 700,
                   padding: "3px 10px", borderRadius: 3,
-                  background: "rgba(234,179,8,0.12)", border: "1px solid rgba(234,179,8,0.35)",
-                  color: "#eab308",
+                  background: "rgba(79,195,247,0.1)", border: "1px solid rgba(79,195,247,0.3)",
+                  color: "#4fc3f7",
                 }}>
-                  ⏳ T/O & LDG TRACKING COMING SOON
+                  {pf90.length} PILOT FLYING SECTOR{pf90.length !== 1 ? "S" : ""} IN LAST 90 DAYS
                 </div>
               )}
             </div>
@@ -1335,59 +1411,102 @@ export default function ELogbook2026() {
                 SELECT AN AIRCRAFT TYPE ABOVE TO VIEW RECENCY DATA
               </div>
             ) : (
-              <div style={{
-                background: "#0d1520", border: "1px solid #0f1e2d",
-                borderLeft: "3px solid #eab308", borderRadius: 4, padding: 16,
-              }}>
-                {/* Type badge */}
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-                  <div>
+              (() => {
+                const overallOk = dayTakeoffs90 >= 3 && dayLandings90 >= 3 && nightTakeoffs90 >= 3 && nightLandings90 >= 3;
+                const anyRed    = dayTakeoffs90 < 3 || dayLandings90 < 3 || nightTakeoffs90 < 3 || nightLandings90 < 3;
+                const borderCol = anyRed ? "#ef4444" : "#22c55e";
+                const dotCol    = anyRed ? "#ef4444" : "#22c55e";
+
+                const recencyCards = [
+                  { label: "DAY TAKEOFFS",   count: dayTakeoffs90,   expiry: dayTOExpiry   },
+                  { label: "DAY LANDINGS",   count: dayLandings90,   expiry: dayLdgExpiry  },
+                  { label: "NIGHT TAKEOFFS", count: nightTakeoffs90, expiry: nightTOExpiry },
+                  { label: "NIGHT LANDINGS", count: nightLandings90, expiry: nightLdgExpiry},
+                ];
+
+                return (
+                  <div style={{
+                    background: "#0d1520", border: "1px solid #0f1e2d",
+                    borderLeft: `3px solid ${borderCol}`, borderRadius: 4, padding: 16,
+                  }}>
+                    {/* Type badge + status dot */}
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
+                      <div>
+                        <div style={{
+                          display: "inline-block", fontSize: 8, letterSpacing: "0.12em",
+                          padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
+                          background: "rgba(79,195,247,0.12)", border: "1px solid rgba(79,195,247,0.3)", color: "#4fc3f7",
+                        }}>{recencyType}</div>
+                        <div style={{ fontSize: 9, color: "#4a6a8a", letterSpacing: "0.08em" }}>
+                          TAKEOFF &amp; LANDING RECENCY · LAST 90 DAYS · MINIMUM 3 EACH
+                        </div>
+                      </div>
+                      <div style={{
+                        width: 7, height: 7, borderRadius: "50%", marginTop: 4, flexShrink: 0,
+                        background: dotCol, boxShadow: `0 0 6px ${dotCol}`,
+                        animation: anyRed ? "blink 0.8s ease infinite" : "none",
+                      }} />
+                    </div>
+
+                    {/* Explanation note */}
                     <div style={{
-                      display: "inline-block", fontSize: 8, letterSpacing: "0.12em",
-                      padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
-                      background: "rgba(79,195,247,0.12)", border: "1px solid rgba(79,195,247,0.3)", color: "#4fc3f7",
-                    }}>{recencyType}</div>
-                    <div style={{ fontSize: 9, color: "#4a6a8a", letterSpacing: "0.08em" }}>
-                      TAKEOFF &amp; LANDING RECENCY · LAST 90 DAYS · MINIMUM 3 EACH
-                    </div>
-                  </div>
-                  <div style={{ width: 7, height: 7, borderRadius: "50%", marginTop: 4,
-                    background: "#eab308", boxShadow: "0 0 6px #eab308",
-                    animation: "blink 1.5s ease infinite" }} />
-                </div>
-
-                {/* Notice */}
-                <div style={{
-                  background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.2)",
-                  borderLeft: "3px solid rgba(234,179,8,0.5)", borderRadius: "0 4px 4px 0",
-                  padding: "12px 16px",
-                }}>
-                  <div style={{ fontSize: 9, color: "#eab308", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
-                    ⏳ T/O & LDG TRACKING NOT YET ENABLED
-                  </div>
-                  <div style={{ fontSize: 9, color: "#4a6a8a", lineHeight: 1.8, letterSpacing: "0.03em" }}>
-                    Takeoff and landing recency requires a <span style={{ color: "#4fc3f7" }}>T/O & LDG checkbox column</span> in the
-                    main logbook table — currently in development as the next priority update.<br />
-                    Once enabled, this panel will automatically compute your rolling 90-day day and night
-                    takeoff/landing counts for <span style={{ color: "#4fc3f7" }}>{recencyType}</span> and
-                    display expiry dates with ✅ / ⚠ / 🚨 alert states.
-                  </div>
-                </div>
-
-                {/* Placeholder counters */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginTop: 14 }}>
-                  {["DAY TAKEOFFS","DAY LANDINGS","NIGHT TAKEOFFS","NIGHT LANDINGS"].map(label => (
-                    <div key={label} style={{
-                      textAlign: "center", background: "#080b10",
-                      border: "1px solid #0f1e2d", borderRadius: 3, padding: "10px 6px",
+                      fontSize: 8, color: "#3a5a7a", lineHeight: 1.7, letterSpacing: "0.03em",
+                      marginBottom: 12, borderLeft: "2px solid #1a3050", paddingLeft: 8,
                     }}>
-                      <div style={{ fontSize: 7, color: "#4a6a8a", letterSpacing: "0.1em", marginBottom: 4 }}>{label}</div>
-                      <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: "#2a4a6a" }}>—</div>
-                      <div style={{ fontSize: 8, color: "#2a4a6a", marginTop: 3 }}>REQ: 3</div>
+                      Each sector with <span style={{ color: "#4fc3f7" }}>PILOT FLYING ✓</span> counts as 1 takeoff and 1 landing.
+                      Day / night is determined by <span style={{ color: "#4fc3f7" }}>STD</span> (takeoff) and{" "}
+                      <span style={{ color: "#4fc3f7" }}>STA</span> (landing) UTC times — civil day = 07:30–19:30.
                     </div>
-                  ))}
-                </div>
-              </div>
+
+                    {/* Live recency counters */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
+                      {recencyCards.map(({ label, count, expiry }) => {
+                        const ok = count >= 3;
+                        const c  = ok ? "#22c55e" : "#ef4444";
+                        const expiryStr = fmtRecencyDate(expiry);
+                        const daysLeft = expiry
+                          ? Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24))
+                          : null;
+                        return (
+                          <div key={label} style={{
+                            textAlign: "center", background: "#080b10",
+                            border: `1px solid ${ok ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                            borderTop: `2px solid ${c}`,
+                            borderRadius: 3, padding: "10px 6px",
+                          }}>
+                            <div style={{ fontSize: 7, color: "#4a6a8a", letterSpacing: "0.1em", marginBottom: 4 }}>{label}</div>
+                            <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: c, fontFamily: "'Courier New',monospace" }}>
+                              {count}
+                            </div>
+                            <div style={{ fontSize: 8, color: "#2a4a6a", marginTop: 3 }}>REQ: 3 IN 90 DAYS</div>
+                            <div style={{ fontSize: 7, fontWeight: 700, letterSpacing: "0.08em", color: c, marginTop: 5 }}>
+                              {ok ? "✓ CURRENT" : "✗ NOT CURRENT"}
+                            </div>
+                            {ok && expiryStr && (
+                              <div style={{ fontSize: 7, color: daysLeft !== null && daysLeft <= 14 ? "#eab308" : "#3a5a7a", marginTop: 3 }}>
+                                EXP: {expiryStr}
+                                {daysLeft !== null && daysLeft <= 14 && (
+                                  <span style={{ color: "#eab308" }}> ({daysLeft}d)</span>
+                                )}
+                              </div>
+                            )}
+                            {!ok && count > 0 && (
+                              <div style={{ fontSize: 7, color: "#ef4444", marginTop: 3 }}>
+                                NEED {3 - count} MORE
+                              </div>
+                            )}
+                            {!ok && count === 0 && (
+                              <div style={{ fontSize: 7, color: "#3a5a7a", marginTop: 3 }}>
+                                NO DATA
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()
             )}
 
             {/* ── AUTOLAND RECENCY ── */}
