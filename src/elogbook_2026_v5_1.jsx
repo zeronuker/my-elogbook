@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
+import SettingsModal, { DEFAULT_SETTINGS } from "./SettingsModal";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -141,8 +142,8 @@ function sumColumn(rows, key) {
 
 // Flatten all logbook rows across all months into a list of sectors with dates.
 // Only rows with a valid date + STD + STA are included.
-// Duty time is estimated as flight time + 1h30 (1h15 pre-flight report + 15min post-flight).
-function getAllSectors(data) {
+// Duty time = flight time + (preFlightBuffer + postFlightBuffer) — defaults 75 + 15 = 90 min.
+function getAllSectors(data, dutyBufferMins = 90) {
   const sectors = [];
   Object.entries(data).forEach(([key, rows]) => {
     if (!Array.isArray(rows)) return;
@@ -161,7 +162,7 @@ function getAllSectors(data) {
       sectors.push({
         date,
         flightMins,
-        dutyMins: flightMins + 90, // +1h30 estimate
+        dutyMins: flightMins + dutyBufferMins,
         type: (row.type || "").trim().toUpperCase(),
       });
     });
@@ -260,6 +261,8 @@ export default function ELogbook2026() {
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
   const [recencyType, setRecencyType] = useState("");   // selected aircraft type in recency
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // ── Auth listener ──
   useEffect(() => {
@@ -287,16 +290,34 @@ export default function ELogbook2026() {
       const ref = doc(db, "users", uid, "logbook", "data");
       const snap = await getDoc(ref);
       if (snap.exists()) {
-        const raw = snap.data().logbookData;
-        const normalized = {};
-        Object.keys(raw).forEach(key => {
-          const [mIdx] = key.split("-").map(Number);
-          normalized[key] = normalizeMonthRows(raw[key], mIdx, null);
-        });
-        setData(normalized);
+        const docData = snap.data();
+        const raw = docData.logbookData;
+        if (raw) {
+          const normalized = {};
+          Object.keys(raw).forEach(key => {
+            const [mIdx] = key.split("-").map(Number);
+            normalized[key] = normalizeMonthRows(raw[key], mIdx, null);
+          });
+          setData(normalized);
+        }
+        if (docData.settings) {
+          setSettings({ ...DEFAULT_SETTINGS, ...docData.settings });
+        }
       }
     } catch (e) {
       console.error("Load error:", e);
+    }
+  };
+
+  // ── Save settings only (separate from logbook auto-save) ──
+  const saveSettings = async (next) => {
+    setSettings(next);
+    if (!user) return;
+    try {
+      const ref = doc(db, "users", user.uid, "logbook", "data");
+      await setDoc(ref, { settings: next, updatedAt: new Date().toISOString() }, { merge: true });
+    } catch (e) {
+      console.error("Settings save error:", e);
     }
   };
 
@@ -328,7 +349,7 @@ export default function ELogbook2026() {
       });
 
       const ref = doc(db, "users", user.uid, "logbook", "data");
-      await setDoc(ref, { logbookData: cleanData, updatedAt: new Date().toISOString() });
+      await setDoc(ref, { logbookData: cleanData, settings, updatedAt: new Date().toISOString() }, { merge: true });
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 3000);
     } catch (e) {
@@ -432,7 +453,13 @@ export default function ELogbook2026() {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
       // Next ID should be length + 1, ensuring no gaps
       const newId = current.length + 1;
-      return { ...prev, [monthKey]: [...current, { id: newId, ...EMPTY_ROW() }] };
+      const seeded = {
+        ...EMPTY_ROW(),
+        type:     settings.defaultAircraftType || "",
+        markings: settings.defaultMarkings     || "",
+        captain:  settings.defaultCaptain      || "",
+      };
+      return { ...prev, [monthKey]: [...current, { id: newId, ...seeded }] };
     });
   };
 
@@ -482,7 +509,8 @@ export default function ELogbook2026() {
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
-  const allSectors = getAllSectors(data);
+  const dutyBufferMins = (Number(settings.preFlightBuffer) || 0) + (Number(settings.postFlightBuffer) || 0);
+  const allSectors = getAllSectors(data, dutyBufferMins);
 
   const ft28dMins   = rollingMins(allSectors, 28,  "flightMins", today);
   const ft12mMins   = rolling12MonthFlightMins(allSectors, today);
@@ -726,8 +754,17 @@ export default function ELogbook2026() {
                   <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
               </button>
-              {/* Settings (dummy) */}
-              <button onClick={() => {}} title="Settings (coming soon)" style={iconBtnStyle}>
+              {/* Settings */}
+              <button
+                onClick={() => setSettingsOpen(true)}
+                title="Settings"
+                style={{
+                  ...iconBtnStyle,
+                  color: settingsOpen ? "#4fc3f7" : "#3a6a8a",
+                  borderColor: settingsOpen ? "#4fc3f7" : "#1e3a5f",
+                  background: settingsOpen ? "rgba(79,195,247,0.1)" : "transparent",
+                }}
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="3"/>
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -1477,6 +1514,15 @@ export default function ELogbook2026() {
           </div>
         );
       })()}
+
+      {/* ── SETTINGS MODAL ── */}
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={settings}
+        onSave={saveSettings}
+        userEmail={user?.email}
+      />
 
       {/* ── FOOTER ── */}
       <div style={{
