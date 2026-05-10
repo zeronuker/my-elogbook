@@ -857,7 +857,7 @@ export default function ELogbook2026() {
 
         {/* ── LOGBOOK TAB ── */}
         {activeTab === "logbook" && (
-          <div style={{ overflowX: "auto" }}>
+          <div>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 0 }}>
             <div style={{ flex: "1 1 auto", minWidth: 0 }}>
             <div style={{
@@ -906,7 +906,7 @@ export default function ELogbook2026() {
               </div>
             </div>
 
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ background: "#0b1320" }}>
                   <th rowSpan={2} style={thStyle}>#</th>
@@ -1269,7 +1269,7 @@ export default function ELogbook2026() {
                   </tbody>
                   <tfoot>
                     <tr style={{ background: "#0b1828", borderTop: "2px solid #1e3a5f" }}>
-                      <td style={{ ...tdStyle, width: 80, minWidth: 80, maxWidth: 80, color: "#4fc3f7", fontWeight: 700 }}>ANNUAL TOTAL</td>
+                      <td style={{ ...tdStyle, width: 80, minWidth: 80, maxWidth: 80, whiteSpace: "normal", wordBreak: "break-word", color: "#4fc3f7", fontWeight: 700 }}>ANNUAL TOTAL</td>
                       <td style={{ ...tdStyle, width: 55, minWidth: 55, maxWidth: 55, textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
                         {Object.values(MONTHS).reduce((acc, _, i) => {
                           const mRows = data[`${i}-${selectedYear}`] || makeMonthRows(i, selectedYear);
@@ -1313,7 +1313,7 @@ export default function ELogbook2026() {
 
         {/* ── FTL & RECENCY TAB ── */}
         {activeTab === "ftl" && (
-          <div style={{ maxWidth: 920 }}>
+          <div>
 
             {/* ── STATUS BANNER ── */}
             <div style={{
