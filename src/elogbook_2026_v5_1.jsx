@@ -934,8 +934,8 @@ export default function ELogbook2026() {
                   <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 11, letterSpacing: "0.15em" }}>DAY</th>
                   <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: 11, letterSpacing: "0.15em" }}>NIGHT</th>
                   <th rowSpan={2} style={thStyle}>TOTAL</th>
-                  <th rowSpan={2} style={{ ...thStyle, width: 76, minWidth: 76 }}></th>
-                  <th rowSpan={2} style={{ ...thStyle, width: 28, minWidth: 28 }}></th>
+                  <th rowSpan={2} style={{ ...thStyle, background: "#0a0d12", border: "none" }}></th>
+                  <th rowSpan={2} style={{ ...thStyle, background: "#0a0d12", border: "none", width: 28, minWidth: 28 }}></th>
                 </tr>
                 <tr style={{ background: "#0b1320" }}>
                   <th style={thSubStyle}>TYPE</th>
@@ -1124,7 +1124,7 @@ export default function ELogbook2026() {
                         return cells;
                       })()}
                       {/* ── REMARKS BUTTON ── */}
-                      <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px", width: 76, minWidth: 76 }}>
+                      <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px" }}>
                         <button
                           onClick={() => setRemarksModal({ rowIdx, draft: row.remarks || "" })}
                           title={row.remarks ? "View / edit remarks" : "Add remarks"}
@@ -1160,9 +1160,9 @@ export default function ELogbook2026() {
                         <button
                           onClick={() => deleteRow(rowIdx)}
                           title="Delete row"
-                          style={{ background: "transparent", border: "none", color: "#2a1a1a", cursor: "pointer", fontSize: 13, padding: "2px 4px", borderRadius: 3, lineHeight: 1 }}
-                          onMouseEnter={e => e.currentTarget.style.color = "#c0392b"}
-                          onMouseLeave={e => e.currentTarget.style.color = "#2a1a1a"}
+                          style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 13, padding: "2px 4px", borderRadius: 3, lineHeight: 1 }}
+                          onMouseEnter={e => e.currentTarget.style.color = "#ff6b6b"}
+                          onMouseLeave={e => e.currentTarget.style.color = "#ef4444"}
                         >✕</button>
                       </td>
                     </tr>
