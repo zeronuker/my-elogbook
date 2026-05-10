@@ -277,6 +277,7 @@ export default function ELogbook2026() {
   const [recencyType, setRecencyType] = useState("");   // selected aircraft type in recency
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
 
   // ── Auth listener ──
   useEffect(() => {
@@ -505,7 +506,6 @@ export default function ELogbook2026() {
     { key: "nightP1US", label: "P1 U/S",                      minWidth: 42,  group: "NIGHT" },
     { key: "nightP2",   label: "P2",                          minWidth: 30,  group: "NIGHT" },
     { key: "total",     label: "TOTAL",                       minWidth: 42,  group: null },
-    { key: "remarks",   label: "REMARKS",                     minWidth: 180, fixedWidth: 180, wrap: true, group: null },
   ];
 
   const timeCols = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total","std","sta"];
@@ -857,7 +857,7 @@ export default function ELogbook2026() {
 
         {/* ── LOGBOOK TAB ── */}
         {activeTab === "logbook" && (
-          <div>
+          <div style={{ overflowX: "auto" }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 0 }}>
             <div style={{ flex: "1 1 auto", minWidth: 0 }}>
             <div style={{
@@ -906,7 +906,7 @@ export default function ELogbook2026() {
               </div>
             </div>
 
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
               <thead>
                 <tr style={{ background: "#0b1320" }}>
                   <th rowSpan={2} style={thStyle}>#</th>
@@ -934,7 +934,7 @@ export default function ELogbook2026() {
                   <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 11, letterSpacing: "0.15em" }}>DAY</th>
                   <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: 11, letterSpacing: "0.15em" }}>NIGHT</th>
                   <th rowSpan={2} style={thStyle}>TOTAL</th>
-                  <th rowSpan={2} style={{ ...thStyle, minWidth: 180, width: 180, whiteSpace: "normal" }}>REMARKS</th>
+                  <th rowSpan={2} style={{ ...thStyle, width: 76, minWidth: 76 }}></th>
                   <th rowSpan={2} style={{ ...thStyle, width: 28, minWidth: 28 }}></th>
                 </tr>
                 <tr style={{ background: "#0b1320" }}>
@@ -1123,6 +1123,39 @@ export default function ELogbook2026() {
                         }
                         return cells;
                       })()}
+                      {/* ── REMARKS BUTTON ── */}
+                      <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px", width: 76, minWidth: 76 }}>
+                        <button
+                          onClick={() => setRemarksModal({ rowIdx, draft: row.remarks || "" })}
+                          title={row.remarks ? "View / edit remarks" : "Add remarks"}
+                          style={{
+                            background: row.remarks ? "rgba(79,195,247,0.08)" : "transparent",
+                            border: `1px solid ${row.remarks ? "#4fc3f7" : "#1e3a5f"}`,
+                            borderRadius: 3,
+                            color: row.remarks ? "#4fc3f7" : "#3a5a7a",
+                            cursor: "pointer",
+                            padding: "3px 6px",
+                            fontFamily: "'Courier New',monospace",
+                            letterSpacing: "0.05em",
+                            lineHeight: 1.3,
+                            display: "flex", flexDirection: "column", alignItems: "center",
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.borderColor = "#4fc3f7";
+                            e.currentTarget.style.color = "#4fc3f7";
+                            e.currentTarget.style.background = "rgba(79,195,247,0.08)";
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.borderColor = row.remarks ? "#4fc3f7" : "#1e3a5f";
+                            e.currentTarget.style.color = row.remarks ? "#4fc3f7" : "#3a5a7a";
+                            e.currentTarget.style.background = row.remarks ? "rgba(79,195,247,0.08)" : "transparent";
+                          }}
+                        >
+                          <span style={{ fontSize: 7, display: "block" }}>{row.remarks ? "VIEW" : "ADD"}</span>
+                          <span style={{ fontSize: 7, display: "block" }}>REMARKS</span>
+                        </button>
+                      </td>
+                      {/* ── DELETE BUTTON ── */}
                       <td style={{ ...tdStyle, textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
                         <button
                           onClick={() => deleteRow(rowIdx)}
@@ -1568,6 +1601,108 @@ export default function ELogbook2026() {
           </div>
         )}
       </div>
+
+      {/* ── REMARKS POPUP ── */}
+      {remarksModal !== null && (() => {
+        const targetRow = rows[remarksModal.rowIdx];
+        const rowLabel = `ROW ${remarksModal.rowIdx + 1}${targetRow?.date ? ` · DATE ${targetRow.date}` : ""}`;
+        return (
+          <div
+            onClick={e => { if (e.target === e.currentTarget) setRemarksModal(null); }}
+            style={{
+              position: "fixed", inset: 0,
+              background: "rgba(0,0,0,0.72)",
+              zIndex: 2000,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 20,
+            }}
+          >
+            <div style={{
+              background: "#0c1622",
+              border: "1px solid #1a3050",
+              borderTop: "2px solid #4fc3f7",
+              borderRadius: 6,
+              padding: "20px 22px 18px",
+              maxWidth: 520, width: "100%",
+              boxShadow: "0 12px 48px rgba(0,0,0,0.8)",
+              animation: "popIn 0.15s ease",
+              fontFamily: "'Courier New',monospace",
+            }}>
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 10, letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>{rowLabel}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.07em" }}>REMARKS</div>
+                </div>
+                <button
+                  onClick={() => setRemarksModal(null)}
+                  style={{
+                    background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
+                    color: "#4a6a8a", fontFamily: "'Courier New',monospace", fontSize: 12,
+                    width: 22, height: 22, cursor: "pointer", flexShrink: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#4a6a8a"; }}
+                >✕</button>
+              </div>
+              <div style={{ height: 1, background: "#1a3050", marginBottom: 14 }} />
+              {/* Textarea */}
+              <textarea
+                value={remarksModal.draft}
+                onChange={e => setRemarksModal(prev => ({ ...prev, draft: e.target.value }))}
+                placeholder="Enter remarks for this sector..."
+                rows={6}
+                autoFocus
+                style={{
+                  width: "100%",
+                  background: "#080f18",
+                  border: "1px solid #1a3050",
+                  borderRadius: 4,
+                  color: "#c8d6e5",
+                  fontFamily: "'Courier New',monospace",
+                  fontSize: 13,
+                  padding: "10px 12px",
+                  resize: "vertical",
+                  outline: "none",
+                  boxSizing: "border-box",
+                  lineHeight: 1.6,
+                }}
+                onFocus={e => e.target.style.borderColor = "#4fc3f7"}
+                onBlur={e => e.target.style.borderColor = "#1a3050"}
+              />
+              {/* Action buttons */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
+                <button
+                  onClick={() => setRemarksModal(null)}
+                  style={{
+                    background: "transparent", border: "1px solid #1e3a5f", borderRadius: 4,
+                    color: "#4a6a8a", fontFamily: "'Courier New',monospace",
+                    fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px", cursor: "pointer",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a5f"; e.currentTarget.style.color = "#4a6a8a"; }}
+                >CANCEL</button>
+                <button
+                  onClick={() => {
+                    updateCell(remarksModal.rowIdx, "remarks", remarksModal.draft.trim());
+                    setRemarksModal(null);
+                  }}
+                  style={{
+                    background: "linear-gradient(135deg, #0d2a3a, #0a1f30)",
+                    border: "1px solid #4fc3f7", borderRadius: 4,
+                    color: "#4fc3f7", fontFamily: "'Courier New',monospace",
+                    fontSize: 11, letterSpacing: "0.12em", padding: "6px 20px", cursor: "pointer",
+                    boxShadow: "0 0 8px rgba(79,195,247,0.2)",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "linear-gradient(135deg, #0d3a4a, #0a2f40)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "linear-gradient(135deg, #0d2a3a, #0a1f30)"}
+                >SAVE REMARKS</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── REGULATORY REFERENCE POPUP ── */}
       {activePopup && (() => {
