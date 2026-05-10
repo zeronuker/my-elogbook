@@ -1,5 +1,7 @@
-import ELogbook from './elogbook_2026_v5_1'
+﻿import ELogbook2026 from './elogbook_2026_v5_1'
 
-export default function App() {
-  return <ELogbook />
+function App() {
+  return <ELogbook2026 />
 }
+
+export default App
