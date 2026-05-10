@@ -393,8 +393,8 @@ export default function ELogbook2026() {
     return (
       <div style={{ background: "#0a0d12", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", color: "#4fc3f7" }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 24, marginBottom: 12 }}>✈</div>
-          <div style={{ fontSize: 11, letterSpacing: "0.2em" }}>LOADING eLOGBOOK...</div>
+          <div style={{ fontSize: 26, marginBottom: 12 }}>✈</div>
+          <div style={{ fontSize: 13, letterSpacing: "0.2em" }}>LOADING eLOGBOOK...</div>
         </div>
       </div>
     );
@@ -405,10 +405,10 @@ export default function ELogbook2026() {
     return (
       <div style={{ background: "#0a0d12", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", color: "#c8d6e5" }}>
         <div style={{ textAlign: "center", padding: 40, border: "1px solid #1e3a5f", borderRadius: 8, background: "#0d1520", maxWidth: 380 }}>
-          <div style={{ fontSize: 36, marginBottom: 8 }}>✈</div>
-          <div style={{ fontSize: 13, letterSpacing: "0.2em", color: "#4fc3f7", marginBottom: 4 }}>eLOGBOOK V5.2</div>
-          <div style={{ fontSize: 10, color: "#5a7a9a", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
-          <div style={{ fontSize: 9, color: "#3a5a7a", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
+          <div style={{ fontSize: 38, marginBottom: 8 }}>✈</div>
+          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "#4fc3f7", marginBottom: 4 }}>eLOGBOOK V5.2</div>
+          <div style={{ fontSize: 12, color: "#5a7a9a", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
+          <div style={{ fontSize: 11, color: "#3a5a7a", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
           <button
             onClick={handleSignIn}
             style={{
@@ -417,7 +417,7 @@ export default function ELogbook2026() {
               borderRadius: 6,
               color: "#4fc3f7",
               fontFamily: "'Courier New', monospace",
-              fontSize: 11,
+              fontSize: 13,
               letterSpacing: "0.15em",
               padding: "12px 28px",
               cursor: "pointer",
@@ -431,7 +431,7 @@ export default function ELogbook2026() {
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.5 26.8 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.6l6.2 5.2C36.9 40.2 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
             SIGN IN WITH GOOGLE
           </button>
-          <div style={{ fontSize: 9, color: "#2a4a6a", marginTop: 20 }}>
+          <div style={{ fontSize: 11, color: "#2a4a6a", marginTop: 20 }}>
             Your logbook data is private and linked to your Google account
           </div>
         </div>
@@ -505,6 +505,7 @@ export default function ELogbook2026() {
     { key: "nightP1US", label: "P1 U/S",                      minWidth: 42,  group: "NIGHT" },
     { key: "nightP2",   label: "P2",                          minWidth: 30,  group: "NIGHT" },
     { key: "total",     label: "TOTAL",                       minWidth: 42,  group: null },
+    { key: "remarks",   label: "REMARKS",                     minWidth: 180, fixedWidth: 180, wrap: true, group: null },
   ];
 
   const timeCols = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total","std","sta"];
@@ -625,7 +626,7 @@ export default function ELogbook2026() {
       }}>
         {/* Header row */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ fontSize: 9, letterSpacing: "0.08em", color: "#4a6a8a", lineHeight: 1.4 }}>{l.label}</div>
+          <div style={{ fontSize: 11, letterSpacing: "0.08em", color: "#4a6a8a", lineHeight: 1.4 }}>{l.label}</div>
           <div style={{
             width: 7, height: 7, borderRadius: "50%", marginTop: 2, flexShrink: 0,
             background: c,
@@ -635,12 +636,12 @@ export default function ELogbook2026() {
         </div>
         {/* Numbers */}
         <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 8 }}>
-          <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1, color: c, fontFamily: "'Courier New',monospace" }}>
+          <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1, color: c, fontFamily: "'Courier New',monospace" }}>
             {toHHMM(l.used) || "00:00"}
           </div>
-          <div style={{ fontSize: 13, color: "#4a6a8a" }}>&nbsp;/&nbsp;</div>
-          <div style={{ fontSize: 13, color: "#4a6a8a" }}>{toHHMM(l.max)}</div>
-          <div style={{ fontSize: 9, color: "#4a6a8a", marginLeft: 2 }}>HR</div>
+          <div style={{ fontSize: 15, color: "#4a6a8a" }}>&nbsp;/&nbsp;</div>
+          <div style={{ fontSize: 15, color: "#4a6a8a" }}>{toHHMM(l.max)}</div>
+          <div style={{ fontSize: 11, color: "#4a6a8a", marginLeft: 2 }}>HR</div>
         </div>
         {/* Progress bar */}
         <div style={{ background: "#0a1018", borderRadius: 2, height: 4, marginBottom: 8, overflow: "hidden", border: "1px solid #0f1e2d" }}>
@@ -648,9 +649,9 @@ export default function ELogbook2026() {
         </div>
         {/* Footer */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontSize: 9, letterSpacing: "0.04em", color: c }}>{remStr}</div>
+          <div style={{ fontSize: 11, letterSpacing: "0.04em", color: c }}>{remStr}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ fontSize: 8, color: "#4a6a8a" }}>{l.rawPct.toFixed(1)}% USED</div>
+            <div style={{ fontSize: 10, color: "#4a6a8a" }}>{l.rawPct.toFixed(1)}% USED</div>
             <button
               onClick={() => setActivePopup(l.popupId)}
               title="View regulatory reference"
@@ -661,7 +662,7 @@ export default function ELogbook2026() {
                 color: "#2d5070",
                 fontFamily: "Georgia,serif",
                 fontStyle: "italic", fontWeight: 700,
-                fontSize: 10,
+                fontSize: 12,
                 cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 padding: 0, lineHeight: 1,
@@ -679,7 +680,7 @@ export default function ELogbook2026() {
   // ── Section header helper ──────────────────────────────────────────────────
   const SectionHeader = ({ icon, title, popupId }) => (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, marginTop: 20 }}>
-      <div style={{ fontSize: 9, letterSpacing: "0.18em", color: "#4fc3f7", whiteSpace: "nowrap" }}>
+      <div style={{ fontSize: 11, letterSpacing: "0.18em", color: "#4fc3f7", whiteSpace: "nowrap" }}>
         {icon} {title}
       </div>
       <div style={{ flex: 1, height: 1, background: "#1a3050" }} />
@@ -691,7 +692,7 @@ export default function ELogbook2026() {
             width: 16, height: 16, borderRadius: "50%",
             background: "transparent", border: "1px solid #1e3a55",
             color: "#2d5070", fontFamily: "Georgia,serif",
-            fontStyle: "italic", fontWeight: 700, fontSize: 10,
+            fontStyle: "italic", fontWeight: 700, fontSize: 12,
             cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             padding: 0, lineHeight: 1, flexShrink: 0,
           }}
@@ -726,18 +727,18 @@ export default function ELogbook2026() {
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
           <div style={{ flex: 1, textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-              <span style={{ fontSize: 20, color: "#4fc3f7" }}>✈</span>
-              <span style={{ fontSize: 11, letterSpacing: "0.25em", color: "#4fc3f7", textTransform: "uppercase" }}>
+              <span style={{ fontSize: 22, color: "#4fc3f7" }}>✈</span>
+              <span style={{ fontSize: 13, letterSpacing: "0.25em", color: "#4fc3f7", textTransform: "uppercase" }}>
                 eLOGBOOK V5.2 · CAAM / MCAR 2016
               </span>
             </div>
-            <div style={{ fontSize: 11, color: "#7ab8d4", marginBottom: 2 }}>
+            <div style={{ fontSize: 13, color: "#7ab8d4", marginBottom: 2 }}>
               eLOGBOOK v5.2 · CAA MALAYSIA / MCAR 2016
             </div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.05em" }}>
+            <div style={{ fontSize: 19, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.05em" }}>
               {MONTHS[selectedMonth].toUpperCase()} {selectedYear} — FLIGHT RECORDS
             </div>
-            <div style={{ fontSize: 10, color: "#5a7a9a", marginTop: 3 }}>
+            <div style={{ fontSize: 12, color: "#5a7a9a", marginTop: 3 }}>
               Compliant with CAD 1901 • MCAR 2016 Part 7 (FTL) • Part 8 (Licensing) • ICAO Annex 1
             </div>
           </div>
@@ -746,12 +747,12 @@ export default function ELogbook2026() {
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {user.photoURL && <img src={user.photoURL} alt="avatar" style={{ width: 22, height: 22, borderRadius: "50%", border: "1px solid #1e3a5f" }} />}
-              <span style={{ fontSize: 9, color: "#4a6a8a", letterSpacing: "0.1em" }}>{user.displayName || user.email}</span>
-              <button onClick={handleSignOut} style={{ background: "transparent", border: "1px solid #1e3a5f", borderRadius: 3, color: "#3a6a8a", fontFamily: "'Courier New', monospace", fontSize: 8, padding: "2px 8px", cursor: "pointer", letterSpacing: "0.1em" }}>
+              <span style={{ fontSize: 11, color: "#4a6a8a", letterSpacing: "0.1em" }}>{user.displayName || user.email}</span>
+              <button onClick={handleSignOut} style={{ background: "transparent", border: "1px solid #1e3a5f", borderRadius: 3, color: "#3a6a8a", fontFamily: "'Courier New', monospace", fontSize: 10, padding: "2px 8px", cursor: "pointer", letterSpacing: "0.1em" }}>
                 SIGN OUT
               </button>
             </div>
-            <div style={{ fontSize: 9, color: "#4a6a8a", letterSpacing: "0.15em" }}>SELECT PERIOD</div>
+            <div style={{ fontSize: 11, color: "#4a6a8a", letterSpacing: "0.15em" }}>SELECT PERIOD</div>
             <div style={{ display: "flex", gap: 8 }}>
               <select
                 value={selectedMonth}
@@ -774,10 +775,10 @@ export default function ELogbook2026() {
             </div>
             <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
               {refreshStatus === "refreshing" && (
-                <span style={{ fontSize: 9, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
+                <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
               )}
               {refreshStatus === "refreshed" && (
-                <span style={{ fontSize: 9, color: "#4fc77a", letterSpacing: "0.1em", fontWeight: 700 }}>✓ REFRESHED</span>
+                <span style={{ fontSize: 11, color: "#4fc77a", letterSpacing: "0.1em", fontWeight: 700 }}>✓ REFRESHED</span>
               )}
               {/* Refresh */}
               <button
@@ -829,8 +830,8 @@ export default function ELogbook2026() {
         <div style={{ display: "flex", gap: 0 }}>
           {[
             { id: "logbook",  label: "📋 LOGBOOK" },
-            { id: "summary",  label: "📊 MONTHLY SUMMARY" },
-            { id: "ftl",      label: "⏱ FTL & RECENCY" },
+            { id: "summary",  label: "📊 FLIGHT SUMMARY" },
+            { id: "ftl",      label: "⏱ LIMITS & RECENCY" },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
               background: activeTab === tab.id ? "#0a0d12" : "transparent",
@@ -840,7 +841,7 @@ export default function ELogbook2026() {
               borderRight: "1px solid " + (activeTab === tab.id ? "#1e3a5f" : "transparent"),
               color: activeTab === tab.id ? "#4fc3f7" : "#5a7a9a",
               padding: "7px 18px",
-              fontSize: 11,
+              fontSize: 13,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
               cursor: "pointer",
@@ -866,7 +867,7 @@ export default function ELogbook2026() {
               borderRadius: "0 4px 4px 0",
               padding: "7px 14px",
               marginBottom: 14,
-              fontSize: 10,
+              fontSize: 12,
               color: "#7ab8d4",
               display: "flex",
               alignItems: "center",
@@ -878,7 +879,7 @@ export default function ELogbook2026() {
                   <svg style={{ animation: "spin 1s linear infinite" }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
                   </svg>
-                  <span style={{ fontSize: 9, letterSpacing: "0.1em" }}>SAVING...</span>
+                  <span style={{ fontSize: 11, letterSpacing: "0.1em" }}>SAVING...</span>
                 </span>
               )}
               {saveStatus === "saved" && (
@@ -886,7 +887,7 @@ export default function ELogbook2026() {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
                   </svg>
-                  <span style={{ fontSize: 9, letterSpacing: "0.1em" }}>SAVED</span>
+                  <span style={{ fontSize: 11, letterSpacing: "0.1em" }}>SAVED</span>
                 </span>
               )}
               {saveStatus === "error" && (
@@ -894,7 +895,7 @@ export default function ELogbook2026() {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                   </svg>
-                  <span style={{ fontSize: 9, letterSpacing: "0.1em" }}>SAVE ERROR</span>
+                  <span style={{ fontSize: 11, letterSpacing: "0.1em" }}>SAVE ERROR</span>
                 </span>
               )}
               <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -905,12 +906,12 @@ export default function ELogbook2026() {
               </div>
             </div>
 
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, tableLayout: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
               <thead>
                 <tr style={{ background: "#0b1320" }}>
                   <th rowSpan={2} style={thStyle}>#</th>
                   <th rowSpan={2} style={thStyle}>DATE</th>
-                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 9, letterSpacing: "0.15em" }}>AIRCRAFT</th>
+                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 11, letterSpacing: "0.15em" }}>AIRCRAFT</th>
                   <th rowSpan={2} style={thStyle}>CAPTAIN</th>
                   <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
                     <span style={{ display: "block" }}>HOLDER</span>
@@ -921,18 +922,19 @@ export default function ELogbook2026() {
                     <span style={{ display: "block" }}>PILOT</span>
                     <span style={{ display: "block" }}>FLYING</span>
                   </th>
-                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 9, letterSpacing: "0.15em" }}>SECTORS</th>
+                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 11, letterSpacing: "0.15em" }}>SECTORS</th>
                   <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
                     <span style={{ display: "block" }}>STD</span>
-                    <span style={{ display: "block", fontSize: 7, color: "#2a5a7a" }}>(UTC)</span>
+                    <span style={{ display: "block", fontSize: 9, color: "#2a5a7a" }}>(UTC)</span>
                   </th>
                   <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
                     <span style={{ display: "block" }}>STA</span>
-                    <span style={{ display: "block", fontSize: 7, color: "#2a5a7a" }}>(UTC)</span>
+                    <span style={{ display: "block", fontSize: 9, color: "#2a5a7a" }}>(UTC)</span>
                   </th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 9, letterSpacing: "0.15em" }}>DAY</th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: 9, letterSpacing: "0.15em" }}>NIGHT</th>
+                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 11, letterSpacing: "0.15em" }}>DAY</th>
+                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: 11, letterSpacing: "0.15em" }}>NIGHT</th>
                   <th rowSpan={2} style={thStyle}>TOTAL</th>
+                  <th rowSpan={2} style={{ ...thStyle, minWidth: 180, width: 180, whiteSpace: "normal" }}>REMARKS</th>
                   <th rowSpan={2} style={{ ...thStyle, width: 28, minWidth: 28 }}></th>
                 </tr>
                 <tr style={{ background: "#0b1320" }}>
@@ -971,7 +973,7 @@ export default function ELogbook2026() {
                       onMouseEnter={e => e.currentTarget.style.background = "#122030"}
                       onMouseLeave={e => e.currentTarget.style.background = isEven ? "#0d1520" : "#0a1018"}
                     >
-                      <td style={{ ...tdStyle, color: "#2a4a6a", textAlign: "center", fontSize: 9 }}>{rowIdx + 1}</td>
+                      <td style={{ ...tdStyle, color: "#2a4a6a", textAlign: "center", fontSize: 11 }}>{rowIdx + 1}</td>
                       {(() => {
                         const cells = [];
                         let skipAutoCalc = false;
@@ -984,7 +986,7 @@ export default function ELogbook2026() {
                           if (needsCapWarning && col.key === "dayP1") {
                             skipAutoCalc = true;
                             cells.push(
-                              <td key="hoc-warning" colSpan={7} style={{ ...tdStyle, background: "rgba(249,115,22,0.06)", borderLeft: "2px solid rgba(249,115,22,0.4)", textAlign: "center", color: "#f97316", fontSize: 9, fontStyle: "italic", letterSpacing: "0.05em", padding: "5px 10px", whiteSpace: "nowrap" }}>
+                              <td key="hoc-warning" colSpan={7} style={{ ...tdStyle, background: "rgba(249,115,22,0.06)", borderLeft: "2px solid rgba(249,115,22,0.4)", textAlign: "center", color: "#f97316", fontSize: 11, fontStyle: "italic", letterSpacing: "0.05em", padding: "6px 10px", whiteSpace: "nowrap" }}>
                                 ⚠ HOLDER OPERATING CAPACITY required to auto calculate
                               </td>
                             );
@@ -1033,7 +1035,7 @@ export default function ELogbook2026() {
                                     borderRadius: 4,
                                     color: capStyle ? capStyle.color : "#7ab8d4",
                                     fontFamily: "'Courier New', monospace",
-                                    fontSize: 11,
+                                    fontSize: 13,
                                     fontWeight: capStyle ? 700 : 400,
                                     width: "auto",
                                     cursor: "pointer",
@@ -1106,8 +1108,8 @@ export default function ELogbook2026() {
                                   style={{
                                     width: "100%", background: "#0f2035", border: "none",
                                     borderBottom: "1px solid #4fc3f7", color: "#e8f4fd",
-                                    fontFamily: "'Courier New', monospace", fontSize: 11,
-                                    padding: "5px 7px", outline: "none", boxSizing: "border-box",
+                                    fontFamily: "'Courier New', monospace", fontSize: 13,
+                                    padding: "6px 8px", outline: "none", boxSizing: "border-box",
                                   }}
                                   placeholder={isTime ? "00:00" : ""}
                                 />
@@ -1136,7 +1138,7 @@ export default function ELogbook2026() {
 
                 {/* ── TOTALS ROW ── */}
                 <tr style={{ background: "#0b1828", borderTop: "2px solid #1e3a5f" }}>
-                  <td colSpan={11} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 10, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
+                  <td colSpan={11} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
                     MONTHLY TOTALS →
                   </td>
                   {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].map(k => (
@@ -1149,11 +1151,12 @@ export default function ELogbook2026() {
                         : (k === "dayP1US" || k === "nightP1US") ? "#ef4444"
                         : "#4fc3f7",
                       fontWeight: 700,
-                      fontSize: 12,
+                      fontSize: 14,
                     }}>
                       {totalsRow[k]}
                     </td>
                   ))}
+                  <td style={{ ...tdStyle }} />
                   <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px" }}>
                     <button
                       onClick={addSector}
@@ -1184,7 +1187,7 @@ export default function ELogbook2026() {
                         borderRadius: 4,
                         color: saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7",
                         fontFamily: "'Courier New', monospace",
-                        fontSize: 10, letterSpacing: "0.15em",
+                        fontSize: 12, letterSpacing: "0.15em",
                         padding: "6px 20px",
                         cursor: saveStatus === "saving" ? "wait" : "pointer",
                         boxShadow: "0 0 8px rgba(79,195,247,0.2)",
@@ -1206,17 +1209,17 @@ export default function ELogbook2026() {
         {activeTab === "summary" && (
           <div>
             <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 11, color: "#4fc3f7", letterSpacing: "0.15em", marginBottom: 16 }}>
+              <div style={{ fontSize: 13, color: "#4fc3f7", letterSpacing: "0.15em", marginBottom: 16 }}>
                 {selectedYear} ANNUAL OVERVIEW — ALL MONTHS
               </div>
               <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 800 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 800 }}>
                   <thead>
                     <tr style={{ background: "#0b1320" }}>
-                      <th rowSpan={2} style={thStyle}>MONTH</th>
-                      <th rowSpan={2} style={thStyle}>SECTORS</th>
-                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 9, letterSpacing: "0.15em" }}>DAY</th>
-                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: 9, letterSpacing: "0.15em" }}>NIGHT</th>
+                      <th rowSpan={2} style={{ ...thStyle, width: 80, minWidth: 80, maxWidth: 80 }}>MONTH</th>
+                      <th rowSpan={2} style={{ ...thStyle, width: 55, minWidth: 55, maxWidth: 55 }}>SECTORS</th>
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 11, letterSpacing: "0.15em" }}>DAY</th>
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: 11, letterSpacing: "0.15em" }}>NIGHT</th>
                       <th rowSpan={2} style={thStyle}>TOTAL</th>
                     </tr>
                     <tr style={{ background: "#0b1320" }}>
@@ -1251,8 +1254,8 @@ export default function ELogbook2026() {
                             borderLeft: isSelected ? "3px solid #4fc3f7" : "3px solid transparent",
                           }}
                         >
-                          <td style={{ ...tdStyle, color: isSelected ? "#4fc3f7" : "#9bbcd4", fontWeight: isSelected ? 700 : 400 }}>{m.toUpperCase()}</td>
-                          <td style={{ ...tdStyle, textAlign: "center", color: "#9bbcd4" }}>{filled || "—"}</td>
+                          <td style={{ ...tdStyle, width: 80, minWidth: 80, maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", color: isSelected ? "#4fc3f7" : "#9bbcd4", fontWeight: isSelected ? 700 : 400 }}>{m.toUpperCase()}</td>
+                          <td style={{ ...tdStyle, width: 55, minWidth: 55, maxWidth: 55, textAlign: "center", color: "#9bbcd4" }}>{filled || "—"}</td>
                           <td style={{ ...tdStyle, textAlign: "center", color: "#22c55e" }}>{dp1  === "00:00" ? "—" : dp1}</td>
                           <td style={{ ...tdStyle, textAlign: "center", color: "#ef4444" }}>{dp1u === "00:00" ? "—" : dp1u}</td>
                           <td style={{ ...tdStyle, textAlign: "center", color: "#eab308" }}>{dp2  === "00:00" ? "—" : dp2}</td>
@@ -1266,8 +1269,8 @@ export default function ELogbook2026() {
                   </tbody>
                   <tfoot>
                     <tr style={{ background: "#0b1828", borderTop: "2px solid #1e3a5f" }}>
-                      <td style={{ ...tdStyle, color: "#4fc3f7", fontWeight: 700 }}>ANNUAL TOTAL</td>
-                      <td style={{ ...tdStyle, textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
+                      <td style={{ ...tdStyle, width: 80, minWidth: 80, maxWidth: 80, color: "#4fc3f7", fontWeight: 700 }}>ANNUAL TOTAL</td>
+                      <td style={{ ...tdStyle, width: 55, minWidth: 55, maxWidth: 55, textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
                         {Object.values(MONTHS).reduce((acc, _, i) => {
                           const mRows = data[`${i}-${selectedYear}`] || makeMonthRows(i, selectedYear);
                           return acc + mRows.filter(r => r.date || r.type || r.sectors).length;
@@ -1301,7 +1304,7 @@ export default function ELogbook2026() {
                   </tfoot>
                 </table>
               </div>
-              <div style={{ fontSize: 10, color: "#3a5a7a", marginTop: 10 }}>
+              <div style={{ fontSize: 12, color: "#3a5a7a", marginTop: 10 }}>
                 Click any month row to jump to its logbook page.
               </div>
             </div>
@@ -1328,29 +1331,29 @@ export default function ELogbook2026() {
             }}>
               <div style={{ fontSize: 18, flexShrink: 0 }}>{bannerInfo.icon}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: FTL_COLOR[bannerCls] }}>
+                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: FTL_COLOR[bannerCls] }}>
                   {bannerInfo.label}
                 </div>
-                <div style={{ fontSize: 9, color: "#4a6a8a", marginTop: 3, letterSpacing: "0.04em", lineHeight: 1.5 }}>
+                <div style={{ fontSize: 11, color: "#4a6a8a", marginTop: 3, letterSpacing: "0.04em", lineHeight: 1.5 }}>
                   {bannerInfo.text}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap", flexShrink: 0 }}>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 8, color: "#4a6a8a", letterSpacing: "0.1em" }}>AS OF DATE</div>
-                  <div style={{ fontSize: 11, fontWeight: 700, marginTop: 2, color: "#4fc3f7" }}>
+                  <div style={{ fontSize: 10, color: "#4a6a8a", letterSpacing: "0.1em" }}>AS OF DATE</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "#4fc3f7" }}>
                     {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 8, color: "#4a6a8a", letterSpacing: "0.1em" }}>WORST LIMIT</div>
-                  <div style={{ fontSize: 11, fontWeight: 700, marginTop: 2, color: FTL_COLOR[bannerCls] }}>
+                  <div style={{ fontSize: 10, color: "#4a6a8a", letterSpacing: "0.1em" }}>WORST LIMIT</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: FTL_COLOR[bannerCls] }}>
                     {worstLimit ? worstLimit.label : "NONE"}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 8, color: "#4a6a8a", letterSpacing: "0.1em" }}>REGULATION</div>
-                  <div style={{ fontSize: 11, fontWeight: 700, marginTop: 2, color: "#4a6a8a" }}>CAD 1901</div>
+                  <div style={{ fontSize: 10, color: "#4a6a8a", letterSpacing: "0.1em" }}>REGULATION</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "#4a6a8a" }}>CAD 1901</div>
                 </div>
               </div>
             </div>
@@ -1372,14 +1375,14 @@ export default function ELogbook2026() {
 
             {/* Aircraft type selector */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.15em", color: "#4a6a8a", whiteSpace: "nowrap" }}>SELECT AIRCRAFT TYPE:</div>
+              <div style={{ fontSize: 11, letterSpacing: "0.15em", color: "#4a6a8a", whiteSpace: "nowrap" }}>SELECT AIRCRAFT TYPE:</div>
               <select
                 value={recencyType}
                 onChange={e => setRecencyType(e.target.value)}
                 style={{
                   background: "#0d1520", border: "1px solid #1a3050",
                   color: "#4fc3f7", fontFamily: "'Courier New',monospace",
-                  fontSize: 10, letterSpacing: "0.1em", padding: "6px 12px",
+                  fontSize: 12, letterSpacing: "0.1em", padding: "6px 12px",
                   borderRadius: 3, cursor: "pointer", outline: "none", minWidth: 180,
                 }}
               >
@@ -1391,7 +1394,7 @@ export default function ELogbook2026() {
               </select>
               {recencyType && pf90.length > 0 && (
                 <div style={{
-                  fontSize: 8, letterSpacing: "0.12em", fontWeight: 700,
+                  fontSize: 10, letterSpacing: "0.12em", fontWeight: 700,
                   padding: "3px 10px", borderRadius: 3,
                   background: "rgba(79,195,247,0.1)", border: "1px solid rgba(79,195,247,0.3)",
                   color: "#4fc3f7",
@@ -1406,7 +1409,7 @@ export default function ELogbook2026() {
               <div style={{
                 background: "#0d1520", border: "1px solid #0f1e2d", borderRadius: 4,
                 padding: 24, textAlign: "center", color: "#4a6a8a",
-                fontSize: 9, letterSpacing: "0.12em",
+                fontSize: 11, letterSpacing: "0.12em",
               }}>
                 SELECT AN AIRCRAFT TYPE ABOVE TO VIEW RECENCY DATA
               </div>
@@ -1433,11 +1436,11 @@ export default function ELogbook2026() {
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
                       <div>
                         <div style={{
-                          display: "inline-block", fontSize: 8, letterSpacing: "0.12em",
+                          display: "inline-block", fontSize: 10, letterSpacing: "0.12em",
                           padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
                           background: "rgba(79,195,247,0.12)", border: "1px solid rgba(79,195,247,0.3)", color: "#4fc3f7",
                         }}>{recencyType}</div>
-                        <div style={{ fontSize: 9, color: "#4a6a8a", letterSpacing: "0.08em" }}>
+                        <div style={{ fontSize: 11, color: "#4a6a8a", letterSpacing: "0.08em" }}>
                           TAKEOFF &amp; LANDING RECENCY · LAST 90 DAYS · MINIMUM 3 EACH
                         </div>
                       </div>
@@ -1450,7 +1453,7 @@ export default function ELogbook2026() {
 
                     {/* Explanation note */}
                     <div style={{
-                      fontSize: 8, color: "#3a5a7a", lineHeight: 1.7, letterSpacing: "0.03em",
+                      fontSize: 10, color: "#3a5a7a", lineHeight: 1.7, letterSpacing: "0.03em",
                       marginBottom: 12, borderLeft: "2px solid #1a3050", paddingLeft: 8,
                     }}>
                       Each sector with <span style={{ color: "#4fc3f7" }}>PILOT FLYING ✓</span> counts as 1 takeoff and 1 landing.
@@ -1474,16 +1477,16 @@ export default function ELogbook2026() {
                             borderTop: `2px solid ${c}`,
                             borderRadius: 3, padding: "10px 6px",
                           }}>
-                            <div style={{ fontSize: 7, color: "#4a6a8a", letterSpacing: "0.1em", marginBottom: 4 }}>{label}</div>
-                            <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: c, fontFamily: "'Courier New',monospace" }}>
+                            <div style={{ fontSize: 9, color: "#4a6a8a", letterSpacing: "0.1em", marginBottom: 4 }}>{label}</div>
+                            <div style={{ fontSize: 30, fontWeight: 700, lineHeight: 1, color: c, fontFamily: "'Courier New',monospace" }}>
                               {count}
                             </div>
-                            <div style={{ fontSize: 8, color: "#2a4a6a", marginTop: 3 }}>REQ: 3 IN 90 DAYS</div>
-                            <div style={{ fontSize: 7, fontWeight: 700, letterSpacing: "0.08em", color: c, marginTop: 5 }}>
+                            <div style={{ fontSize: 10, color: "#2a4a6a", marginTop: 3 }}>REQ: 3 IN 90 DAYS</div>
+                            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: c, marginTop: 5 }}>
                               {ok ? "✓ CURRENT" : "✗ NOT CURRENT"}
                             </div>
                             {ok && expiryStr && (
-                              <div style={{ fontSize: 7, color: daysLeft !== null && daysLeft <= 14 ? "#eab308" : "#3a5a7a", marginTop: 3 }}>
+                              <div style={{ fontSize: 9, color: daysLeft !== null && daysLeft <= 14 ? "#eab308" : "#3a5a7a", marginTop: 3 }}>
                                 EXP: {expiryStr}
                                 {daysLeft !== null && daysLeft <= 14 && (
                                   <span style={{ color: "#eab308" }}> ({daysLeft}d)</span>
@@ -1491,12 +1494,12 @@ export default function ELogbook2026() {
                               </div>
                             )}
                             {!ok && count > 0 && (
-                              <div style={{ fontSize: 7, color: "#ef4444", marginTop: 3 }}>
+                              <div style={{ fontSize: 9, color: "#ef4444", marginTop: 3 }}>
                                 NEED {3 - count} MORE
                               </div>
                             )}
                             {!ok && count === 0 && (
-                              <div style={{ fontSize: 7, color: "#3a5a7a", marginTop: 3 }}>
+                              <div style={{ fontSize: 9, color: "#3a5a7a", marginTop: 3 }}>
                                 NO DATA
                               </div>
                             )}
@@ -1518,11 +1521,11 @@ export default function ELogbook2026() {
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
                 <div>
                   <div style={{
-                    display: "inline-block", fontSize: 8, letterSpacing: "0.12em",
+                    display: "inline-block", fontSize: 10, letterSpacing: "0.12em",
                     padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
                     background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.3)", color: "#c084fc",
                   }}>CAT III AUTOLAND</div>
-                  <div style={{ fontSize: 9, color: "#4a6a8a", letterSpacing: "0.08em" }}>
+                  <div style={{ fontSize: 11, color: "#4a6a8a", letterSpacing: "0.08em" }}>
                     ALL AIRCRAFT TYPES · LAST 6 MONTHS · MINIMUM 3
                   </div>
                 </div>
@@ -1535,10 +1538,10 @@ export default function ELogbook2026() {
                 borderLeft: "3px solid rgba(234,179,8,0.5)", borderRadius: "0 4px 4px 0",
                 padding: "12px 16px",
               }}>
-                <div style={{ fontSize: 9, color: "#eab308", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
+                <div style={{ fontSize: 11, color: "#eab308", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
                   ⏳ AUTOLAND TRACKING NOT YET ENABLED
                 </div>
-                <div style={{ fontSize: 9, color: "#4a6a8a", lineHeight: 1.8, letterSpacing: "0.03em" }}>
+                <div style={{ fontSize: 11, color: "#4a6a8a", lineHeight: 1.8, letterSpacing: "0.03em" }}>
                   Autoland recency requires an <span style={{ color: "#4fc3f7" }}>Autoland checkbox column</span> in the
                   logbook table — coming alongside the T/O & LDG tracking update.<br />
                   Simulator autoland sessions will also be manually enterable once this feature is live.
@@ -1550,7 +1553,7 @@ export default function ELogbook2026() {
             <div style={{
               background: "rgba(79,195,247,0.04)", border: "1px solid rgba(79,195,247,0.1)",
               borderRadius: 4, padding: "10px 14px", marginTop: 20,
-              fontSize: 8, color: "#4a6a8a", letterSpacing: "0.04em", lineHeight: 1.7,
+              fontSize: 10, color: "#4a6a8a", letterSpacing: "0.04em", lineHeight: 1.7,
             }}>
               <span style={{ color: "#4fc3f7" }}>⚠ DISCLAIMER:</span> This FTL display is for{" "}
               <span style={{ color: "#4fc3f7" }}>reference purposes only</span> and is based solely on
@@ -1595,14 +1598,14 @@ export default function ELogbook2026() {
               {/* Header */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: 8, letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>{p.para}</div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.07em", lineHeight: 1.45 }}>{p.title}</div>
+                  <div style={{ fontSize: 10, letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>{p.para}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.07em", lineHeight: 1.45 }}>{p.title}</div>
                 </div>
                 <button
                   onClick={() => setActivePopup(null)}
                   style={{
                     background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
-                    color: "#4a6a8a", fontFamily: "'Courier New',monospace", fontSize: 10,
+                    color: "#4a6a8a", fontFamily: "'Courier New',monospace", fontSize: 12,
                     width: 22, height: 22, cursor: "pointer", flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}
@@ -1613,7 +1616,7 @@ export default function ELogbook2026() {
               <div style={{ height: 1, background: "#1a3050", marginBottom: 14 }} />
               {/* Body */}
               <div
-                style={{ fontSize: 9, color: "#4a6a8a", lineHeight: 1.9, letterSpacing: "0.03em" }}
+                style={{ fontSize: 11, color: "#4a6a8a", lineHeight: 1.9, letterSpacing: "0.03em" }}
                 dangerouslySetInnerHTML={{ __html: p.body }}
               />
               {/* Note */}
@@ -1624,7 +1627,7 @@ export default function ELogbook2026() {
                     background: "rgba(79,195,247,0.05)",
                     borderLeft: "2px solid rgba(79,195,247,0.25)",
                     borderRadius: "0 3px 3px 0",
-                    fontSize: 8, color: "#4a6a8a", lineHeight: 1.75, letterSpacing: "0.03em",
+                    fontSize: 10, color: "#4a6a8a", lineHeight: 1.75, letterSpacing: "0.03em",
                   }}
                   dangerouslySetInnerHTML={{ __html: p.note }}
                 />
@@ -1647,7 +1650,7 @@ export default function ELogbook2026() {
       <div style={{
         padding: "10px 24px",
         borderTop: "1px solid #111820",
-        fontSize: 9,
+        fontSize: 11,
         color: "#2a4a6a",
         letterSpacing: "0.12em",
         display: "flex",
@@ -1681,7 +1684,7 @@ const selectStyle = {
   border: "1px solid #1e3a5f",
   borderRadius: 4,
   color: "#4fc3f7",
-  fontSize: 13,
+  fontSize: 15,
   fontFamily: "'Courier New', monospace",
   fontWeight: 700,
   padding: "6px 10px",
@@ -1692,10 +1695,10 @@ const selectStyle = {
 };
 
 const thStyle = {
-  padding: "6px 7px",
+  padding: "7px 8px",
   textAlign: "center",
   color: "#3a6a8a",
-  fontSize: 9,
+  fontSize: 11,
   letterSpacing: "0.12em",
   borderBottom: "1px solid #1a3050",
   borderRight: "1px solid #111820",
@@ -1709,15 +1712,16 @@ const thSubStyle = {
   ...thStyle,
   color: "#3a6a8a",
   background: "#090d14",
-  fontSize: 8,
+  fontSize: 10,
+  fontWeight: 400,
 };
 
 const tdStyle = {
-  padding: "5px 7px",
+  padding: "6px 8px",
   borderBottom: "1px solid #0f1820",
   borderRight: "1px solid #0d1520",
   whiteSpace: "nowrap",
-  fontSize: 11,
+  fontSize: 13,
   overflow: "hidden",
   textOverflow: "ellipsis",
 };
