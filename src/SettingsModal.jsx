@@ -224,42 +224,11 @@ function ProfileTab({ d, upd, userEmail }) {
             </select>
           </Field>
         </div>
-        <div className="elb-form-row">
+        <div className="elb-form-row single">
           <Field label="AIRLINE / OPERATOR">
             <input className="elb-form-input" type="text" value={d.airline}
               onChange={e => upd({ airline: e.target.value })}
               placeholder="e.g. AirAsia" />
-          </Field>
-          <Field label="HOME BASE (ICAO)">
-            <input className="elb-form-input" type="text" value={d.homeBase}
-              onChange={e => upd({ homeBase: e.target.value.toUpperCase() })}
-              maxLength={4}
-              placeholder="e.g. WMKK" />
-          </Field>
-        </div>
-      </div>
-
-      <div className="elb-form-section">
-        <div className="elb-form-section-title">LOGBOOK DEFAULTS</div>
-        <div className="elb-form-row">
-          <Field label="DEFAULT AIRCRAFT TYPE"
-                 hint="Auto-fills the Aircraft Type column on new rows.">
-            <input className="elb-form-input" type="text" value={d.defaultAircraftType}
-              onChange={e => upd({ defaultAircraftType: e.target.value })}
-              placeholder="e.g. B737-800" />
-          </Field>
-          <Field label="DEFAULT AIRCRAFT MARKINGS">
-            <input className="elb-form-input" type="text" value={d.defaultMarkings}
-              onChange={e => upd({ defaultMarkings: e.target.value.toUpperCase() })}
-              placeholder="e.g. 9M-AHX" />
-          </Field>
-        </div>
-        <div className="elb-form-row single">
-          <Field label="DEFAULT CAPTAIN NAME"
-                 hint="Leave blank to not auto-fill.">
-            <input className="elb-form-input" type="text" value={d.defaultCaptain}
-              onChange={e => upd({ defaultCaptain: e.target.value })}
-              placeholder="Pre-fills Captain column" />
           </Field>
         </div>
       </div>
@@ -350,16 +319,13 @@ function AppearanceTab({ d, upd }) {
           </div>
 
           <div className="elb-form-group">
-            <div className="elb-slider-wrap" style={{ margin: 0 }}>
-              <div className="elb-slider-header">
+            <div className="elb-slider-wrap" style={{ margin: 0, padding: "7px 10px" }}>
+              <div className="elb-slider-header" style={{ marginBottom: 6 }}>
                 <span className="elb-slider-label">FONT SIZE</span>
                 <span className="elb-slider-value">{d.fontSize}px</span>
               </div>
               <input type="range" min="9" max="14" step="1" value={d.fontSize}
                 onChange={e => upd({ fontSize: Number(e.target.value) })} />
-              <div className="elb-slider-labels">
-                <span>9</span><span>11</span><span>14</span>
-              </div>
             </div>
           </div>
         </div>
@@ -670,7 +636,7 @@ const settingsCss = `
     padding:12px 20px 0;flex-shrink:0;gap:2px;flex-wrap:wrap;
   }
   .elb-stab{
-    padding:7px 16px;font-size:8px;letter-spacing:0.14em;
+    padding:7px 16px;font-size:var(--elb-th-sz,8px);letter-spacing:0.14em;
     color:#4a6a8a;cursor:pointer;border:1px solid transparent;border-bottom:none;
     border-radius:3px 3px 0 0;background:transparent;
     transition:all 0.15s;display:flex;align-items:center;gap:5px;
@@ -688,7 +654,7 @@ const settingsCss = `
 
   .elb-form-section{margin-bottom:22px;}
   .elb-form-section-title{
-    font-size:8px;letter-spacing:0.18em;color:#4fc3f7;
+    font-size:var(--elb-th-sz,8px);letter-spacing:0.18em;color:#4fc3f7;
     margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #0f1e2d;
   }
   .elb-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
