@@ -19,6 +19,10 @@ export const DEFAULT_SETTINGS = {
   highContrast: false,
   fontType: "Courier New",
   fontSize: 11,
+  // Carry forward
+  carryForward: [
+    { type: "", dayP1: "", dayP1US: "", dayP2: "", nightP1: "", nightP1US: "", nightP2: "" },
+  ],
   // Preferences
   dayNightMethod: "fixed", // "fixed" | "sunrise" | "great-circle"
   useStandardFormula: true,
@@ -80,6 +84,25 @@ const TAB_HINTS = {
   preferences: "⚠ Recalculation may take a moment on large logbooks.",
   misc:        "Version 5.2 · claudeborne.my",
 };
+
+// ── Carry-forward helpers ────────────────────────────────────────────────────
+const CF_FIELDS = ["dayP1", "dayP1US", "dayP2", "nightP1", "nightP1US", "nightP2"];
+const CF_EMPTY  = () => ({ type: "", dayP1: "", dayP1US: "", dayP2: "", nightP1: "", nightP1US: "", nightP2: "" });
+
+function cfParseHHMM(val) {
+  if (!val || !String(val).trim()) return 0;
+  const parts = String(val).trim().split(":");
+  return parts.length === 2
+    ? (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0)
+    : parseInt(val) || 0;
+}
+function cfToHHMM(mins) {
+  if (!mins || mins <= 0) return "";
+  return `${Math.floor(mins / 60).toString().padStart(2, "0")}:${(mins % 60).toString().padStart(2, "0")}`;
+}
+function cfRowTotal(row) {
+  return cfToHHMM(CF_FIELDS.reduce((acc, k) => acc + cfParseHHMM(row[k] || ""), 0));
+}
 
 // ── Component ───────────────────────────────────────────────────────────────
 export default function SettingsModal({ open, onClose, settings, onSave, userEmail }) {
@@ -231,6 +254,75 @@ function ProfileTab({ d, upd, userEmail }) {
               placeholder="e.g. AirAsia" />
           </Field>
         </div>
+      </div>
+
+      {/* ── CARRY FORWARD HOURS ── */}
+      <div className="elb-form-section">
+        <div className="elb-form-section-title">CARRY FORWARD HOURS</div>
+        <div className="elb-form-hint" style={{ marginBottom: 10 }}>
+          Enter total flying hours from previous logbooks per aircraft type. Time format: HH:MM
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table className="elb-cf-table">
+            <thead>
+              <tr>
+                <th className="elb-cf-th elb-cf-th-type" rowSpan={2}>AIRCRAFT<br />TYPE</th>
+                <th className="elb-cf-th elb-cf-th-group elb-cf-day" colSpan={3}>DAY</th>
+                <th className="elb-cf-th elb-cf-th-group elb-cf-night" colSpan={3}>NIGHT</th>
+                <th className="elb-cf-th elb-cf-th-total" rowSpan={2}>TOTAL</th>
+                <th className="elb-cf-th" rowSpan={2} style={{ width: 20 }} />
+              </tr>
+              <tr>
+                {["P1","P1 U/S","P2","P1","P1 U/S","P2"].map((lbl, i) => (
+                  <th key={i} className="elb-cf-th elb-cf-th-sub">{lbl}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(d.carryForward || [CF_EMPTY()]).map((row, i) => {
+                const rows = d.carryForward || [CF_EMPTY()];
+                const setRow = (patch) => {
+                  const next = rows.map((r, idx) => idx === i ? { ...r, ...patch } : r);
+                  upd({ carryForward: next });
+                };
+                return (
+                  <tr key={i}>
+                    <td className="elb-cf-td">
+                      <input className="elb-cf-input elb-cf-input-type" type="text"
+                        value={row.type || ""}
+                        onChange={e => setRow({ type: e.target.value.toUpperCase() })}
+                        placeholder="B737" />
+                    </td>
+                    {CF_FIELDS.map(field => (
+                      <td key={field} className="elb-cf-td">
+                        <input className="elb-cf-input" type="text"
+                          value={row[field] || ""}
+                          onChange={e => setRow({ [field]: e.target.value })}
+                          placeholder="00:00" />
+                      </td>
+                    ))}
+                    <td className="elb-cf-td elb-cf-total-cell">
+                      {cfRowTotal(row) || <span style={{ color: "#1e3a5f" }}>—</span>}
+                    </td>
+                    <td className="elb-cf-td elb-cf-action-cell">
+                      {rows.length > 1 && (
+                        <button type="button" className="elb-cf-remove"
+                          title="Remove row"
+                          onClick={() => upd({ carryForward: rows.filter((_, idx) => idx !== i) })}>
+                          ✕
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <button type="button" className="elb-cf-add"
+          onClick={() => upd({ carryForward: [...(d.carryForward || [CF_EMPTY()]), CF_EMPTY()] })}>
+          ＋ ADD AIRCRAFT TYPE
+        </button>
       </div>
     </>
   );
@@ -834,6 +926,55 @@ const settingsCss = `
     font-size:0.85em;font-weight:700;width:15px;height:15px;
     display:flex;align-items:center;justify-content:center;line-height:1;
   }
+
+  /* ── Carry-forward table ── */
+  .elb-cf-table{
+    width:100%;border-collapse:collapse;min-width:560px;font-family:inherit;
+  }
+  .elb-cf-th{
+    padding:5px 6px;text-align:center;background:#06101c;
+    border:1px solid #0f1e2d;font-size:0.73em;letter-spacing:0.1em;
+    font-weight:700;white-space:nowrap;color:#4a6a8a;line-height:1.4;
+  }
+  .elb-cf-th-type{text-align:left;padding-left:8px;min-width:80px;}
+  .elb-cf-th-total{min-width:56px;}
+  .elb-cf-th-group{border-bottom:1px solid #1a3050;}
+  .elb-cf-day{color:#f5c542;}
+  .elb-cf-night{color:#7ab8d4;}
+  .elb-cf-th-sub{
+    background:#04080e;font-weight:400;font-size:0.64em;color:#4a6a8a;
+  }
+  .elb-cf-td{
+    padding:2px 3px;border:1px solid #0f1e2d;vertical-align:middle;
+  }
+  .elb-cf-input{
+    width:100%;background:transparent;border:none;outline:none;
+    color:#c8d6e5;font-family:inherit;font-size:0.9em;
+    text-align:center;padding:4px 3px;min-width:46px;
+  }
+  .elb-cf-input:focus{background:rgba(79,195,247,0.05);}
+  .elb-cf-input::placeholder{color:#1e3050;}
+  .elb-cf-input-type{text-align:left;padding-left:6px;min-width:70px;}
+  .elb-cf-total-cell{
+    text-align:center;color:#4fc3f7;font-weight:700;
+    background:#04080e;white-space:nowrap;padding:4px 8px;
+    font-size:0.85em;border:1px solid #0f1e2d;
+  }
+  .elb-cf-action-cell{
+    padding:0 3px;border:1px solid #0f1e2d;text-align:center;width:18px;
+  }
+  .elb-cf-remove{
+    background:transparent;border:none;color:#2a4a6a;cursor:pointer;
+    font-size:0.82em;padding:2px 4px;line-height:1;transition:color 0.15s;
+  }
+  .elb-cf-remove:hover{color:#ef4444;}
+  .elb-cf-add{
+    margin-top:8px;background:transparent;border:1px dashed #1a3050;
+    border-radius:3px;color:#4a6a8a;font-family:inherit;font-size:0.82em;
+    letter-spacing:0.1em;padding:7px 16px;cursor:pointer;
+    width:100%;transition:all 0.15s;text-align:center;
+  }
+  .elb-cf-add:hover{border-color:#4fc3f7;color:#4fc3f7;background:rgba(79,195,247,0.03);}
 
   @media (max-width: 540px){
     .elb-scheme-grid{grid-template-columns:repeat(2,1fr);}
