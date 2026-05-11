@@ -296,7 +296,6 @@ function makeThemeCss(settings) {
   `;
 
   return `
-    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap');
     :root {
       ${isDark ? darkVars : lightVars}
       --elb-font:${fontFamily};
@@ -443,6 +442,7 @@ export default function ELogbook2026() {
   if (authLoading) {
     return (
       <>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" />
         <style>{themeCss}</style>
         <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-acc, #4fc3f7)" }}>
         <div style={{ textAlign: "center" }}>
@@ -458,6 +458,8 @@ export default function ELogbook2026() {
   if (!user) {
     return (
       <>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" />
+      <style>{themeCss}</style>
       <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-txt, #c8d6e5)" }}>
         <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-bdr, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
           <div style={{ fontSize: 38, marginBottom: 8 }}>✈</div>
@@ -491,7 +493,6 @@ export default function ELogbook2026() {
           </div>
         </div>
       </div>
-      <style>{themeCss}</style>
       </>
     );
   }
@@ -763,6 +764,8 @@ export default function ELogbook2026() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
+    <>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" />
     <div style={{
       background: "var(--elb-bg, #0a0d12)",
       minHeight: "100vh",
@@ -1866,6 +1869,7 @@ export default function ELogbook2026() {
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
     </div>
+    </>
   );
 }
 
