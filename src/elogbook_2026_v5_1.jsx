@@ -300,8 +300,10 @@ function makeThemeCss(settings) {
       ${isDark ? darkVars : lightVars}
       --elb-font:${fontFamily};
       --elb-td-sz:${fontSize}px;
-      --elb-th-sz:${Math.max(8, fontSize - 2)}px;
-      --elb-ths-sz:${Math.max(7, fontSize - 3)}px;
+      --elb-th-sz:${Math.max(10, fontSize - 1)}px;
+      --elb-ths-sz:${Math.max(9, fontSize - 2)}px;
+      --elb-desc-sz:${Math.max(11, fontSize)}px;
+      --elb-hint-sz:${Math.max(10, fontSize - 1)}px;
     }
   `;
 }
@@ -700,7 +702,7 @@ export default function ELogbook2026() {
           </div>
           <div style={{ fontSize: 15, color: "#4a6a8a" }}>&nbsp;/&nbsp;</div>
           <div style={{ fontSize: 15, color: "#4a6a8a" }}>{toHHMM(l.max)}</div>
-          <div style={{ fontSize: 11, color: "#4a6a8a", marginLeft: 2 }}>HR</div>
+          <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", marginLeft: 2 }}>HR</div>
         </div>
         {/* Progress bar */}
         <div style={{ background: "#0a1018", borderRadius: 2, height: 4, marginBottom: 8, overflow: "hidden", border: "1px solid #0f1e2d" }}>
@@ -710,7 +712,7 @@ export default function ELogbook2026() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontSize: 11, letterSpacing: "0.04em", color: c }}>{remStr}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ fontSize: 10, color: "#4a6a8a" }}>{l.rawPct.toFixed(1)}% USED</div>
+            <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a" }}>{l.rawPct.toFixed(1)}% USED</div>
             <button
               onClick={() => setActivePopup(l.popupId)}
               title="View regulatory reference"
@@ -739,7 +741,7 @@ export default function ELogbook2026() {
   // ── Section header helper ──────────────────────────────────────────────────
   const SectionHeader = ({ icon, title, popupId }) => (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, marginTop: 20 }}>
-      <div style={{ fontSize: 11, letterSpacing: "0.18em", color: "#4fc3f7", whiteSpace: "nowrap" }}>
+      <div style={{ fontSize: "var(--elb-th-sz)", letterSpacing: "0.18em", color: "#4fc3f7", whiteSpace: "nowrap" }}>
         {icon} {title}
       </div>
       <div style={{ flex: 1, height: 1, background: "#1a3050" }} />
@@ -814,7 +816,7 @@ export default function ELogbook2026() {
                   {settings.fullName || user.displayName || user.email}
                 </span>
                 {(settings.airline || settings.licenceNumber) && (
-                  <span style={{ fontSize: 10, color: "#4a6a8a", letterSpacing: "0.08em" }}>
+                  <span style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.08em" }}>
                     {[settings.airline, settings.licenceNumber].filter(Boolean).join(" · ")}
                   </span>
                 )}
@@ -823,7 +825,7 @@ export default function ELogbook2026() {
                 SIGN OUT
               </button>
             </div>
-            <div style={{ fontSize: 11, color: "#4a6a8a", letterSpacing: "0.15em" }}>SELECT PERIOD</div>
+            <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", letterSpacing: "0.15em" }}>SELECT PERIOD</div>
             <div style={{ display: "flex", gap: 8 }}>
               <select
                 value={selectedMonth}
@@ -982,7 +984,7 @@ export default function ELogbook2026() {
                 <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                   <th rowSpan={2} style={thStyle}>#</th>
                   <th rowSpan={2} style={thStyle}>DATE</th>
-                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 11, letterSpacing: "0.15em" }}>AIRCRAFT</th>
+                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>AIRCRAFT</th>
                   <th rowSpan={2} style={thStyle}>CAPTAIN</th>
                   <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
                     <span style={{ display: "block" }}>HOLDER</span>
@@ -993,17 +995,17 @@ export default function ELogbook2026() {
                     <span style={{ display: "block" }}>PILOT</span>
                     <span style={{ display: "block" }}>FLYING</span>
                   </th>
-                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 11, letterSpacing: "0.15em" }}>SECTORS</th>
+                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>SECTORS</th>
                   <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
                     <span style={{ display: "block" }}>STD</span>
-                    <span style={{ display: "block", fontSize: 9, color: "#2a5a7a" }}>(UTC)</span>
+                    <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
                   </th>
                   <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
                     <span style={{ display: "block" }}>STA</span>
-                    <span style={{ display: "block", fontSize: 9, color: "#2a5a7a" }}>(UTC)</span>
+                    <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
                   </th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 11, letterSpacing: "0.15em" }}>DAY</th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: 11, letterSpacing: "0.15em" }}>NIGHT</th>
+                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
+                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
                   <th rowSpan={2} style={thStyle}>TOTAL</th>
                   <th rowSpan={2} style={{ ...thStyle, background: "#0a0d12", border: "none" }}></th>
                   <th rowSpan={2} style={{ ...thStyle, background: "#0a0d12", border: "none", width: 28, minWidth: 28 }}></th>
@@ -1322,8 +1324,8 @@ export default function ELogbook2026() {
                     <tr style={{ background: "#0b1320" }}>
                       <th rowSpan={2} style={{ ...thStyle, width: 80, minWidth: 80, maxWidth: 80 }}>MONTH</th>
                       <th rowSpan={2} style={{ ...thStyle, width: 55, minWidth: 55, maxWidth: 55 }}>SECTORS</th>
-                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: 11, letterSpacing: "0.15em" }}>DAY</th>
-                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: 11, letterSpacing: "0.15em" }}>NIGHT</th>
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
                       <th rowSpan={2} style={thStyle}>TOTAL</th>
                     </tr>
                     <tr style={{ background: "#0b1320" }}>
@@ -1438,25 +1440,25 @@ export default function ELogbook2026() {
                 <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: FTL_COLOR[bannerCls] }}>
                   {bannerInfo.label}
                 </div>
-                <div style={{ fontSize: 11, color: "#4a6a8a", marginTop: 3, letterSpacing: "0.04em", lineHeight: 1.5 }}>
+                <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", marginTop: 3, letterSpacing: "0.04em", lineHeight: 1.5 }}>
                   {bannerInfo.text}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap", flexShrink: 0 }}>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 10, color: "#4a6a8a", letterSpacing: "0.1em" }}>AS OF DATE</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em" }}>AS OF DATE</div>
                   <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "#4fc3f7" }}>
                     {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 10, color: "#4a6a8a", letterSpacing: "0.1em" }}>WORST LIMIT</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em" }}>WORST LIMIT</div>
                   <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: FTL_COLOR[bannerCls] }}>
                     {worstLimit ? worstLimit.label : "NONE"}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 10, color: "#4a6a8a", letterSpacing: "0.1em" }}>REGULATION</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em" }}>REGULATION</div>
                   <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "#4a6a8a" }}>CAD 1901</div>
                 </div>
               </div>
@@ -1479,7 +1481,7 @@ export default function ELogbook2026() {
 
             {/* Aircraft type selector */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
-              <div style={{ fontSize: 11, letterSpacing: "0.15em", color: "#4a6a8a", whiteSpace: "nowrap" }}>SELECT AIRCRAFT TYPE:</div>
+              <div style={{ fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em", color: "#4a6a8a", whiteSpace: "nowrap" }}>SELECT AIRCRAFT TYPE:</div>
               <select
                 value={recencyType}
                 onChange={e => setRecencyType(e.target.value)}
@@ -1498,7 +1500,7 @@ export default function ELogbook2026() {
               </select>
               {recencyType && pf90.length > 0 && (
                 <div style={{
-                  fontSize: 10, letterSpacing: "0.12em", fontWeight: 700,
+                  fontSize: "var(--elb-hint-sz)", letterSpacing: "0.12em", fontWeight: 700,
                   padding: "3px 10px", borderRadius: 3,
                   background: "rgba(79,195,247,0.1)", border: "1px solid rgba(79,195,247,0.3)",
                   color: "#4fc3f7",
@@ -1540,11 +1542,11 @@ export default function ELogbook2026() {
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
                       <div>
                         <div style={{
-                          display: "inline-block", fontSize: 10, letterSpacing: "0.12em",
+                          display: "inline-block", fontSize: "var(--elb-hint-sz)", letterSpacing: "0.12em",
                           padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
                           background: "rgba(79,195,247,0.12)", border: "1px solid rgba(79,195,247,0.3)", color: "#4fc3f7",
                         }}>{recencyType}</div>
-                        <div style={{ fontSize: 11, color: "#4a6a8a", letterSpacing: "0.08em" }}>
+                        <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", letterSpacing: "0.08em" }}>
                           TAKEOFF &amp; LANDING RECENCY · LAST 90 DAYS · MINIMUM 3 EACH
                         </div>
                       </div>
@@ -1557,7 +1559,7 @@ export default function ELogbook2026() {
 
                     {/* Explanation note */}
                     <div style={{
-                      fontSize: 10, color: "#3a5a7a", lineHeight: 1.7, letterSpacing: "0.03em",
+                      fontSize: "var(--elb-hint-sz)", color: "#3a5a7a", lineHeight: 1.7, letterSpacing: "0.03em",
                       marginBottom: 12, borderLeft: "2px solid #1a3050", paddingLeft: 8,
                     }}>
                       Each sector with <span style={{ color: "#4fc3f7" }}>PILOT FLYING ✓</span> counts as 1 takeoff and 1 landing.
@@ -1581,16 +1583,16 @@ export default function ELogbook2026() {
                             borderTop: `2px solid ${c}`,
                             borderRadius: 3, padding: "10px 6px",
                           }}>
-                            <div style={{ fontSize: 9, color: "#4a6a8a", letterSpacing: "0.1em", marginBottom: 4 }}>{label}</div>
+                            <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em", marginBottom: 4 }}>{label}</div>
                             <div style={{ fontSize: 30, fontWeight: 700, lineHeight: 1, color: c, fontFamily: "'Courier New',monospace" }}>
                               {count}
                             </div>
-                            <div style={{ fontSize: 10, color: "#2a4a6a", marginTop: 3 }}>REQ: 3 IN 90 DAYS</div>
-                            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: c, marginTop: 5 }}>
+                            <div style={{ fontSize: "var(--elb-hint-sz)", color: "#2a4a6a", marginTop: 3 }}>REQ: 3 IN 90 DAYS</div>
+                            <div style={{ fontSize: "var(--elb-hint-sz)", fontWeight: 700, letterSpacing: "0.08em", color: c, marginTop: 5 }}>
                               {ok ? "✓ CURRENT" : "✗ NOT CURRENT"}
                             </div>
                             {ok && expiryStr && (
-                              <div style={{ fontSize: 9, color: daysLeft !== null && daysLeft <= 14 ? "#eab308" : "#3a5a7a", marginTop: 3 }}>
+                              <div style={{ fontSize: "var(--elb-hint-sz)", color: daysLeft !== null && daysLeft <= 14 ? "#eab308" : "#3a5a7a", marginTop: 3 }}>
                                 EXP: {expiryStr}
                                 {daysLeft !== null && daysLeft <= 14 && (
                                   <span style={{ color: "#eab308" }}> ({daysLeft}d)</span>
@@ -1598,12 +1600,12 @@ export default function ELogbook2026() {
                               </div>
                             )}
                             {!ok && count > 0 && (
-                              <div style={{ fontSize: 9, color: "#ef4444", marginTop: 3 }}>
+                              <div style={{ fontSize: "var(--elb-hint-sz)", color: "#ef4444", marginTop: 3 }}>
                                 NEED {3 - count} MORE
                               </div>
                             )}
                             {!ok && count === 0 && (
-                              <div style={{ fontSize: 9, color: "#3a5a7a", marginTop: 3 }}>
+                              <div style={{ fontSize: "var(--elb-hint-sz)", color: "#3a5a7a", marginTop: 3 }}>
                                 NO DATA
                               </div>
                             )}
@@ -1625,11 +1627,11 @@ export default function ELogbook2026() {
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
                 <div>
                   <div style={{
-                    display: "inline-block", fontSize: 10, letterSpacing: "0.12em",
+                    display: "inline-block", fontSize: "var(--elb-hint-sz)", letterSpacing: "0.12em",
                     padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
                     background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.3)", color: "#c084fc",
                   }}>CAT III AUTOLAND</div>
-                  <div style={{ fontSize: 11, color: "#4a6a8a", letterSpacing: "0.08em" }}>
+                  <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", letterSpacing: "0.08em" }}>
                     ALL AIRCRAFT TYPES · LAST 6 MONTHS · MINIMUM 3
                   </div>
                 </div>
@@ -1642,10 +1644,10 @@ export default function ELogbook2026() {
                 borderLeft: "3px solid rgba(234,179,8,0.5)", borderRadius: "0 4px 4px 0",
                 padding: "12px 16px",
               }}>
-                <div style={{ fontSize: 11, color: "#eab308", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
+                <div style={{ fontSize: "var(--elb-desc-sz)", color: "#eab308", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
                   ⏳ AUTOLAND TRACKING NOT YET ENABLED
                 </div>
-                <div style={{ fontSize: 11, color: "#4a6a8a", lineHeight: 1.8, letterSpacing: "0.03em" }}>
+                <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", lineHeight: 1.8, letterSpacing: "0.03em" }}>
                   Autoland recency requires an <span style={{ color: "#4fc3f7" }}>Autoland checkbox column</span> in the
                   logbook table — coming alongside the T/O & LDG tracking update.<br />
                   Simulator autoland sessions will also be manually enterable once this feature is live.
@@ -1657,7 +1659,7 @@ export default function ELogbook2026() {
             <div style={{
               background: "rgba(79,195,247,0.04)", border: "1px solid rgba(79,195,247,0.1)",
               borderRadius: 4, padding: "10px 14px", marginTop: 20,
-              fontSize: 10, color: "#4a6a8a", letterSpacing: "0.04em", lineHeight: 1.7,
+              fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.04em", lineHeight: 1.7,
             }}>
               <span style={{ color: "#4fc3f7" }}>⚠ DISCLAIMER:</span> This FTL display is for{" "}
               <span style={{ color: "#4fc3f7" }}>reference purposes only</span> and is based solely on
@@ -1702,7 +1704,7 @@ export default function ELogbook2026() {
               {/* Header */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: 10, letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>{rowLabel}</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>{rowLabel}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.07em" }}>REMARKS</div>
                 </div>
                 <button
@@ -1804,7 +1806,7 @@ export default function ELogbook2026() {
               {/* Header */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: 10, letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>{p.para}</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>{p.para}</div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.07em", lineHeight: 1.45 }}>{p.title}</div>
                 </div>
                 <button
@@ -1822,7 +1824,7 @@ export default function ELogbook2026() {
               <div style={{ height: 1, background: "#1a3050", marginBottom: 14 }} />
               {/* Body */}
               <div
-                style={{ fontSize: 11, color: "#4a6a8a", lineHeight: 1.9, letterSpacing: "0.03em" }}
+                style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", lineHeight: 1.9, letterSpacing: "0.03em" }}
                 dangerouslySetInnerHTML={{ __html: p.body }}
               />
               {/* Note */}
@@ -1833,7 +1835,7 @@ export default function ELogbook2026() {
                     background: "rgba(79,195,247,0.05)",
                     borderLeft: "2px solid rgba(79,195,247,0.25)",
                     borderRadius: "0 3px 3px 0",
-                    fontSize: 10, color: "#4a6a8a", lineHeight: 1.75, letterSpacing: "0.03em",
+                    fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", lineHeight: 1.75, letterSpacing: "0.03em",
                   }}
                   dangerouslySetInnerHTML={{ __html: p.note }}
                 />
