@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -327,6 +327,7 @@ export default function ELogbook2026() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const gtDateInputRef = useRef(null);
 
   // ── Auth listener ──
   useEffect(() => {
@@ -1465,28 +1466,57 @@ export default function ELogbook2026() {
             {/* ── GRAND TOTAL HOURS ── */}
             <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid var(--elb-bdr3, #0f1820)" }}>
 
-              {/* Heading with inline clickable date */}
-              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0, marginBottom: 18 }}>
+              {/* Heading with clickable date + TODAY shortcut */}
+              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 18 }}>
                 <span style={{ fontSize: 13, letterSpacing: "0.15em", color: "#4fc3f7" }}>
-                  GRAND TOTAL HOURS AS OF :&nbsp;
+                  GRAND TOTAL HOURS AS OF :
                 </span>
-                <label style={{ position: "relative", cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
-                  <span style={{
-                    fontSize: 13, letterSpacing: "0.15em", color: "#4fc3f7", fontWeight: 700,
-                    borderBottom: "1px dashed #4fc3f7", paddingBottom: 1, lineHeight: 1.4,
-                  }}>
-                    {fmtGrandTotalDate(grandTotalDate)}
-                  </span>
-                  <input
-                    type="date"
-                    value={grandTotalDate}
-                    onChange={e => setGrandTotalDate(e.target.value)}
-                    style={{
-                      position: "absolute", inset: 0, opacity: 0,
-                      cursor: "pointer", width: "100%", height: "100%",
-                    }}
-                  />
-                </label>
+
+                {/* Formatted date — clicking calls showPicker() on the hidden input */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = gtDateInputRef.current;
+                    if (!el) return;
+                    try { el.showPicker(); } catch { el.click(); }
+                  }}
+                  style={{
+                    background: "transparent", border: "none", padding: "0 0 2px 0",
+                    borderBottom: "1px dashed #4fc3f7", color: "#4fc3f7",
+                    fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                    fontSize: 13, letterSpacing: "0.15em", fontWeight: 700,
+                    cursor: "pointer", lineHeight: 1.4,
+                  }}
+                >
+                  {fmtGrandTotalDate(grandTotalDate)}
+                </button>
+
+                {/* Hidden real date input — triggered programmatically */}
+                <input
+                  ref={gtDateInputRef}
+                  type="date"
+                  value={grandTotalDate}
+                  onChange={e => setGrandTotalDate(e.target.value)}
+                  style={{ position: "absolute", opacity: 0, width: 0, height: 0, pointerEvents: "none" }}
+                />
+
+                {/* TODAY shortcut */}
+                <button
+                  type="button"
+                  title="Jump to today"
+                  onClick={() => setGrandTotalDate(new Date().toISOString().split("T")[0])}
+                  style={{
+                    background: "rgba(79,195,247,0.08)", border: "1px solid #1e3a5f",
+                    borderRadius: 3, color: "#4a6a8a",
+                    fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                    fontSize: 10, letterSpacing: "0.12em", padding: "3px 8px",
+                    cursor: "pointer", transition: "all 0.15s", lineHeight: 1.4,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a5f"; e.currentTarget.style.color = "#4a6a8a"; }}
+                >
+                  ⊙ TODAY
+                </button>
               </div>
 
               {grandTotals.length === 0 ? (
