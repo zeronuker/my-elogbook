@@ -326,6 +326,7 @@ export default function ELogbook2026() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
+  const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
 
   // ── Auth listener ──
   useEffect(() => {
@@ -664,6 +665,52 @@ export default function ELogbook2026() {
 
   const fmtRecencyDate = (d) =>
     d ? d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase() : null;
+
+  // ── Grand Total Hours computation ─────────────────────────────────────────
+  const GT_KEYS = ["dayP1", "dayP1US", "dayP2", "nightP1", "nightP1US", "nightP2"];
+  const gtCutoff = new Date(grandTotalDate + "T23:59:59");
+  const gtByType = {};
+
+  // Carry-forward hours from profile settings
+  (settings.carryForward || []).forEach(cf => {
+    const t = (cf.type || "").trim().toUpperCase();
+    if (!t) return;
+    if (!gtByType[t]) gtByType[t] = { dayP1:0, dayP1US:0, dayP2:0, nightP1:0, nightP1US:0, nightP2:0 };
+    GT_KEYS.forEach(k => { gtByType[t][k] += parseHHMM(cf[k] || ""); });
+  });
+
+  // All logbook rows up to the cutoff date
+  Object.entries(data).forEach(([key, rows]) => {
+    const [monthStr, yearStr] = key.split("-");
+    const month = parseInt(monthStr), year = parseInt(yearStr);
+    rows.forEach(row => {
+      const day = parseInt(row.date);
+      if (!day || !row.type) return;
+      if (new Date(year, month, day) > gtCutoff) return;
+      const t = (row.type || "").trim().toUpperCase();
+      if (!t) return;
+      if (!gtByType[t]) gtByType[t] = { dayP1:0, dayP1US:0, dayP2:0, nightP1:0, nightP1US:0, nightP2:0 };
+      const ft = calcFlightTimes(row);
+      GT_KEYS.forEach(k => { gtByType[t][k] += parseHHMM(ft[k] || ""); });
+    });
+  });
+
+  const grandTotals = Object.entries(gtByType)
+    .map(([type, t]) => ({ type, ...t }))
+    .sort((a, b) => a.type.localeCompare(b.type));
+
+  const gtSum = GT_KEYS.reduce((acc, k) => {
+    acc[k] = grandTotals.reduce((s, r) => s + r[k], 0);
+    return acc;
+  }, {});
+
+  const fmtGrandTotalDate = (str) => {
+    if (!str) return "—";
+    const [y, m, d] = str.split("-").map(Number);
+    return new Date(y, m - 1, d)
+      .toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+      .toUpperCase();
+  };
 
   // ── Render helper: FTL/Duty limit card ────────────────────────────────────
   const renderLimitCard = (l) => {
@@ -1413,6 +1460,98 @@ export default function ELogbook2026() {
               <div style={{ fontSize: 12, color: "#3a5a7a", marginTop: 10 }}>
                 Click any month row to jump to its logbook page.
               </div>
+            </div>
+
+            {/* ── GRAND TOTAL HOURS ── */}
+            <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid var(--elb-bdr3, #0f1820)" }}>
+
+              {/* Heading with inline clickable date */}
+              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0, marginBottom: 18 }}>
+                <span style={{ fontSize: 13, letterSpacing: "0.15em", color: "#4fc3f7" }}>
+                  GRAND TOTAL HOURS AS OF :&nbsp;
+                </span>
+                <label style={{ position: "relative", cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
+                  <span style={{
+                    fontSize: 13, letterSpacing: "0.15em", color: "#4fc3f7", fontWeight: 700,
+                    borderBottom: "1px dashed #4fc3f7", paddingBottom: 1, lineHeight: 1.4,
+                  }}>
+                    {fmtGrandTotalDate(grandTotalDate)}
+                  </span>
+                  <input
+                    type="date"
+                    value={grandTotalDate}
+                    onChange={e => setGrandTotalDate(e.target.value)}
+                    style={{
+                      position: "absolute", inset: 0, opacity: 0,
+                      cursor: "pointer", width: "100%", height: "100%",
+                    }}
+                  />
+                </label>
+              </div>
+
+              {grandTotals.length === 0 ? (
+                <div style={{ color: "#2a4a6a", fontSize: "var(--elb-desc-sz)", letterSpacing: "0.08em", padding: "16px 0" }}>
+                  No logbook entries or carry-forward hours found up to this date.
+                </div>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
+                    <thead>
+                      <tr style={{ background: "#0b1320" }}>
+                        <th rowSpan={2} style={{ ...thStyle, textAlign: "left", paddingLeft: 10, minWidth: 90 }}>AIRCRAFT<br />TYPE</th>
+                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
+                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
+                        <th rowSpan={2} style={thStyle}>TOTAL</th>
+                      </tr>
+                      <tr style={{ background: "#0b1320" }}>
+                        <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
+                        <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
+                        <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>
+                        <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
+                        <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
+                        <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {grandTotals.map((row, i) => {
+                        const rowTotal = toHHMM(GT_KEYS.reduce((s, k) => s + row[k], 0));
+                        const colMap = { dayP1:"#22c55e", dayP1US:"#ef4444", dayP2:"#eab308", nightP1:"#22c55e", nightP1US:"#ef4444", nightP2:"#eab308" };
+                        return (
+                          <tr key={i} style={{ background: i % 2 === 0 ? "#0d1520" : "#0a1018" }}>
+                            <td style={{ ...tdStyle, textAlign: "left", paddingLeft: 10, color: "#e8f4fd", fontWeight: 700 }}>
+                              {row.type}
+                            </td>
+                            {GT_KEYS.map(k => (
+                              <td key={k} style={{ ...tdStyle, textAlign: "center", color: row[k] ? colMap[k] : "#2a4a6a" }}>
+                                {row[k] ? toHHMM(row[k]) : "—"}
+                              </td>
+                            ))}
+                            <td style={{ ...tdStyle, textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
+                              {rowTotal || "—"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{ background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
+                        <td style={{ ...tdStyle, textAlign: "left", paddingLeft: 10, color: "#4fc3f7", fontWeight: 700 }}>GRAND TOTAL</td>
+                        {GT_KEYS.map(k => {
+                          const colMap = { dayP1:"#22c55e", dayP1US:"#ef4444", dayP2:"#eab308", nightP1:"#22c55e", nightP1US:"#ef4444", nightP2:"#eab308" };
+                          return (
+                            <td key={k} style={{ ...tdStyle, textAlign: "center", color: colMap[k], fontWeight: 700 }}>
+                              {gtSum[k] ? toHHMM(gtSum[k]) : "—"}
+                            </td>
+                          );
+                        })}
+                        <td style={{ ...tdStyle, textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
+                          {toHHMM(GT_KEYS.reduce((s, k) => s + gtSum[k], 0)) || "—"}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}
