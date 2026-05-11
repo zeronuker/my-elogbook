@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import SettingsModal, { DEFAULT_SETTINGS } from "./SettingsModal";
+import SettingsModal, { DEFAULT_SETTINGS, THEMES } from "./SettingsModal";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -260,6 +260,53 @@ const FTL_POPUPS = {
   },
 };
 
+// ─── Theme CSS variable injection ─────────────────────────────────────────────
+function makeThemeCss(settings) {
+  const key = settings.colorScheme || "darkCockpit";
+  const t   = THEMES[key] || THEMES.darkCockpit;
+  const isDark = settings.darkMode !== false;
+  const fontSize = Number(settings.fontSize) || 11;
+  const fontFamily = settings.fontType
+    ? `'${settings.fontType}', 'Courier New', monospace`
+    : "'Courier New', Courier, monospace";
+
+  const hc = settings.highContrast;
+  const darkVars = `
+    --elb-bg:${t.bg};--elb-bg2:${t.bg2};--elb-bg3:${t.bg3};
+    --elb-bghd:${t.bgHeader};--elb-bgalt:${t.bgAlt};--elb-thead:${t.bgThead};
+    --elb-bginput:${t.bgInput};--elb-rowhover:${t.rowHover};
+    --elb-acc:${t.accent};--elb-acc2:${t.accent2};--elb-accdim:${t.accentDim};
+    --elb-bdr:${t.border};
+    --elb-bdr2:${hc ? t.border : t.border2};
+    --elb-bdr3:${hc ? t.border2 : t.border3};
+    --elb-bdr4:${hc ? t.border2 : t.border4};
+    --elb-txt:${t.text};--elb-muted:${t.textMuted};--elb-dim:${t.textDim};--elb-bright:${t.textBright};
+  `;
+
+  const lightVars = `
+    --elb-bg:#f2f5f9;--elb-bg2:#ffffff;--elb-bg3:#e8edf5;
+    --elb-bghd:#0d1520;--elb-bgalt:#1a2a3a;--elb-thead:#1a2535;
+    --elb-bginput:#ffffff;--elb-rowhover:#dde8f5;
+    --elb-acc:${t.accent};--elb-acc2:${t.accent2};--elb-accdim:${t.accentDim};
+    --elb-bdr:#b0c4d8;
+    --elb-bdr2:${hc ? "#90b0cc" : "#c8d8ea"};
+    --elb-bdr3:${hc ? "#a8c0d8" : "#d8e4f0"};
+    --elb-bdr4:${hc ? "#b8ccde" : "#e4eef8"};
+    --elb-txt:#1a2a3a;--elb-muted:#4a6a8a;--elb-dim:#7a9ab8;--elb-bright:#0a1020;
+  `;
+
+  return `
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap');
+    :root {
+      ${isDark ? darkVars : lightVars}
+      --elb-font:${fontFamily};
+      --elb-td-sz:${fontSize}px;
+      --elb-th-sz:${Math.max(8, fontSize - 2)}px;
+      --elb-ths-sz:${Math.max(7, fontSize - 3)}px;
+    }
+  `;
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export default function ELogbook2026() {
@@ -390,34 +437,41 @@ export default function ELogbook2026() {
   };
 
   // ── Loading screen ──
+  // Inject theme CSS vars early so loading/login screens are also themed
+  const themeCss = makeThemeCss(settings);
+
   if (authLoading) {
     return (
-      <div style={{ background: "#0a0d12", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", color: "#4fc3f7" }}>
+      <>
+        <style>{themeCss}</style>
+        <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-acc, #4fc3f7)" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 26, marginBottom: 12 }}>✈</div>
           <div style={{ fontSize: 13, letterSpacing: "0.2em" }}>LOADING eLOGBOOK...</div>
         </div>
       </div>
+      </>
     );
   }
 
   // ── Login screen ──
   if (!user) {
     return (
-      <div style={{ background: "#0a0d12", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", color: "#c8d6e5" }}>
-        <div style={{ textAlign: "center", padding: 40, border: "1px solid #1e3a5f", borderRadius: 8, background: "#0d1520", maxWidth: 380 }}>
+      <>
+      <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-txt, #c8d6e5)" }}>
+        <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-bdr, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
           <div style={{ fontSize: 38, marginBottom: 8 }}>✈</div>
-          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "#4fc3f7", marginBottom: 4 }}>eLOGBOOK V5.2</div>
+          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V5.2</div>
           <div style={{ fontSize: 12, color: "#5a7a9a", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
           <div style={{ fontSize: 11, color: "#3a5a7a", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
           <button
             onClick={handleSignIn}
             style={{
-              background: "linear-gradient(135deg, #0d2a3a, #0a1f30)",
-              border: "1px solid #4fc3f7",
+              background: "var(--elb-bg2, #0d1520)",
+              border: "1px solid var(--elb-acc, #4fc3f7)",
               borderRadius: 6,
-              color: "#4fc3f7",
-              fontFamily: "'Courier New', monospace",
+              color: "var(--elb-acc, #4fc3f7)",
+              fontFamily: "var(--elb-font, 'Courier New', monospace)",
               fontSize: 13,
               letterSpacing: "0.15em",
               padding: "12px 28px",
@@ -437,6 +491,8 @@ export default function ELogbook2026() {
           </div>
         </div>
       </div>
+      <style>{themeCss}</style>
+      </>
     );
   }
 
@@ -525,7 +581,9 @@ export default function ELogbook2026() {
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
-  const dutyBufferMins = (Number(settings.preFlightBuffer) || 0) + (Number(settings.postFlightBuffer) || 0);
+  const dutyBufferMins = settings.useStandardFormula === false
+    ? 0
+    : (Number(settings.preFlightBuffer) || 0) + (Number(settings.postFlightBuffer) || 0);
   const allSectors = getAllSectors(data, dutyBufferMins);
 
   const ft28dMins   = rollingMins(allSectors, 28,  "flightMins", today);
@@ -706,22 +764,23 @@ export default function ELogbook2026() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div style={{
-      background: "#0a0d12",
+      background: "var(--elb-bg, #0a0d12)",
       minHeight: "100vh",
-      fontFamily: "'Courier New', Courier, monospace",
-      color: "#c8d6e5",
+      fontFamily: "var(--elb-font, 'Courier New', Courier, monospace)",
+      color: "var(--elb-txt, #c8d6e5)",
     }}>
       <style>{`
         @keyframes spin    { from { transform: rotate(0deg);   } to { transform: rotate(360deg); } }
         @keyframes fadeIn  { from { opacity: 0;                } to { opacity: 1;                } }
         @keyframes blink   { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
         @keyframes popIn   { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+        ${themeCss}
       `}</style>
 
       {/* ── HEADER ── */}
       <div style={{
-        background: "linear-gradient(135deg, #0d1117 0%, #161d2a 100%)",
-        borderBottom: "1px solid #1e3a5f",
+        background: "linear-gradient(135deg, var(--elb-bghd, #0d1117) 0%, var(--elb-bgalt, #161d2a) 100%)",
+        borderBottom: "1px solid var(--elb-bdr, #1e3a5f)",
         padding: "18px 24px 0",
       }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
@@ -747,7 +806,16 @@ export default function ELogbook2026() {
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {user.photoURL && <img src={user.photoURL} alt="avatar" style={{ width: 22, height: 22, borderRadius: "50%", border: "1px solid #1e3a5f" }} />}
-              <span style={{ fontSize: 11, color: "#4a6a8a", letterSpacing: "0.1em" }}>{user.displayName || user.email}</span>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
+                <span style={{ fontSize: 11, color: "#c8d6e5", letterSpacing: "0.1em", fontWeight: 700 }}>
+                  {settings.fullName || user.displayName || user.email}
+                </span>
+                {(settings.airline || settings.licenceNumber) && (
+                  <span style={{ fontSize: 10, color: "#4a6a8a", letterSpacing: "0.08em" }}>
+                    {[settings.airline, settings.licenceNumber].filter(Boolean).join(" · ")}
+                  </span>
+                )}
+              </div>
               <button onClick={handleSignOut} style={{ background: "transparent", border: "1px solid #1e3a5f", borderRadius: 3, color: "#3a6a8a", fontFamily: "'Courier New', monospace", fontSize: 10, padding: "2px 8px", cursor: "pointer", letterSpacing: "0.1em" }}>
                 SIGN OUT
               </button>
@@ -834,18 +902,18 @@ export default function ELogbook2026() {
             { id: "ftl",      label: "⏱ LIMITS & RECENCY" },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-              background: activeTab === tab.id ? "#0a0d12" : "transparent",
+              background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
               border: "none",
-              borderTop: activeTab === tab.id ? "2px solid #4fc3f7" : "2px solid transparent",
-              borderLeft: "1px solid " + (activeTab === tab.id ? "#1e3a5f" : "transparent"),
-              borderRight: "1px solid " + (activeTab === tab.id ? "#1e3a5f" : "transparent"),
-              color: activeTab === tab.id ? "#4fc3f7" : "#5a7a9a",
+              borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
+              borderLeft: "1px solid " + (activeTab === tab.id ? "var(--elb-bdr, #1e3a5f)" : "transparent"),
+              borderRight: "1px solid " + (activeTab === tab.id ? "var(--elb-bdr, #1e3a5f)" : "transparent"),
+              color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "#5a7a9a",
               padding: "7px 18px",
               fontSize: 13,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
               cursor: "pointer",
-              fontFamily: "'Courier New', monospace",
+              fontFamily: "var(--elb-font, 'Courier New', monospace)",
               marginBottom: activeTab === tab.id ? "-1px" : 0,
             }}>{tab.label}</button>
           ))}
@@ -908,7 +976,7 @@ export default function ELogbook2026() {
 
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
               <thead>
-                <tr style={{ background: "#0b1320" }}>
+                <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                   <th rowSpan={2} style={thStyle}>#</th>
                   <th rowSpan={2} style={thStyle}>DATE</th>
                   <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: 11, letterSpacing: "0.15em" }}>AIRCRAFT</th>
@@ -937,7 +1005,7 @@ export default function ELogbook2026() {
                   <th rowSpan={2} style={{ ...thStyle, background: "#0a0d12", border: "none" }}></th>
                   <th rowSpan={2} style={{ ...thStyle, background: "#0a0d12", border: "none", width: 28, minWidth: 28 }}></th>
                 </tr>
-                <tr style={{ background: "#0b1320" }}>
+                <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                   <th style={thSubStyle}>TYPE</th>
                   <th style={thSubStyle}>MARKINGS</th>
                   <th style={thSubStyle}>DEP</th>
@@ -969,9 +1037,9 @@ export default function ELogbook2026() {
                   return (
                     <tr
                       key={row.id}
-                      style={{ background: isEven ? "#0d1520" : "#0a1018", transition: "background 0.15s" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#122030"}
-                      onMouseLeave={e => e.currentTarget.style.background = isEven ? "#0d1520" : "#0a1018"}
+                      style={{ background: isEven ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)", transition: "background 0.15s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "var(--elb-rowhover, #122030)"}
+                      onMouseLeave={e => e.currentTarget.style.background = isEven ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)"}
                     >
                       <td style={{ ...tdStyle, color: "#2a4a6a", textAlign: "center", fontSize: 11 }}>{rowIdx + 1}</td>
                       {(() => {
@@ -1170,7 +1238,7 @@ export default function ELogbook2026() {
                 })}
 
                 {/* ── TOTALS ROW ── */}
-                <tr style={{ background: "#0b1828", borderTop: "2px solid #1e3a5f" }}>
+                <tr style={{ background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
                   <td colSpan={11} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
                     MONTHLY TOTALS →
                   </td>
@@ -1301,7 +1369,7 @@ export default function ELogbook2026() {
                     })}
                   </tbody>
                   <tfoot>
-                    <tr style={{ background: "#0b1828", borderTop: "2px solid #1e3a5f" }}>
+                    <tr style={{ background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
                       <td style={{ ...tdStyle, width: 80, minWidth: 80, maxWidth: 80, whiteSpace: "normal", wordBreak: "break-word", color: "#4fc3f7", fontWeight: 700 }}>ANNUAL TOTAL</td>
                       <td style={{ ...tdStyle, width: 55, minWidth: 55, maxWidth: 55, textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
                         {Object.values(MONTHS).reduce((acc, _, i) => {
@@ -1833,10 +1901,10 @@ const thStyle = {
   padding: "7px 8px",
   textAlign: "center",
   color: "#3a6a8a",
-  fontSize: 11,
+  fontSize: "var(--elb-th-sz, 10px)",
   letterSpacing: "0.12em",
-  borderBottom: "1px solid #1a3050",
-  borderRight: "1px solid #111820",
+  borderBottom: "1px solid var(--elb-bdr2, #1a3050)",
+  borderRight: "1px solid var(--elb-bdr4, #111820)",
   whiteSpace: "nowrap",
   fontWeight: 700,
   textTransform: "uppercase",
@@ -1846,17 +1914,17 @@ const thStyle = {
 const thSubStyle = {
   ...thStyle,
   color: "#3a6a8a",
-  background: "#090d14",
-  fontSize: 10,
+  background: "var(--elb-thead, #090d14)",
+  fontSize: "var(--elb-ths-sz, 9px)",
   fontWeight: 400,
 };
 
 const tdStyle = {
   padding: "6px 8px",
-  borderBottom: "1px solid #0f1820",
-  borderRight: "1px solid #0d1520",
+  borderBottom: "1px solid var(--elb-bdr3, #0f1820)",
+  borderRight: "1px solid var(--elb-bg2, #0d1520)",
   whiteSpace: "nowrap",
-  fontSize: 13,
+  fontSize: "var(--elb-td-sz, 13px)",
   overflow: "hidden",
   textOverflow: "ellipsis",
 };

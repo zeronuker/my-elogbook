@@ -14,17 +14,64 @@ export const DEFAULT_SETTINGS = {
   defaultMarkings: "",
   defaultCaptain: "",
   // Appearance
+  colorScheme: "darkCockpit",
   darkMode: true,
   highContrast: false,
   fontType: "Courier New",
   fontSize: 11,
-  rowsPerPage: 30,
-  dateFormat: "DD MMM",
   // Preferences
   dayNightMethod: "fixed", // "fixed" | "sunrise" | "great-circle"
   useStandardFormula: true,
   preFlightBuffer: 75,
   postFlightBuffer: 15,
+};
+
+// ── Color themes ────────────────────────────────────────────────────────────
+export const THEMES = {
+  darkCockpit: {
+    name: "Dark Cockpit",
+    bg:        "#0a0d12", bg2:       "#0d1520", bg3:       "#0a1018",
+    bgHeader:  "#0d1117", bgAlt:     "#161d2a", bgThead:   "#0b1320",
+    bgInput:   "#0b1828",
+    accent:    "#4fc3f7", accent2:   "#7ab8d4", accentDim: "#2a5a7a",
+    border:    "#1e3a5f", border2:   "#1a3050", border3:   "#0f1820", border4: "#111820",
+    text:      "#c8d6e5", textMuted: "#4a6a8a", textDim:   "#2a4a6a", textBright: "#e8f4fd",
+    rowHover:  "#122030",
+    swatch: ["#0a0d12","#4fc3f7","#1e3a5f"],
+  },
+  airAsia: {
+    name: "AirAsia",
+    bg:        "#0d0608", bg2:       "#1a0a0e", bg3:       "#120709",
+    bgHeader:  "#0f0507", bgAlt:     "#1e0c10", bgThead:   "#0e0508",
+    bgInput:   "#1a0a0e",
+    accent:    "#ff2b4a", accent2:   "#cc2038", accentDim: "#5a0f1a",
+    border:    "#6a1525", border2:   "#4a1018", border3:   "#28080e", border4: "#1a0608",
+    text:      "#f0ced2", textMuted: "#8a4a52", textDim:   "#4a1a22", textBright: "#fff0f2",
+    rowHover:  "#221015",
+    swatch: ["#0d0608","#ff2b4a","#6a1525"],
+  },
+  airAsiaX: {
+    name: "Batik Air Malaysia",
+    bg:        "#090710", bg2:       "#12101e", bg3:       "#0d0b18",
+    bgHeader:  "#0a0812", bgAlt:     "#181428", bgThead:   "#0a0814",
+    bgInput:   "#100e1c",
+    accent:    "#c040a8", accent2:   "#9a3088", accentDim: "#501848",
+    border:    "#5a1a60", border2:   "#401050", border3:   "#200830", border4: "#160622",
+    text:      "#e8cce8", textMuted: "#7a4a80", textDim:   "#3a1a45", textBright: "#f8eafc",
+    rowHover:  "#1a1030",
+    swatch: ["#090710","#c040a8","#5a1a60"],
+  },
+  malaysiaAirlines: {
+    name: "Malaysia Airlines",
+    bg:        "#070a14", bg2:       "#0c1020", bg3:       "#080b18",
+    bgHeader:  "#080a14", bgAlt:     "#0f1428", bgThead:   "#08091a",
+    bgInput:   "#0c1020",
+    accent:    "#7c4dff", accent2:   "#9d6fff", accentDim: "#301a70",
+    border:    "#2a1a70", border2:   "#1e1060", border3:   "#100830", border4: "#0c0620",
+    text:      "#d0d0f5", textMuted: "#5050a0", textDim:   "#202060", textBright: "#eeeeff",
+    rowHover:  "#121830",
+    swatch: ["#070a14","#7c4dff","#2a1a70"],
+  },
 };
 
 const TAB_HINTS = {
@@ -226,49 +273,94 @@ function ProfileTab({ d, upd, userEmail }) {
 function AppearanceTab({ d, upd }) {
   return (
     <>
+      {/* ── COLOR SCHEME ── */}
       <div className="elb-form-section">
-        <div className="elb-form-section-title">THEME</div>
+        <div className="elb-form-section-title">COLOR SCHEME</div>
+        <div className="elb-scheme-grid">
+          {Object.entries(THEMES).map(([key, t]) => {
+            const isSel = d.colorScheme === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                className={"elb-scheme-card" + (isSel ? " elb-scheme-sel" : "")}
+                onClick={() => upd({ colorScheme: key })}
+              >
+                {/* Mini colour preview */}
+                <div className="elb-scheme-preview" style={{ background: t.bg }}>
+                  <div style={{ height: 3, background: t.accent, borderRadius: "2px 2px 0 0" }} />
+                  <div style={{ display: "flex", gap: 3, padding: "5px 6px 3px" }}>
+                    <div style={{ height: 4, flex: 2, background: t.border2, borderRadius: 1 }} />
+                    <div style={{ height: 4, flex: 1, background: t.accent, borderRadius: 1, opacity: 0.55 }} />
+                  </div>
+                  <div style={{ display: "flex", gap: 2, padding: "0 6px 5px" }}>
+                    {[1, 0.6, 0.35].map((op, i) => (
+                      <div key={i} style={{ height: 3, flex: 1, background: t.accent, borderRadius: 1, opacity: op }} />
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 2, padding: "0 6px 4px" }}>
+                    {[0.2, 0.15, 0.12, 0.1].map((op, i) => (
+                      <div key={i} style={{ height: 3, flex: 1, background: t.text, borderRadius: 1, opacity: op }} />
+                    ))}
+                  </div>
+                </div>
+                <div className="elb-scheme-name">{t.name}</div>
+                {isSel && <div className="elb-scheme-tick">✓</div>}
+              </button>
+            );
+          })}
+        </div>
+        <div className="elb-form-hint" style={{ marginTop: 4 }}>
+          Colour scheme applies immediately on save. All schemes use the same dark-cockpit layout — only accent and background tones change.
+        </div>
+      </div>
 
+      {/* ── DISPLAY ── */}
+      <div className="elb-form-section">
+        <div className="elb-form-section-title">DISPLAY</div>
         <ToggleRow
           name="DARK MODE"
-          desc="Cockpit-inspired dark theme · Recommended for low-light environments"
-          checked={d.darkMode}
+          desc="Cockpit-dark theme · Recommended for all lighting conditions · Default ON"
+          checked={d.darkMode !== false}
           onChange={v => upd({ darkMode: v })}
         />
         <ToggleRow
           name="HIGH CONTRAST BORDERS"
-          desc="Increases border visibility on table rows and cards"
-          checked={d.highContrast}
+          desc="Strengthens table row and card borders for improved readability · Default OFF"
+          checked={!!d.highContrast}
           onChange={v => upd({ highContrast: v })}
         />
       </div>
 
+      {/* ── TYPOGRAPHY ── */}
       <div className="elb-form-section">
         <div className="elb-form-section-title">TYPOGRAPHY</div>
 
-        <div className="elb-toggle-row" style={{ marginBottom: 12 }}>
-          <div className="elb-form-group" style={{ flex: 1 }}>
+        <div className="elb-form-row" style={{ alignItems: "flex-end", marginBottom: 10 }}>
+          <div className="elb-form-group">
             <label className="elb-form-label" style={{ marginBottom: 6 }}>FONT TYPE</label>
             <select className="elb-form-input" value={d.fontType}
               onChange={e => upd({ fontType: e.target.value })}>
-              <option>Courier New</option>
-              <option>IBM Plex Mono</option>
-              <option>JetBrains Mono</option>
-              <option>Source Code Pro</option>
-              <option>Roboto Mono</option>
+              <option value="Courier New">Courier New — Classic aviation logbook</option>
+              <option value="IBM Plex Mono">IBM Plex Mono — Modern technical</option>
+              <option value="JetBrains Mono">JetBrains Mono — High legibility</option>
+              <option value="Space Mono">Space Mono — Bold distinctive</option>
+              <option value="Roboto Mono">Roboto Mono — Clean minimal</option>
             </select>
           </div>
-        </div>
 
-        <div className="elb-slider-wrap">
-          <div className="elb-slider-header">
-            <span className="elb-slider-label">FONT SIZE</span>
-            <span className="elb-slider-value">{d.fontSize}px</span>
-          </div>
-          <input type="range" min="9" max="14" step="1" value={d.fontSize}
-            onChange={e => upd({ fontSize: Number(e.target.value) })} />
-          <div className="elb-slider-labels">
-            <span>SMALL (9)</span><span>DEFAULT (11)</span><span>LARGE (14)</span>
+          <div className="elb-form-group">
+            <div className="elb-slider-wrap" style={{ margin: 0 }}>
+              <div className="elb-slider-header">
+                <span className="elb-slider-label">FONT SIZE</span>
+                <span className="elb-slider-value">{d.fontSize}px</span>
+              </div>
+              <input type="range" min="9" max="14" step="1" value={d.fontSize}
+                onChange={e => upd({ fontSize: Number(e.target.value) })} />
+              <div className="elb-slider-labels">
+                <span>9</span><span>11</span><span>14</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -279,32 +371,8 @@ function AppearanceTab({ d, upd }) {
             fontSize: d.fontSize,
           }}>
             DATE &nbsp; AIRCRAFT &nbsp; DEP &nbsp; ARR &nbsp; STD &nbsp; STA &nbsp; TOTAL<br />
-            09 MAY &nbsp; B737-800 &nbsp; WMKK &nbsp; WSSS &nbsp; 0830 &nbsp; 1020 &nbsp; 01:50
+            09 MAY &nbsp; B737-800 &nbsp; WMKK &nbsp; WSSS &nbsp; 08:30 &nbsp; 10:20 &nbsp; 01:50
           </div>
-        </div>
-      </div>
-
-      <div className="elb-form-section">
-        <div className="elb-form-section-title">TABLE DISPLAY</div>
-        <div className="elb-form-row">
-          <Field label="ROWS PER PAGE">
-            <select className="elb-form-input" value={d.rowsPerPage}
-              onChange={e => upd({ rowsPerPage: Number(e.target.value) })}>
-              <option value={20}>20 rows</option>
-              <option value={30}>30 rows</option>
-              <option value={50}>50 rows</option>
-              <option value={9999}>All rows</option>
-            </select>
-          </Field>
-          <Field label="DATE FORMAT">
-            <select className="elb-form-input" value={d.dateFormat}
-              onChange={e => upd({ dateFormat: e.target.value })}>
-              <option value="DD MMM">DD MMM (e.g. 09 MAY)</option>
-              <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-              <option value="DD-MON-YY">DD-MON-YY</option>
-            </select>
-          </Field>
         </div>
       </div>
     </>
@@ -778,7 +846,31 @@ const settingsCss = `
   .elb-tag-fix{background:rgba(79,195,247,0.1);color:#4fc3f7;border:1px solid rgba(79,195,247,0.2);}
   .elb-tag-imp{background:rgba(234,179,8,0.1);color:#eab308;border:1px solid rgba(234,179,8,0.2);}
 
+  /* ── Colour scheme swatch picker ── */
+  .elb-scheme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px;}
+  .elb-scheme-card{
+    background:#0b1828;border:1px solid #0f1e2d;border-radius:4px;
+    cursor:pointer;padding:0;overflow:hidden;position:relative;
+    transition:border-color 0.15s,border-width 0.1s;text-align:left;
+    font-family:inherit;color:inherit;
+  }
+  .elb-scheme-card:hover{border-color:#2a4a6a;}
+  .elb-scheme-sel{border:2px solid #4fc3f7 !important;}
+  .elb-scheme-preview{width:100%;height:56px;overflow:hidden;flex-shrink:0;}
+  .elb-scheme-name{
+    font-size:8px;letter-spacing:0.08em;color:#4a6a8a;
+    padding:5px 7px 6px;display:block;line-height:1.3;
+  }
+  .elb-scheme-sel .elb-scheme-name{color:#4fc3f7;}
+  .elb-scheme-tick{
+    position:absolute;top:5px;right:5px;
+    background:#4fc3f7;color:#0a0d12;border-radius:50%;
+    font-size:8px;font-weight:700;width:15px;height:15px;
+    display:flex;align-items:center;justify-content:center;line-height:1;
+  }
+
   @media (max-width: 540px){
+    .elb-scheme-grid{grid-template-columns:repeat(2,1fr);}
     .elb-form-row{grid-template-columns:1fr;}
     .elb-modal-footer{flex-direction:column;align-items:stretch;}
     .elb-footer-actions{justify-content:flex-end;}
