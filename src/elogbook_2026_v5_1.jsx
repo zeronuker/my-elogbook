@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { db, auth, googleProvider } from "./firebase";
-import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { signInWithPopup, signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup } from "firebase/auth";
+import { doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS, THEMES } from "./SettingsModal";
 
 const MONTHS = [
@@ -86,14 +86,15 @@ function toHHMM(mins) {
   return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
 }
 
-// Returns true if the HH:MM time falls within civil day hours (07:30–19:30 UTC).
-// Used to classify takeoffs (by STD) and landings (by STA) as day or night.
+// Returns true if the HH:MM time falls within civil day hours (23:30–11:30 UTC, midnight-crossing).
+// Night = 11:30–23:30 UTC. Used to classify takeoffs (by STD) and landings (by STA) as day or night.
 function isTimeInDay(hhmm) {
   if (!hhmm || !hhmm.trim()) return true; // default to day when unknown
-  const DAY_START = 7 * 60 + 30;  // 07:30 = 450 min
-  const DAY_END   = 19 * 60 + 30; // 19:30 = 1170 min
+  const NIGHT_START = 11 * 60 + 30;  // 11:30 = 690 min
+  const NIGHT_END   = 23 * 60 + 30;  // 23:30 = 1410 min
   const mins = parseHHMM(hhmm) % (24 * 60);
-  return mins >= DAY_START && mins <= DAY_END;
+  // Day = outside the night window [11:30, 23:30]
+  return mins < NIGHT_START || mins > NIGHT_END;
 }
 
 function calcTotal(row) {
@@ -109,20 +110,23 @@ function calcDayNight(std, sta) {
     const [h, m] = t.trim().split(":").map(Number);
     return h * 60 + m;
   };
-  const DAY_START = toMins("07:30");
-  const DAY_END   = toMins("19:30");
-  const FULL_DAY  = 24 * 60;
+  // Night window = 11:30–23:30 UTC (does NOT cross midnight — simple overlap calc)
+  // Day  window = 23:30–11:30 UTC (crosses midnight — derived as totalMins − nightMins)
+  const NIGHT_START = 11 * 60 + 30;  // 690 min
+  const NIGHT_END   = 23 * 60 + 30;  // 1410 min
+  const FULL_DAY    = 24 * 60;
   let stdM = toMins(std);
   let staM = toMins(sta);
   if (staM <= stdM) staM += FULL_DAY;
   const totalMins = staM - stdM;
-  let dayMins = 0;
-  dayMins += Math.max(0, Math.min(staM, DAY_END) - Math.max(stdM, DAY_START));
+  // Overlap with night window [11:30, 23:30] — handles cross-midnight flights via +FULL_DAY second pass
+  let nightMins = 0;
+  nightMins += Math.max(0, Math.min(staM, NIGHT_END) - Math.max(stdM, NIGHT_START));
   if (staM > FULL_DAY) {
-    dayMins += Math.max(0, Math.min(staM, DAY_END + FULL_DAY) - Math.max(stdM, DAY_START + FULL_DAY));
+    nightMins += Math.max(0, Math.min(staM, NIGHT_END + FULL_DAY) - Math.max(stdM, NIGHT_START + FULL_DAY));
   }
-  dayMins = Math.max(0, dayMins);
-  const nightMins = Math.max(0, totalMins - dayMins);
+  nightMins = Math.max(0, nightMins);
+  const dayMins = Math.max(0, totalMins - nightMins);
   return { day: dayMins, night: nightMins };
 }
 
@@ -250,7 +254,7 @@ const FTL_POPUPS = {
     para:  "MCAR 2016 PART 8 · SUBPART A",
     title: "TAKEOFF & LANDING RECENCY — 3 WITHIN 90 DAYS",
     body:  `A pilot shall not act as <strong style="color:#c8d6e5">Pilot-in-Command</strong> (or co-pilot performing the duties of PIC) unless they have carried out, as pilot flying, <span style="color:#4fc3f7">at least 3 takeoffs and 3 landings</span> in the <span style="color:#4fc3f7">preceding 90 days</span> on an aircraft of the same type.<br><br><strong style="color:#c8d6e5">Day and Night recency are tracked separately.</strong> A night takeoff or landing is one that occurs between the end of evening civil twilight and the beginning of morning civil twilight.`,
-    note:  `Recency is <span style="color:#4fc3f7">type-specific</span>. Takeoffs and landings on a B737 do not count toward A320 recency. Use the <strong style="color:#c8d6e5">PILOT FLYING</strong> checkbox in the logbook to mark sectors where you were the handling pilot — each checked sector counts as 1 T/O and 1 LDG. Day/night is determined by STD (takeoff) and STA (landing) UTC times against civil twilight (07:30–19:30).`,
+    note:  `Recency is <span style="color:#4fc3f7">type-specific</span>. Takeoffs and landings on a B737 do not count toward A320 recency. Use the <strong style="color:#c8d6e5">PILOT FLYING</strong> checkbox in the logbook to mark sectors where you were the handling pilot — each checked sector counts as 1 T/O and 1 LDG. Day/night is determined by STD (takeoff) and STA (landing) UTC times — civil day = 23:30–11:30 UTC, civil night = 11:30–23:30 UTC.`,
   },
   "rec-autoland": {
     para:  "MCAR 2016 PART 8 · SUBPART A",
@@ -439,6 +443,35 @@ export default function ELogbook2026() {
     setData(initialData());
   };
 
+  // ── Delete Account ──
+  const deleteAccount = async () => {
+    if (!user) return;
+    // Firebase requires a recent sign-in before sensitive ops; re-authenticate first
+    try {
+      await reauthenticateWithPopup(user, googleProvider);
+    } catch (e) {
+      console.error("Re-authentication failed or cancelled:", e);
+      return;
+    }
+    // Delete all Firestore data
+    try {
+      const ref = doc(db, "users", user.uid, "logbook", "data");
+      await deleteDoc(ref);
+    } catch (e) {
+      console.error("Firestore delete error:", e);
+    }
+    // Delete Firebase Auth account
+    try {
+      await deleteUser(user);
+    } catch (e) {
+      console.error("Auth user delete error:", e);
+    }
+    // Clear local state (auth listener will handle sign-out state)
+    setSettingsOpen(false);
+    setData(initialData());
+    setSettings(DEFAULT_SETTINGS);
+  };
+
   // ── Loading screen ──
   // Inject theme CSS vars early so loading/login screens are also themed
   const themeCss = makeThemeCss(settings);
@@ -503,11 +536,22 @@ export default function ELogbook2026() {
 
   // ── Per-month state ──
   const monthKey = `${selectedMonth}-${selectedYear}`;
-  const rows = data[monthKey] || makeMonthRows(selectedMonth, selectedYear);
+  const rowsPerPage = Number(settings.rowsPerPage) || DEFAULT_ROWS;
+  const storedRows = data[monthKey] || makeMonthRows(selectedMonth, selectedYear);
+  // Display at least rowsPerPage rows; virtual extra rows become real on edit via updateCell
+  const rows = storedRows.length >= rowsPerPage
+    ? storedRows
+    : [...storedRows, ...Array.from({ length: rowsPerPage - storedRows.length }, (_, i) => ({
+        id: storedRows.length + i + 1, ...EMPTY_ROW(),
+      }))];
 
   const updateCell = (rowIdx, field, value) => {
     setData(prev => {
-      const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
+      let current = [...(prev[monthKey] || makeMonthRows(selectedMonth, selectedYear))];
+      // Extend stored rows if the edited row is beyond what's been saved (virtual display rows)
+      while (current.length <= rowIdx) {
+        current.push({ id: current.length + 1, ...EMPTY_ROW() });
+      }
       const newRows = current.map((r, i) =>
         i === rowIdx ? { ...r, [field]: value } : r
       );
@@ -725,7 +769,7 @@ export default function ELogbook2026() {
 
     return (
       <div key={l.key} style={{
-        background: "#0d1520",
+        background: "var(--elb-bg2, #0d1520)",
         border: `1px solid #0f1e2d`,
         borderLeft: `3px solid ${c}`,
         borderRadius: 4,
@@ -753,7 +797,7 @@ export default function ELogbook2026() {
           <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", marginLeft: 2 }}>HR</div>
         </div>
         {/* Progress bar */}
-        <div style={{ background: "#0a1018", borderRadius: 2, height: 4, marginBottom: 8, overflow: "hidden", border: "1px solid #0f1e2d" }}>
+        <div style={{ background: "var(--elb-bg3, #0a1018)", borderRadius: 2, height: 4, marginBottom: 8, overflow: "hidden", border: "1px solid #0f1e2d" }}>
           <div style={{ height: "100%", borderRadius: 2, background: c, width: `${pct.toFixed(1)}%`, transition: "width 0.4s ease" }} />
         </div>
         {/* Footer */}
@@ -1121,6 +1165,16 @@ export default function ELogbook2026() {
                           let displayVal = "";
                           if (col.key === "total") displayVal = computedTotal || "";
                           else if (isAutoCalc) displayVal = computedFT[col.key] || "";
+                          else if (col.key === "date") {
+                            const d = parseInt(row.date);
+                            if (!d) displayVal = row.date || "";
+                            else {
+                              const fmt = settings.dateFormat || "D";
+                              if (fmt === "DD") displayVal = String(d).padStart(2, "0");
+                              else if (fmt === "DD MMM") displayVal = String(d).padStart(2, "0") + " " + MONTHS[selectedMonth].slice(0, 3).toUpperCase();
+                              else displayVal = String(d);
+                            }
+                          }
                           else displayVal = row[col.key] || "";
 
                           if (col.key === "pilotFlying") {
@@ -1682,7 +1736,7 @@ export default function ELogbook2026() {
             {/* Recency panel */}
             {!recencyType ? (
               <div style={{
-                background: "#0d1520", border: "1px solid #0f1e2d", borderRadius: 4,
+                background: "var(--elb-bg2, #0d1520)", border: "1px solid #0f1e2d", borderRadius: 4,
                 padding: 24, textAlign: "center", color: "#4a6a8a",
                 fontSize: 11, letterSpacing: "0.12em",
               }}>
@@ -1704,7 +1758,7 @@ export default function ELogbook2026() {
 
                 return (
                   <div style={{
-                    background: "#0d1520", border: "1px solid #0f1e2d",
+                    background: "var(--elb-bg2, #0d1520)", border: "1px solid #0f1e2d",
                     borderLeft: `3px solid ${borderCol}`, borderRadius: 4, padding: 16,
                   }}>
                     {/* Type badge + status dot */}
@@ -1733,7 +1787,7 @@ export default function ELogbook2026() {
                     }}>
                       Each sector with <span style={{ color: "#4fc3f7" }}>PILOT FLYING ✓</span> counts as 1 takeoff and 1 landing.
                       Day / night is determined by <span style={{ color: "#4fc3f7" }}>STD</span> (takeoff) and{" "}
-                      <span style={{ color: "#4fc3f7" }}>STA</span> (landing) UTC times — civil day = 07:30–19:30.
+                      <span style={{ color: "#4fc3f7" }}>STA</span> (landing) UTC times — civil day = 23:30–11:30 UTC, civil night = 11:30–23:30 UTC.
                     </div>
 
                     {/* Live recency counters */}
@@ -1747,7 +1801,7 @@ export default function ELogbook2026() {
                           : null;
                         return (
                           <div key={label} style={{
-                            textAlign: "center", background: "#080b10",
+                            textAlign: "center", background: "var(--elb-bg3, #080b10)",
                             border: `1px solid ${ok ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
                             borderTop: `2px solid ${c}`,
                             borderRadius: 3, padding: "10px 6px",
@@ -1790,7 +1844,7 @@ export default function ELogbook2026() {
             {/* ── AUTOLAND RECENCY ── */}
             <SectionHeader icon="🎯" title="AUTOLAND RECENCY — 3 WITHIN 6 MONTHS · ALL TYPES" popupId="rec-autoland" />
             <div style={{
-              background: "#0d1520", border: "1px solid #0f1e2d",
+              background: "var(--elb-bg2, #0d1520)", border: "1px solid #0f1e2d",
               borderLeft: "3px solid #eab308", borderRadius: 4, padding: 16,
             }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
@@ -2021,6 +2075,7 @@ export default function ELogbook2026() {
         settings={settings}
         onSave={saveSettings}
         userEmail={user?.email}
+        onDeleteAccount={deleteAccount}
       />
 
       {/* ── FOOTER ── */}

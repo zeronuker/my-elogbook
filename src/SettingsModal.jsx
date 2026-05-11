@@ -24,6 +24,8 @@ export const DEFAULT_SETTINGS = {
     { type: "", dayP1: "", dayP1US: "", dayP2: "", nightP1: "", nightP1US: "", nightP2: "" },
   ],
   // Preferences
+  dateFormat: "D",      // "D" | "DD" | "DD MMM" — display format for DATE column
+  rowsPerPage: 15,      // minimum rows shown per month in logbook
   dayNightMethod: "fixed", // "fixed" | "sunrise" | "great-circle"
   useStandardFormula: true,
   preFlightBuffer: 75,
@@ -105,7 +107,7 @@ function cfRowTotal(row) {
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
-export default function SettingsModal({ open, onClose, settings, onSave, userEmail }) {
+export default function SettingsModal({ open, onClose, settings, onSave, userEmail, onDeleteAccount }) {
   const [tab, setTab] = useState("profile");
   const [draft, setDraft] = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -181,7 +183,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
-          {tab === "misc"        && <MiscTab />}
+          {tab === "misc"        && <MiscTab onDeleteAccount={onDeleteAccount} />}
         </div>
 
         {/* ── FOOTER ── */}
@@ -444,6 +446,30 @@ function PreferencesTab({ d, upd }) {
   return (
     <>
       <div className="elb-form-section">
+        <div className="elb-form-section-title">LOGBOOK DISPLAY</div>
+        <div className="elb-form-row">
+          <Field label="DATE FORMAT" hint="Controls how the DATE column appears in the logbook">
+            <select className="elb-form-input" value={d.dateFormat || "D"}
+              onChange={e => upd({ dateFormat: e.target.value })}>
+              <option value="D">1 · 2 · 31 — Day number only</option>
+              <option value="DD">01 · 02 · 31 — Zero-padded day</option>
+              <option value="DD MMM">01 JAN · 15 MAY — Day + month abbreviation</option>
+            </select>
+          </Field>
+          <Field label="ROWS PER PAGE" hint="Minimum rows shown per month in the logbook">
+            <select className="elb-form-input" value={d.rowsPerPage || 15}
+              onChange={e => upd({ rowsPerPage: Number(e.target.value) })}>
+              <option value={10}>10 rows</option>
+              <option value={15}>15 rows (default)</option>
+              <option value={20}>20 rows</option>
+              <option value={30}>30 rows</option>
+              <option value={50}>50 rows</option>
+            </select>
+          </Field>
+        </div>
+      </div>
+
+      <div className="elb-form-section">
         <div className="elb-form-section-title">DAY / NIGHT CALCULATION METHOD</div>
         <div className="elb-radio-group">
           <RadioOption
@@ -451,7 +477,7 @@ function PreferencesTab({ d, upd }) {
             checked={d.dayNightMethod === "fixed"}
             onChange={() => upd({ dayNightMethod: "fixed" })}
             name="FIXED BOUNDARY (CURRENT)"
-            desc="Day = 07:30–19:30 UTC · Night = outside this window · Applied uniformly to all sectors regardless of location or date. Simple and fast."
+            desc="Day = 23:30–11:30 UTC · Night = 11:30–23:30 UTC · Applied uniformly to all sectors regardless of location or date. Simple and fast."
           />
           <RadioOption
             value="sunrise"
@@ -517,7 +543,8 @@ function PreferencesTab({ d, upd }) {
 /* ─────────────────────────────────────────────────────────────────────────
    MISCELLANEOUS TAB
    ───────────────────────────────────────────────────────────────────────── */
-function MiscTab() {
+function MiscTab({ onDeleteAccount }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   return (
     <>
       <div className="elb-ver-badge">✈ eLOGBOOK · VERSION 5.2 · CAD 1901 ISS01/REV01</div>
@@ -598,20 +625,41 @@ function MiscTab() {
 
       <div className="elb-form-section">
         <div className="elb-form-section-title">ACCOUNT</div>
-        <button
-          type="button"
-          className="elb-misc-item elb-misc-item-danger"
-          onClick={() => alert("Delete account is not yet wired up. Contact support to request deletion.")}
-        >
-          <span className="elb-misc-item-left">
-            <span className="elb-misc-item-icon">🗑</span>
-            <span>
-              <span className="elb-misc-item-name">DELETE ACCOUNT &amp; ALL DATA</span>
-              <span className="elb-misc-item-desc">Permanently removes your account and all logbook data. This cannot be undone.</span>
+        {!confirmDelete ? (
+          <button
+            type="button"
+            className="elb-misc-item elb-misc-item-danger"
+            onClick={() => setConfirmDelete(true)}
+          >
+            <span className="elb-misc-item-left">
+              <span className="elb-misc-item-icon">🗑</span>
+              <span>
+                <span className="elb-misc-item-name">DELETE ACCOUNT &amp; ALL DATA</span>
+                <span className="elb-misc-item-desc">Permanently removes your account and all logbook data. This cannot be undone.</span>
+              </span>
             </span>
-          </span>
-          <span className="elb-misc-item-arrow">›</span>
-        </button>
+            <span className="elb-misc-item-arrow">›</span>
+          </button>
+        ) : (
+          <div className="elb-delete-confirm">
+            <div className="elb-delete-warn">⚠ THIS CANNOT BE UNDONE</div>
+            <div className="elb-delete-body">
+              All logbook data, carry-forward hours, and your eLOGBOOK account will be
+              permanently deleted. You will be asked to re-authenticate with Google before
+              deletion proceeds.
+            </div>
+            <div className="elb-delete-actions">
+              <button type="button" className="elb-btn elb-btn-ghost"
+                onClick={() => setConfirmDelete(false)}>
+                CANCEL
+              </button>
+              <button type="button" className="elb-btn elb-btn-danger"
+                onClick={() => { setConfirmDelete(false); onDeleteAccount && onDeleteAccount(); }}>
+                CONFIRM DELETE
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
@@ -695,13 +743,13 @@ const settingsCss = `
   .elb-settings-overlay{
     position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:2000;
     display:flex;align-items:center;justify-content:center;padding:20px;
-    font-family:var(--elb-font,'Courier New',monospace);font-size:var(--elb-td-sz,11px);color:#c8d6e5;
+    font-family:var(--elb-font,'Courier New',monospace);font-size:var(--elb-td-sz,11px);color:var(--elb-txt,#c8d6e5);
     animation:elbFadeIn 0.15s ease;
   }
   @keyframes elbFadeIn{from{opacity:0;}to{opacity:1;}}
 
   .elb-settings-modal{
-    background:#0d1520;border:1px solid #1a3050;border-top:2px solid #4fc3f7;
+    background:var(--elb-bg2,#0d1520);border:1px solid #1a3050;border-top:2px solid #4fc3f7;
     border-radius:5px;width:100%;max-width:720px;max-height:88vh;
     display:flex;flex-direction:column;overflow:hidden;
     box-shadow:0 20px 60px rgba(0,0,0,0.85);
@@ -736,7 +784,7 @@ const settingsCss = `
   }
   .elb-stab:hover{color:#8fafc8;border-color:#0f1e2d;}
   .elb-stab.active{
-    color:#4fc3f7;background:#0b1828;border-color:#1a3050;border-bottom-color:#0b1828;
+    color:#4fc3f7;background:var(--elb-bginput,#0b1828);border-color:#1a3050;border-bottom-color:#0b1828;
   }
 
   .elb-tab-content{flex:1;overflow-y:auto;padding:22px 24px 20px;}
@@ -755,7 +803,7 @@ const settingsCss = `
   .elb-form-label{font-size:0.85em;letter-spacing:0.12em;color:#4a6a8a;}
   .elb-required{color:#ef4444;margin-left:2px;}
   .elb-form-input{
-    background:#0b1828;border:1px solid #1a3050;color:#c8d6e5;
+    background:var(--elb-bginput,#0b1828);border:1px solid #1a3050;color:#c8d6e5;
     font-family:inherit;font-size:1em;padding:7px 10px;border-radius:3px;
     transition:border-color 0.15s;outline:none;width:100%;
   }
@@ -772,7 +820,7 @@ const settingsCss = `
 
   .elb-toggle-row{
     display:flex;align-items:center;justify-content:space-between;
-    padding:10px 12px;background:#0b1828;border:1px solid #0f1e2d;
+    padding:10px 12px;background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;
     border-radius:3px;margin-bottom:8px;gap:12px;
   }
   .elb-toggle-name{font-size:1em;color:#c8d6e5;letter-spacing:0.05em;}
@@ -780,7 +828,7 @@ const settingsCss = `
   .elb-toggle-switch{position:relative;width:38px;height:20px;flex-shrink:0;}
   .elb-toggle-switch input{opacity:0;width:0;height:0;}
   .elb-toggle-track{
-    position:absolute;inset:0;background:#0a1018;border:1px solid #1a3050;
+    position:absolute;inset:0;background:var(--elb-bg3,#0a1018);border:1px solid #1a3050;
     border-radius:20px;cursor:pointer;transition:background 0.2s,border-color 0.2s;
     display:block;
   }
@@ -792,14 +840,14 @@ const settingsCss = `
   .elb-toggle-switch input:checked + .elb-toggle-track::before{transform:translateX(18px);background:#4fc3f7;}
 
   .elb-slider-wrap{
-    padding:10px 12px;background:#0b1828;border:1px solid #0f1e2d;
+    padding:10px 12px;background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;
     border-radius:3px;margin-bottom:8px;
   }
   .elb-slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
   .elb-slider-label{font-size:1em;color:#c8d6e5;letter-spacing:0.05em;}
   .elb-slider-value{font-size:1em;color:#4fc3f7;font-weight:700;min-width:28px;text-align:right;}
   .elb-slider-wrap input[type=range]{
-    width:100%;appearance:none;height:4px;background:#0a1018;
+    width:100%;appearance:none;height:4px;background:var(--elb-bg3,#0a1018);
     border-radius:2px;border:1px solid #0f1e2d;outline:none;cursor:pointer;
   }
   .elb-slider-wrap input[type=range]::-webkit-slider-thumb{
@@ -810,7 +858,7 @@ const settingsCss = `
   .elb-slider-labels{display:flex;justify-content:space-between;font-size:0.85em;color:#4a6a8a;margin-top:5px;}
 
   .elb-preview{
-    padding:10px 12px;background:#0b1828;border:1px solid #0f1e2d;border-radius:3px;
+    padding:10px 12px;background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;border-radius:3px;
   }
   .elb-preview-label{font-size:0.85em;color:#4a6a8a;letter-spacing:0.1em;margin-bottom:6px;}
   .elb-preview-body{color:#8fafc8;line-height:1.8;}
@@ -818,7 +866,7 @@ const settingsCss = `
   .elb-radio-group{display:flex;flex-direction:column;gap:6px;}
   .elb-radio-option{
     display:flex;align-items:flex-start;gap:10px;padding:10px 12px;
-    background:#0b1828;border:1px solid #0f1e2d;border-radius:3px;
+    background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;border-radius:3px;
     cursor:pointer;transition:border-color 0.15s;
   }
   .elb-radio-option:hover{border-color:#243d5a;}
@@ -830,7 +878,7 @@ const settingsCss = `
 
   .elb-misc-item{
     display:flex;align-items:center;justify-content:space-between;
-    padding:12px 14px;background:#0b1828;border:1px solid #0f1e2d;
+    padding:12px 14px;background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;
     border-radius:3px;margin-bottom:8px;cursor:pointer;width:100%;
     transition:border-color 0.15s,background 0.15s;
     text-decoration:none;color:inherit;font-family:inherit;font-size:1em;
@@ -848,7 +896,7 @@ const settingsCss = `
   .elb-misc-item-danger .elb-misc-item-arrow{color:#ef4444;}
 
   .elb-formula-box{
-    background:#06100f;border:1px solid rgba(34,197,94,0.2);
+    background:var(--elb-bg3,#06100f);border:1px solid rgba(34,197,94,0.2);
     border-left:2px solid #22c55e;border-radius:3px;
     padding:10px 14px;margin-top:8px;
     font-size:0.82em;color:#4a6a8a;line-height:1.8;
@@ -859,7 +907,7 @@ const settingsCss = `
   .elb-modal-footer{
     padding:12px 24px;border-top:1px solid #1a3050;
     display:flex;align-items:center;justify-content:space-between;
-    flex-shrink:0;background:#0b1828;gap:12px;flex-wrap:wrap;
+    flex-shrink:0;background:var(--elb-bginput,#0b1828);gap:12px;flex-wrap:wrap;
   }
   .elb-footer-hint{font-size:0.85em;color:#4a6a8a;letter-spacing:0.05em;transition:color 0.2s;}
   .elb-footer-hint.saved{color:#22c55e;}
@@ -873,6 +921,20 @@ const settingsCss = `
   .elb-btn-ghost:hover{border-color:#243d5a;color:#c8d6e5;}
   .elb-btn-primary{background:rgba(79,195,247,0.1);border-color:#4fc3f7;color:#4fc3f7;}
   .elb-btn-primary:hover{background:rgba(79,195,247,0.18);}
+  .elb-btn-danger{background:rgba(239,68,68,0.1);border-color:#ef4444;color:#ef4444;}
+  .elb-btn-danger:hover{background:rgba(239,68,68,0.2);}
+
+  .elb-delete-confirm{
+    background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.25);
+    border-left:3px solid #ef4444;border-radius:3px;padding:14px 16px;
+  }
+  .elb-delete-warn{
+    font-size:0.85em;font-weight:700;letter-spacing:0.15em;color:#ef4444;margin-bottom:8px;
+  }
+  .elb-delete-body{
+    font-size:0.85em;color:#4a6a8a;line-height:1.7;margin-bottom:14px;
+  }
+  .elb-delete-actions{display:flex;gap:8px;justify-content:flex-end;}
 
   .elb-ver-badge{
     display:inline-flex;align-items:center;gap:5px;
@@ -882,7 +944,7 @@ const settingsCss = `
   }
 
   .elb-changelog-entry{
-    padding:10px 12px;background:#0b1828;border:1px solid #0f1e2d;
+    padding:10px 12px;background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;
     border-radius:3px;margin-bottom:6px;
   }
   .elb-changelog-ver{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
@@ -907,7 +969,7 @@ const settingsCss = `
   /* ── Colour scheme swatch picker ── */
   .elb-scheme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px;}
   .elb-scheme-card{
-    background:#0b1828;border:1px solid #0f1e2d;border-radius:4px;
+    background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;border-radius:4px;
     cursor:pointer;padding:0;overflow:hidden;position:relative;
     transition:border-color 0.15s,border-width 0.1s;text-align:left;
     font-family:inherit;color:inherit;
