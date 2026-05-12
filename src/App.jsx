@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { auth, db } from './firebase'
 import {
   createUserWithEmailAndPassword,
@@ -19,11 +19,21 @@ function App() {
   const [authLoading, setAuthLoading] = useState(true)
   const [signupError, setSignupError] = useState(null)
   const [isSigningUp, setIsSigningUp] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const prevUserRef = useRef(null)
 
   // Listen to auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log('Auth state changed, user:', currentUser?.email)
+
+      // Detect logout: user was authenticated, now is null
+      if (prevUserRef.current && !currentUser) {
+        console.log('User logged out, showing confirmation')
+        setShowLogoutConfirm(true)
+      }
+
+      prevUserRef.current = currentUser
       setUser(currentUser)
       setAuthLoading(false)
 
@@ -209,7 +219,7 @@ function App() {
     return <div style={{ background: '#0a0d12', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Courier New' }}>Loading...</div>
   }
 
-  if (showOnboarding) {
+  if (showOnboarding || showLogoutConfirm) {
     return (
       <OnboardingFlow
         user={user}
@@ -219,11 +229,12 @@ function App() {
         onOnboardingComplete={handleOnboardingComplete}
         signupError={signupError}
         isLoading={isSigningUp}
+        showLogoutConfirm={showLogoutConfirm}
       />
     )
   }
 
-  return <ELogbook2026 />
+  return <ELogbook2026 onLogout={() => signOut(auth)} />
 }
 
 export default App

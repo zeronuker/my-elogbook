@@ -156,7 +156,8 @@ function OnboardingFlow({
   onGoogleAuth,
   onOnboardingComplete,
   signupError,
-  isLoading
+  isLoading,
+  showLogoutConfirm
 }) {
   const [authMode, setAuthMode] = useState('landing');
   const [formData, setFormData] = useState({
@@ -205,6 +206,23 @@ function OnboardingFlow({
       return () => clearInterval(interval)
     }
   }, [user, authMode]);
+
+  // Show logout screen when logout is triggered
+  useEffect(() => {
+    if (showLogoutConfirm && authMode !== 'logout') {
+      goTo('logout')
+    }
+  }, [showLogoutConfirm]);
+
+  // Auto-navigate to landing after logout confirmation
+  useEffect(() => {
+    if (authMode === 'logout') {
+      const timer = setTimeout(() => {
+        goTo('landing')
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [authMode]);
 
   const updateFormData = (key, value) => {
     setFormData(prev => ({ ...prev, [key]: value }));
@@ -824,6 +842,16 @@ function OnboardingFlow({
   );
 
 
+  // Screen: Logout Confirmation
+  const ScreenLogout = () => (
+    <div className="onb-done">
+      <div className="onb-done-icon" style={{ fontSize: 56 }}>👋</div>
+      <div className="onb-done-ttl" style={{ color: '#b8d6e5' }}>YOU'VE BEEN SIGNED OUT</div>
+      <div className="onb-done-sub">See you next time, Captain.</div>
+      <div style={{ fontSize: 11, color: '#7a9aaa', marginTop: 20, letterSpacing: '0.08em' }}>Returning to login in 3 seconds...</div>
+    </div>
+  );
+
   // Screen: Done
   const ScreenDone = () => {
     const handleOpenLogbook = async () => {
@@ -862,6 +890,7 @@ function OnboardingFlow({
     signup1: <ScreenSignUp1 formData={formData} updateFormData={updateFormData} passwordValidation={passwordValidation} onSignup={onSignup} onGoogleAuth={onGoogleAuth} signupError={signupError} isLoading={isLoading} goTo={goTo} />,
     emailVerification: <ScreenEmailVerification />,
     signup2: <ScreenSignUp2 formData={formData} updateFormData={updateFormData} isLoading={isLoading} goTo={goTo} />,
+    logout: <ScreenLogout />,
     done: <ScreenDone />
   };
 
