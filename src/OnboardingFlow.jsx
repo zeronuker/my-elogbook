@@ -1,6 +1,121 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 
-export default function OnboardingFlow({
+// Extract ScreenSignUp1 outside component to prevent recreation
+const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSignup, onGoogleAuth, signupError, isLoading, goTo }) => {
+  const handleSignupClick = async () => {
+    const result = await onSignup(formData.email, formData.password, formData.fullName)
+    if (result.success) {
+      goTo('emailVerification')
+    }
+  }
+
+  const handleGoogleSignup = async () => {
+    const result = await onGoogleAuth()
+    if (result.success) {
+      // Auth state listener will handle navigation
+    }
+  }
+
+  return (
+    <div style={{ maxWidth: '400px', width: '100%' }}>
+      <button className="onb-back" onClick={() => goTo('landing')} disabled={isLoading}>← BACK</button>
+      <div className="onb-card">
+        <div className="onb-cbar"></div>
+        <div className="onb-cbody">
+          <div className="onb-slbl">NEW PILOT · STEP 1 OF 3</div>
+          <div className="onb-stitle">CREATE YOUR ACCOUNT</div>
+          <div className="onb-ssub">Free forever. No credit card required.</div>
+          {signupError && (
+            <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
+              {signupError}
+            </div>
+          )}
+          <div className="onb-field">
+            <label>EMAIL ADDRESS</label>
+            <input type="email" autoComplete="off" placeholder="your@email.com" value={formData.email} onChange={(e) => updateFormData('email', e.target.value)} disabled={isLoading} />
+          </div>
+          <div className="onb-pwd-wrapper">
+            <div className="onb-field" style={{ marginBottom: 0 }}>
+              <label>PASSWORD</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="password"
+                  autoComplete="off"
+                  placeholder="Min. 8 chars, 1 letter, 1 number, 1 symbol"
+                  value={formData.password}
+                  onChange={(e) => updateFormData('password', e.target.value)}
+                  disabled={isLoading}
+                  style={{ paddingRight: '40px' }}
+                />
+                <div className={`onb-pwd-indicator ${passwordValidation.isValid ? 'onb-pwd-valid' : 'onb-pwd-invalid'}`} style={{ display: formData.password ? 'block' : 'none' }}>
+                  {passwordValidation.isValid ? '✓' : '✗'}
+                </div>
+              </div>
+            </div>
+            <div className="onb-pwd-requirements" style={{ display: formData.password ? 'block' : 'none' }}>
+              <div className={`onb-pwd-req-item ${passwordValidation.hasLength ? 'done' : ''}`}>
+                <div className={`onb-pwd-req-check ${passwordValidation.hasLength ? 'done' : ''}`}>
+                  {passwordValidation.hasLength ? '✓' : ''}
+                </div>
+                <span>Min. 8 characters</span>
+              </div>
+              <div className={`onb-pwd-req-item ${passwordValidation.hasLetter ? 'done' : ''}`}>
+                <div className={`onb-pwd-req-check ${passwordValidation.hasLetter ? 'done' : ''}`}>
+                  {passwordValidation.hasLetter ? '✓' : ''}
+                </div>
+                <span>1 letter (a-z, A-Z)</span>
+              </div>
+              <div className={`onb-pwd-req-item ${passwordValidation.hasNumber ? 'done' : ''}`}>
+                <div className={`onb-pwd-req-check ${passwordValidation.hasNumber ? 'done' : ''}`}>
+                  {passwordValidation.hasNumber ? '✓' : ''}
+                </div>
+                <span>1 number (0-9)</span>
+              </div>
+              <div className={`onb-pwd-req-item ${passwordValidation.hasSymbol ? 'done' : ''}`}>
+                <div className={`onb-pwd-req-check ${passwordValidation.hasSymbol ? 'done' : ''}`}>
+                  {passwordValidation.hasSymbol ? '✓' : ''}
+                </div>
+                <span>1 symbol (!@#$%^&*)</span>
+              </div>
+            </div>
+          </div>
+          <div className="onb-field">
+            <label>CONFIRM PASSWORD</label>
+            <input type="password" autoComplete="off" placeholder="Repeat" value={formData.confirmPassword} onChange={(e) => updateFormData('confirmPassword', e.target.value)} disabled={isLoading} />
+          </div>
+          <div className="onb-field">
+            <label>FULL NAME (OPTIONAL)</label>
+            <input type="text" autoComplete="off" placeholder="e.g. AMIR RASHID" value={formData.fullName} onChange={(e) => updateFormData('fullName', e.target.value)} disabled={isLoading} />
+          </div>
+          <div className="onb-hint">💡 Leave blank if you prefer anonymity</div>
+          <button
+            className="onb-btn onb-btn-p"
+            onClick={handleSignupClick}
+            disabled={isLoading || !passwordValidation.isValid || formData.password !== formData.confirmPassword}
+          >
+            {isLoading ? 'CREATING ACCOUNT...' : 'NEXT →'}
+          </button>
+          {formData.password !== formData.confirmPassword && formData.confirmPassword && (
+            <div className="onb-hint" style={{ color: 'var(--red)', marginTop: '8px' }}>⚠ Passwords don't match</div>
+          )}
+          <div className="onb-divider">
+            <div className="onb-divider-line"></div>
+            <div className="onb-divider-text">OR</div>
+            <div className="onb-divider-line"></div>
+          </div>
+          <button className="onb-btn onb-btn-google" onClick={handleGoogleSignup} disabled={isLoading}>
+            <span style={{ fontSize: '14px', color: '#e8453c', fontWeight: '700' }}>G</span>CONTINUE WITH GOOGLE
+          </button>
+          <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '8px', color: 'var(--muted)', letterSpacing: '0.06em' }}>
+            Already have an account? <span style={{ color: 'var(--accent)', cursor: 'pointer' }} onClick={() => goTo('login')}>LOG IN</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+function OnboardingFlow({
   user,
   onSignup,
   onLogin,
@@ -649,120 +764,6 @@ export default function OnboardingFlow({
     )
   };
 
-  // Screen: Sign Up Step 1
-  const ScreenSignUp1 = () => {
-    const handleSignupClick = async () => {
-      const result = await onSignup(formData.email, formData.password, formData.fullName)
-      if (result.success) {
-        goTo('emailVerification')
-      }
-    }
-
-    const handleGoogleSignup = async () => {
-      const result = await onGoogleAuth()
-      if (result.success) {
-        // Auth state listener will handle navigation
-      }
-    }
-
-    return (
-      <div style={{ maxWidth: '400px', width: '100%' }}>
-        <button className="onb-back" onClick={() => goTo('landing')} disabled={isLoading}>← BACK</button>
-        <div className="onb-card">
-          <div className="onb-cbar"></div>
-          <div className="onb-cbody">
-            <div className="onb-slbl">NEW PILOT · STEP 1 OF 3</div>
-            <div className="onb-stitle">CREATE YOUR ACCOUNT</div>
-            <div className="onb-ssub">Free forever. No credit card required.</div>
-            {signupError && (
-              <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
-                {signupError}
-              </div>
-            )}
-            <div className="onb-field">
-              <label>EMAIL ADDRESS</label>
-              <input key="email" type="email" placeholder="your@email.com" value={formData.email} onChange={(e) => updateFormData('email', e.target.value)} disabled={isLoading} />
-            </div>
-            <div className="onb-pwd-wrapper">
-              <div className="onb-field" style={{ marginBottom: 0 }}>
-                <label>PASSWORD</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    key="password"
-                    type="password"
-                    placeholder="Min. 8 chars, 1 letter, 1 number, 1 symbol"
-                    value={formData.password}
-                    onChange={(e) => updateFormData('password', e.target.value)}
-                    disabled={isLoading}
-                    style={{ paddingRight: '40px' }}
-                  />
-                  <div className={`onb-pwd-indicator ${passwordValidation.isValid ? 'onb-pwd-valid' : 'onb-pwd-invalid'}`} style={{ display: formData.password ? 'block' : 'none' }}>
-                    {passwordValidation.isValid ? '✓' : '✗'}
-                  </div>
-                </div>
-              </div>
-              <div className="onb-pwd-requirements" style={{ display: formData.password ? 'block' : 'none' }}>
-                  <div className={`onb-pwd-req-item ${passwordValidation.hasLength ? 'done' : ''}`}>
-                    <div className={`onb-pwd-req-check ${passwordValidation.hasLength ? 'done' : ''}`}>
-                      {passwordValidation.hasLength ? '✓' : ''}
-                    </div>
-                    <span>Min. 8 characters</span>
-                  </div>
-                  <div className={`onb-pwd-req-item ${passwordValidation.hasLetter ? 'done' : ''}`}>
-                    <div className={`onb-pwd-req-check ${passwordValidation.hasLetter ? 'done' : ''}`}>
-                      {passwordValidation.hasLetter ? '✓' : ''}
-                    </div>
-                    <span>1 letter (a-z, A-Z)</span>
-                  </div>
-                  <div className={`onb-pwd-req-item ${passwordValidation.hasNumber ? 'done' : ''}`}>
-                    <div className={`onb-pwd-req-check ${passwordValidation.hasNumber ? 'done' : ''}`}>
-                      {passwordValidation.hasNumber ? '✓' : ''}
-                    </div>
-                    <span>1 number (0-9)</span>
-                  </div>
-                  <div className={`onb-pwd-req-item ${passwordValidation.hasSymbol ? 'done' : ''}`}>
-                    <div className={`onb-pwd-req-check ${passwordValidation.hasSymbol ? 'done' : ''}`}>
-                      {passwordValidation.hasSymbol ? '✓' : ''}
-                    </div>
-                    <span>1 symbol (!@#$%^&*)</span>
-                  </div>
-                </div>
-            </div>
-            <div className="onb-field">
-              <label>CONFIRM PASSWORD</label>
-              <input key="confirmPassword" type="password" placeholder="Repeat" value={formData.confirmPassword} onChange={(e) => updateFormData('confirmPassword', e.target.value)} disabled={isLoading} />
-            </div>
-            <div className="onb-field">
-              <label>FULL NAME (OPTIONAL)</label>
-              <input key="fullName" type="text" placeholder="e.g. AMIR RASHID" value={formData.fullName} onChange={(e) => updateFormData('fullName', e.target.value)} disabled={isLoading} />
-            </div>
-            <div className="onb-hint">💡 Leave blank if you prefer anonymity</div>
-            <button
-              className="onb-btn onb-btn-p"
-              onClick={handleSignupClick}
-              disabled={isLoading || !passwordValidation.isValid || formData.password !== formData.confirmPassword}
-            >
-              {isLoading ? 'CREATING ACCOUNT...' : 'NEXT →'}
-            </button>
-            {formData.password !== formData.confirmPassword && formData.confirmPassword && (
-              <div className="onb-hint" style={{ color: 'var(--red)', marginTop: '8px' }}>⚠ Passwords don't match</div>
-            )}
-            <div className="onb-divider">
-              <div className="onb-divider-line"></div>
-              <div className="onb-divider-text">OR</div>
-              <div className="onb-divider-line"></div>
-            </div>
-            <button className="onb-btn onb-btn-google" onClick={handleGoogleSignup} disabled={isLoading}>
-              <span style={{ fontSize: '14px', color: '#e8453c', fontWeight: '700' }}>G</span>CONTINUE WITH GOOGLE
-            </button>
-            <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '8px', color: 'var(--muted)', letterSpacing: '0.06em' }}>
-              Already have an account? <span style={{ color: 'var(--accent)', cursor: 'pointer' }} onClick={() => goTo('login')}>LOG IN</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  };
 
   // Screen: Email Verification
   const ScreenEmailVerification = () => (
@@ -857,7 +858,7 @@ export default function OnboardingFlow({
   const screens = {
     landing: <ScreenLanding />,
     login: <ScreenLogin />,
-    signup1: <ScreenSignUp1 />,
+    signup1: <ScreenSignUp1 formData={formData} updateFormData={updateFormData} passwordValidation={passwordValidation} onSignup={onSignup} onGoogleAuth={onGoogleAuth} signupError={signupError} isLoading={isLoading} goTo={goTo} />,
     emailVerification: <ScreenEmailVerification />,
     signup2: <ScreenSignUp2 />,
     done: <ScreenDone />
@@ -891,3 +892,5 @@ export default function OnboardingFlow({
     </div>
   );
 }
+
+export default memo(OnboardingFlow);
