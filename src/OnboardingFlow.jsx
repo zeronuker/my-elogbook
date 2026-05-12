@@ -115,6 +115,40 @@ const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSi
   );
 });
 
+// Extract ScreenSignUp2 outside component to prevent recreation
+const ScreenSignUp2 = memo(({ formData, updateFormData, isLoading, goTo }) => {
+  return (
+    <div style={{ maxWidth: '480px', width: '100%' }}>
+      <div className="onb-card">
+        <div className="onb-cbar"></div>
+        <div className="onb-cbody">
+          <div className="onb-slbl">NEW PILOT · STEP 3 OF 3</div>
+          <div className="onb-stitle">PILOT CREDENTIALS</div>
+          <div className="onb-ssub">Quick setup. Update anytime in Settings.</div>
+          <div className="onb-field">
+            <label>LICENCE TYPE (DEFAULT: ATPL(A))</label>
+            <select value={formData.licenseType} onChange={(e) => updateFormData('licenseType', e.target.value)} disabled={isLoading}>
+              <option>ATPL(A)</option>
+              <option>CPL(A)</option>
+              <option>MPL</option>
+              <option>PPL(A)</option>
+            </select>
+          </div>
+          <div className="onb-field">
+            <label>ORGANIZATION (OPTIONAL)</label>
+            <input type="text" autoComplete="off" placeholder="e.g. MALAYSIA AIRLINES" value={formData.organization} onChange={(e) => updateFormData('organization', e.target.value)} disabled={isLoading} />
+          </div>
+          <div className="onb-hint">💡 Both fields optional. You can skip and add later.</div>
+          <button className="onb-btn onb-btn-p" onClick={() => goTo('done')} disabled={isLoading}>
+            CONTINUE →
+          </button>
+          <button className="onb-btn onb-btn-g" onClick={() => goTo('done')} disabled={isLoading}>SKIP TO LOGBOOK</button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 function OnboardingFlow({
   user,
   onSignup,
@@ -789,39 +823,6 @@ function OnboardingFlow({
     </div>
   );
 
-  // Screen: Sign Up Step 2
-  const ScreenSignUp2 = () => {
-    return (
-      <div style={{ maxWidth: '480px', width: '100%' }}>
-        <div className="onb-card">
-          <div className="onb-cbar"></div>
-          <div className="onb-cbody">
-            <div className="onb-slbl">NEW PILOT · STEP 3 OF 3</div>
-            <div className="onb-stitle">PILOT CREDENTIALS</div>
-            <div className="onb-ssub">Quick setup. Update anytime in Settings.</div>
-            <div className="onb-field">
-              <label>LICENCE TYPE (DEFAULT: ATPL(A))</label>
-              <select value={formData.licenseType} onChange={(e) => updateFormData('licenseType', e.target.value)} disabled={isLoading}>
-                <option>ATPL(A)</option>
-                <option>CPL(A)</option>
-                <option>MPL</option>
-                <option>PPL(A)</option>
-              </select>
-            </div>
-            <div className="onb-field">
-              <label>ORGANIZATION (OPTIONAL)</label>
-              <input type="text" placeholder="e.g. MALAYSIA AIRLINES" value={formData.organization} onChange={(e) => updateFormData('organization', e.target.value)} disabled={isLoading} />
-            </div>
-            <div className="onb-hint">💡 Both fields optional. You can skip and add later.</div>
-            <button className="onb-btn onb-btn-p" onClick={() => goTo('done')} disabled={isLoading}>
-              CONTINUE →
-            </button>
-            <button className="onb-btn onb-btn-g" onClick={() => goTo('done')} disabled={isLoading}>SKIP TO LOGBOOK</button>
-          </div>
-        </div>
-      </div>
-    )
-  };
 
   // Screen: Done
   const ScreenDone = () => {
@@ -860,7 +861,7 @@ function OnboardingFlow({
     login: <ScreenLogin />,
     signup1: <ScreenSignUp1 formData={formData} updateFormData={updateFormData} passwordValidation={passwordValidation} onSignup={onSignup} onGoogleAuth={onGoogleAuth} signupError={signupError} isLoading={isLoading} goTo={goTo} />,
     emailVerification: <ScreenEmailVerification />,
-    signup2: <ScreenSignUp2 />,
+    signup2: <ScreenSignUp2 formData={formData} updateFormData={updateFormData} isLoading={isLoading} goTo={goTo} />,
     done: <ScreenDone />
   };
 
