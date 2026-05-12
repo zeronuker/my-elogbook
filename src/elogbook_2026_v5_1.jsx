@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup } from "firebase/auth";
 import { doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
-import SettingsModal, { DEFAULT_SETTINGS, THEMES } from "./SettingsModal";
+import SettingsModal, { DEFAULT_SETTINGS } from "./SettingsModal";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -265,43 +265,32 @@ const FTL_POPUPS = {
 };
 
 // ─── Theme CSS variable injection ─────────────────────────────────────────────
-function makeThemeCss(settings) {
-  const key = settings.colorScheme || "darkCockpit";
-  const t   = THEMES[key] || THEMES.darkCockpit;
-  const isDark = settings.darkMode !== false;
-  const fontSize = Number(settings.fontSize) || 11;
-  const fontFamily = settings.fontType
-    ? `'${settings.fontType}', 'Courier New', monospace`
-    : "'Courier New', Courier, monospace";
-
-  const hc = settings.highContrast;
-  const darkVars = `
-    --elb-bg:${t.bg};--elb-bg2:${t.bg2};--elb-bg3:${t.bg3};
-    --elb-bghd:${t.bgHeader};--elb-bgalt:${t.bgAlt};--elb-thead:${t.bgThead};
-    --elb-bginput:${t.bgInput};--elb-rowhover:${t.rowHover};
-    --elb-acc:${t.accent};--elb-acc2:${t.accent2};--elb-accdim:${t.accentDim};
-    --elb-bdr:${t.border};
-    --elb-bdr2:${hc ? t.border : t.border2};
-    --elb-bdr3:${hc ? t.border2 : t.border3};
-    --elb-bdr4:${hc ? t.border2 : t.border4};
-    --elb-txt:${t.text};--elb-muted:${t.textMuted};--elb-dim:${t.textDim};--elb-bright:${t.textBright};
-  `;
-
-  const lightVars = `
-    --elb-bg:#f2f5f9;--elb-bg2:#ffffff;--elb-bg3:#e8edf5;
-    --elb-bghd:#0d1520;--elb-bgalt:#1a2a3a;--elb-thead:#1a2535;
-    --elb-bginput:#ffffff;--elb-rowhover:#dde8f5;
-    --elb-acc:${t.accent};--elb-acc2:${t.accent2};--elb-accdim:${t.accentDim};
-    --elb-bdr:#b0c4d8;
-    --elb-bdr2:${hc ? "#90b0cc" : "#c8d8ea"};
-    --elb-bdr3:${hc ? "#a8c0d8" : "#d8e4f0"};
-    --elb-bdr4:${hc ? "#b8ccde" : "#e4eef8"};
-    --elb-txt:#1a2a3a;--elb-muted:#4a6a8a;--elb-dim:#7a9ab8;--elb-bright:#0a1020;
-  `;
+function makeThemeCss() {
+  const t = {
+    bg:        "#0a0d12", bg2:       "#0d1520", bg3:       "#0a1018",
+    bgHeader:  "#0d1117", bgAlt:     "#161d2a", bgThead:   "#0b1320",
+    bgInput:   "#0b1828",
+    accent:    "#4fc3f7", accent2:   "#7ab8d4", accentDim: "#2a5a7a",
+    border:    "#1e3a5f", border2:   "#1a3050", border3:   "#0f1820", border4: "#111820",
+    text:      "#ffffff", textMuted: "#b8d6e5", textDim:   "#7a9aaa", textBright: "#ffffff",
+    rowHover:  "#122030",
+  };
+  const fontSize = 14;
+  const fontFamily = "'Courier New', Courier, monospace";
 
   return `
     :root {
-      ${isDark ? darkVars : lightVars}
+      --elb-bg:${t.bg};--elb-bg2:${t.bg2};--elb-bg3:${t.bg3};
+      --elb-bghd:${t.bgHeader};--elb-bgalt:${t.bgAlt};--elb-thead:${t.bgThead};
+      --elb-bginput:${t.bgInput};--elb-rowhover:${t.rowHover};
+      --elb-acc:${t.accent};--elb-acc2:${t.accent2};--elb-accdim:${t.accentDim};
+      --elb-border:${t.border};--elb-bdr:${t.border};
+      --elb-border2:${t.border2};--elb-bdr2:${t.border2};
+      --elb-border3:${t.border3};--elb-bdr3:${t.border3};
+      --elb-border4:${t.border4};--elb-bdr4:${t.border4};
+      --elb-txt:${t.text};--elb-txt-muted:${t.textMuted};--elb-txt-dim:${t.textDim};--elb-txt-bright:${t.textBright};
+      --elb-muted:${t.textMuted};--elb-dim:${t.textDim};--elb-bright:${t.textBright};
+      --elb-accent:${t.accent};
       --elb-font:${fontFamily};
       --elb-td-sz:${fontSize}px;
       --elb-th-sz:${Math.max(10, fontSize - 1)}px;
@@ -474,7 +463,7 @@ export default function ELogbook2026() {
 
   // ── Loading screen ──
   // Inject theme CSS vars early so loading/login screens are also themed
-  const themeCss = makeThemeCss(settings);
+  const themeCss = makeThemeCss();
 
   if (authLoading) {
     return (
