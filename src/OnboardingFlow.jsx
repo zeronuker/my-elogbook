@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function OnboardingFlow({
   user,
@@ -681,13 +681,14 @@ export default function OnboardingFlow({
             )}
             <div className="onb-field">
               <label>EMAIL ADDRESS</label>
-              <input type="email" placeholder="your@email.com" value={formData.email} onChange={(e) => updateFormData('email', e.target.value)} disabled={isLoading} />
+              <input key="email" type="email" placeholder="your@email.com" value={formData.email} onChange={(e) => updateFormData('email', e.target.value)} disabled={isLoading} />
             </div>
             <div className="onb-pwd-wrapper">
               <div className="onb-field" style={{ marginBottom: 0 }}>
                 <label>PASSWORD</label>
                 <div style={{ position: 'relative' }}>
                   <input
+                    key="password"
                     type="password"
                     placeholder="Min. 8 chars, 1 letter, 1 number, 1 symbol"
                     value={formData.password}
@@ -695,15 +696,12 @@ export default function OnboardingFlow({
                     disabled={isLoading}
                     style={{ paddingRight: '40px' }}
                   />
-                  {formData.password && (
-                    <div className={`onb-pwd-indicator ${passwordValidation.isValid ? 'onb-pwd-valid' : 'onb-pwd-invalid'}`}>
-                      {passwordValidation.isValid ? '✓' : '✗'}
-                    </div>
-                  )}
+                  <div className={`onb-pwd-indicator ${passwordValidation.isValid ? 'onb-pwd-valid' : 'onb-pwd-invalid'}`} style={{ display: formData.password ? 'block' : 'none' }}>
+                    {passwordValidation.isValid ? '✓' : '✗'}
+                  </div>
                 </div>
               </div>
-              {formData.password && (
-                <div className="onb-pwd-requirements">
+              <div className="onb-pwd-requirements" style={{ display: formData.password ? 'block' : 'none' }}>
                   <div className={`onb-pwd-req-item ${passwordValidation.hasLength ? 'done' : ''}`}>
                     <div className={`onb-pwd-req-check ${passwordValidation.hasLength ? 'done' : ''}`}>
                       {passwordValidation.hasLength ? '✓' : ''}
@@ -729,15 +727,14 @@ export default function OnboardingFlow({
                     <span>1 symbol (!@#$%^&*)</span>
                   </div>
                 </div>
-              )}
             </div>
             <div className="onb-field">
               <label>CONFIRM PASSWORD</label>
-              <input type="password" placeholder="Repeat" value={formData.confirmPassword} onChange={(e) => updateFormData('confirmPassword', e.target.value)} disabled={isLoading} />
+              <input key="confirmPassword" type="password" placeholder="Repeat" value={formData.confirmPassword} onChange={(e) => updateFormData('confirmPassword', e.target.value)} disabled={isLoading} />
             </div>
             <div className="onb-field">
               <label>FULL NAME (OPTIONAL)</label>
-              <input type="text" placeholder="e.g. AMIR RASHID" value={formData.fullName} onChange={(e) => updateFormData('fullName', e.target.value)} disabled={isLoading} />
+              <input key="fullName" type="text" placeholder="e.g. AMIR RASHID" value={formData.fullName} onChange={(e) => updateFormData('fullName', e.target.value)} disabled={isLoading} />
             </div>
             <div className="onb-hint">💡 Leave blank if you prefer anonymity</div>
             <button
