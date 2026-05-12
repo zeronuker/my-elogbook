@@ -13,12 +13,6 @@ export const DEFAULT_SETTINGS = {
   defaultAircraftType: "",
   defaultMarkings: "",
   defaultCaptain: "",
-  // Appearance
-  colorScheme: "darkCockpit",
-  darkMode: true,
-  highContrast: false,
-  fontType: "Courier New",
-  fontSize: 11,
   // Carry forward
   carryForward: [
     { type: "", dayP1: "", dayP1US: "", dayP2: "", nightP1: "", nightP1US: "", nightP2: "" },
@@ -32,52 +26,15 @@ export const DEFAULT_SETTINGS = {
   postFlightBuffer: 15,
 };
 
-// ── Color themes ────────────────────────────────────────────────────────────
-export const THEMES = {
-  darkCockpit: {
-    name: "Dark Cockpit",
-    bg:        "#0a0d12", bg2:       "#0d1520", bg3:       "#0a1018",
-    bgHeader:  "#0d1117", bgAlt:     "#161d2a", bgThead:   "#0b1320",
-    bgInput:   "#0b1828",
-    accent:    "#4fc3f7", accent2:   "#7ab8d4", accentDim: "#2a5a7a",
-    border:    "#1e3a5f", border2:   "#1a3050", border3:   "#0f1820", border4: "#111820",
-    text:      "#c8d6e5", textMuted: "#4a6a8a", textDim:   "#2a4a6a", textBright: "#e8f4fd",
-    rowHover:  "#122030",
-    swatch: ["#0a0d12","#4fc3f7","#1e3a5f"],
-  },
-  airAsia: {
-    name: "AirAsia",
-    bg:        "#0d0608", bg2:       "#1a0a0e", bg3:       "#120709",
-    bgHeader:  "#0f0507", bgAlt:     "#1e0c10", bgThead:   "#0e0508",
-    bgInput:   "#1a0a0e",
-    accent:    "#ff2b4a", accent2:   "#cc2038", accentDim: "#5a0f1a",
-    border:    "#6a1525", border2:   "#4a1018", border3:   "#28080e", border4: "#1a0608",
-    text:      "#f0ced2", textMuted: "#8a4a52", textDim:   "#4a1a22", textBright: "#fff0f2",
-    rowHover:  "#221015",
-    swatch: ["#0d0608","#ff2b4a","#6a1525"],
-  },
-  airAsiaX: {
-    name: "Batik Air Malaysia",
-    bg:        "#090710", bg2:       "#12101e", bg3:       "#0d0b18",
-    bgHeader:  "#0a0812", bgAlt:     "#181428", bgThead:   "#0a0814",
-    bgInput:   "#100e1c",
-    accent:    "#c040a8", accent2:   "#9a3088", accentDim: "#501848",
-    border:    "#5a1a60", border2:   "#401050", border3:   "#200830", border4: "#160622",
-    text:      "#e8cce8", textMuted: "#7a4a80", textDim:   "#3a1a45", textBright: "#f8eafc",
-    rowHover:  "#1a1030",
-    swatch: ["#090710","#c040a8","#5a1a60"],
-  },
-  malaysiaAirlines: {
-    name: "Malaysia Airlines",
-    bg:        "#070a14", bg2:       "#0c1020", bg3:       "#080b18",
-    bgHeader:  "#080a14", bgAlt:     "#0f1428", bgThead:   "#08091a",
-    bgInput:   "#0c1020",
-    accent:    "#7c4dff", accent2:   "#9d6fff", accentDim: "#301a70",
-    border:    "#2a1a70", border2:   "#1e1060", border3:   "#100830", border4: "#0c0620",
-    text:      "#d0d0f5", textMuted: "#5050a0", textDim:   "#202060", textBright: "#eeeeff",
-    rowHover:  "#121830",
-    swatch: ["#070a14","#7c4dff","#2a1a70"],
-  },
+// ── Dark Cockpit Theme (fixed) ──────────────────────────────────────────────
+const DARK_COCKPIT_THEME = {
+  bg:        "#0a0d12", bg2:       "#0d1520", bg3:       "#0a1018",
+  bgHeader:  "#0d1117", bgAlt:     "#161d2a", bgThead:   "#0b1320",
+  bgInput:   "#0b1828",
+  accent:    "#4fc3f7", accent2:   "#7ab8d4", accentDim: "#2a5a7a",
+  border:    "#1e3a5f", border2:   "#1a3050", border3:   "#0f1820", border4: "#111820",
+  text:      "#ffffff", textMuted: "#b8d6e5", textDim:   "#7a9aaa", textBright: "#ffffff",
+  rowHover:  "#122030",
 };
 
 const TAB_HINTS = {
@@ -181,7 +138,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
         {/* ── CONTENT ── */}
         <div className="elb-tab-content">
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} />}
-          {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
+          {tab === "appearance"  && <AppearanceTab />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
           {tab === "misc"        && <MiscTab onDeleteAccount={onDeleteAccount} />}
         </div>
@@ -333,109 +290,15 @@ function ProfileTab({ d, upd, userEmail }) {
 /* ─────────────────────────────────────────────────────────────────────────
    APPEARANCE TAB
    ───────────────────────────────────────────────────────────────────────── */
-function AppearanceTab({ d, upd }) {
+function AppearanceTab() {
   return (
-    <>
-      {/* ── COLOR SCHEME ── */}
-      <div className="elb-form-section">
-        <div className="elb-form-section-title">COLOR SCHEME</div>
-        <div className="elb-scheme-grid">
-          {Object.entries(THEMES).map(([key, t]) => {
-            const isSel = d.colorScheme === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                className={"elb-scheme-card" + (isSel ? " elb-scheme-sel" : "")}
-                onClick={() => upd({ colorScheme: key })}
-              >
-                {/* Mini colour preview */}
-                <div className="elb-scheme-preview" style={{ background: t.bg }}>
-                  <div style={{ height: 3, background: t.accent, borderRadius: "2px 2px 0 0" }} />
-                  <div style={{ display: "flex", gap: 3, padding: "5px 6px 3px" }}>
-                    <div style={{ height: 4, flex: 2, background: t.border2, borderRadius: 1 }} />
-                    <div style={{ height: 4, flex: 1, background: t.accent, borderRadius: 1, opacity: 0.55 }} />
-                  </div>
-                  <div style={{ display: "flex", gap: 2, padding: "0 6px 5px" }}>
-                    {[1, 0.6, 0.35].map((op, i) => (
-                      <div key={i} style={{ height: 3, flex: 1, background: t.accent, borderRadius: 1, opacity: op }} />
-                    ))}
-                  </div>
-                  <div style={{ display: "flex", gap: 2, padding: "0 6px 4px" }}>
-                    {[0.2, 0.15, 0.12, 0.1].map((op, i) => (
-                      <div key={i} style={{ height: 3, flex: 1, background: t.text, borderRadius: 1, opacity: op }} />
-                    ))}
-                  </div>
-                </div>
-                <div className="elb-scheme-name">{t.name}</div>
-                {isSel && <div className="elb-scheme-tick">✓</div>}
-              </button>
-            );
-          })}
-        </div>
-        <div className="elb-form-hint" style={{ marginTop: 4 }}>
-          Colour scheme applies immediately on save. All schemes use the same dark-cockpit layout — only accent and background tones change.
-        </div>
+    <div className="elb-form-section" style={{ textAlign: "center", color: "var(--elb-txt-muted, #4a6a8a)", padding: "40px 20px" }}>
+      <div style={{ fontSize: "1.2em", marginBottom: 8 }}>🎨</div>
+      <div style={{ fontSize: "0.95em", lineHeight: 1.6 }}>
+        Appearance customization coming soon.<br />
+        Currently running Dark Cockpit theme with optimized text sizing.
       </div>
-
-      {/* ── DISPLAY ── */}
-      <div className="elb-form-section">
-        <div className="elb-form-section-title">DISPLAY</div>
-        <ToggleRow
-          name="DARK MODE"
-          desc="Cockpit-dark theme · Recommended for all lighting conditions · Default ON"
-          checked={d.darkMode !== false}
-          onChange={v => upd({ darkMode: v })}
-        />
-        <ToggleRow
-          name="HIGH CONTRAST BORDERS"
-          desc="Strengthens table row and card borders for improved readability · Default OFF"
-          checked={!!d.highContrast}
-          onChange={v => upd({ highContrast: v })}
-        />
-      </div>
-
-      {/* ── TYPOGRAPHY ── */}
-      <div className="elb-form-section">
-        <div className="elb-form-section-title">TYPOGRAPHY</div>
-
-        <div className="elb-form-row" style={{ alignItems: "flex-end", marginBottom: 10 }}>
-          <div className="elb-form-group">
-            <label className="elb-form-label" style={{ marginBottom: 6 }}>FONT TYPE</label>
-            <select className="elb-form-input" value={d.fontType}
-              onChange={e => upd({ fontType: e.target.value })}>
-              <option value="Courier New">Courier New — Classic aviation logbook</option>
-              <option value="IBM Plex Mono">IBM Plex Mono — Modern technical</option>
-              <option value="JetBrains Mono">JetBrains Mono — High legibility</option>
-              <option value="Space Mono">Space Mono — Bold distinctive</option>
-              <option value="Roboto Mono">Roboto Mono — Clean minimal</option>
-            </select>
-          </div>
-
-          <div className="elb-form-group">
-            <div className="elb-slider-wrap" style={{ margin: 0, padding: "7px 10px" }}>
-              <div className="elb-slider-header" style={{ marginBottom: 6 }}>
-                <span className="elb-slider-label">FONT SIZE</span>
-                <span className="elb-slider-value">{d.fontSize}px</span>
-              </div>
-              <input type="range" min="9" max="14" step="1" value={d.fontSize}
-                onChange={e => upd({ fontSize: Number(e.target.value) })} />
-            </div>
-          </div>
-        </div>
-
-        <div className="elb-preview">
-          <div className="elb-preview-label">PREVIEW</div>
-          <div className="elb-preview-body" style={{
-            fontFamily: `'${d.fontType}', 'Courier New', monospace`,
-            fontSize: d.fontSize,
-          }}>
-            DATE &nbsp; AIRCRAFT &nbsp; DEP &nbsp; ARR &nbsp; STD &nbsp; STA &nbsp; TOTAL<br />
-            09 MAY &nbsp; B737-800 &nbsp; WMKK &nbsp; WSSS &nbsp; 08:30 &nbsp; 10:20 &nbsp; 01:50
-          </div>
-        </div>
-      </div>
-    </>
+    </div>
   );
 }
 
@@ -743,7 +606,7 @@ const settingsCss = `
   .elb-settings-overlay{
     position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:2000;
     display:flex;align-items:center;justify-content:center;padding:20px;
-    font-family:var(--elb-font,'Courier New',monospace);font-size:var(--elb-td-sz,11px);color:var(--elb-txt,#c8d6e5);
+    font-family:var(--elb-font,'Courier New',monospace);font-size:var(--elb-td-sz,14px);color:var(--elb-txt,#c8d6e5);
     animation:elbFadeIn 0.15s ease;
   }
   @keyframes elbFadeIn{from{opacity:0;}to{opacity:1;}}
@@ -800,7 +663,7 @@ const settingsCss = `
   .elb-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
   .elb-form-row.single{grid-template-columns:1fr;}
   .elb-form-group{display:flex;flex-direction:column;gap:5px;}
-  .elb-form-label{font-size:0.85em;letter-spacing:0.12em;color:#4a6a8a;}
+  .elb-form-label{font-size:0.85em;letter-spacing:0.12em;color:var(--elb-txt-muted,#4a6a8a);}
   .elb-required{color:#ef4444;margin-left:2px;}
   .elb-form-input{
     background:var(--elb-bginput,#0b1828);border:1px solid #1a3050;color:#c8d6e5;
@@ -810,7 +673,7 @@ const settingsCss = `
   .elb-form-input:focus{border-color:#4fc3f7;}
   .elb-form-input:disabled{opacity:0.45;cursor:not-allowed;}
   .elb-form-input::placeholder{color:#4a6a8a;}
-  .elb-form-hint{font-size:0.85em;color:#4a6a8a;letter-spacing:0.04em;margin-top:2px;}
+  .elb-form-hint{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);letter-spacing:0.04em;margin-top:2px;}
   select.elb-form-input{
     appearance:none;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a6a8a'/%3E%3C/svg%3E");
@@ -824,7 +687,7 @@ const settingsCss = `
     border-radius:3px;margin-bottom:8px;gap:12px;
   }
   .elb-toggle-name{font-size:1em;color:#c8d6e5;letter-spacing:0.05em;}
-  .elb-toggle-desc{font-size:0.85em;color:#4a6a8a;margin-top:3px;line-height:1.5;}
+  .elb-toggle-desc{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);margin-top:3px;line-height:1.5;}
   .elb-toggle-switch{position:relative;width:38px;height:20px;flex-shrink:0;}
   .elb-toggle-switch input{opacity:0;width:0;height:0;}
   .elb-toggle-track{
@@ -839,29 +702,6 @@ const settingsCss = `
   .elb-toggle-switch input:checked + .elb-toggle-track{background:rgba(79,195,247,0.15);border-color:#4fc3f7;}
   .elb-toggle-switch input:checked + .elb-toggle-track::before{transform:translateX(18px);background:#4fc3f7;}
 
-  .elb-slider-wrap{
-    padding:10px 12px;background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;
-    border-radius:3px;margin-bottom:8px;
-  }
-  .elb-slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-  .elb-slider-label{font-size:1em;color:#c8d6e5;letter-spacing:0.05em;}
-  .elb-slider-value{font-size:1em;color:#4fc3f7;font-weight:700;min-width:28px;text-align:right;}
-  .elb-slider-wrap input[type=range]{
-    width:100%;appearance:none;height:4px;background:var(--elb-bg3,#0a1018);
-    border-radius:2px;border:1px solid #0f1e2d;outline:none;cursor:pointer;
-  }
-  .elb-slider-wrap input[type=range]::-webkit-slider-thumb{
-    appearance:none;width:14px;height:14px;border-radius:50%;
-    background:#4fc3f7;border:2px solid #0c1622;cursor:pointer;
-    box-shadow:0 0 6px rgba(79,195,247,0.4);
-  }
-  .elb-slider-labels{display:flex;justify-content:space-between;font-size:0.85em;color:#4a6a8a;margin-top:5px;}
-
-  .elb-preview{
-    padding:10px 12px;background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;border-radius:3px;
-  }
-  .elb-preview-label{font-size:0.85em;color:#4a6a8a;letter-spacing:0.1em;margin-bottom:6px;}
-  .elb-preview-body{color:#8fafc8;line-height:1.8;}
 
   .elb-radio-group{display:flex;flex-direction:column;gap:6px;}
   .elb-radio-option{
@@ -874,7 +714,7 @@ const settingsCss = `
   .elb-radio-option.disabled{opacity:0.55;cursor:not-allowed;}
   .elb-radio-option input[type=radio]{accent-color:#4fc3f7;margin-top:2px;flex-shrink:0;}
   .elb-radio-option-name{font-size:1em;color:#c8d6e5;letter-spacing:0.05em;}
-  .elb-radio-option-desc{font-size:0.85em;color:#4a6a8a;margin-top:3px;line-height:1.6;}
+  .elb-radio-option-desc{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);margin-top:3px;line-height:1.6;}
 
   .elb-misc-item{
     display:flex;align-items:center;justify-content:space-between;
@@ -888,8 +728,8 @@ const settingsCss = `
   .elb-misc-item-left{display:flex;align-items:center;gap:10px;}
   .elb-misc-item-icon{font-size:1.27em;width:20px;text-align:center;flex-shrink:0;display:inline-block;}
   .elb-misc-item-name{font-size:1em;color:#c8d6e5;letter-spacing:0.05em;display:block;}
-  .elb-misc-item-desc{font-size:0.85em;color:#4a6a8a;margin-top:3px;display:block;}
-  .elb-misc-item-arrow{font-size:0.91em;color:#4a6a8a;}
+  .elb-misc-item-desc{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);margin-top:3px;display:block;}
+  .elb-misc-item-arrow{font-size:0.91em;color:var(--elb-txt-muted,#4a6a8a);}
   .elb-misc-item-danger{border-color:rgba(239,68,68,0.15);}
   .elb-misc-item-danger .elb-misc-item-name{color:#ef4444;}
   .elb-misc-item-danger:hover{border-color:rgba(239,68,68,0.35);background:rgba(239,68,68,0.03);}
@@ -899,7 +739,7 @@ const settingsCss = `
     background:var(--elb-bg3,#06100f);border:1px solid rgba(34,197,94,0.2);
     border-left:2px solid #22c55e;border-radius:3px;
     padding:10px 14px;margin-top:8px;
-    font-size:0.82em;color:#4a6a8a;line-height:1.8;
+    font-size:0.82em;color:var(--elb-txt-muted,#4a6a8a);line-height:1.8;
   }
   .elb-formula-box .f-hl{color:#22c55e;}
   .elb-formula-box .f-acc{color:#4fc3f7;}
@@ -909,7 +749,7 @@ const settingsCss = `
     display:flex;align-items:center;justify-content:space-between;
     flex-shrink:0;background:var(--elb-bginput,#0b1828);gap:12px;flex-wrap:wrap;
   }
-  .elb-footer-hint{font-size:0.85em;color:#4a6a8a;letter-spacing:0.05em;transition:color 0.2s;}
+  .elb-footer-hint{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);letter-spacing:0.05em;transition:color 0.2s;}
   .elb-footer-hint.saved{color:#22c55e;}
   .elb-footer-actions{display:flex;gap:8px;}
   .elb-btn{
@@ -949,15 +789,15 @@ const settingsCss = `
   }
   .elb-changelog-ver{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
   .elb-changelog-tag{font-size:0.82em;color:#4fc3f7;font-weight:700;}
-  .elb-changelog-date{font-size:0.85em;color:#4a6a8a;}
+  .elb-changelog-date{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);}
   .elb-changelog-items{list-style:none;padding:0;margin:0;}
-  .elb-changelog-items li{font-size:0.85em;color:#4a6a8a;line-height:1.7;padding-left:12px;position:relative;}
+  .elb-changelog-items li{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);line-height:1.7;padding-left:12px;position:relative;}
   .elb-changelog-items li::before{content:'›';position:absolute;left:0;color:#4fc3f7;}
 
   .elb-disclaimer-box{
     background:rgba(234,179,8,0.04);border:1px solid rgba(234,179,8,0.15);
     border-left:2px solid #eab308;border-radius:3px;
-    padding:12px 14px;font-size:0.85em;color:#4a6a8a;line-height:1.85;letter-spacing:0.03em;
+    padding:12px 14px;font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);line-height:1.85;letter-spacing:0.03em;
   }
   .elb-disclaimer-box .hl{color:#eab308;}
 
@@ -966,37 +806,15 @@ const settingsCss = `
   .elb-tag-fix{background:rgba(79,195,247,0.1);color:#4fc3f7;border:1px solid rgba(79,195,247,0.2);}
   .elb-tag-imp{background:rgba(234,179,8,0.1);color:#eab308;border:1px solid rgba(234,179,8,0.2);}
 
-  /* ── Colour scheme swatch picker ── */
-  .elb-scheme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px;}
-  .elb-scheme-card{
-    background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;border-radius:4px;
-    cursor:pointer;padding:0;overflow:hidden;position:relative;
-    transition:border-color 0.15s,border-width 0.1s;text-align:left;
-    font-family:inherit;color:inherit;
-  }
-  .elb-scheme-card:hover{border-color:#2a4a6a;}
-  .elb-scheme-sel{border:2px solid #4fc3f7 !important;}
-  .elb-scheme-preview{width:100%;height:56px;overflow:hidden;flex-shrink:0;}
-  .elb-scheme-name{
-    font-size:0.85em;letter-spacing:0.08em;color:#4a6a8a;
-    padding:5px 7px 6px;display:block;line-height:1.3;
-  }
-  .elb-scheme-sel .elb-scheme-name{color:#4fc3f7;}
-  .elb-scheme-tick{
-    position:absolute;top:5px;right:5px;
-    background:#4fc3f7;color:#0a0d12;border-radius:50%;
-    font-size:0.85em;font-weight:700;width:15px;height:15px;
-    display:flex;align-items:center;justify-content:center;line-height:1;
-  }
 
   /* ── Carry-forward table ── */
   .elb-cf-table{
     width:100%;border-collapse:collapse;min-width:560px;font-family:inherit;
   }
   .elb-cf-th{
-    padding:5px 6px;text-align:center;background:#06101c;
-    border:1px solid #0f1e2d;font-size:0.73em;letter-spacing:0.1em;
-    font-weight:700;white-space:nowrap;color:#4a6a8a;line-height:1.4;
+    padding:5px 6px;text-align:center;background:var(--elb-bg3,#06101c);
+    border:1px solid var(--elb-border3,#0f1e2d);font-size:0.73em;letter-spacing:0.1em;
+    font-weight:700;white-space:nowrap;color:var(--elb-txt-muted,#4a6a8a);line-height:1.4;
   }
   .elb-cf-th-type{text-align:left;padding-left:8px;min-width:80px;}
   .elb-cf-th-total{min-width:56px;}
@@ -1004,29 +822,31 @@ const settingsCss = `
   .elb-cf-day{color:#f5c542;}
   .elb-cf-night{color:#7ab8d4;}
   .elb-cf-th-sub{
-    background:#04080e;font-weight:400;font-size:0.64em;color:#4a6a8a;
+    background:var(--elb-bg2,#04080e);font-weight:400;font-size:0.64em;color:var(--elb-txt-muted,#4a6a8a);
   }
   .elb-cf-td{
-    padding:2px 3px;border:1px solid #0f1e2d;vertical-align:middle;
+    padding:2px 3px;border:1px solid var(--elb-border3,#0f1e2d);vertical-align:middle;
+    background:var(--elb-bg,#0a0d12);
   }
   .elb-cf-input{
     width:100%;background:transparent;border:none;outline:none;
-    color:#c8d6e5;font-family:inherit;font-size:0.9em;
+    color:var(--elb-txt,#c8d6e5);font-family:inherit;font-size:1em;
     text-align:center;padding:4px 3px;min-width:46px;
   }
   .elb-cf-input:focus{background:rgba(79,195,247,0.05);}
-  .elb-cf-input::placeholder{color:#1e3050;}
+  .elb-cf-input::placeholder{color:var(--elb-border,#1e3050);}
   .elb-cf-input-type{text-align:left;padding-left:6px;min-width:70px;}
   .elb-cf-total-cell{
-    text-align:center;color:#4fc3f7;font-weight:700;
-    background:#04080e;white-space:nowrap;padding:4px 8px;
-    font-size:0.85em;border:1px solid #0f1e2d;
+    text-align:center;color:var(--elb-accent,#4fc3f7);font-weight:700;
+    background:var(--elb-bg2,#04080e);white-space:nowrap;padding:4px 8px;
+    font-size:0.85em;border:1px solid var(--elb-border3,#0f1e2d);
   }
   .elb-cf-action-cell{
-    padding:0 3px;border:1px solid #0f1e2d;text-align:center;width:18px;
+    padding:0 3px;border:1px solid var(--elb-border3,#0f1e2d);text-align:center;width:18px;
+    background:var(--elb-bg,#0a0d12);
   }
   .elb-cf-remove{
-    background:transparent;border:none;color:#2a4a6a;cursor:pointer;
+    background:transparent;border:none;color:var(--elb-txt-dim,#2a4a6a);cursor:pointer;
     font-size:0.82em;padding:2px 4px;line-height:1;transition:color 0.15s;
   }
   .elb-cf-remove:hover{color:#ef4444;}
