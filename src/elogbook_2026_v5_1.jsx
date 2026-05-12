@@ -29,6 +29,7 @@ const EMPTY_ROW = () => ({
   nightP2: "",
   total: "",
   remarks: "",
+  autoland: false,
 });
 
 const YEARS = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
@@ -260,7 +261,7 @@ const FTL_POPUPS = {
     para:  "MCAR 2016 PART 8 · SUBPART A",
     title: "AUTOLAND RECENCY — 3 WITHIN 6 MONTHS",
     body:  `A pilot qualified for <strong style="color:#c8d6e5">CAT III autoland operations</strong> shall maintain currency by performing <span style="color:#4fc3f7">at least 3 autoland approaches and landings within the preceding 6 months</span>.<br><br>Autoland operations may be performed on any approved aircraft type or in an approved Full Flight Simulator (FFS). Simulator autolands count toward currency if conducted in an approved FFS with a valid approval letter.`,
-    note:  `The <span style="color:#4fc3f7">Autoland checkbox</span> column (coming soon) will mark sectors where a coupled autoland to touchdown was performed. Simulator sessions must be entered manually.`,
+    note:  `Check the <span style="color:#4fc3f7">AUTOLAND checkbox</span> in the remarks window to mark sectors where a coupled autoland to touchdown was performed. Track autoland recency for all aircraft types combined — a 6-month rolling window with minimum 3 entries required.`,
   },
 };
 
@@ -699,6 +700,40 @@ export default function ELogbook2026() {
 
   const fmtRecencyDate = (d) =>
     d ? d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase() : null;
+
+  // ── Autoland Recency computation ──────────────────────────────────────────
+  let lastAutolandDate = null;
+  const autolandDates = [];
+  Object.entries(data).forEach(([key, rows]) => {
+    if (!Array.isArray(rows)) return;
+    const parts = key.split("-");
+    const monthIdx = parseInt(parts[0]);
+    const year = parseInt(parts[1]);
+    if (isNaN(monthIdx) || isNaN(year)) return;
+    rows.forEach(row => {
+      if (row.autoland && row.date) {
+        const day = parseInt(row.date);
+        if (!day || day < 1 || day > 31) return;
+        const d = new Date(year, monthIdx, day);
+        d.setHours(12, 0, 0, 0);
+        autolandDates.push(d);
+        if (!lastAutolandDate || d > lastAutolandDate) {
+          lastAutolandDate = d;
+        }
+      }
+    });
+  });
+
+  // Count autolands within last 6 months
+  const cutoff6m = new Date(today);
+  cutoff6m.setDate(today.getDate() - 180);
+  cutoff6m.setHours(0, 0, 0, 0);
+  const autoland6m = autolandDates.filter(d => d > cutoff6m).length;
+  const autolandCurrent = autoland6m >= 3;
+
+  const daysSinceAutoland = lastAutolandDate
+    ? Math.floor((today - lastAutolandDate) / (1000 * 60 * 60 * 24))
+    : null;
 
   // ── Grand Total Hours computation ─────────────────────────────────────────
   const GT_KEYS = ["dayP1", "dayP1US", "dayP2", "nightP1", "nightP1US", "nightP2"];
@@ -1290,13 +1325,13 @@ export default function ELogbook2026() {
                       {/* ── REMARKS BUTTON ── */}
                       <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px" }}>
                         <button
-                          onClick={() => setRemarksModal({ rowIdx, draft: row.remarks || "" })}
+                          onClick={() => setRemarksModal({ rowIdx, draft: row.remarks || "", autoland: row.autoland || false })}
                           title={row.remarks ? "View / edit remarks" : "Add remarks"}
                           style={{
-                            background: row.remarks ? "rgba(79,195,247,0.08)" : "transparent",
-                            border: `1px solid ${row.remarks ? "#4fc3f7" : "#1e3a5f"}`,
+                            background: (row.remarks || row.autoland) ? "rgba(79,195,247,0.08)" : "transparent",
+                            border: `1px solid ${(row.remarks || row.autoland) ? "#4fc3f7" : "#1e3a5f"}`,
                             borderRadius: 3,
-                            color: row.remarks ? "#4fc3f7" : "#3a5a7a",
+                            color: (row.remarks || row.autoland) ? "#4fc3f7" : "#3a5a7a",
                             cursor: "pointer",
                             padding: "3px 6px",
                             fontFamily: "'Courier New',monospace",
@@ -1310,9 +1345,9 @@ export default function ELogbook2026() {
                             e.currentTarget.style.background = "rgba(79,195,247,0.08)";
                           }}
                           onMouseLeave={e => {
-                            e.currentTarget.style.borderColor = row.remarks ? "#4fc3f7" : "#1e3a5f";
-                            e.currentTarget.style.color = row.remarks ? "#4fc3f7" : "#3a5a7a";
-                            e.currentTarget.style.background = row.remarks ? "rgba(79,195,247,0.08)" : "transparent";
+                            e.currentTarget.style.borderColor = (row.remarks || row.autoland) ? "#4fc3f7" : "#1e3a5f";
+                            e.currentTarget.style.color = (row.remarks || row.autoland) ? "#4fc3f7" : "#3a5a7a";
+                            e.currentTarget.style.background = (row.remarks || row.autoland) ? "rgba(79,195,247,0.08)" : "transparent";
                           }}
                         >
                           <span style={{ fontSize: 7, display: "block" }}>{row.remarks ? "VIEW" : "ADD"}</span>
@@ -1851,20 +1886,53 @@ export default function ELogbook2026() {
                   background: "#eab308", boxShadow: "0 0 6px #eab308",
                   animation: "blink 1.5s ease infinite" }} />
               </div>
-              <div style={{
-                background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.2)",
-                borderLeft: "3px solid rgba(234,179,8,0.5)", borderRadius: "0 4px 4px 0",
-                padding: "12px 16px",
-              }}>
-                <div style={{ fontSize: "var(--elb-desc-sz)", color: "#eab308", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
-                  ⏳ AUTOLAND TRACKING NOT YET ENABLED
+              {lastAutolandDate ? (
+                <div style={{
+                  display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12,
+                }}>
+                  <div style={{
+                    background: "var(--elb-bg3, #080b10)", border: "1px solid rgba(234,179,8,0.2)",
+                    borderRadius: 3, padding: "12px 10px", textAlign: "center",
+                  }}>
+                    <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em", marginBottom: 6 }}>LAST AUTOLAND</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#4fc3f7", marginBottom: 3 }}>
+                      {fmtRecencyDate(lastAutolandDate)}
+                    </div>
+                    <div style={{ fontSize: "var(--elb-hint-sz)", color: "#eab308", fontWeight: 700, letterSpacing: "0.08em" }}>
+                      {daysSinceAutoland} DAYS AGO
+                    </div>
+                  </div>
+                  <div style={{
+                    background: "var(--elb-bg3, #080b10)", border: `1px solid ${autolandCurrent ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                    borderTop: `2px solid ${autolandCurrent ? "#22c55e" : "#ef4444"}`,
+                    borderRadius: 3, padding: "12px 10px", textAlign: "center",
+                  }}>
+                    <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em", marginBottom: 6 }}>STATUS · 6 MONTHS</div>
+                    <div style={{ fontSize: 30, fontWeight: 700, lineHeight: 1, color: autolandCurrent ? "#22c55e" : "#ef4444", fontFamily: "'Courier New',monospace", marginBottom: 3 }}>
+                      {autoland6m}
+                    </div>
+                    <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", marginBottom: 6 }}>
+                      {autolandCurrent ? "REQ: 3 ✓" : "REQ: 3 — NEED " + (3 - autoland6m)}
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: autolandCurrent ? "#22c55e" : "#ef4444", letterSpacing: "0.08em" }}>
+                      {autolandCurrent ? "✓ CURRENT" : "✗ NOT CURRENT"}
+                    </div>
+                  </div>
                 </div>
-                <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", lineHeight: 1.8, letterSpacing: "0.03em" }}>
-                  Autoland recency requires an <span style={{ color: "#4fc3f7" }}>Autoland checkbox column</span> in the
-                  logbook table — coming alongside the T/O & LDG tracking update.<br />
-                  Simulator autoland sessions will also be manually enterable once this feature is live.
+              ) : (
+                <div style={{
+                  background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.2)",
+                  borderLeft: "3px solid rgba(234,179,8,0.5)", borderRadius: "0 4px 4px 0",
+                  padding: "12px 16px",
+                }}>
+                  <div style={{ fontSize: "var(--elb-desc-sz)", color: "#eab308", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
+                    ⏳ NO AUTOLAND ENTRIES FOUND
+                  </div>
+                  <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", lineHeight: 1.8, letterSpacing: "0.03em" }}>
+                    Check the <span style={{ color: "#4fc3f7" }}>AUTOLAND checkbox</span> in the remarks window when logging autoland landings.
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* ── DISCLAIMER ── */}
@@ -1956,6 +2024,18 @@ export default function ELogbook2026() {
                 onFocus={e => e.target.style.borderColor = "#4fc3f7"}
                 onBlur={e => e.target.style.borderColor = "#1a3050"}
               />
+              {/* Autoland Checkbox */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, marginBottom: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={remarksModal.autoland || false}
+                  onChange={e => setRemarksModal(prev => ({ ...prev, autoland: e.target.checked }))}
+                  style={{
+                    width: 14, height: 14, cursor: "pointer", accentColor: "#4fc3f7",
+                  }}
+                />
+                <label style={{ fontSize: 11, color: "#7ab8d4", letterSpacing: "0.08em", cursor: "pointer", userSelect: "none" }}>AUTOLAND</label>
+              </div>
               {/* Action buttons */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
                 <button
@@ -1971,6 +2051,7 @@ export default function ELogbook2026() {
                 <button
                   onClick={() => {
                     updateCell(remarksModal.rowIdx, "remarks", remarksModal.draft.trim());
+                    updateCell(remarksModal.rowIdx, "autoland", remarksModal.autoland);
                     setRemarksModal(null);
                   }}
                   style={{
