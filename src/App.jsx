@@ -182,8 +182,19 @@ function App() {
           emailVerified: true,
           createdAt: new Date().toISOString()
         })
+        // New user: stay on onboarding (Step 3)
+        setUser(googleUser)
       } else {
-        console.log('Existing profile, onboardingComplete:', profileSnap.data().onboardingComplete)
+        // Existing user: check if onboarding is complete
+        const profileData = profileSnap.data()
+        const isComplete = profileData.onboardingComplete || profileData.emailVerified
+        console.log('Existing user, onboarding complete:', isComplete)
+
+        setUser(googleUser)
+        if (isComplete) {
+          // Skip onboarding for existing users
+          setShowOnboarding(false)
+        }
       }
 
       setIsSigningUp(false)
