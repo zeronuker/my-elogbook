@@ -937,9 +937,6 @@ export default function ELogbook2026({ onLogout }) {
                   </span>
                 )}
               </div>
-              <button onClick={handleSignOut} style={{ background: "transparent", border: "1px solid #1e3a5f", borderRadius: 3, color: "#3a6a8a", fontFamily: "'Courier New', monospace", fontSize: 10, padding: "2px 8px", cursor: "pointer", letterSpacing: "0.1em" }}>
-                SIGN OUT
-              </button>
             </div>
             <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", letterSpacing: "0.15em" }}>SELECT PERIOD</div>
             <div style={{ display: "flex", gap: 8 }}>
