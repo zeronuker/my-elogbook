@@ -92,7 +92,12 @@ function App() {
       })
 
       // Send verification email
-      await newUser.sendEmailVerification()
+      try {
+        await newUser.sendEmailVerification()
+        console.log('Verification email sent to:', newUser.email)
+      } catch (emailError) {
+        console.error('Email verification error:', emailError)
+      }
 
       setIsSigningUp(false)
       return { success: true }
