@@ -22,6 +22,7 @@ function App() {
   // Listen to auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      console.log('Auth state changed, user:', currentUser?.email)
       setUser(currentUser)
       setAuthLoading(false)
 
@@ -29,9 +30,12 @@ function App() {
         // Check if profile exists and onboarding is complete
         try {
           const profileSnap = await getDoc(doc(db, 'users', currentUser.uid, 'profile', 'data'))
+          console.log('Profile check - exists:', profileSnap.exists(), 'onboardingComplete:', profileSnap.data()?.onboardingComplete)
           if (profileSnap.exists() && profileSnap.data().onboardingComplete) {
+            console.log('Setting showOnboarding to false')
             setShowOnboarding(false)
           } else {
+            console.log('Setting showOnboarding to true')
             setShowOnboarding(true)
           }
         } catch (err) {
@@ -121,12 +125,15 @@ function App() {
       const provider = new GoogleAuthProvider()
       const result = await signInWithPopup(auth, provider)
       const googleUser = result.user
+      console.log('Google auth successful, user:', googleUser.email)
 
       // Check if profile exists
       const profileSnap = await getDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'))
+      console.log('Profile exists:', profileSnap.exists())
 
       if (!profileSnap.exists()) {
         // New user: create profile
+        console.log('Creating new profile for:', googleUser.email)
         await setDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'), {
           email: googleUser.email,
           fullName: googleUser.displayName || '',
@@ -138,11 +145,14 @@ function App() {
           emailVerified: true,
           createdAt: new Date().toISOString()
         })
+      } else {
+        console.log('Existing profile, onboardingComplete:', profileSnap.data().onboardingComplete)
       }
 
       setIsSigningUp(false)
       return { success: true }
     } catch (error) {
+      console.error('Google auth error:', error)
       setSignupError('Google sign-in failed.')
       setIsSigningUp(false)
       return { success: false, error: 'Google sign-in failed.' }
