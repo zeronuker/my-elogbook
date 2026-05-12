@@ -31,11 +31,32 @@ function App() {
         try {
           const profileSnap = await getDoc(doc(db, 'users', currentUser.uid, 'profile', 'data'))
           console.log('Profile check - exists:', profileSnap.exists(), 'onboardingComplete:', profileSnap.data()?.onboardingComplete)
-          if (profileSnap.exists() && profileSnap.data().onboardingComplete) {
-            console.log('Setting showOnboarding to false')
-            setShowOnboarding(false)
+
+          if (profileSnap.exists()) {
+            const profileData = profileSnap.data()
+
+            // If profile exists and email is verified, assume onboarding is complete
+            // (handles existing users created before onboarding feature)
+            if (profileData.emailVerified && !profileData.onboardingComplete) {
+              console.log('Auto-completing onboarding for verified user')
+              await setDoc(
+                doc(db, 'users', currentUser.uid, 'profile', 'data'),
+                { onboardingComplete: true },
+                { merge: true }
+              )
+            }
+
+            // Check if onboarding is complete
+            const isComplete = profileData.onboardingComplete || profileData.emailVerified
+            if (isComplete) {
+              console.log('Setting showOnboarding to false')
+              setShowOnboarding(false)
+            } else {
+              console.log('Setting showOnboarding to true')
+              setShowOnboarding(true)
+            }
           } else {
-            console.log('Setting showOnboarding to true')
+            console.log('No profile, setting showOnboarding to true')
             setShowOnboarding(true)
           }
         } catch (err) {
