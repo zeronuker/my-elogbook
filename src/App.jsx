@@ -6,7 +6,8 @@ import {
   signInWithPopup,
   signOut,
   onAuthStateChanged,
-  GoogleAuthProvider
+  GoogleAuthProvider,
+  sendEmailVerification
 } from 'firebase/auth'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
 import ELogbook2026 from './elogbook_2026_v5_1'
@@ -93,7 +94,7 @@ function App() {
 
       // Send verification email
       try {
-        await newUser.sendEmailVerification()
+        await sendEmailVerification(newUser)
         console.log('Verification email sent to:', newUser.email)
       } catch (emailError) {
         console.error('Email verification error:', emailError)
