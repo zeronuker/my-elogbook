@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import SunCalc from "suncalc";
+import { getCoords } from "./airportCoords";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup } from "firebase/auth";
 import { doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
@@ -98,8 +100,8 @@ function isTimeInDay(hhmm) {
   return mins < NIGHT_START || mins > NIGHT_END;
 }
 
-function calcTotal(row) {
-  const ft = calcFlightTimes(row);
+function calcTotal(row, method, year, monthIdx) {
+  const ft = calcFlightTimes(row, method, year, monthIdx);
   const sum = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"]
     .reduce((acc, k) => acc + parseHHMM(ft[k]), 0);
   return sum ? toHHMM(sum) : "";
@@ -131,8 +133,36 @@ function calcDayNight(std, sta) {
   return { day: dayMins, night: nightMins };
 }
 
-function calcFlightTimes(row) {
-  const { day, night } = calcDayNight(row.std, row.sta);
+// Dynamic day/night per CAD-6: Night = sunset+20min → sunrise−20min at departure airport
+function calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx) {
+  if (!std || !sta) return { day: 0, night: 0 };
+  const coords = getCoords(depIcao);
+  if (!coords) return calcDayNight(std, sta);
+  const D    = parseInt(dayStr) || 1;
+  const FULL = 1440;
+  const utcM = dt => dt.getUTCHours() * 60 + dt.getUTCMinutes();
+  const tP   = SunCalc.getTimes(new Date(year, monthIdx, D - 1), coords.lat, coords.lon);
+  const tC   = SunCalc.getTimes(new Date(year, monthIdx, D),     coords.lat, coords.lon);
+  const tN   = SunCalc.getTimes(new Date(year, monthIdx, D + 1), coords.lat, coords.lon);
+  // Two night windows in minutes from midnight of departure date
+  const ns1  = utcM(tP.sunset)  - FULL + 20;
+  const ne1  = utcM(tC.sunrise) - 20;
+  const ns2  = utcM(tC.sunset)  + 20;
+  const ne2  = utcM(tN.sunrise) + FULL - 20;
+  const toM  = t => { const [h, m] = t.trim().split(":").map(Number); return h * 60 + m; };
+  let stdM   = toM(std), staM = toM(sta);
+  if (staM <= stdM) staM += FULL;
+  const totalMins = staM - stdM;
+  const ovlp = (s, e, ns, ne) => Math.max(0, Math.min(e, ne) - Math.max(s, ns));
+  let nightMins = ovlp(stdM, staM, ns1, ne1) + ovlp(stdM, staM, ns2, ne2);
+  nightMins = Math.min(Math.max(0, nightMins), totalMins);
+  return { day: Math.max(0, totalMins - nightMins), night: nightMins };
+}
+
+function calcFlightTimes(row, method, year, monthIdx) {
+  const { day, night } = method === "sunrise"
+    ? calcDayNightDynamic(row.std, row.sta, row.date, row.departure, year, monthIdx)
+    : calcDayNight(row.std, row.sta);
   const cap = row.cap;
   const result = { dayP1: "", dayP1US: "", dayP2: "", nightP1: "", nightP1US: "", nightP2: "" };
   if (!cap || (!day && !night)) return result;
@@ -607,13 +637,13 @@ export default function ELogbook2026({ onLogout }) {
   const autoCalcCols = ["total","dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"];
 
   const totalsRow = {
-    dayP1:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP1), 0)) || "00:00",
-    dayP1US:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP1US), 0)) || "00:00",
-    dayP2:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP2), 0)) || "00:00",
-    nightP1:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP1), 0)) || "00:00",
-    nightP1US: toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP1US), 0)) || "00:00",
-    nightP2:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP2), 0)) || "00:00",
-    total:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcTotal(r)), 0)) || "00:00",
+    dayP1:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).dayP1), 0)) || "00:00",
+    dayP1US:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).dayP1US), 0)) || "00:00",
+    dayP2:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).dayP2), 0)) || "00:00",
+    nightP1:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).nightP1), 0)) || "00:00",
+    nightP1US: toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).nightP1US), 0)) || "00:00",
+    nightP2:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).nightP2), 0)) || "00:00",
+    total:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcTotal(r, settings.dayNightMethod, selectedYear, selectedMonth)), 0)) || "00:00",
   };
 
   // ── FTL computations (live from logbook data) ──────────────────────────────
@@ -1155,8 +1185,8 @@ export default function ELogbook2026({ onLogout }) {
 
               <tbody>
                 {rows.map((row, rowIdx) => {
-                  const computedTotal = calcTotal(row);
-                  const computedFT = calcFlightTimes(row);
+                  const computedTotal = calcTotal(row, settings.dayNightMethod, selectedYear, selectedMonth);
+                  const computedFT = calcFlightTimes(row, settings.dayNightMethod, selectedYear, selectedMonth);
                   const isEven = rowIdx % 2 === 0;
                   const hasStdSta = row.std && row.sta;
                   const hasCap = row.cap && ["P1","P2","P1 U/S"].includes(row.cap);
@@ -1167,6 +1197,9 @@ export default function ELogbook2026({ onLogout }) {
                     "P1 U/S":{ color: "#ef4444", bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.3)" },
                   };
                   const capStyle = capColors[row.cap] || null;
+                  const dynMode = settings.dayNightMethod === "sunrise";
+                  const isDepUnknown = dynMode && row.departure && !getCoords(row.departure);
+                  const isArrUnknown = dynMode && row.arrival   && !getCoords(row.arrival);
 
                   return (
                     <tr
@@ -1326,9 +1359,9 @@ export default function ELogbook2026({ onLogout }) {
                                   placeholder={isTime ? "00:00" : ""}
                                 />
                               ) : (
-                                <span style={{ opacity: displayVal ? 1 : 0.2 }}>
-                                  {displayVal || "—"}
-                                </span>
+                                (col.key === "departure" && isDepUnknown) || (col.key === "arrival" && isArrUnknown)
+                                  ? <span style={{ color: "rgba(155,188,212,0.6)", background: "rgba(155,188,212,0.1)", border: "1px solid rgba(155,188,212,0.35)", borderRadius: 3, padding: "2px 6px" }}>{displayVal}</span>
+                                  : <span style={{ opacity: displayVal ? 1 : 0.2 }}>{displayVal || "—"}</span>
                               )}
                             </td>
                           );
