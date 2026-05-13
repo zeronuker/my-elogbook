@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS = {
   // Preferences
   dateFormat: "D",      // "D" | "DD" | "DD MMM" — display format for DATE column
   rowsPerPage: 15,      // minimum rows shown per month in logbook
-  dayNightMethod: "fixed", // "fixed" | "sunrise" | "great-circle"
+  dayNightMethod: "fixed", // "fixed" | "sunrise"
   useStandardFormula: true,
   preFlightBuffer: 75,
   postFlightBuffer: 15,
@@ -346,17 +346,8 @@ function PreferencesTab({ d, upd }) {
             value="sunrise"
             checked={d.dayNightMethod === "sunrise"}
             onChange={() => upd({ dayNightMethod: "sunrise" })}
-            name={<>DYNAMIC — DEPARTURE AIRPORT SUNRISE/SUNSET <span className="elb-tag elb-tag-new">COMING SOON</span></>}
-            desc="Uses departure airport coordinates and solar position formula to calculate actual sunrise/sunset for each flight date. Day = 10 min after sunrise to 10 min before sunset. No API required — works offline."
-            disabled
-          />
-          <RadioOption
-            value="great-circle"
-            checked={d.dayNightMethod === "great-circle"}
-            onChange={() => upd({ dayNightMethod: "great-circle" })}
-            name={<>DYNAMIC — GREAT CIRCLE INTERPOLATION <span className="elb-tag elb-tag-new">COMING SOON</span></>}
-            desc="Full route interpolation every 30 minutes along the great circle track. Ideal for long-haul international sectors (e.g. WMKK–OMDB) where the aircraft crosses significantly different solar conditions."
-            disabled
+            name={<>DYNAMIC — DEPARTURE AIRPORT <span className="elb-tag elb-tag-new">CAD-6</span></>}
+            desc="Uses departure airport ICAO to determine sunrise/sunset for each flight date. Night = sunset + 20 min → sunrise − 20 min (CAD-6 Part-1). Works offline. Falls back to fixed method if airport not in database — departure/arrival cells flagged."
           />
         </div>
         <div className="elb-form-hint" style={{ marginTop: 8 }}>
