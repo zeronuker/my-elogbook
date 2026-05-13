@@ -426,6 +426,15 @@ function MiscTab({ onDeleteAccount }) {
               <span className="elb-changelog-date">13 MAY 2026</span>
             </div>
             <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Data Management</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Export logbook data to Excel or PDF (date range)</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Import Excel/PDF files with validation &amp; merge</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Duplicate flight detection — skip existing entries</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Globe icon with bidirectional arrows (import/export)</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
               <div className="elb-changelog-subsection">Account Management</div>
               <ul className="elb-changelog-items">
                 <li><span className="elb-tag elb-tag-new">NEW</span> Delete account &amp; all data — permanent deletion via Cloud Function</li>
