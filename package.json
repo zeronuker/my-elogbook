@@ -13,7 +13,7 @@
     "dotenv": "^17.4.2",
     "firebase": "^12.13.0",
     "jspdf": "^2.5.1",
-    "jspdf-plugin-autotable": "^3.6.1",
+    "jspdf-autotable": "^3.6.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "suncalc": "^1.9.0",
