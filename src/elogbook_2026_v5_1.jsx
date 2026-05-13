@@ -140,15 +140,19 @@ function calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx) {
   if (!coords) return calcDayNight(std, sta);
   const D    = parseInt(dayStr) || 1;
   const FULL = 1440;
-  const utcM = dt => dt.getUTCHours() * 60 + dt.getUTCMinutes();
-  const tP   = SunCalc.getTimes(new Date(year, monthIdx, D - 1), coords.lat, coords.lon);
-  const tC   = SunCalc.getTimes(new Date(year, monthIdx, D),     coords.lat, coords.lon);
-  const tN   = SunCalc.getTimes(new Date(year, monthIdx, D + 1), coords.lat, coords.lon);
-  // Two night windows in minutes from midnight of departure date
-  const ns1  = utcM(tP.sunset)  - FULL + 20;
-  const ne1  = utcM(tC.sunrise) - 20;
-  const ns2  = utcM(tC.sunset)  + 20;
-  const ne2  = utcM(tN.sunrise) + FULL - 20;
+  // Use UTC midnight as reference — avoids local-timezone offset bugs for high-UTC-offset locations
+  const ref  = new Date(Date.UTC(year, monthIdx, D)).getTime();
+  const toRef = dt => (dt.getTime() - ref) / 60000; // minutes from UTC midnight of departure date
+  const tP   = SunCalc.getTimes(new Date(Date.UTC(year, monthIdx, D - 1)), coords.lat, coords.lon);
+  const tC   = SunCalc.getTimes(new Date(Date.UTC(year, monthIdx, D)),     coords.lat, coords.lon);
+  const tN   = SunCalc.getTimes(new Date(Date.UTC(year, monthIdx, D + 1)), coords.lat, coords.lon);
+  // Guard against polar regions (no sunrise/sunset)
+  if (!isFinite(toRef(tC.sunrise)) || !isFinite(toRef(tC.sunset))) return calcDayNight(std, sta);
+  // Two night windows: [prevSunset+20, currSunrise−20] and [currSunset+20, nextSunrise−20]
+  const ns1  = toRef(tP.sunset)  + 20;
+  const ne1  = toRef(tC.sunrise) - 20;
+  const ns2  = toRef(tC.sunset)  + 20;
+  const ne2  = toRef(tN.sunrise) - 20;
   const toM  = t => { const [h, m] = t.trim().split(":").map(Number); return h * 60 + m; };
   let stdM   = toM(std), staM = toM(sta);
   if (staM <= stdM) staM += FULL;
