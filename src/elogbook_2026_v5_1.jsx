@@ -159,7 +159,7 @@ function calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx) {
   const totalMins = staM - stdM;
   const ovlp = (s, e, ns, ne) => Math.max(0, Math.min(e, ne) - Math.max(s, ns));
   let nightMins = ovlp(stdM, staM, ns1, ne1) + ovlp(stdM, staM, ns2, ne2);
-  nightMins = Math.min(Math.max(0, nightMins), totalMins);
+  nightMins = Math.round(Math.min(Math.max(0, nightMins), totalMins));
   return { day: Math.max(0, totalMins - nightMins), night: nightMins };
 }
 
