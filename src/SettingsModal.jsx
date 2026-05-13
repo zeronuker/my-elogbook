@@ -664,7 +664,7 @@ const settingsCss = `
   .elb-form-input:focus{border-color:#4fc3f7;}
   .elb-form-input:disabled{opacity:0.45;cursor:not-allowed;}
   .elb-form-input::placeholder{color:#4a6a8a;}
-  input[type="number"].elb-form-input{max-width:120px;}
+  input[type="number"].elb-form-input{max-width:120px;margin:0 auto;display:block;}
   .elb-form-row.single .elb-form-input{max-width:280px;text-align:left;}
   .elb-form-hint{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);letter-spacing:0.04em;margin-top:2px;}
   select.elb-form-input{
