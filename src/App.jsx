@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef } from 'react'
-import { auth, db } from './firebase'
+import { auth, db, functions } from './firebase'
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -10,6 +10,7 @@ import {
   sendEmailVerification
 } from 'firebase/auth'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 import ELogbook2026 from './elogbook_2026_v5_1'
 import OnboardingFlow from './OnboardingFlow'
 
@@ -226,6 +227,19 @@ function App() {
     }
   }
 
+  // Delete account and all data
+  const handleDeleteAccount = async () => {
+    try {
+      const deleteUserAccount = httpsCallable(functions, 'deleteUserAccount')
+      await deleteUserAccount()
+      // Auth listener will detect logout and handle redirect
+      console.log('Account deletion initiated')
+    } catch (error) {
+      console.error('Account deletion failed:', error)
+      // User stays on page, sees error in settings
+    }
+  }
+
   if (authLoading) {
     return <div style={{ background: '#0a0d12', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Courier New' }}>Loading...</div>
   }
@@ -245,7 +259,7 @@ function App() {
     )
   }
 
-  return <ELogbook2026 onLogout={() => signOut(auth)} />
+  return <ELogbook2026 onLogout={() => signOut(auth)} onDeleteAccount={handleDeleteAccount} />
 }
 
 export default App
