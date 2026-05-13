@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-plugin-autotable";
+import "jspdf-autotable";
 
 const DARK_COCKPIT_THEME = {
   bg:        "#0a0d12",
@@ -117,7 +117,7 @@ export default function ExportImportModal({ open, onClose, monthData }) {
     });
 
     const doc = new jsPDF({ orientation: "landscape" });
-    autoTable(doc, {
+    doc.autoTable({
       head: [COLUMN_ORDER],
       body: flatRows,
       startY: 10,
