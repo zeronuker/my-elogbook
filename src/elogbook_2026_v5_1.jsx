@@ -5,6 +5,7 @@ import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup } from "firebase/auth";
 import { doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS } from "./SettingsModal";
+import ExportImportModal from "./ExportImportModal";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -353,6 +354,7 @@ export default function ELogbook2026({ onLogout }) {
   const [recencyType, setRecencyType] = useState("");   // selected aircraft type in recency
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [exportImportOpen, setExportImportOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
   const gtDateInputRef = useRef(null);
@@ -376,6 +378,17 @@ export default function ELogbook2026({ onLogout }) {
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, data]);
+
+  // ── Handle import complete event ──
+  useEffect(() => {
+    const handleImportComplete = (e) => {
+      const { monthData: importedData, addedCount } = e.detail;
+      setData(importedData);
+      saveData();
+    };
+    window.addEventListener("importComplete", handleImportComplete);
+    return () => window.removeEventListener("importComplete", handleImportComplete);
+  }, []);
 
   // ── Load data from Firestore ──
   const loadData = async (uid) => {
@@ -1018,12 +1031,16 @@ export default function ELogbook2026({ onLogout }) {
                   <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                 </svg>
               </button>
-              {/* Export (dummy) */}
-              <button onClick={() => {}} title="Export (coming soon)" style={iconBtnStyle}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
+              {/* Export/Import */}
+              <button onClick={() => setExportImportOpen(true)} title="Export / Import" style={iconBtnStyle}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M2 12h20"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  <polyline points="18 7 23 7 23 9"/>
+                  <line x1="23" y1="8" x2="16" y2="8"/>
+                  <polyline points="6 17 1 17 1 15"/>
+                  <line x1="1" y1="16" x2="8" y2="16"/>
                 </svg>
               </button>
               {/* Settings */}
@@ -2196,6 +2213,13 @@ export default function ELogbook2026({ onLogout }) {
         onSave={saveSettings}
         userEmail={user?.email}
         onDeleteAccount={deleteAccount}
+      />
+
+      {/* ── EXPORT/IMPORT MODAL ── */}
+      <ExportImportModal
+        open={exportImportOpen}
+        onClose={() => setExportImportOpen(false)}
+        monthData={data}
       />
 
       {/* ── FOOTER ── */}
