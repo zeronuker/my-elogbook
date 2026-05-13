@@ -419,43 +419,111 @@ function MiscTab({ onDeleteAccount }) {
       <div className="elb-form-section">
         <div className="elb-form-section-title">CHANGELOG</div>
 
-        <div className="elb-changelog-entry">
-          <div className="elb-changelog-ver">
-            <span className="elb-changelog-tag">V5.2 <span className="elb-tag elb-tag-new">CURRENT</span></span>
-            <span className="elb-changelog-date">MAY 2026</span>
+        <div className="elb-changelog-scroll">
+          <div className="elb-changelog-entry">
+            <div className="elb-changelog-ver">
+              <span className="elb-changelog-tag">V5.2 <span className="elb-tag elb-tag-new">CURRENT</span></span>
+              <span className="elb-changelog-date">13 MAY 2026</span>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Settings &amp; Customization</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Settings modal with font type and size scaling</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Profile header with standard formula toggle</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Dark Cockpit theme locked in</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Layout &amp; Spacing</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Center number input fields &amp; airline operator</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Field spacing &amp; visual layout improvements</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">UI Polish &amp; Refinements</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Font sizing, header weights, column widths</li>
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Rename STD/STA headers, current month default</li>
+              </ul>
+            </div>
           </div>
-          <ul className="elb-changelog-items">
-            <li><span className="elb-tag elb-tag-new">NEW</span> Settings panel — profile, appearance, preferences and misc</li>
-            <li><span className="elb-tag elb-tag-new">NEW</span> Default aircraft / markings / captain auto-fill</li>
-            <li><span className="elb-tag elb-tag-new">NEW</span> Configurable pre/post-flight duty buffers</li>
-            <li><span className="elb-tag elb-tag-imp">IMP</span> Adjustable logbook font size (9–14px)</li>
-          </ul>
-        </div>
 
-        <div className="elb-changelog-entry">
-          <div className="elb-changelog-ver">
-            <span className="elb-changelog-tag">V5.1</span>
-            <span className="elb-changelog-date">MAY 2026</span>
+          <div className="elb-changelog-entry">
+            <div className="elb-changelog-ver">
+              <span className="elb-changelog-tag">V5.1</span>
+              <span className="elb-changelog-date">07 MAY 2026</span>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Flight Tracking</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Dynamic day/night calculation (CAD-6) with sunrise/sunset</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Autoland recency tracking — 3-in-6-months requirement</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Grand total hours section with date picker</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Carry forward hours table in profile settings</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Authentication</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Google auth UI freeze — manual state update</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Input focus loss on signup screens</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Email verification error handling</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Other</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Move Firebase config to env variables</li>
+              </ul>
+            </div>
           </div>
-          <ul className="elb-changelog-items">
-            <li><span className="elb-tag elb-tag-new">NEW</span> FTL Limits tab — Para 2.18 &amp; 2.19.1 with approaching-limit alerts</li>
-            <li><span className="elb-tag elb-tag-new">NEW</span> Recency tracker — T/O &amp; LDG and Autoland per aircraft type</li>
-            <li><span className="elb-tag elb-tag-new">NEW</span> Regulatory reference popups on each limit card</li>
-            <li><span className="elb-tag elb-tag-imp">IMP</span> Day/night calculation now handles cross-midnight sectors</li>
-          </ul>
-        </div>
 
-        <div className="elb-changelog-entry">
-          <div className="elb-changelog-ver">
-            <span className="elb-changelog-tag">V5.0</span>
-            <span className="elb-changelog-date">MAR 2026</span>
+          <div className="elb-changelog-entry">
+            <div className="elb-changelog-ver">
+              <span className="elb-changelog-tag">V5.0</span>
+              <span className="elb-changelog-date">05 MAY 2026</span>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Authentication &amp; Onboarding</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Firebase email/password &amp; Google OAuth</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> 3-step onboarding flow with email verification</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Logout confirmation screen</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">UI Structure &amp; Data</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Remarks popup per-row with modal editor</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Duplicate row entries via ID regeneration</li>
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Auto column widths with fixed captain column</li>
+              </ul>
+            </div>
           </div>
-          <ul className="elb-changelog-items">
-            <li><span className="elb-tag elb-tag-new">NEW</span> Cloud save with Google Sign-In · Private per-pilot data</li>
-            <li><span className="elb-tag elb-tag-new">NEW</span> Monthly Summary tab with annual grand totals</li>
-            <li><span className="elb-tag elb-tag-fix">FIX</span> HOC colour coding badge now wraps text correctly</li>
-            <li><span className="elb-tag elb-tag-imp">IMP</span> Tab key navigation between logbook cells</li>
-          </ul>
+
+          <div className="elb-changelog-entry">
+            <div className="elb-changelog-ver">
+              <span className="elb-changelog-tag">V1</span>
+              <span className="elb-changelog-date">01 MAY 2026</span>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Early Work &amp; Foundation</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Initial commit and v5 scaffolding</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Dropdown for capacity column</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Departure/arrival subcategories under sectors</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">UI Structure &amp; Foundation</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Green plus icon, aligned delete button</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Auto day/night calculation from STD/STA</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Google login &amp; Firebase cloud save</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -776,15 +844,29 @@ const settingsCss = `
     letter-spacing:0.1em;margin-bottom:16px;
   }
 
-  .elb-changelog-entry{
-    padding:12px 14px;background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;
-    border-radius:3px;margin-bottom:10px;text-align:left;
+  .elb-changelog-scroll{
+    height:200px;overflow-y:auto;border:1px solid #0f1e2d;border-radius:3px;
+    padding:12px;background:var(--elb-bg,#0a0d12);
   }
-  .elb-changelog-ver{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;text-align:left;}
+  .elb-changelog-scroll::-webkit-scrollbar{width:4px;}
+  .elb-changelog-scroll::-webkit-scrollbar-track{background:transparent;}
+  .elb-changelog-scroll::-webkit-scrollbar-thumb{background:#1a3050;border-radius:2px;}
+  .elb-changelog-scroll::-webkit-scrollbar-thumb:hover{background:#243d5a;}
+
+  .elb-changelog-entry{
+    padding:0 2px 12px 2px;margin-bottom:12px;text-align:left;border-bottom:1px solid #0f1e2d;
+  }
+  .elb-changelog-entry:last-child{border-bottom:none;margin-bottom:0;}
+  .elb-changelog-ver{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;text-align:left;}
   .elb-changelog-tag{font-size:0.82em;color:#4fc3f7;font-weight:700;}
   .elb-changelog-date{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);}
-  .elb-changelog-items{list-style:none;padding:0;margin:0;text-align:left;}
-  .elb-changelog-items li{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);line-height:1.8;padding-left:18px;position:relative;margin-bottom:6px;}
+
+  .elb-changelog-section{margin-bottom:8px;}
+  .elb-changelog-section:last-child{margin-bottom:0;}
+  .elb-changelog-subsection{font-size:0.8em;letter-spacing:0.08em;color:#4fc3f7;font-weight:600;margin-bottom:4px;text-transform:uppercase;}
+
+  .elb-changelog-items{list-style:none;padding:0;margin:0 0 6px 0;text-align:left;}
+  .elb-changelog-items li{font-size:0.82em;color:var(--elb-txt-muted,#4a6a8a);line-height:1.6;padding-left:16px;position:relative;margin-bottom:3px;}
   .elb-changelog-items li::before{content:'›';position:absolute;left:4px;color:#4fc3f7;}
 
   .elb-disclaimer-box{
