@@ -111,7 +111,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
         {/* ── HEADER ── */}
         <div className="elb-modal-header">
           <div>
-            <div className="elb-modal-label">eLOGBOOK V5.2 · CONFIGURATION</div>
+            <div className="elb-modal-label">eLOGBOOK V5.3 · CONFIGURATION</div>
             <div className="elb-modal-title">⚙ SETTINGS</div>
           </div>
           <button className="elb-modal-close" onClick={onClose} title="Close">✕</button>
@@ -426,12 +426,11 @@ function MiscTab({ onDeleteAccount }) {
               <span className="elb-changelog-date">13 MAY 2026</span>
             </div>
             <div className="elb-changelog-section">
-              <div className="elb-changelog-subsection">Data Management</div>
+              <div className="elb-changelog-subsection">Account Management</div>
               <ul className="elb-changelog-items">
-                <li><span className="elb-tag elb-tag-new">NEW</span> Export logbook data to Excel or PDF (date range)</li>
-                <li><span className="elb-tag elb-tag-new">NEW</span> Import Excel/PDF files with validation &amp; merge</li>
-                <li><span className="elb-tag elb-tag-new">NEW</span> Duplicate flight detection — skip existing entries</li>
-                <li><span className="elb-tag elb-tag-new">NEW</span> Globe icon with bidirectional arrows (import/export)</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Delete account &amp; all data — permanent deletion via Cloud Function</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Account deletion confirmation dialog with clear warnings</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Auto-redirect to login/signup after deletion</li>
               </ul>
             </div>
           </div>
