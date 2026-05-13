@@ -652,7 +652,7 @@ const settingsCss = `
     margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #0f1e2d;
   }
   .elb-form-row{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:24px;}
-  .elb-form-row.single{grid-template-columns:1fr;}
+  .elb-form-row.single{grid-template-columns:1fr;justify-items:center;}
   .elb-form-group{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
   .elb-form-label{font-size:0.85em;letter-spacing:0.12em;color:var(--elb-txt-muted,#4a6a8a);}
   .elb-required{color:#ef4444;margin-left:2px;}
