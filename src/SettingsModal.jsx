@@ -41,7 +41,7 @@ const TAB_HINTS = {
   profile:     "Profile changes update your logbook defaults immediately.",
   appearance:  "Appearance changes apply after saving.",
   preferences: "⚠ Recalculation may take a moment on large logbooks.",
-  misc:        "Version 5.2 · claudeborne.my",
+  misc:        "Version 5.3 · claudeborne.my",
 };
 
 // ── Carry-forward helpers ────────────────────────────────────────────────────
@@ -401,7 +401,7 @@ function MiscTab({ onDeleteAccount }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   return (
     <>
-      <div className="elb-ver-badge">✈ eLOGBOOK · VERSION 5.2 · CAD 1901 ISS01/REV01</div>
+      <div className="elb-ver-badge">✈ eLOGBOOK · VERSION 5.3 · CAD 1901 ISS01/REV01</div>
 
       <div className="elb-form-section">
         <div className="elb-form-section-title">SUPPORT</div>
@@ -422,7 +422,23 @@ function MiscTab({ onDeleteAccount }) {
         <div className="elb-changelog-scroll">
           <div className="elb-changelog-entry">
             <div className="elb-changelog-ver">
-              <span className="elb-changelog-tag">V5.2 <span className="elb-tag elb-tag-new">CURRENT</span></span>
+              <span className="elb-changelog-tag">V5.3 <span className="elb-tag elb-tag-new">CURRENT</span></span>
+              <span className="elb-changelog-date">13 MAY 2026</span>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Data Management</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Export logbook data to Excel or PDF (date range)</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Import Excel/PDF files with validation &amp; merge</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Duplicate flight detection — skip existing entries</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Globe icon with bidirectional arrows (import/export)</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="elb-changelog-entry">
+            <div className="elb-changelog-ver">
+              <span className="elb-changelog-tag">V5.2</span>
               <span className="elb-changelog-date">13 MAY 2026</span>
             </div>
             <div className="elb-changelog-section">
