@@ -374,7 +374,7 @@ export default function ELogbook2026({ onLogout }) {
   const [editingCell, setEditingCell] = useState(null);
   const [activeTab, setActiveTab] = useState("logbook");
   const [saveStatus, setSaveStatus] = useState("idle");
-  const [lastSaveTime, setLastSaveTime] = useState("");
+  const [lastSaveTime, setLastSaveTime] = useState(""); // Format: "DD MMM YYYY • HH:MM:SS"
   const [refreshStatus, setRefreshStatus] = useState("idle");
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
@@ -491,8 +491,10 @@ export default function ELogbook2026({ onLogout }) {
       const ref = doc(db, "users", user.uid, "logbook", "data");
       await setDoc(ref, { logbookData: cleanData, settings: settingsRef.current, updatedAt: new Date().toISOString() }, { merge: true });
       const now = new Date();
+      const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
       const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      setLastSaveTime(timeStr);
+      const fullStr = `${dateStr} • ${timeStr}`;
+      setLastSaveTime(fullStr);
       setSaveStatus("saved");
       // Keep "saved" status visible until next save attempt
     } catch (e) {
@@ -1192,7 +1194,7 @@ export default function ELogbook2026({ onLogout }) {
             ))}
           </div>
           {/* ── AUTOSAVE STATUS & SAVE NOW BUTTON ── */}
-          <div style={{ paddingRight: 18, display: "flex", alignItems: "center", gap: 12, fontSize: 11, letterSpacing: "0.1em" }}>
+          <div style={{ paddingRight: 18, display: "flex", alignItems: "center", gap: 12, fontSize: 11, letterSpacing: "0.1em", flex: 1, justifyContent: "flex-end" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               {saveStatus === "saving" && (
                 <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f5c542", fontWeight: 700 }}>
@@ -1203,12 +1205,12 @@ export default function ELogbook2026({ onLogout }) {
                 </span>
               )}
               {saveStatus === "saved" && lastSaveTime && (
-                <span style={{ color: "#4fc77a", fontWeight: 700 }}>
+                <span style={{ color: "#4fc77a", fontWeight: 700, fontStyle: "italic" }}>
                   ✓ {lastSaveTime}
                 </span>
               )}
               {saveStatus === "error" && (
-                <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f74f4f", fontWeight: 700 }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f74f4f", fontWeight: 700, fontStyle: "italic" }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                   </svg>
@@ -1222,12 +1224,12 @@ export default function ELogbook2026({ onLogout }) {
               title="Save data to cloud"
               style={{
                 marginLeft: "auto",
-                background: saveStatus === "saved" ? "linear-gradient(135deg, #0d3a1a, #0a2a12)"
-                          : saveStatus === "error"  ? "linear-gradient(135deg, #3a0d0d, #2a0a0a)"
+                flexShrink: 0,
+                background: saveStatus === "error"  ? "linear-gradient(135deg, #3a0d0d, #2a0a0a)"
                           : "linear-gradient(135deg, #0d2a3a, #0a1f30)",
-                border: `1px solid ${saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7"}`,
+                border: `1px solid ${saveStatus === "error" ? "#f74f4f" : "#4fc3f7"}`,
                 borderRadius: 4,
-                color: saveStatus === "saved" ? "#4fc77a" : saveStatus === "error" ? "#f74f4f" : "#4fc3f7",
+                color: saveStatus === "error" ? "#f74f4f" : "#4fc3f7",
                 fontFamily: "'Courier New', monospace",
                 fontSize: 11,
                 letterSpacing: "0.15em",
@@ -1236,10 +1238,9 @@ export default function ELogbook2026({ onLogout }) {
                 boxShadow: "0 0 8px rgba(79,195,247,0.2)",
                 opacity: saveStatus === "saving" ? 0.7 : 1,
                 fontWeight: 700,
-                flexShrink: 0,
               }}
             >
-              {saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "saved" ? "✅ SAVED" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}
+              {saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}
             </button>
           </div>
         </div>
