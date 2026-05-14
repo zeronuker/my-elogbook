@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClaudeBorne eLogbook V5.3 — User Guide</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Courier New', Courier, monospace;
+    background: #0a0d12;
+    color: #ffffff;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 2rem 5rem;
+  }
+
+  /* ── APP HEADER ── */
+  .app-header {
+    background: #050810;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    padding: 1.25rem 1.75rem;
+    margin-bottom: 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .app-header i { font-size: 24px; color: #4fc3f7; flex-shrink: 0; }
+  .app-header .title { color: #4fc3f7; font-size: 15px; font-weight: 700; letter-spacing: .06em; }
+  .app-header .sub { color: #b8d6e5; font-size: 11px; margin-top: 3px; }
+
+  /* ── NAV TABS ── */
+  .guide-nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #1e3a5f;
+  }
+  .guide-nav button {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    padding: 6px 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1px solid #1e3a5f;
+    background: #0d1520;
+    color: #b8d6e5;
+    transition: all .15s;
+    letter-spacing: .04em;
+  }
+  .guide-nav button:hover { background: #1a2840; border-color: #4fc3f7; color: #4fc3f7; }
+  .guide-nav button.on { background: #0d3a5f; color: #4fc3f7; border-color: #4fc3f7; font-weight: 700; }
+
+  /* ── SECTION VISIBILITY ── */
+  .gsec { display: none; }
+  .gsec.active { display: block; }
+
+  /* ── INTRO BAR ── */
+  .intro {
+    background: #0d1520;
+    border-left: 3px solid #4fc3f7;
+    padding: 12px 18px;
+    font-size: 14px;
+    color: #b8d6e5;
+    margin-bottom: 2rem;
+    line-height: 1.7;
+  }
+
+  /* ── TWO-COL LAYOUT ── */
+  .tcol {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+  @media (max-width: 700px) { .tcol { grid-template-columns: 1fr; } }
+
+  /* ── STEPS ── */
+  ol.steps { list-style: none; }
+  ol.steps li {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #b8d6e5;
+  }
+  ol.steps li strong { color: #ffffff; }
+  ol.steps li em { color: #4fc3f7; font-style: normal; }
+  ol.steps li code {
+    background: #0d1520;
+    border: 1px solid #1e3a5f;
+    border-radius: 2px;
+    padding: 1px 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #4fc3f7;
+  }
+  .sn {
+    min-width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #0d3a5f;
+    color: #4fc3f7;
+    border: 1px solid #4fc3f7;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── CALLOUT ROWS (section 2) ── */
+  .crow { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; font-size: 14px; color: #b8d6e5; }
+  .carr { color: #4fc3f7; font-weight: 700; flex-shrink: 0; font-size: 16px; min-width: 22px; }
+  .clbl { color: #ffffff; font-weight: 700; }
+
+  /* ── TIP / NOTE ── */
+  .tip {
+    background: #0a2010;
+    border-left: 3px solid #2e7d32;
+    padding: 10px 16px;
+    font-size: 13px;
+    color: #66bb6a;
+    margin-top: 1.25rem;
+  }
+  .note {
+    background: #0d2030;
+    border-left: 3px solid #4fc3f7;
+    padding: 10px 16px;
+    font-size: 13px;
+    color: #4fc3f7;
+    margin-top: 1.25rem;
+  }
+
+  /* ══════════════════════════════════════
+     DARK COCKPIT MOCKUP COMPONENTS
+     ══════════════════════════════════════ */
+  .dc {
+    background: #0a0d12;
+    border: 1px solid #1e3a5f;
+    border-radius: 6px;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+    color: #ffffff;
+  }
+  .dcbar {
+    background: #050810;
+    border-bottom: 1px solid #1e3a5f;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dct { color: #4fc3f7; font-size: 11px; letter-spacing: .06em; font-weight: 700; }
+  .dcb { padding: 14px; }
+
+  /* Colour helpers */
+  .cy  { color: #4fc3f7; }
+  .mu  { color: #b8d6e5; }
+  .gn  { color: #66bb6a; }
+  .am  { color: #ffa726; }
+  .wh  { color: #ffffff; }
+
+  /* Input cells */
+  .inp {
+    background: #0d1520;
+    border: 1px solid #1e3a5f;
+    padding: 4px 8px;
+    border-radius: 3px;
+    color: #ffffff;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .inp.act { border-color: #4fc3f7; }
+  .inp.cy-inp { background: #0d3a5f; border-color: #4fc3f7; color: #4fc3f7; }
+
+  /* Badge */
+  .bdg {
+    background: #0d3a5f;
+    color: #4fc3f7;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 11px;
+    display: inline-block;
+    white-space: nowrap;
+    border: 1px solid #1e5f8f;
+  }
+
+  /* Checkbox */
+  .chk {
+    width: 16px; height: 16px;
+    border: 1px solid #4fc3f7;
+    border-radius: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+  }
+  .chk.on { background: #4fc3f7; color: #000; font-weight: 700; }
+
+  /* Tab row inside mockup */
+  .mktabrow { display: flex; border-bottom: 1px solid #1e3a5f; background: #050810; }
+  .mktab {
+    padding: 6px 14px;
+    font-size: 11px;
+    color: #b8d6e5;
+    border-bottom: 2px solid transparent;
+    letter-spacing: .04em;
+  }
+  .mktab.on { color: #4fc3f7; border-bottom-color: #4fc3f7; }
+
+  /* Toolbar icon */
+  .dico {
+    width: 26px; height: 26px;
+    border: 1px solid #1e3a5f;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: #4fc3f7;
+    flex-shrink: 0;
+    background: #0d1520;
+  }
+
+  /* Progress bar */
+  .prog { height: 5px; background: #1e3a5f; border-radius: 3px; margin: 4px 0; }
+  .progf { height: 100%; border-radius: 3px; background: #66bb6a; }
+
+  /* Divider */
+  .ddiv { border-top: 1px solid #1e3a5f; margin: 10px 0; }
+
+  /* Section label inside mockup */
+  .dlbl { color: #4fc3f7; font-size: 10px; margin-bottom: 6px; letter-spacing: .06em; font-weight: 700; }
+
+  /* Field grid 2-col */
+  .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+
+  /* Buttons inside mockup */
+  .dbtn  { background: #0d3a5f; border: 1px solid #4fc3f7; color: #4fc3f7; padding: 5px 12px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 11px; white-space: nowrap; }
+  .dbtnp { background: #4fc3f7; color: #000; border: none; padding: 5px 12px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; white-space: nowrap; }
+
+  /* Row flex helper */
+  .drow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+
+  /* Table grid helpers — define per usage */
+
+  /* ── FOOTER ── */
+  .guide-footer {
+    margin-top: 4rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #1e3a5f;
+    text-align: center;
+    font-size: 11px;
+    color: #1e3a5f;
+    letter-spacing: .05em;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: #0a0d12; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .guide-nav { display: none; }
+    .gsec { display: block !important; page-break-before: always; }
+    .gsec:first-of-type { page-break-before: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══ APP HEADER ══ -->
+  <div class="app-header">
+    <i class="ti ti-plane-departure"></i>
+    <div>
+      <div class="title">CLAUDEBORNE ELOGBOOK V5.3 · USER GUIDE</div>
+      <div class="sub">CAD 1901 · MCAR 2016 Part 7 (FTL) · Part 8 (Licensing) · ICAO Annex 1 — step-by-step for new users</div>
+    </div>
+  </div>
+
+  <!-- ══ NAV ══ -->
+  <div class="guide-nav" role="tablist">
+    <button class="on" onclick="gs(0)">1. GETTING STARTED</button>
+    <button onclick="gs(1)">2. THE INTERFACE</button>
+    <button onclick="gs(2)">3. LOGGING A FLIGHT</button>
+    <button onclick="gs(3)">4. NAVIGATION</button>
+    <button onclick="gs(4)">5. FLIGHT SUMMARY</button>
+    <button onclick="gs(5)">6. LIMITS &amp; RECENCY</button>
+    <button onclick="gs(6)">7. SETTINGS</button>
+  </div>
+
+  <!-- ══════════════ SECTION 1 — GETTING STARTED ══════════════ -->
+  <div class="gsec active" id="s0">
+    <div class="intro">ClaudeBorne is a web-based electronic pilot logbook. No app download needed — open it in any browser on any device. You sign in with your Google account.</div>
+    <div class="tcol">
+      <div>
+        <ol class="steps">
+          <li><span class="sn">1</span><span>Open your browser and go to <strong>claudeborne.my</strong></span></li>
+          <li><span class="sn">2</span><span>Click <strong>Sign in with Google</strong> and select your registered Google account</span></li>
+          <li><span class="sn">3</span><span>You'll land on the current month's logbook automatically</span></li>
+          <li><span class="sn">4</span><span>First time? Click the <strong>⚙ gear icon</strong> top-right and fill in your <strong>Profile</strong> — name, licence number, and airline — before entering any flights</span></li>
+          <li><span class="sn">5</span><span>You're ready to log your first flight</span></li>
+        </ol>
+        <div class="tip"><i class="ti ti-device-mobile" style="margin-right:6px"></i>Works on phones, tablets, and computers. No installation required.</div>
+      </div>
+
+      <!-- LOGIN SCREEN MOCKUP -->
+      <div class="dc">
+        <div class="dcbar">
+          <i class="ti ti-plane" style="color:#4fc3f7;font-size:14px"></i>
+          <span class="dct">CLAUDEBORNE · LOGIN</span>
+        </div>
+        <div class="dcb" style="padding:40px 32px;text-align:center">
+          <div style="font-size:48px;margin-bottom:12px;line-height:1">✈</div>
+          <div style="color:#4fc3f7;font-size:18px;font-weight:700;letter-spacing:.08em;margin-bottom:4px">ELOGBOOK V5.3</div>
+          <div style="color:#b8d6e5;font-size:12px;margin-bottom:6px">CAAM / MCAR 2016</div>
+          <div style="color:#1e3a5f;font-size:11px;margin-bottom:28px;line-height:1.6">
+            CAD 1901 · MCAR 2016 Part 7 (FTL)<br>Part 8 (Licensing) · ICAO Annex 1
+          </div>
+          <div style="background:#0d3a5f;border:1px solid #4fc3f7;border-radius:5px;padding:12px 20px;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;max-width:280px;margin:0 auto 12px">
+            <span style="background:#ffffff;color:#333;padding:2px 6px;font-size:11px;border-radius:2px;font-weight:900;letter-spacing:.02em">G</span>
+            <span style="color:#4fc3f7;font-size:13px;letter-spacing:.05em">SIGN IN WITH GOOGLE</span>
+          </div>
+          <div style="color:#1e3a5f;font-size:10px;margin-top:16px">Secured by Google Authentication</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SECTION 2 — THE INTERFACE ══════════════ -->
+  <div class="gsec" id="s1">
+    <div class="intro">Once logged in you'll see the main logbook. Here's a map of every area on screen — learn what each zone does before you start entering data.</div>
+    <div class="tcol">
+      <div>
+        <div class="crow"><span class="carr">①</span><span><span class="clbl">Header</span> — app version and regulatory compliance references</span></div>
+        <div class="crow"><span class="carr">②</span><span><span class="clbl">User panel</span> — your name, airline, and staff ID shown top right</span></div>
+        <div class="crow"><span class="carr">③</span><span><span class="clbl">Period selector</span> — choose any month and year (2024–2030 supported)</span></div>
+        <div class="crow"><span class="carr">④</span><span><span class="clbl">Toolbar icons</span> — left to right: Refresh · Export to Excel · Settings · Sign out</span></div>
+        <div class="crow"><span class="carr">⑤</span><span><span class="clbl">Tab bar</span> — switch between Logbook, Flight Summary, and Limits &amp; Recency</span></div>
+        <div class="crow"><span class="carr">⑥</span><span><span class="clbl">Help banner</span> — cyan bar with context-sensitive tips for the current view</span></div>
+        <div class="crow"><span class="carr">⑦</span><span><span class="clbl">Logbook table</span> — click any cell to type. Day/Night hours auto-calculate</span></div>
+        <div class="note"><i class="ti ti-calculator" style="margin-right:6px"></i>You never manually calculate day or night hours — the app does it from your block times.</div>
+      </div>
+
+      <!-- MAIN INTERFACE MOCKUP -->
+      <div class="dc">
+        <div class="dcbar" style="flex-direction:column;align-items:flex-start;gap:4px;padding:8px 14px">
+          <div style="display:flex;align-items:center;gap:8px;width:100%">
+            <span style="color:#4fc3f7;font-size:12px;letter-spacing:.05em">① ✈ ELOGBOOK V5.3 · CAAM / MCAR 2016</span>
+            <div style="margin-left:auto;background:#0d3a5f;color:#4fc3f7;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;border:1px solid #1e5f8f">A</div>
+          </div>
+          <div style="color:#b8d6e5;font-size:10px;display:flex;justify-content:space-between;width:100%">
+            <span>eLogbook v5.3 · CAA Malaysia / MCAR 2016</span>
+            <span style="color:#4fc3f7">② YOUR NAME · AIRLINE · ID</span>
+          </div>
+        </div>
+        <div class="dcb">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+            <div>
+              <div style="color:#ffffff;font-size:16px;font-weight:700;letter-spacing:.04em">MAY 2026 — FLIGHT RECORDS</div>
+              <div style="color:#b8d6e5;font-size:10px;margin-top:2px">Compliant with CAD 1901 · MCAR 2016 Part 7 (FTL) · Part 8 (Licensing) · ICAO Annex 1</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;margin-left:12px">
+              <div style="color:#b8d6e5;font-size:10px;margin-bottom:4px;letter-spacing:.04em">③ SELECT PERIOD</div>
+              <div style="display:flex;gap:5px;margin-bottom:6px">
+                <div class="inp cy-inp" style="font-size:11px">MAY ▾</div>
+                <div class="inp cy-inp" style="font-size:11px">2026 ▾</div>
+              </div>
+              <div style="display:flex;gap:4px;justify-content:flex-end">
+                <div class="dico" title="Refresh">↻</div>
+                <div class="dico" title="Export to Excel">⬇</div>
+                <div class="dico" title="Settings">⚙</div>
+                <div class="dico" title="Sign out">→|</div>
+              </div>
+              <div style="color:#b8d6e5;font-size:9px;text-align:right;margin-top:3px">④ refresh · export · settings · sign out</div>
+            </div>
+          </div>
+
+          <div class="mktabrow">
+            <div class="mktab on">■ LOGBOOK</div>
+            <div class="mktab">■ FLIGHT SUMMARY</div>
+            <div class="mktab">● LIMITS &amp; RECENCY</div>
+          </div>
+          <div style="color:#b8d6e5;font-size:9px;margin:3px 0 6px">⑤ ↑ click any tab to switch views</div>
+
+          <div style="background:#0d2030;border-left:3px solid #4fc3f7;padding:6px 12px;margin-bottom:10px;color:#4fc3f7;font-size:11px">
+            ⑥ MAY 2026 — Click any cell to enter data. Time fields format: HH:MM (e.g. 02:30). TOTAL auto-calculates from Day + Night columns.
+          </div>
+
+          <!-- Table header -->
+          <div style="display:grid;grid-template-columns:20px 46px 64px 46px 36px 48px 20px 36px 36px 44px 40px 40px;gap:2px;color:#4fc3f7;font-size:10px;margin-bottom:4px;letter-spacing:.04em">
+            <div>#</div><div>DATE</div><div>TYPE</div><div>MARK</div><div>CAPT</div><div>HOC</div><div>PF</div><div>DEP</div><div>ARR</div><div>STD</div><div>DAY</div><div>NIGHT</div>
+          </div>
+          <!-- Row 1 -->
+          <div style="display:grid;grid-template-columns:20px 46px 64px 46px 36px 48px 20px 36px 36px 44px 40px 40px;gap:2px;font-size:11px;margin-bottom:3px;align-items:center">
+            <div class="mu">1</div>
+            <div>01 MAY</div>
+            <div>B737-800</div>
+            <div>9M-LDG</div>
+            <div>SELF</div>
+            <div><span class="bdg">P1</span></div>
+            <div><div class="chk on" style="width:14px;height:14px;font-size:9px">✓</div></div>
+            <div>WMKK</div>
+            <div>WMKP</div>
+            <div>05:05</div>
+            <div class="gn" style="font-weight:700">01:05</div>
+            <div class="mu">—</div>
+          </div>
+          <!-- Row 2 -->
+          <div style="display:grid;grid-template-columns:20px 46px 64px 46px 36px 48px 20px 36px 36px 44px 40px 40px;gap:2px;font-size:11px;margin-bottom:3px;align-items:center">
+            <div class="mu">2</div>
+            <div>01 MAY</div>
+            <div>B737-800</div>
+            <div>9M-LDG</div>
+            <div>SELF</div>
+            <div><span class="bdg">P1</span></div>
+            <div><div class="chk on" style="width:14px;height:14px;font-size:9px">✓</div></div>
+            <div>WMKP</div>
+            <div>WIII</div>
+            <div>07:05</div>
+            <div class="gn" style="font-weight:700">02:35</div>
+            <div class="mu">—</div>
+          </div>
+          <!-- Row 3 -->
+          <div style="display:grid;grid-template-columns:20px 46px 64px 46px 36px 48px 20px 36px 36px 44px 40px 40px;gap:2px;font-size:11px;margin-bottom:3px;align-items:center">
+            <div class="mu">3</div>
+            <div>01 MAY</div>
+            <div>B737-800</div>
+            <div>9M-LDG</div>
+            <div>SELF</div>
+            <div><span class="bdg">P1</span></div>
+            <div><div class="chk on" style="width:14px;height:14px;font-size:9px">✓</div></div>
+            <div>WIII</div>
+            <div>WMKK</div>
+            <div>10:29</div>
+            <div class="gn" style="font-weight:700">01:01</div>
+            <div class="gn" style="font-weight:700">01:05</div>
+          </div>
+          <div style="color:#b8d6e5;font-size:9px;margin-top:6px">⑦ ↑ 30 rows per page — click any cell to enter or edit data</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SECTION 3 — LOGGING A FLIGHT ══════════════ -->
+  <div class="gsec" id="s2">
+    <div class="intro">Each row = one flight sector. Fill left to right — entering block times (STD/STA) is all you need for the app to calculate day and night hours automatically.</div>
+    <div class="tcol">
+      <div>
+        <ol class="steps">
+          <li><span class="sn">1</span><span>Click any <strong>empty cell</strong> in the next blank row to activate it</span></li>
+          <li><span class="sn">2</span><span><strong>Date</strong> — type the day number (e.g. <code>15</code>) or full date (<code>15 MAY</code>)</span></li>
+          <li><span class="sn">3</span><span><strong>Aircraft Type</strong> — e.g. <code>B737-800</code></span></li>
+          <li><span class="sn">4</span><span><strong>Markings</strong> — aircraft registration, e.g. <code>9M-LDG</code></span></li>
+          <li><span class="sn">5</span><span><strong>Captain</strong> — type the captain's name, or leave as <code>SELF</code> if you were the captain</span></li>
+          <li><span class="sn">6</span><span><strong>Holder Operating Capacity (HOC)</strong> — use the dropdown:<br><code>P1</code> = Captain &nbsp;·&nbsp; <code>P2</code> = First Officer &nbsp;·&nbsp; <code>P1 U/S</code> = PIC Under Supervision</span></li>
+          <li><span class="sn">7</span><span><strong>Pilot Flying (PF)</strong> — tick ☑ if you were the handling pilot for that sector</span></li>
+          <li><span class="sn">8</span><span><strong>DEP / ARR</strong> — ICAO codes, e.g. <code>WMKK</code> / <code>WSSS</code></span></li>
+          <li><span class="sn">9</span><span><strong>STD / STA</strong> — off-block and on-block in UTC format <code>HH:MM</code> (e.g. <code>06:30</code>)</span></li>
+          <li><span class="sn">10</span><span><strong>Day / Night auto-fills</strong> — nothing to do. Calculated the moment you enter block times</span></li>
+        </ol>
+        <div class="tip"><i class="ti ti-device-floppy" style="margin-right:6px"></i>Data saves automatically as you type. There is no save button.</div>
+      </div>
+
+      <div>
+        <!-- ENTRY FORM MOCKUP -->
+        <div class="dc" style="margin-bottom:16px">
+          <div class="dcbar"><span class="dct">LOGBOOK ENTRY — NEW ROW</span></div>
+          <div class="dcb" style="padding:18px">
+
+            <div class="dlbl">DATE &amp; AIRCRAFT</div>
+            <div class="drow" style="margin-bottom:12px">
+              <div>
+                <div class="mu" style="font-size:10px;margin-bottom:3px">DATE</div>
+                <div class="inp" style="font-size:12px">15 MAY</div>
+              </div>
+              <div>
+                <div class="mu" style="font-size:10px;margin-bottom:3px">AIRCRAFT TYPE</div>
+                <div class="inp" style="font-size:12px">B737-800</div>
+              </div>
+              <div>
+                <div class="mu" style="font-size:10px;margin-bottom:3px">MARKINGS</div>
+                <div class="inp" style="font-size:12px">9M-LDG</div>
+              </div>
+            </div>
+
+            <div class="ddiv"></div>
+            <div class="dlbl">CREW &amp; CAPACITY</div>
+            <div class="drow" style="margin-bottom:12px;align-items:flex-end">
+              <div>
+                <div class="mu" style="font-size:10px;margin-bottom:3px">CAPTAIN</div>
+                <div class="inp" style="font-size:12px">SELF</div>
+              </div>
+              <div>
+                <div class="mu" style="font-size:10px;margin-bottom:3px">HOLDER OPERATING CAPACITY</div>
+                <div class="inp cy-inp" style="font-size:12px;padding:4px 12px">P1 ▾</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+                <div class="mu" style="font-size:10px">PILOT FLYING</div>
+                <div class="chk on">✓</div>
+              </div>
+            </div>
+
+            <div class="ddiv"></div>
+            <div class="dlbl">SECTORS &amp; BLOCK TIMES (UTC)</div>
+            <div class="drow" style="margin-bottom:12px">
+              <div>
+                <div class="mu" style="font-size:10px;margin-bottom:3px">DEP</div>
+                <div class="inp" style="font-size:12px">WMKK</div>
+              </div>
+              <div>
+                <div class="mu" style="font-size:10px;margin-bottom:3px">ARR</div>
+                <div class="inp" style="font-size:12px">WSSS</div>
+              </div>
+              <div>
+                <div class="mu" style="font-size:10px;margin-bottom:3px">STD (UTC)</div>
+                <div class="inp act" style="font-size:12px">06:30</div>
+              </div>
+              <div>
+                <div class="mu" style="font-size:10px;margin-bottom:3px">STA (UTC)</div>
+                <div class="inp" style="font-size:12px">07:55</div>
+              </div>
+            </div>
+
+            <div class="ddiv"></div>
+            <div class="dlbl">AUTO-CALCULATED ⚡</div>
+            <div class="drow">
+              <div>
+                <div class="mu" style="font-size:10px;margin-bottom:3px">DAY P1</div>
+                <div class="inp gn" style="background:#0a2010;border-color:#2e7d32;font-size:13px;font-weight:700">01:25</div>
+              </div>
+              <div>
+                <div class="mu" style="font-size:10px;margin-bottom:3px">NIGHT P1</div>
+                <div class="inp mu" style="font-size:12px">—</div>
+              </div>
+              <div style="margin-left:8px;align-self:flex-end">
+                <div style="color:#4fc3f7;font-size:11px">← filled automatically</div>
+                <div style="color:#b8d6e5;font-size:10px">from your block times</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HOC REFERENCE -->
+        <div class="dc">
+          <div class="dcbar"><span class="dct">HOC DROPDOWN — WHAT TO SELECT</span></div>
+          <div class="dcb" style="padding:14px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <span class="bdg" style="font-size:12px;padding:4px 10px">P1</span>
+              <span style="color:#ffffff;font-size:13px">Captain / Pilot in Command</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <span class="bdg" style="font-size:12px;padding:4px 10px">P2</span>
+              <span style="color:#ffffff;font-size:13px">First Officer / Co-pilot</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="bdg" style="font-size:12px;padding:4px 10px">P1 U/S</span>
+              <span style="color:#ffffff;font-size:13px">PIC Under Supervision (LIFUS)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SECTION 4 — NAVIGATION ══════════════ -->
+  <div class="gsec" id="s3">
+    <div class="intro">Your logbook is organised by month. Jump to any month and year using the Period Selector, or use the shortcut in the Flight Summary tab.</div>
+    <div class="tcol">
+      <div>
+        <ol class="steps">
+          <li><span class="sn">1</span><span>Find <strong>Select Period</strong> in the top-right corner of the screen</span></li>
+          <li><span class="sn">2</span><span>Click the <strong>month dropdown</strong> and select the month you want (January–December)</span></li>
+          <li><span class="sn">3</span><span>Click the <strong>year dropdown</strong> to change the year — 2024 through 2030 are supported</span></li>
+          <li><span class="sn">4</span><span>The logbook updates immediately showing that month's entries</span></li>
+          <li><span class="sn">5</span><span>Shortcut: open the <strong>Flight Summary</strong> tab and <strong>click any month row</strong> — it jumps straight to that logbook page</span></li>
+        </ol>
+        <div class="note"><i class="ti ti-calendar" style="margin-right:6px"></i>Each month holds up to 30 rows. The currently selected month is highlighted with a cyan left border in the Flight Summary.</div>
+      </div>
+
+      <!-- PERIOD SELECTOR MOCKUP -->
+      <div class="dc">
+        <div class="dcbar"><span class="dct">SELECT PERIOD</span></div>
+        <div class="dcb" style="padding:20px">
+          <div class="dlbl" style="margin-bottom:10px">CHANGE MONTH / YEAR</div>
+          <div style="display:flex;gap:12px;margin-bottom:24px">
+            <div>
+              <div class="mu" style="font-size:11px;margin-bottom:4px">MONTH</div>
+              <div class="inp cy-inp" style="font-size:13px;padding:6px 16px">MAY ▾</div>
+            </div>
+            <div>
+              <div class="mu" style="font-size:11px;margin-bottom:4px">YEAR</div>
+              <div class="inp cy-inp" style="font-size:13px;padding:6px 16px">2026 ▾</div>
+            </div>
+          </div>
+          <div class="ddiv"></div>
+          <div class="mu" style="font-size:11px;margin:12px 0 10px;letter-spacing:.04em">OR CLICK A MONTH ROW IN FLIGHT SUMMARY:</div>
+          <div style="background:#0d1520;border-left:3px solid #1e3a5f;padding:8px 14px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:12px">
+            <span>APRIL</span><span class="mu">13 sectors · 62:14 total</span>
+          </div>
+          <div style="background:#1a2840;border-left:3px solid #66bb6a;padding:8px 14px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:12px">
+            <span class="cy" style="font-weight:700">MAY ← currently viewing</span><span class="mu">10 sectors · 32:57 total</span>
+          </div>
+          <div style="background:#0d1520;border-left:3px solid #1e3a5f;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:12px;color:#b8d6e5">
+            <span>JUNE</span><span>—</span>
+          </div>
+          <div style="color:#b8d6e5;font-size:10px;margin-top:10px;text-align:center">↑ click any row to jump to that month's logbook</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SECTION 5 — FLIGHT SUMMARY ══════════════ -->
+  <div class="gsec" id="s4">
+    <div class="intro">The Flight Summary tab shows your entire year at a glance — monthly sector counts and hour totals broken down by day/night and capacity type (P1, P1 U/S, P2).</div>
+    <div class="tcol">
+      <div>
+        <ol class="steps">
+          <li><span class="sn">1</span><span>Click the <strong>Flight Summary</strong> tab in the middle of the tab bar</span></li>
+          <li><span class="sn">2</span><span>Each <strong>row = one month</strong>. Empty months show dashes (—)</span></li>
+          <li><span class="sn">3</span><span><strong>Sectors</strong> column = total number of flight sectors logged that month</span></li>
+          <li><span class="sn">4</span><span>Hour columns split by <strong>Day / Night</strong> and by capacity: P1, P1 U/S, P2</span></li>
+          <li><span class="sn">5</span><span>The <strong>Annual Total</strong> row at the bottom sums the full year</span></li>
+          <li><span class="sn">6</span><span>Click any <strong>month row</strong> to jump directly to that month's logbook page</span></li>
+        </ol>
+        <div class="tip"><i class="ti ti-table" style="margin-right:6px"></i>Use the annual total to track where you stand against yearly regulatory limits or personal hour targets.</div>
+      </div>
+
+      <!-- FLIGHT SUMMARY MOCKUP -->
+      <div class="dc">
+        <div class="dcbar"><span class="dct">2026 ANNUAL OVERVIEW — ALL MONTHS</span></div>
+        <div class="dcb" style="padding:14px">
+          <!-- Header row -->
+          <div style="display:grid;grid-template-columns:70px 36px 52px 52px 46px 52px 52px 50px;gap:3px;color:#4fc3f7;font-size:10px;text-align:right;margin-bottom:6px;letter-spacing:.04em;font-weight:700">
+            <div style="text-align:left">MONTH</div><div>SEC</div><div>DAY P1</div><div>DAY P2</div><div>P1U/S</div><div>NGT P1</div><div>NGT P2</div><div>TOTAL</div>
+          </div>
+          <!-- Data rows -->
+          <div style="display:grid;grid-template-columns:70px 36px 52px 52px 46px 52px 52px 50px;gap:3px;font-size:12px;text-align:right;color:#ffffff;margin-bottom:3px;align-items:center">
+            <div style="text-align:left;color:#b8d6e5">JANUARY</div><div>13</div><div class="gn">20:33</div><div class="mu">—</div><div class="mu">—</div><div class="gn">33:40</div><div class="mu">—</div><div style="font-weight:700">54:13</div>
+          </div>
+          <div style="display:grid;grid-template-columns:70px 36px 52px 52px 46px 52px 52px 50px;gap:3px;font-size:12px;text-align:right;color:#ffffff;margin-bottom:3px;align-items:center">
+            <div style="text-align:left;color:#b8d6e5">FEBRUARY</div><div>17</div><div class="gn">26:15</div><div class="mu">—</div><div class="gn">02:51</div><div class="gn">22:30</div><div class="mu">—</div><div style="font-weight:700">60:00</div>
+          </div>
+          <div style="display:grid;grid-template-columns:70px 36px 52px 52px 46px 52px 52px 50px;gap:3px;font-size:12px;text-align:right;color:#ffffff;margin-bottom:3px;align-items:center">
+            <div style="text-align:left;color:#b8d6e5">MARCH</div><div>21</div><div class="gn">40:30</div><div class="mu">—</div><div class="gn">05:50</div><div class="gn">24:02</div><div class="mu">—</div><div style="font-weight:700">70:22</div>
+          </div>
+          <div style="display:grid;grid-template-columns:70px 36px 52px 52px 46px 52px 52px 50px;gap:3px;font-size:12px;text-align:right;color:#ffffff;margin-bottom:3px;align-items:center">
+            <div style="text-align:left;color:#b8d6e5">APRIL</div><div>13</div><div class="gn">21:36</div><div class="mu">—</div><div class="mu">—</div><div class="gn">40:38</div><div class="mu">—</div><div style="font-weight:700">62:14</div>
+          </div>
+          <!-- Current month highlight -->
+          <div style="display:grid;grid-template-columns:70px 36px 52px 52px 46px 52px 52px 50px;gap:3px;font-size:12px;text-align:right;background:#1a2840;border-left:3px solid #4fc3f7;padding:4px 0 4px 6px;color:#4fc3f7;margin-bottom:3px;align-items:center;font-weight:700">
+            <div style="text-align:left">MAY ←</div><div>10</div><div>13:58</div><div>—</div><div>—</div><div>18:59</div><div>—</div><div>32:57</div>
+          </div>
+          <div style="display:grid;grid-template-columns:70px 36px 52px 52px 46px 52px 52px 50px;gap:3px;font-size:12px;text-align:right;color:#1e3a5f;margin-bottom:3px;align-items:center">
+            <div style="text-align:left">JUNE</div><div>—</div><div>—</div><div>—</div><div>—</div><div>—</div><div>—</div><div>—</div>
+          </div>
+          <div style="display:grid;grid-template-columns:70px 36px 52px 52px 46px 52px 52px 50px;gap:3px;font-size:12px;text-align:right;color:#1e3a5f;margin-bottom:6px;align-items:center">
+            <div style="text-align:left">JULY–DEC</div><div>—</div><div>—</div><div>—</div><div>—</div><div>—</div><div>—</div><div>—</div>
+          </div>
+          <div class="ddiv"></div>
+          <!-- Annual total -->
+          <div style="display:grid;grid-template-columns:70px 36px 52px 52px 46px 52px 52px 50px;gap:3px;font-size:13px;text-align:right;color:#4fc3f7;font-weight:700;padding-top:6px;align-items:center">
+            <div style="text-align:left">ANNUAL</div><div>74</div><div>122:52</div><div>—</div><div>08:41</div><div>139:49</div><div>08:24</div><div>279:46</div>
+          </div>
+          <div style="color:#b8d6e5;font-size:10px;margin-top:10px;text-align:center">↑ click any month row to jump to its logbook page</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SECTION 6 — LIMITS & RECENCY ══════════════ -->
+  <div class="gsec" id="s5">
+    <div class="intro">The Limits &amp; Recency tab automatically checks your flying against Malaysian aviation (CAD 1901) regulatory limits. Everything is calculated for you — just read the gauges.</div>
+    <div class="tcol">
+      <div>
+        <ol class="steps">
+          <li><span class="sn">1</span><span>Click the <strong>Limits &amp; Recency</strong> tab — the one with the green dot ●</span></li>
+          <li><span class="sn">2</span><span>Read the <strong>status banner</strong> at the top: green ✔ = fully compliant, amber/red = approaching or exceeded a limit</span></li>
+          <li><span class="sn">3</span><span><strong>Flight Time Limits</strong> — hours flown in the last 28 consecutive days (cap: 100 hrs) and last 12 months (cap: 900 hrs)</span></li>
+          <li><span class="sn">4</span><span><strong>Cumulative Duty Hours</strong> — duty time in 7, 14, and 28 consecutive days vs regulatory maximums</span></li>
+          <li><span class="sn">5</span><span><strong>Takeoff &amp; Landing Recency</strong> — select your aircraft type to check if you've completed 3 T&amp;Ls in the last 90 days</span></li>
+          <li><span class="sn">6</span><span><strong>Autoland Recency</strong> — checks for 3 autoland approaches within the last 6 months (all aircraft types)</span></li>
+        </ol>
+        <div class="tip"><i class="ti ti-shield-check" style="margin-right:6px"></i>Green bar = safe. As hours accumulate the bar fills. Amber = approaching limit. Red = at or over the cap.</div>
+      </div>
+
+      <!-- LIMITS MOCKUP -->
+      <div class="dc">
+        <div class="dcbar"><span class="dct">LIMITS &amp; RECENCY · CAD 1901</span></div>
+        <div class="dcb" style="padding:14px">
+          <!-- Status banner -->
+          <div style="background:#0a2510;border:1px solid #2e7d32;border-radius:5px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+            <span style="color:#66bb6a;font-size:20px;line-height:1">✔</span>
+            <div>
+              <div style="color:#66bb6a;font-size:12px;font-weight:700;letter-spacing:.04em">ALL LIMITS WITHIN RANGE — FULLY COMPLIANT</div>
+              <div style="color:#b8d6e5;font-size:10px;margin-top:2px">As of 13 MAY 2026 &nbsp;·&nbsp; Worst limit: ANY 12 MONTHS (END OF PREV MONTH) &nbsp;·&nbsp; CAD 1901</div>
+            </div>
+          </div>
+
+          <!-- Flight time limits -->
+          <div class="dlbl" style="margin-bottom:8px">✈ FLIGHT TIME LIMITS — CAD 1901 PARA 2.18</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+            <div style="background:#0d1520;border:1px solid #1e3a5f;border-radius:4px;padding:10px">
+              <div class="mu" style="font-size:10px;margin-bottom:3px">ANY 28 CONSECUTIVE DAYS</div>
+              <div style="color:#ffffff;font-size:16px;font-weight:700;margin-bottom:2px">67:02 <span class="mu" style="font-size:10px;font-weight:400">/ 100:00 HR</span></div>
+              <div class="prog"><div class="progf" style="width:67%"></div></div>
+              <div class="gn" style="font-size:10px">✓ 32:58 remaining &nbsp;·&nbsp; 67% used</div>
+            </div>
+            <div style="background:#0d1520;border:1px solid #1e3a5f;border-radius:4px;padding:10px">
+              <div class="mu" style="font-size:10px;margin-bottom:3px">ANY 12 MONTHS (END OF PREV MONTH)</div>
+              <div style="color:#ffffff;font-size:16px;font-weight:700;margin-bottom:2px">693:20 <span class="mu" style="font-size:10px;font-weight:400">/ 900:00 HR</span></div>
+              <div class="prog"><div class="progf" style="width:77%;background:#ffa726"></div></div>
+              <div class="gn" style="font-size:10px">✓ 206:40 remaining &nbsp;·&nbsp; 77% used</div>
+            </div>
+          </div>
+
+          <!-- Duty hours -->
+          <div class="dlbl" style="margin-bottom:8px">■ CUMULATIVE DUTY HOURS — CAD 1901 PARA 2.19.1</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+            <div style="background:#0d1520;border:1px solid #1e3a5f;border-radius:4px;padding:8px">
+              <div class="mu" style="font-size:10px;margin-bottom:2px">ANY 7 CONSECUTIVE DAYS</div>
+              <div style="color:#ffffff;font-size:13px;font-weight:700">12:20 <span class="mu" style="font-size:9px;font-weight:400">/ 55:00</span></div>
+              <div class="prog"><div class="progf" style="width:22%"></div></div>
+              <div class="gn" style="font-size:10px">22% used</div>
+            </div>
+            <div style="background:#0d1520;border:1px solid #1e3a5f;border-radius:4px;padding:8px">
+              <div class="mu" style="font-size:10px;margin-bottom:2px">ANY 14 CONSECUTIVE DAYS</div>
+              <div style="color:#ffffff;font-size:13px;font-weight:700">47:57 <span class="mu" style="font-size:9px;font-weight:400">/ 95:00</span></div>
+              <div class="prog"><div class="progf" style="width:51%"></div></div>
+              <div class="gn" style="font-size:10px">51% used</div>
+            </div>
+            <div style="background:#0d1520;border:1px solid #1e3a5f;border-radius:4px;padding:8px">
+              <div class="mu" style="font-size:10px;margin-bottom:2px">ANY 28 CONSECUTIVE DAYS</div>
+              <div style="color:#ffffff;font-size:13px;font-weight:700">94:02 <span class="mu" style="font-size:9px;font-weight:400">/ 190:00</span></div>
+              <div class="prog"><div class="progf" style="width:49%"></div></div>
+              <div class="gn" style="font-size:10px">49% used</div>
+            </div>
+          </div>
+
+          <!-- Recency -->
+          <div class="dlbl" style="margin-bottom:8px">↻ TAKEOFF &amp; LANDING RECENCY — 3 WITHIN 90 DAYS</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="inp cy-inp" style="font-size:12px;padding:5px 14px">— SELECT AIRCRAFT TYPE — ▾</div>
+            <span class="mu" style="font-size:11px">select type to check recency</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SECTION 7 — SETTINGS ══════════════ -->
+  <div class="gsec" id="s6">
+    <div class="intro">Settings lets you configure your profile, logbook preferences, and day/night calculation method. Access it any time via the ⚙ gear icon in the toolbar.</div>
+    <div class="tcol">
+      <div>
+        <ol class="steps">
+          <li><span class="sn">1</span><span>Click the <strong>⚙ gear icon</strong> in the top-right toolbar to open Settings</span></li>
+          <li><span class="sn">2</span><span><strong>Profile tab</strong> — enter your full name, date of birth, staff/employee ID, licence number, licence type, and airline</span></li>
+          <li><span class="sn">3</span><span><strong>Preferences tab</strong> — set your preferred date display format and rows per page (default: 30)</span></li>
+          <li><span class="sn">4</span><span><strong>Day/Night method</strong> — <em>Fixed Boundary</em> (simple: 11:30–23:30 UTC = night) or <em>Dynamic CAD-6</em> (actual sunrise/sunset for your departure airport — more accurate)</span></li>
+          <li><span class="sn">5</span><span><strong>Carry Forward Hours</strong> — entering hours from a previous logbook ensures cumulative totals are correct from day one</span></li>
+          <li><span class="sn">6</span><span>Click <strong>Save Changes</strong> — profile updates apply to the logbook immediately</span></li>
+        </ol>
+        <div class="note"><i class="ti ti-info-circle" style="margin-right:6px"></i>Your email is linked to your Google account and cannot be changed here. The Miscellaneous tab contains the app changelog and version history.</div>
+      </div>
+
+      <!-- SETTINGS MOCKUP -->
+      <div class="dc">
+        <div class="dcbar" style="justify-content:space-between">
+          <span class="dct">⚙ SETTINGS · ELOGBOOK V5.3 · CONFIGURATION</span>
+          <span style="color:#b8d6e5;cursor:pointer;font-size:16px">✕</span>
+        </div>
+        <!-- Settings tabs -->
+        <div class="mktabrow">
+          <div class="mktab on">👤 PROFILE</div>
+          <div class="mktab">🎨 APPEARANCE</div>
+          <div class="mktab">⚙ PREFERENCES</div>
+          <div class="mktab">📋 MISCELLANEOUS</div>
+        </div>
+        <div class="dcb" style="padding:16px">
+          <div class="dlbl" style="margin-bottom:8px">PERSONAL INFORMATION</div>
+          <div class="frow">
+            <div>
+              <div class="mu" style="font-size:10px;margin-bottom:3px">FULL NAME *</div>
+              <div class="inp" style="width:100%;font-size:12px">YOUR FULL NAME</div>
+            </div>
+            <div>
+              <div class="mu" style="font-size:10px;margin-bottom:3px">DATE OF BIRTH *</div>
+              <div class="inp" style="width:100%;font-size:12px">DD/MM/YYYY</div>
+            </div>
+          </div>
+          <div class="frow">
+            <div>
+              <div class="mu" style="font-size:10px;margin-bottom:3px">STAFF / EMPLOYEE ID</div>
+              <div class="inp" style="width:100%;font-size:12px">M00000</div>
+            </div>
+            <div>
+              <div class="mu" style="font-size:10px;margin-bottom:3px">EMAIL ADDRESS</div>
+              <div class="inp mu" style="width:100%;font-size:12px">linked to Google — read only</div>
+            </div>
+          </div>
+
+          <div class="ddiv"></div>
+          <div class="dlbl" style="margin-bottom:8px">LICENCE &amp; RATINGS</div>
+          <div class="frow">
+            <div>
+              <div class="mu" style="font-size:10px;margin-bottom:3px">LICENCE NUMBER</div>
+              <div class="inp" style="width:100%;font-size:12px">00000</div>
+            </div>
+            <div>
+              <div class="mu" style="font-size:10px;margin-bottom:3px">LICENCE TYPE</div>
+              <div class="inp cy-inp" style="width:100%;font-size:12px">ATPL(A) ▾</div>
+            </div>
+          </div>
+          <div style="margin-bottom:10px">
+            <div class="mu" style="font-size:10px;margin-bottom:3px">AIRLINE / OPERATOR</div>
+            <div class="inp" style="font-size:12px;width:100%">YOUR AIRLINE</div>
+          </div>
+
+          <div class="ddiv"></div>
+          <div class="mu" style="font-size:11px;margin-bottom:12px">Profile changes update your logbook defaults immediately.</div>
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <div class="dbtn">CANCEL</div>
+            <div class="dbtnp">SAVE CHANGES</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ FOOTER ══ -->
+  <div class="guide-footer">
+    CLAUDEBORNE ELOGBOOK V5.3 · USER GUIDE · CAD 1901 · MCAR 2016 · ICAO ANNEX 1 · CLAUDEBORNE.MY
+  </div>
+
+</div>
+
+<script>
+  var secs = document.querySelectorAll('.gsec');
+  var btns = document.querySelectorAll('.guide-nav button');
+  function gs(i) {
+    secs.forEach(function(s, j) { s.classList.toggle('active', j === i); });
+    btns.forEach(function(b, j) { b.classList.toggle('on', j === i); });
+  }
+</script>
+</body>
+</html>
