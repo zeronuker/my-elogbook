@@ -494,11 +494,11 @@ export default function ELogbook2026({ onLogout }) {
       const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
       setLastSaveTime(timeStr);
       setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 3000);
+      // Keep "saved" status visible until next save attempt
     } catch (e) {
       console.error("Save error:", e);
       setSaveStatus("error");
-      setTimeout(() => setSaveStatus("idle"), 3000);
+      // Keep "error" status visible until successful save
     }
   };
 
@@ -1192,7 +1192,7 @@ export default function ELogbook2026({ onLogout }) {
             ))}
           </div>
           {/* ── AUTOSAVE STATUS & SAVE NOW BUTTON ── */}
-          <div style={{ paddingRight: 18, display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, letterSpacing: "0.1em" }}>
+          <div style={{ paddingRight: 18, display: "flex", alignItems: "center", gap: 12, fontSize: 11, letterSpacing: "0.1em" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               {saveStatus === "saving" && (
                 <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f5c542", fontWeight: 700 }}>
@@ -1221,6 +1221,7 @@ export default function ELogbook2026({ onLogout }) {
               disabled={saveStatus === "saving"}
               title="Save data to cloud"
               style={{
+                marginLeft: "auto",
                 background: saveStatus === "saved" ? "linear-gradient(135deg, #0d3a1a, #0a2a12)"
                           : saveStatus === "error"  ? "linear-gradient(135deg, #3a0d0d, #2a0a0a)"
                           : "linear-gradient(135deg, #0d2a3a, #0a1f30)",
