@@ -380,6 +380,7 @@ export default function ELogbook2026({ onLogout }) {
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
   const [recencyType, setRecencyType] = useState("");   // selected aircraft type in recency
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
@@ -434,7 +435,9 @@ export default function ELogbook2026({ onLogout }) {
           setData(normalized);
         }
         if (docData.settings) {
-          setSettings({ ...DEFAULT_SETTINGS, ...docData.settings });
+          const merged = { ...DEFAULT_SETTINGS, ...docData.settings };
+          settingsRef.current = merged;
+          setSettings(merged);
         }
       }
     } catch (e) {
@@ -442,8 +445,12 @@ export default function ELogbook2026({ onLogout }) {
     }
   };
 
+  // ── Keep settingsRef in sync so saveData never reads a stale closure ──
+  useEffect(() => { settingsRef.current = settings; }, [settings]);
+
   // ── Save settings only (separate from logbook auto-save) ──
   const saveSettings = async (next) => {
+    settingsRef.current = next; // update ref immediately before any async gap
     setSettings(next);
     if (!user) return;
     try {
@@ -482,7 +489,7 @@ export default function ELogbook2026({ onLogout }) {
       });
 
       const ref = doc(db, "users", user.uid, "logbook", "data");
-      await setDoc(ref, { logbookData: cleanData, settings, updatedAt: new Date().toISOString() }, { merge: true });
+      await setDoc(ref, { logbookData: cleanData, settings: settingsRef.current, updatedAt: new Date().toISOString() }, { merge: true });
       const now = new Date();
       const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
       setLastSaveTime(timeStr);
