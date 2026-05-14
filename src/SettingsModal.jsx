@@ -423,10 +423,45 @@ function MiscTab({ onDeleteAccount }) {
           <div className="elb-changelog-entry">
             <div className="elb-changelog-ver">
               <span className="elb-changelog-tag">V5.3 <span className="elb-tag elb-tag-new">CURRENT</span></span>
-              <span className="elb-changelog-date">13 MAY 2026</span>
+              <span className="elb-changelog-date">14 MAY 2026</span>
             </div>
             <div className="elb-changelog-section">
-              <div className="elb-changelog-subsection">Data Management</div>
+              <div className="elb-changelog-subsection">Table &amp; Display</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Bold all table headers in logbook &amp; flight summary tabs</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Floating Add Remarks &amp; Delete Row columns with transparent background</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Data Entry &amp; Input</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Auto-capitalize all data entry fields (uppercase display)</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Accept both HH:MM and HHMM time formats (STD, STA, Carry Forward)</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Read-only columns after STA (UTC) — Day, Night, and Total columns</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Navigation &amp; Interaction</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Tab navigation stops at STA (UTC) and wraps to next row</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Add Remarks button with 4 state colors (gray/amber/cyan/green)</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Feedback &amp; Status</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Autosave timestamp display in tabs row (HH:MM:SS format)</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Autosave failure prompt with clear error message &amp; action button</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Header &amp; Compliance</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Removed duplicate "CAAM/MCAR 2016" header line for cleaner display</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Data Management (Previous)</div>
               <ul className="elb-changelog-items">
                 <li><span className="elb-tag elb-tag-new">NEW</span> Export logbook data to Excel or PDF (date range)</li>
                 <li><span className="elb-tag elb-tag-new">NEW</span> Import Excel/PDF files with validation &amp; merge</li>
@@ -435,7 +470,7 @@ function MiscTab({ onDeleteAccount }) {
               </ul>
             </div>
             <div className="elb-changelog-section">
-              <div className="elb-changelog-subsection">Account Management</div>
+              <div className="elb-changelog-subsection">Account Management (Previous)</div>
               <ul className="elb-changelog-items">
                 <li><span className="elb-tag elb-tag-new">NEW</span> Delete account &amp; all data — permanent deletion via Cloud Function</li>
                 <li><span className="elb-tag elb-tag-new">NEW</span> Account deletion confirmation dialog with clear warnings</li>

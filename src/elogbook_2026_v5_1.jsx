@@ -74,12 +74,35 @@ const initialData = () => {
 
 function parseHHMM(val) {
   if (!val || !val.trim()) return 0;
-  const parts = val.trim().split(":");
-  if (parts.length === 2) {
-    const h = parseInt(parts[0]) || 0;
-    const m = parseInt(parts[1]) || 0;
-    return h * 60 + m;
+  const trimmed = val.trim();
+
+  // Try HH:MM format first
+  if (trimmed.includes(":")) {
+    const parts = trimmed.split(":");
+    if (parts.length === 2) {
+      const h = parseInt(parts[0]) || 0;
+      const m = parseInt(parts[1]) || 0;
+      return h * 60 + m;
+    }
   }
+
+  // Try HHMM format (no colon)
+  const digitsOnly = trimmed.replace(/\D/g, "");
+  if (digitsOnly.length >= 3) {
+    // Last 2 digits are minutes, rest are hours
+    const h = parseInt(digitsOnly.slice(0, -2)) || 0;
+    const m = parseInt(digitsOnly.slice(-2)) || 0;
+    return h * 60 + m;
+  } else if (digitsOnly.length === 2) {
+    // 2 digits: could be HH or MM, assume MM
+    const m = parseInt(digitsOnly) || 0;
+    return m;
+  } else if (digitsOnly.length === 1) {
+    // 1 digit: assume hours
+    const h = parseInt(digitsOnly) || 0;
+    return h * 60;
+  }
+
   return 0;
 }
 
@@ -348,6 +371,7 @@ export default function ELogbook2026({ onLogout }) {
   const [editingCell, setEditingCell] = useState(null);
   const [activeTab, setActiveTab] = useState("logbook");
   const [saveStatus, setSaveStatus] = useState("idle");
+  const [lastSaveTime, setLastSaveTime] = useState("");
   const [refreshStatus, setRefreshStatus] = useState("idle");
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
@@ -456,6 +480,9 @@ export default function ELogbook2026({ onLogout }) {
 
       const ref = doc(db, "users", user.uid, "logbook", "data");
       await setDoc(ref, { logbookData: cleanData, settings, updatedAt: new Date().toISOString() }, { merge: true });
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      setLastSaveTime(timeStr);
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 3000);
     } catch (e) {
@@ -956,11 +983,11 @@ export default function ELogbook2026({ onLogout }) {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <span style={{ fontSize: 22, color: "#4fc3f7" }}>✈</span>
               <span style={{ fontSize: 13, letterSpacing: "0.25em", color: "#4fc3f7", textTransform: "uppercase" }}>
-                eLOGBOOK V5.3 · CAAM / MCAR 2016
+                eLOGBOOK V5.3
               </span>
             </div>
             <div style={{ fontSize: 13, color: "#7ab8d4", marginBottom: 2 }}>
-              eLOGBOOK v5.3 · CAA MALAYSIA / MCAR 2016
+              CAA MALAYSIA / MCAR 2016
             </div>
             <div style={{ fontSize: 19, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.05em" }}>
               {MONTHS[selectedMonth].toUpperCase()} {selectedYear} — FLIGHT RECORDS
@@ -1080,28 +1107,54 @@ export default function ELogbook2026({ onLogout }) {
         </div>
 
         {/* ── TABS ── */}
-        <div style={{ display: "flex", gap: 0 }}>
-          {[
-            { id: "logbook",  label: "📋 LOGBOOK" },
-            { id: "summary",  label: "📊 FLIGHT SUMMARY" },
-            { id: "ftl",      label: "⏱ LIMITS & RECENCY" },
-          ].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-              background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
-              border: "none",
-              borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
-              borderLeft: "1px solid " + (activeTab === tab.id ? "var(--elb-bdr, #1e3a5f)" : "transparent"),
-              borderRight: "1px solid " + (activeTab === tab.id ? "var(--elb-bdr, #1e3a5f)" : "transparent"),
-              color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "#5a7a9a",
-              padding: "7px 18px",
-              fontSize: 13,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              cursor: "pointer",
-              fontFamily: "var(--elb-font, 'Courier New', monospace)",
-              marginBottom: activeTab === tab.id ? "-1px" : 0,
-            }}>{tab.label}</button>
-          ))}
+        <div style={{ display: "flex", gap: 0, alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", gap: 0 }}>
+            {[
+              { id: "logbook",  label: "📋 LOGBOOK" },
+              { id: "summary",  label: "📊 FLIGHT SUMMARY" },
+              { id: "ftl",      label: "⏱ LIMITS & RECENCY" },
+            ].map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+                background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
+                border: "none",
+                borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
+                borderLeft: "1px solid " + (activeTab === tab.id ? "var(--elb-bdr, #1e3a5f)" : "transparent"),
+                borderRight: "1px solid " + (activeTab === tab.id ? "var(--elb-bdr, #1e3a5f)" : "transparent"),
+                color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "#5a7a9a",
+                padding: "7px 18px",
+                fontSize: 13,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+                fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                marginBottom: activeTab === tab.id ? "-1px" : 0,
+              }}>{tab.label}</button>
+            ))}
+          </div>
+          {/* ── AUTOSAVE STATUS ── */}
+          <div style={{ paddingRight: 18, display: "flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: "0.1em" }}>
+            {saveStatus === "saving" && (
+              <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f5c542", fontWeight: 700 }}>
+                <svg style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                </svg>
+                <span>SAVING...</span>
+              </span>
+            )}
+            {saveStatus === "saved" && lastSaveTime && (
+              <span style={{ color: "#4fc77a", fontWeight: 700 }}>
+                ✓ {lastSaveTime}
+              </span>
+            )}
+            {saveStatus === "error" && (
+              <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f74f4f", fontWeight: 700 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>SAVE ERROR</span>
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1155,7 +1208,7 @@ export default function ELogbook2026({ onLogout }) {
                 <span style={{ color: "#4fc3f7", fontWeight: 700 }}>
                   {MONTHS[selectedMonth].toUpperCase()} {selectedYear} —
                 </span>
-                {" "}Click any cell to enter data. Time fields format: HH:MM (e.g. 02:30). TOTAL auto-calculates from Day + Night columns. ({rows.length} rows)
+                {" "}Click any cell to enter data. Time fields accept HH:MM (e.g. 02:30) or HHMM (e.g. 0230) format. TOTAL auto-calculates from Day + Night columns. ({rows.length} rows)
               </div>
             </div>
 
@@ -1320,10 +1373,11 @@ export default function ELogbook2026({ onLogout }) {
                             continue;
                           }
 
+                          const isAfterSta = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].includes(col.key);
                           cells.push(
                             <td
                               key={col.key}
-                              onClick={() => !isAutoCalc && setEditingCell({ rowIdx, field: col.key })}
+                              onClick={() => !isAutoCalc && !isAfterSta && setEditingCell({ rowIdx, field: col.key })}
                               style={{
                                 ...tdStyle,
                                 textAlign: isTime ? "center" : "left",
@@ -1338,7 +1392,7 @@ export default function ELogbook2026({ onLogout }) {
                                 background: isAutoCalc
                                   ? (col.key === "total" ? "rgba(79,195,247,0.04)" : "transparent")
                                   : "transparent",
-                                cursor: isAutoCalc ? "default" : "text",
+                                cursor: isAutoCalc || isAfterSta ? "default" : "text",
                                 padding: isEditing ? "0" : "5px 7px",
                                 minWidth: col.minWidth,
                                 width: col.fixedWidth ? col.fixedWidth : undefined,
@@ -1353,14 +1407,19 @@ export default function ELogbook2026({ onLogout }) {
                                 <input
                                   autoFocus
                                   defaultValue={row[col.key]}
-                                  onBlur={e => { updateCell(rowIdx, col.key, e.target.value); setEditingCell(null); }}
+                                  onBlur={e => { updateCell(rowIdx, col.key, e.target.value.toUpperCase()); setEditingCell(null); }}
                                   onKeyDown={e => {
                                     if (e.key === "Tab") {
                                       e.preventDefault();
-                                      updateCell(rowIdx, col.key, e.target.value);
-                                      const tabbableCols = columns.filter(c => c.key !== "total" && c.type !== "select" && c.type !== "checkbox").map(c => c.key);
+                                      updateCell(rowIdx, col.key, e.target.value.toUpperCase());
+                                      const tabbableCols = columns.filter(c => (c.key !== "total" && c.type !== "select" && c.type !== "checkbox")).map(c => c.key);
+                                      const staIdx = tabbableCols.indexOf("sta");
                                       const currentIdx = tabbableCols.indexOf(col.key);
-                                      if (currentIdx < tabbableCols.length - 1) {
+                                      if (col.key === "sta") {
+                                        const nextRowIdx = rowIdx + 1;
+                                        if (nextRowIdx < rows.length) setEditingCell({ rowIdx: nextRowIdx, field: tabbableCols[0] });
+                                        else setEditingCell(null);
+                                      } else if (currentIdx < staIdx) {
                                         setEditingCell({ rowIdx, field: tabbableCols[currentIdx + 1] });
                                       } else {
                                         const nextRowIdx = rowIdx + 1;
@@ -1368,7 +1427,7 @@ export default function ELogbook2026({ onLogout }) {
                                         else setEditingCell(null);
                                       }
                                     }
-                                    if (e.key === "Enter") { updateCell(rowIdx, col.key, e.target.value); setEditingCell(null); }
+                                    if (e.key === "Enter") { updateCell(rowIdx, col.key, e.target.value.toUpperCase()); setEditingCell(null); }
                                     if (e.key === "Escape") setEditingCell(null);
                                   }}
                                   style={{
@@ -1376,6 +1435,7 @@ export default function ELogbook2026({ onLogout }) {
                                     borderBottom: "1px solid #4fc3f7", color: "#e8f4fd",
                                     fontFamily: "'Courier New', monospace", fontSize: 13,
                                     padding: "6px 8px", outline: "none", boxSizing: "border-box",
+                                    textTransform: "uppercase",
                                   }}
                                   placeholder={isTime ? "00:00" : ""}
                                 />
@@ -1390,39 +1450,55 @@ export default function ELogbook2026({ onLogout }) {
                         return cells;
                       })()}
                       {/* ── REMARKS BUTTON ── */}
-                      <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px" }}>
-                        <button
-                          onClick={() => setRemarksModal({ rowIdx, draft: row.remarks || "", autoland: row.autoland || false })}
-                          title={row.remarks ? "View / edit remarks" : "Add remarks"}
-                          style={{
-                            background: (row.remarks || row.autoland) ? "rgba(79,195,247,0.08)" : "transparent",
-                            border: `1px solid ${(row.remarks || row.autoland) ? "#4fc3f7" : "#1e3a5f"}`,
-                            borderRadius: 3,
-                            color: (row.remarks || row.autoland) ? "#4fc3f7" : "#3a5a7a",
-                            cursor: "pointer",
-                            padding: "3px 6px",
-                            fontFamily: "'Courier New',monospace",
-                            letterSpacing: "0.05em",
-                            lineHeight: 1.3,
-                            display: "flex", flexDirection: "column", alignItems: "center",
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.borderColor = "#4fc3f7";
-                            e.currentTarget.style.color = "#4fc3f7";
-                            e.currentTarget.style.background = "rgba(79,195,247,0.08)";
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.borderColor = (row.remarks || row.autoland) ? "#4fc3f7" : "#1e3a5f";
-                            e.currentTarget.style.color = (row.remarks || row.autoland) ? "#4fc3f7" : "#3a5a7a";
-                            e.currentTarget.style.background = (row.remarks || row.autoland) ? "rgba(79,195,247,0.08)" : "transparent";
-                          }}
-                        >
-                          <span style={{ fontSize: 7, display: "block" }}>{row.remarks ? "VIEW" : "ADD"}</span>
-                          <span style={{ fontSize: 7, display: "block" }}>REMARKS</span>
-                        </button>
+                      <td style={{ background: "transparent", border: "none", textAlign: "center", padding: "3px 4px" }}>
+                        {(() => {
+                          const hasRemarks = row.remarks && row.remarks.trim().length > 0;
+                          const hasAutoland = row.autoland;
+                          let stateColor, stateAltColor, stateBg;
+                          if (!hasRemarks && !hasAutoland) {
+                            stateColor = "#3a5a7a"; stateAltColor = "#4fc3f7"; stateBg = "rgba(79,195,247,0.08)";
+                          } else if (hasRemarks && !hasAutoland) {
+                            stateColor = "#b8860b"; stateAltColor = "#f5c542"; stateBg = "rgba(245,197,66,0.08)";
+                          } else if (!hasRemarks && hasAutoland) {
+                            stateColor = "#1e5a7a"; stateAltColor = "#4fc3f7"; stateBg = "rgba(79,195,247,0.08)";
+                          } else {
+                            stateColor = "#1b6b2f"; stateAltColor = "#4fc77a"; stateBg = "rgba(79,199,122,0.08)";
+                          }
+                          return (
+                            <button
+                              onClick={() => setRemarksModal({ rowIdx, draft: row.remarks || "", autoland: row.autoland || false })}
+                              title={row.remarks ? "View / edit remarks" : "Add remarks"}
+                              style={{
+                                background: stateColor === "#3a5a7a" ? "transparent" : stateBg,
+                                border: `1px solid ${stateColor}`,
+                                borderRadius: 3,
+                                color: stateColor,
+                                cursor: "pointer",
+                                padding: "3px 6px",
+                                fontFamily: "'Courier New',monospace",
+                                letterSpacing: "0.05em",
+                                lineHeight: 1.3,
+                                display: "flex", flexDirection: "column", alignItems: "center",
+                              }}
+                              onMouseEnter={e => {
+                                e.currentTarget.style.borderColor = stateAltColor;
+                                e.currentTarget.style.color = stateAltColor;
+                                e.currentTarget.style.background = stateBg;
+                              }}
+                              onMouseLeave={e => {
+                                e.currentTarget.style.borderColor = stateColor;
+                                e.currentTarget.style.color = stateColor;
+                                e.currentTarget.style.background = stateColor === "#3a5a7a" ? "transparent" : stateBg;
+                              }}
+                            >
+                              <span style={{ fontSize: 7, display: "block" }}>{row.remarks ? "VIEW" : "ADD"}</span>
+                              <span style={{ fontSize: 7, display: "block" }}>REMARKS</span>
+                            </button>
+                          );
+                        })()}
                       </td>
                       {/* ── DELETE BUTTON ── */}
-                      <td style={{ ...tdStyle, textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
+                      <td style={{ background: "transparent", border: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
                         <button
                           onClick={() => deleteRow(rowIdx)}
                           title="Delete row"
@@ -2205,6 +2281,72 @@ export default function ELogbook2026({ onLogout }) {
         );
       })()}
 
+      {/* ── AUTOSAVE ERROR MODAL ── */}
+      {saveStatus === "error" && (
+        <div
+          onClick={e => { if (e.target === e.currentTarget) setSaveStatus("idle"); }}
+          style={{
+            position: "fixed", inset: 0,
+            background: "rgba(0,0,0,0.72)",
+            zIndex: 3000,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <div style={{
+            background: "#0c1622",
+            border: "1px solid #3a2020",
+            borderTop: "2px solid #f74f4f",
+            borderRadius: 6,
+            padding: "20px 22px 18px",
+            maxWidth: 420, width: "100%",
+            boxShadow: "0 12px 48px rgba(0,0,0,0.9)",
+            animation: "popIn 0.15s ease",
+            fontFamily: "'Courier New',monospace",
+          }}>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#f74f4f", letterSpacing: "0.08em", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span>🚨</span> AUTOSAVE FAILED
+                </div>
+              </div>
+              <button
+                onClick={() => setSaveStatus("idle")}
+                style={{
+                  background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
+                  color: "#4a6a8a", fontFamily: "'Courier New',monospace", fontSize: 12,
+                  width: 22, height: 22, cursor: "pointer", flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#4a6a8a"; }}
+              >✕</button>
+            </div>
+            <div style={{ height: 1, background: "#1a3050", marginBottom: 14 }} />
+            {/* Message */}
+            <div style={{ fontSize: 13, color: "#9bbcd4", lineHeight: 1.7, marginBottom: 14 }}>
+              An error occurred while saving your data to the cloud. Please check your internet connection and try refreshing the page. Your local changes are safe and will be retried.
+            </div>
+            {/* Action Button */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <button
+                onClick={() => setSaveStatus("idle")}
+                style={{
+                  background: "transparent",
+                  border: "1px solid #1e3a55",
+                  borderRadius: 4,
+                  color: "#4a6a8a", fontFamily: "'Courier New',monospace",
+                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 18px", cursor: "pointer",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#4a6a8a"; }}
+              >DISMISS</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── SETTINGS MODAL ── */}
       <SettingsModal
         open={settingsOpen}
@@ -2290,7 +2432,7 @@ const thSubStyle = {
   color: "#3a6a8a",
   background: "var(--elb-thead, #090d14)",
   fontSize: "var(--elb-ths-sz, 9px)",
-  fontWeight: 400,
+  fontWeight: 700,
 };
 
 const tdStyle = {
