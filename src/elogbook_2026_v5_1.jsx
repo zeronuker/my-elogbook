@@ -1205,7 +1205,7 @@ export default function ELogbook2026({ onLogout }) {
             ))}
           </div>
           {/* ── AUTOSAVE STATUS & SAVE NOW BUTTON ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, letterSpacing: "0.1em", flex: 1, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, letterSpacing: "0.1em", flex: 1, justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               {saveStatus === "saving" && (
                 <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f5c542", fontWeight: 700 }}>
@@ -1234,7 +1234,6 @@ export default function ELogbook2026({ onLogout }) {
               disabled={saveStatus === "saving"}
               title="Save data to cloud"
               style={{
-                marginLeft: "auto",
                 flexShrink: 0,
                 background: saveStatus === "error"  ? "linear-gradient(135deg, #3a0d0d, #2a0a0a)"
                           : "linear-gradient(135deg, #0d2a3a, #0a1f30)",
