@@ -1772,7 +1772,7 @@ export default function ELogbook2026({ onLogout }) {
                         const colMap = { dayP1:"#22c55e", dayP1US:"#ef4444", dayP2:"#eab308", nightP1:"#22c55e", nightP1US:"#ef4444", nightP2:"#eab308" };
                         return (
                           <tr key={i} style={{ background: i % 2 === 0 ? "#0d1520" : "#0a1018" }}>
-                            <td style={{ ...tdStyle, textAlign: "left", paddingLeft: 10, color: "#e8f4fd", fontWeight: 700 }}>
+                            <td style={{ ...tdStyle, textAlign: "left", paddingLeft: 10, color: "#9bbcd4" }}>
                               {row.type}
                             </td>
                             {GT_KEYS.map(k => (
