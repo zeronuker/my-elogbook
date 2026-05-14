@@ -18,9 +18,12 @@ export const DEFAULT_SETTINGS = {
     { type: "", dayP1: "", dayP1US: "", dayP2: "", nightP1: "", nightP1US: "", nightP2: "" },
   ],
   // Appearance
-  theme: "dark",          // "dark" | "light"
-  fontSize: 14,           // 12 | 14 | 16
-  tableDensity: "default", // "compact" | "default" | "relaxed"
+  theme: "dark",            // "dark" | "light"
+  fontSize: 14,             // 12–18
+  tableDensity: "default",  // "compact" | "default" | "relaxed"
+  fontType: "courier",      // "courier" | "jetbrains" | "ibmplex" | "roboto" | "space"
+  brightness: 100,          // 60–100 (dark mode only)
+  accentColor: "#4fc3f7",   // hex from ACCENT_PALETTE
   // Preferences
   dateFormat: "D",      // "D" | "DD" | "DD MMM" — display format for DATE column
   rowsPerPage: 15,      // minimum rows shown per month in logbook
@@ -45,7 +48,7 @@ const TAB_HINTS = {
   profile:     "Profile changes update your logbook defaults immediately.",
   appearance:  "Appearance changes apply after saving.",
   preferences: "⚠ Recalculation may take a moment on large logbooks.",
-  misc:        "Version 5.4 · claudeborne.my",
+  misc:        "Version 5.5 · claudeborne.my",
 };
 
 // ── Carry-forward helpers ────────────────────────────────────────────────────
@@ -121,7 +124,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
         {/* ── HEADER ── */}
         <div className="elb-modal-header">
           <div>
-            <div className="elb-modal-label">eLOGBOOK V5.4 · CONFIGURATION</div>
+            <div className="elb-modal-label">eLOGBOOK V5.5 · CONFIGURATION</div>
             <div className="elb-modal-title">⚙ SETTINGS</div>
           </div>
           <button className="elb-modal-close" onClick={onClose} title="Close">✕</button>
@@ -300,10 +303,40 @@ function ProfileTab({ d, upd, userEmail }) {
 /* ─────────────────────────────────────────────────────────────────────────
    APPEARANCE TAB
    ───────────────────────────────────────────────────────────────────────── */
+const ACCENT_SWATCHES = [
+  { hex: "#4fc3f7", name: "CYAN"   },
+  { hex: "#f5c542", name: "AMBER"  },
+  { hex: "#22c55e", name: "GREEN"  },
+  { hex: "#a78bfa", name: "PURPLE" },
+  { hex: "#fb923c", name: "ORANGE" },
+  { hex: "#f472b6", name: "PINK"   },
+  { hex: "#ef4444", name: "RED"    },
+  { hex: "#2dd4bf", name: "TEAL"   },
+];
+
+const FONT_OPTIONS = [
+  { key: "courier",   label: "COURIER NEW",  sample: "AaBb 01" },
+  { key: "jetbrains", label: "JETBRAINS",    sample: "AaBb 01" },
+  { key: "ibmplex",   label: "IBM PLEX",     sample: "AaBb 01" },
+  { key: "roboto",    label: "ROBOTO",       sample: "AaBb 01" },
+  { key: "space",     label: "SPACE MONO",   sample: "AaBb 01" },
+];
+
+const FONT_FAMILIES_PREVIEW = {
+  courier:   "'Courier New', Courier, monospace",
+  jetbrains: "'JetBrains Mono', monospace",
+  ibmplex:   "'IBM Plex Mono', monospace",
+  roboto:    "'Roboto Mono', monospace",
+  space:     "'Space Mono', monospace",
+};
+
 function AppearanceTab({ d, upd }) {
   const theme       = d.theme        || "dark";
-  const fontSize    = Number(d.fontSize) || 14;
+  const fontSize    = Math.min(18, Math.max(12, Number(d.fontSize) || 14));
   const density     = d.tableDensity || "default";
+  const fontType    = d.fontType     || "courier";
+  const brightness  = Number(d.brightness) || 100;
+  const accentColor = d.accentColor  || "#4fc3f7";
 
   return (
     <>
@@ -312,14 +345,12 @@ function AppearanceTab({ d, upd }) {
         <div className="elb-form-section-title">THEME</div>
         <div className="elb-radio-group">
           <RadioOption
-            value="dark"
             checked={theme === "dark"}
             onChange={() => upd({ theme: "dark" })}
             name="DARK COCKPIT (DEFAULT)"
             desc="Dark background optimised for low-light environments. Recommended for cockpit and night use."
           />
           <RadioOption
-            value="light"
             checked={theme === "light"}
             onChange={() => upd({ theme: "light" })}
             name="LIGHT MODE"
@@ -328,27 +359,48 @@ function AppearanceTab({ d, upd }) {
         </div>
       </div>
 
-      {/* ── FONT SIZE ── */}
+      {/* ── TYPOGRAPHY ── */}
       <div className="elb-form-section">
-        <div className="elb-form-section-title">FONT SIZE</div>
-        <div className="elb-form-hint" style={{ marginBottom: 12 }}>Controls text size across the entire logbook.</div>
-        <div className="elb-font-size-group">
-          {[
-            { val: 12, label: "SMALL", sub: "12px" },
-            { val: 14, label: "DEFAULT", sub: "14px" },
-            { val: 16, label: "LARGE", sub: "16px" },
-          ].map(opt => (
-            <button
-              key={opt.val}
-              type="button"
-              className={"elb-font-btn" + (fontSize === opt.val ? " selected" : "")}
-              onClick={() => upd({ fontSize: opt.val })}
-              style={{ fontSize: opt.val }}
-            >
-              <span className="elb-font-btn-label">{opt.label}</span>
-              <span className="elb-font-btn-sub">{opt.sub}</span>
-            </button>
-          ))}
+        <div className="elb-form-section-title">TYPOGRAPHY</div>
+
+        {/* Font size slider */}
+        <div className="elb-form-group" style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <label className="elb-form-label" style={{ margin: 0 }}>FONT SIZE</label>
+            <span style={{ fontSize: "0.9em", color: "var(--elb-acc, #4fc3f7)", fontWeight: 700 }}>{fontSize}px</span>
+          </div>
+          <input
+            type="range" min="12" max="18" step="1"
+            value={fontSize}
+            onChange={e => upd({ fontSize: Number(e.target.value) })}
+            className="elb-range-input"
+          />
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+            <span className="elb-form-hint">12px · MIN</span>
+            <span className="elb-form-hint">18px · MAX</span>
+          </div>
+          <div className="elb-preview-row" style={{ fontFamily: FONT_FAMILIES_PREVIEW[fontType], fontSize }}>
+            WMKK → OMDB &nbsp;·&nbsp; STD 23:45 &nbsp;·&nbsp; B737 &nbsp;·&nbsp; 9M-XXX
+          </div>
+        </div>
+
+        {/* Font type */}
+        <div className="elb-form-group">
+          <label className="elb-form-label">FONT TYPE</label>
+          <div className="elb-form-hint" style={{ marginBottom: 10 }}>All options are monospace to preserve column alignment.</div>
+          <div className="elb-font-grid">
+            {FONT_OPTIONS.map(opt => (
+              <button
+                key={opt.key}
+                type="button"
+                className={"elb-font-card" + (fontType === opt.key ? " selected" : "")}
+                onClick={() => upd({ fontType: opt.key })}
+              >
+                <span className="elb-font-card-name">{opt.label}</span>
+                <span className="elb-font-card-sample" style={{ fontFamily: FONT_FAMILIES_PREVIEW[opt.key] }}>{opt.sample}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -357,21 +409,18 @@ function AppearanceTab({ d, upd }) {
         <div className="elb-form-section-title">TABLE DENSITY</div>
         <div className="elb-radio-group">
           <RadioOption
-            value="compact"
             checked={density === "compact"}
             onChange={() => upd({ tableDensity: "compact" })}
             name="COMPACT"
             desc="Tighter rows — more sectors visible without scrolling. Good for large monthly totals."
           />
           <RadioOption
-            value="default"
             checked={density === "default"}
             onChange={() => upd({ tableDensity: "default" })}
             name="DEFAULT"
             desc="Standard row height. Balanced readability and density."
           />
           <RadioOption
-            value="relaxed"
             checked={density === "relaxed"}
             onChange={() => upd({ tableDensity: "relaxed" })}
             name="RELAXED"
@@ -379,6 +428,55 @@ function AppearanceTab({ d, upd }) {
           />
         </div>
       </div>
+
+      {/* ── ACCENT COLOUR ── */}
+      <div className="elb-form-section">
+        <div className="elb-form-section-title">ACCENT COLOUR</div>
+        <div className="elb-form-hint" style={{ marginBottom: 12 }}>Changes highlight colour for headers, active states, and badges.</div>
+        <div className="elb-swatch-row">
+          {ACCENT_SWATCHES.map(sw => (
+            <div key={sw.hex} className="elb-swatch-item">
+              <button
+                type="button"
+                className={"elb-swatch" + (accentColor === sw.hex ? " selected" : "")}
+                style={{ background: sw.hex }}
+                title={sw.name}
+                onClick={() => upd({ accentColor: sw.hex })}
+              />
+              <span className="elb-swatch-name">{sw.name}</span>
+            </div>
+          ))}
+        </div>
+        <div className="elb-form-hint" style={{ marginTop: 8 }}>
+          SELECTED: {ACCENT_SWATCHES.find(s => s.hex === accentColor)?.name || "CYAN"}
+        </div>
+      </div>
+
+      {/* ── BRIGHTNESS (dark mode only) ── */}
+      {theme === "dark" && (
+        <div className="elb-form-section">
+          <div className="elb-form-section-title">DISPLAY</div>
+          <div className="elb-form-group">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <label className="elb-form-label" style={{ margin: 0 }}>SCREEN BRIGHTNESS</label>
+              <span style={{ fontSize: "0.9em", color: "var(--elb-acc, #4fc3f7)", fontWeight: 700 }}>{brightness}%</span>
+            </div>
+            <input
+              type="range" min="60" max="100" step="5"
+              value={brightness}
+              onChange={e => upd({ brightness: Number(e.target.value) })}
+              className="elb-range-input"
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+              <span className="elb-form-hint">60% · DIM</span>
+              <span className="elb-form-hint">100% · FULL</span>
+            </div>
+            <div className="elb-form-hint" style={{ marginTop: 8 }}>
+              ⚠ Dims the logbook interface only. For full screen dimming use your device brightness controls.
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -482,7 +580,7 @@ function MiscTab({ onDeleteAccount }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   return (
     <>
-      <div className="elb-ver-badge">✈ eLOGBOOK · VERSION 5.4 · CAD 1901 ISS01/REV01</div>
+      <div className="elb-ver-badge">✈ eLOGBOOK · VERSION 5.5 · CAD 1901 ISS01/REV01</div>
 
       <div className="elb-form-section">
         <div className="elb-form-section-title">SUPPORT</div>
@@ -504,7 +602,23 @@ function MiscTab({ onDeleteAccount }) {
 
           <div className="elb-changelog-entry">
             <div className="elb-changelog-ver">
-              <span className="elb-changelog-tag">V5.4 <span className="elb-tag elb-tag-new">CURRENT</span></span>
+              <span className="elb-changelog-tag">V5.5 <span className="elb-tag elb-tag-new">CURRENT</span></span>
+              <span className="elb-changelog-date">14 MAY 2026</span>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Appearance</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Font size slider — 12px to 18px with live preview</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Font type selector — 5 monospace options</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Accent colour — 8 swatches (Cyan, Amber, Green, Purple, Orange, Pink, Red, Teal)</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Screen brightness dimmer — Dark Mode only (60–100%)</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="elb-changelog-entry">
+            <div className="elb-changelog-ver">
+              <span className="elb-changelog-tag">V5.4</span>
               <span className="elb-changelog-date">14 MAY 2026</span>
             </div>
             <div className="elb-changelog-section">
@@ -926,17 +1040,44 @@ const settingsCss = `
   .elb-toggle-switch input:checked + .elb-toggle-track::before{transform:translateX(18px);background:#4fc3f7;}
 
 
-  .elb-font-size-group{display:flex;gap:8px;}
-  .elb-font-btn{
-    flex:1;background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;border-radius:3px;
-    color:#c8d6e5;font-family:inherit;cursor:pointer;padding:12px 8px;
-    display:flex;flex-direction:column;align-items:center;gap:4px;
+  .elb-range-input{
+    width:100%;-webkit-appearance:none;appearance:none;height:4px;
+    background:var(--elb-bginput,#0b1828);border-radius:2px;outline:none;
+    border:1px solid #1a3050;accent-color:var(--elb-acc,#4fc3f7);
+  }
+  .elb-range-input::-webkit-slider-thumb{
+    -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:var(--elb-acc,#4fc3f7);cursor:pointer;border:2px solid var(--elb-bginput,#0b1828);
+  }
+  .elb-range-input::-moz-range-thumb{
+    width:14px;height:14px;border-radius:50%;
+    background:var(--elb-acc,#4fc3f7);cursor:pointer;border:2px solid var(--elb-bginput,#0b1828);
+  }
+  .elb-preview-row{
+    margin-top:10px;padding:8px 12px;background:var(--elb-bg,#0a0d12);
+    border:1px solid #0f1e2d;border-radius:3px;color:var(--elb-txt,#c8d6e5);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .elb-font-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+  .elb-font-card{
+    background:var(--elb-bg,#0a0d12);border:1px solid #0f1e2d;border-radius:3px;
+    padding:10px 6px;cursor:pointer;text-align:center;font-family:inherit;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
     transition:border-color 0.15s,background 0.15s;
   }
-  .elb-font-btn:hover{border-color:#243d5a;}
-  .elb-font-btn.selected{border-color:rgba(79,195,247,0.4);background:rgba(79,195,247,0.06);}
-  .elb-font-btn-label{letter-spacing:0.1em;color:#c8d6e5;}
-  .elb-font-btn-sub{font-size:10px;color:#4a6a8a;letter-spacing:0.08em;}
+  .elb-font-card:hover{border-color:#243d5a;}
+  .elb-font-card.selected{border-color:rgba(79,195,247,0.4);background:rgba(79,195,247,0.05);}
+  .elb-font-card-name{font-size:9px;letter-spacing:0.08em;color:#4a6a8a;}
+  .elb-font-card-sample{font-size:14px;color:var(--elb-acc,#4fc3f7);}
+  .elb-swatch-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .elb-swatch-item{display:flex;flex-direction:column;align-items:center;gap:5px;}
+  .elb-swatch{
+    width:30px;height:30px;border-radius:3px;border:2px solid transparent;
+    cursor:pointer;transition:transform 0.1s,border-color 0.15s;
+  }
+  .elb-swatch:hover{transform:scale(1.1);}
+  .elb-swatch.selected{border-color:#ffffff;transform:scale(1.15);}
+  .elb-swatch-name{font-size:9px;color:#4a6a8a;letter-spacing:0.08em;}
 
   .elb-radio-group{display:flex;flex-direction:column;gap:6px;}
   .elb-radio-option{
