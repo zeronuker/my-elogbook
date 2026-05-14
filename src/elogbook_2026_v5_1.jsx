@@ -1453,7 +1453,7 @@ export default function ELogbook2026({ onLogout }) {
                         return cells;
                       })()}
                       {/* ── REMARKS BUTTON ── */}
-                      <td style={{ background: "transparent", border: "none", borderRight: "none", textAlign: "center", padding: "3px 4px" }}>
+                      <td style={{ background: "#0a0d12", border: "none", borderRight: "none", textAlign: "center", padding: "3px 4px" }}>
                         {(() => {
                           const hasRemarks = row.remarks && row.remarks.trim().length > 0;
                           const hasAutoland = row.autoland;
@@ -1501,7 +1501,7 @@ export default function ELogbook2026({ onLogout }) {
                         })()}
                       </td>
                       {/* ── DELETE BUTTON ── */}
-                      <td style={{ background: "transparent", border: "none", borderRight: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
+                      <td style={{ background: "#0a0d12", border: "none", borderRight: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
                         <button
                           onClick={() => deleteRow(rowIdx)}
                           title="Delete row"
