@@ -987,13 +987,13 @@ export default function ELogbook2026({ onLogout }) {
               </span>
             </div>
             <div style={{ fontSize: 13, color: "#7ab8d4", marginBottom: 2 }}>
-              CAA MALAYSIA / MCAR 2016
+              CAAM • MCAR 2016
             </div>
             <div style={{ fontSize: 19, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.05em" }}>
               {MONTHS[selectedMonth].toUpperCase()} {selectedYear} — FLIGHT RECORDS
             </div>
             <div style={{ fontSize: 12, color: "#5a7a9a", marginTop: 3 }}>
-              Compliant with CAD 1901 • MCAR 2016 Part 7 (FTL) • Part 8 (Licensing) • ICAO Annex 1
+              Compliant with CAD 1901 • MCAR 2016 Part 69 & Part 74
             </div>
           </div>
 
