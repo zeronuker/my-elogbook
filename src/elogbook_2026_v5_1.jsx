@@ -628,7 +628,7 @@ export default function ELogbook2026({ onLogout }) {
       <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-txt, #c8d6e5)" }}>
         <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-bdr, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
           <div style={{ fontSize: 38, marginBottom: 8 }}>✈</div>
-          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V5.5</div>
+          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V5.4</div>
           <div style={{ fontSize: 12, color: "#5a7a9a", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
           <div style={{ fontSize: 11, color: "#3a5a7a", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
           <button
@@ -1100,7 +1100,7 @@ export default function ELogbook2026({ onLogout }) {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <span style={{ fontSize: 22, color: "#4fc3f7" }}>✈</span>
               <span style={{ fontSize: 13, letterSpacing: "0.25em", color: "#4fc3f7", textTransform: "uppercase" }}>
-                eLOGBOOK V5.5
+                eLOGBOOK V5.4
               </span>
             </div>
             <div style={{ fontSize: 13, color: "#7ab8d4", marginBottom: 2 }}>
@@ -2426,6 +2426,8 @@ export default function ELogbook2026({ onLogout }) {
         open={exportImportOpen}
         onClose={() => setExportImportOpen(false)}
         monthData={data}
+        settings={settings}
+        user={user}
       />
 
       {/* ── FOOTER ── */}
