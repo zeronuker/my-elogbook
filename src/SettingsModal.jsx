@@ -73,12 +73,18 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
   const [draft, setDraft] = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
 
-  // Resync local draft whenever the modal is opened or upstream settings change
+  // Reset tab and flash only when modal is first opened
+  useEffect(() => {
+    if (open) {
+      setTab("profile");
+      setSavedFlash(false);
+    }
+  }, [open]);
+
+  // Resync draft whenever upstream settings change (includes after save)
   useEffect(() => {
     if (open) {
       setDraft({ ...DEFAULT_SETTINGS, ...(settings || {}) });
-      setTab("profile");
-      setSavedFlash(false);
     }
   }, [open, settings]);
 
