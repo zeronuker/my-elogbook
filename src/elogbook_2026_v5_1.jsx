@@ -1248,12 +1248,12 @@ export default function ELogbook2026({ onLogout }) {
                   <th style={thSubStyle}>MARKINGS</th>
                   <th style={thSubStyle}>DEP</th>
                   <th style={thSubStyle}>ARR</th>
-                  <th style={{ ...thSubStyle, color: "#c8a800" }}>P1</th>
-                  <th style={{ ...thSubStyle, color: "#c8a800" }}>P1 U/S</th>
-                  <th style={{ ...thSubStyle, color: "#c8a800" }}>P2</th>
-                  <th style={{ ...thSubStyle, color: "#5a96b8" }}>P1</th>
-                  <th style={{ ...thSubStyle, color: "#5a96b8" }}>P1 U/S</th>
-                  <th style={{ ...thSubStyle, color: "#5a96b8" }}>P2</th>
+                  <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
+                  <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
+                  <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>
+                  <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P1</th>
+                  <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
+                  <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P2</th>
                 </tr>
               </thead>
 
@@ -1318,6 +1318,9 @@ export default function ELogbook2026({ onLogout }) {
                               else if (fmt === "DD MMM") displayVal = String(d).padStart(2, "0") + " " + MONTHS[selectedMonth].slice(0, 3).toUpperCase();
                               else displayVal = String(d);
                             }
+                          }
+                          else if (timeCols.includes(col.key)) {
+                            displayVal = toHHMM(parseHHMM(row[col.key])) || "";
                           }
                           else displayVal = row[col.key] || "";
 
@@ -1450,7 +1453,7 @@ export default function ELogbook2026({ onLogout }) {
                         return cells;
                       })()}
                       {/* ── REMARKS BUTTON ── */}
-                      <td style={{ background: "transparent", border: "none", textAlign: "center", padding: "3px 4px" }}>
+                      <td style={{ background: "transparent", border: "none", borderRight: "none", textAlign: "center", padding: "3px 4px" }}>
                         {(() => {
                           const hasRemarks = row.remarks && row.remarks.trim().length > 0;
                           const hasAutoland = row.autoland;
@@ -1460,7 +1463,7 @@ export default function ELogbook2026({ onLogout }) {
                           } else if (hasRemarks && !hasAutoland) {
                             stateColor = "#b8860b"; stateAltColor = "#f5c542"; stateBg = "rgba(245,197,66,0.08)";
                           } else if (!hasRemarks && hasAutoland) {
-                            stateColor = "#1e5a7a"; stateAltColor = "#4fc3f7"; stateBg = "rgba(79,195,247,0.08)";
+                            stateColor = "#6d28d9"; stateAltColor = "#a855f7"; stateBg = "rgba(168,85,247,0.08)";
                           } else {
                             stateColor = "#1b6b2f"; stateAltColor = "#4fc77a"; stateBg = "rgba(79,199,122,0.08)";
                           }
@@ -1498,7 +1501,7 @@ export default function ELogbook2026({ onLogout }) {
                         })()}
                       </td>
                       {/* ── DELETE BUTTON ── */}
-                      <td style={{ background: "transparent", border: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
+                      <td style={{ background: "transparent", border: "none", borderRight: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
                         <button
                           onClick={() => deleteRow(rowIdx)}
                           title="Delete row"
