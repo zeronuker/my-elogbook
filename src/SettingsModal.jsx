@@ -17,6 +17,10 @@ export const DEFAULT_SETTINGS = {
   carryForward: [
     { type: "", dayP1: "", dayP1US: "", dayP2: "", nightP1: "", nightP1US: "", nightP2: "" },
   ],
+  // Appearance
+  theme: "dark",          // "dark" | "light"
+  fontSize: 14,           // 12 | 14 | 16
+  tableDensity: "default", // "compact" | "default" | "relaxed"
   // Preferences
   dateFormat: "D",      // "D" | "DD" | "DD MMM" — display format for DATE column
   rowsPerPage: 15,      // minimum rows shown per month in logbook
@@ -41,7 +45,7 @@ const TAB_HINTS = {
   profile:     "Profile changes update your logbook defaults immediately.",
   appearance:  "Appearance changes apply after saving.",
   preferences: "⚠ Recalculation may take a moment on large logbooks.",
-  misc:        "Version 5.3 · claudeborne.my",
+  misc:        "Version 5.4 · claudeborne.my",
 };
 
 // ── Carry-forward helpers ────────────────────────────────────────────────────
@@ -111,7 +115,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
         {/* ── HEADER ── */}
         <div className="elb-modal-header">
           <div>
-            <div className="elb-modal-label">eLOGBOOK V5.3 · CONFIGURATION</div>
+            <div className="elb-modal-label">eLOGBOOK V5.4 · CONFIGURATION</div>
             <div className="elb-modal-title">⚙ SETTINGS</div>
           </div>
           <button className="elb-modal-close" onClick={onClose} title="Close">✕</button>
@@ -138,7 +142,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
         {/* ── CONTENT ── */}
         <div className="elb-tab-content">
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} />}
-          {tab === "appearance"  && <AppearanceTab />}
+          {tab === "appearance"  && <AppearanceTab d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
           {tab === "misc"        && <MiscTab onDeleteAccount={onDeleteAccount} />}
         </div>
@@ -290,15 +294,86 @@ function ProfileTab({ d, upd, userEmail }) {
 /* ─────────────────────────────────────────────────────────────────────────
    APPEARANCE TAB
    ───────────────────────────────────────────────────────────────────────── */
-function AppearanceTab() {
+function AppearanceTab({ d, upd }) {
+  const theme       = d.theme        || "dark";
+  const fontSize    = Number(d.fontSize) || 14;
+  const density     = d.tableDensity || "default";
+
   return (
-    <div className="elb-form-section" style={{ textAlign: "center", color: "var(--elb-txt-muted, #4a6a8a)", padding: "40px 20px" }}>
-      <div style={{ fontSize: "1.2em", marginBottom: 8 }}>🎨</div>
-      <div style={{ fontSize: "0.95em", lineHeight: 1.6 }}>
-        Appearance customization coming soon.<br />
-        Currently running Dark Cockpit theme with optimized text sizing.
+    <>
+      {/* ── THEME ── */}
+      <div className="elb-form-section">
+        <div className="elb-form-section-title">THEME</div>
+        <div className="elb-radio-group">
+          <RadioOption
+            value="dark"
+            checked={theme === "dark"}
+            onChange={() => upd({ theme: "dark" })}
+            name="DARK COCKPIT (DEFAULT)"
+            desc="Dark background optimised for low-light environments. Recommended for cockpit and night use."
+          />
+          <RadioOption
+            value="light"
+            checked={theme === "light"}
+            onChange={() => upd({ theme: "light" })}
+            name="LIGHT MODE"
+            desc="Light background for bright environments — office, home, daytime use."
+          />
+        </div>
       </div>
-    </div>
+
+      {/* ── FONT SIZE ── */}
+      <div className="elb-form-section">
+        <div className="elb-form-section-title">FONT SIZE</div>
+        <div className="elb-form-hint" style={{ marginBottom: 12 }}>Controls text size across the entire logbook.</div>
+        <div className="elb-font-size-group">
+          {[
+            { val: 12, label: "SMALL", sub: "12px" },
+            { val: 14, label: "DEFAULT", sub: "14px" },
+            { val: 16, label: "LARGE", sub: "16px" },
+          ].map(opt => (
+            <button
+              key={opt.val}
+              type="button"
+              className={"elb-font-btn" + (fontSize === opt.val ? " selected" : "")}
+              onClick={() => upd({ fontSize: opt.val })}
+              style={{ fontSize: opt.val }}
+            >
+              <span className="elb-font-btn-label">{opt.label}</span>
+              <span className="elb-font-btn-sub">{opt.sub}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── TABLE DENSITY ── */}
+      <div className="elb-form-section">
+        <div className="elb-form-section-title">TABLE DENSITY</div>
+        <div className="elb-radio-group">
+          <RadioOption
+            value="compact"
+            checked={density === "compact"}
+            onChange={() => upd({ tableDensity: "compact" })}
+            name="COMPACT"
+            desc="Tighter rows — more sectors visible without scrolling. Good for large monthly totals."
+          />
+          <RadioOption
+            value="default"
+            checked={density === "default"}
+            onChange={() => upd({ tableDensity: "default" })}
+            name="DEFAULT"
+            desc="Standard row height. Balanced readability and density."
+          />
+          <RadioOption
+            value="relaxed"
+            checked={density === "relaxed"}
+            onChange={() => upd({ tableDensity: "relaxed" })}
+            name="RELAXED"
+            desc="Taller rows with more padding. Easier to tap on tablets and touchscreens."
+          />
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -401,7 +476,7 @@ function MiscTab({ onDeleteAccount }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   return (
     <>
-      <div className="elb-ver-badge">✈ eLOGBOOK · VERSION 5.3 · CAD 1901 ISS01/REV01</div>
+      <div className="elb-ver-badge">✈ eLOGBOOK · VERSION 5.4 · CAD 1901 ISS01/REV01</div>
 
       <div className="elb-form-section">
         <div className="elb-form-section-title">SUPPORT</div>
@@ -420,9 +495,31 @@ function MiscTab({ onDeleteAccount }) {
         <div className="elb-form-section-title">CHANGELOG</div>
 
         <div className="elb-changelog-scroll">
+
           <div className="elb-changelog-entry">
             <div className="elb-changelog-ver">
-              <span className="elb-changelog-tag">V5.3 <span className="elb-tag elb-tag-new">CURRENT</span></span>
+              <span className="elb-changelog-tag">V5.4 <span className="elb-tag elb-tag-new">CURRENT</span></span>
+              <span className="elb-changelog-date">14 MAY 2026</span>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Appearance</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Light Mode theme — bright background for office and daytime use</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Font size selector — Small (12px), Default (14px), Large (16px)</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Table density — Compact, Default, and Relaxed row spacing</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Bug Fixes</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Dynamic day/night method reverting to Fixed after autosave</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="elb-changelog-entry">
+            <div className="elb-changelog-ver">
+              <span className="elb-changelog-tag">V5.3</span>
               <span className="elb-changelog-date">14 MAY 2026</span>
             </div>
             <div className="elb-changelog-section">
@@ -822,6 +919,18 @@ const settingsCss = `
   .elb-toggle-switch input:checked + .elb-toggle-track{background:rgba(79,195,247,0.15);border-color:#4fc3f7;}
   .elb-toggle-switch input:checked + .elb-toggle-track::before{transform:translateX(18px);background:#4fc3f7;}
 
+
+  .elb-font-size-group{display:flex;gap:8px;}
+  .elb-font-btn{
+    flex:1;background:var(--elb-bginput,#0b1828);border:1px solid #0f1e2d;border-radius:3px;
+    color:#c8d6e5;font-family:inherit;cursor:pointer;padding:12px 8px;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    transition:border-color 0.15s,background 0.15s;
+  }
+  .elb-font-btn:hover{border-color:#243d5a;}
+  .elb-font-btn.selected{border-color:rgba(79,195,247,0.4);background:rgba(79,195,247,0.06);}
+  .elb-font-btn-label{letter-spacing:0.1em;color:#c8d6e5;}
+  .elb-font-btn-sub{font-size:10px;color:#4a6a8a;letter-spacing:0.08em;}
 
   .elb-radio-group{display:flex;flex-direction:column;gap:6px;}
   .elb-radio-option{
