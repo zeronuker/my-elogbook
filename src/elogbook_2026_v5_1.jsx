@@ -489,7 +489,18 @@ export default function ELogbook2026({ onLogout }) {
       });
 
       const ref = doc(db, "users", user.uid, "logbook", "data");
-      await setDoc(ref, { logbookData: cleanData, settings: settingsRef.current, updatedAt: new Date().toISOString() }, { merge: true });
+
+      // Create a 15-second timeout promise
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Save operation timed out after 15 seconds")), 15000)
+      );
+
+      // Race the save operation against the timeout
+      await Promise.race([
+        setDoc(ref, { logbookData: cleanData, settings: settingsRef.current, updatedAt: new Date().toISOString() }, { merge: true }),
+        timeoutPromise
+      ]);
+
       const now = new Date();
       const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
       const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
