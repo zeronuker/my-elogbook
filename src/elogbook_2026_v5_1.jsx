@@ -327,6 +327,25 @@ const FTL_POPUPS = {
 };
 
 // ─── Theme CSS variable injection ─────────────────────────────────────────────
+const ACCENT_PALETTE = {
+  "#4fc3f7": { accent: "#4fc3f7", accent2: "#7ab8d4", accentDim: "#2a5a7a" },
+  "#f5c542": { accent: "#f5c542", accent2: "#c4a030", accentDim: "#5a4a10" },
+  "#22c55e": { accent: "#22c55e", accent2: "#16a34a", accentDim: "#166534" },
+  "#a78bfa": { accent: "#a78bfa", accent2: "#8b5cf6", accentDim: "#4c1d95" },
+  "#fb923c": { accent: "#fb923c", accent2: "#f97316", accentDim: "#7c2d12" },
+  "#f472b6": { accent: "#f472b6", accent2: "#ec4899", accentDim: "#831843" },
+  "#ef4444": { accent: "#ef4444", accent2: "#dc2626", accentDim: "#7f1d1d" },
+  "#2dd4bf": { accent: "#2dd4bf", accent2: "#14b8a6", accentDim: "#134e4a" },
+};
+
+const FONT_FAMILIES = {
+  courier:   "'Courier New', Courier, monospace",
+  jetbrains: "'JetBrains Mono', monospace",
+  ibmplex:   "'IBM Plex Mono', monospace",
+  roboto:    "'Roboto Mono', monospace",
+  space:     "'Space Mono', monospace",
+};
+
 const THEMES = {
   dark: {
     bg:        "#0a0d12", bg2:       "#0d1520", bg3:       "#0a1018",
@@ -356,23 +375,24 @@ const DENSITY_PAD = {
 
 function makeThemeCss(settings = {}) {
   const t = THEMES[settings.theme] || THEMES.dark;
-  const fontSize = Number(settings.fontSize) || 14;
+  const fontSize = Math.min(18, Math.max(12, Number(settings.fontSize) || 14));
   const rowPad = DENSITY_PAD[settings.tableDensity] || DENSITY_PAD.default;
-  const fontFamily = "'Courier New', Courier, monospace";
+  const ac = ACCENT_PALETTE[settings.accentColor] || ACCENT_PALETTE["#4fc3f7"];
+  const fontFamily = FONT_FAMILIES[settings.fontType] || FONT_FAMILIES.courier;
 
   return `
     :root {
       --elb-bg:${t.bg};--elb-bg2:${t.bg2};--elb-bg3:${t.bg3};
       --elb-bghd:${t.bgHeader};--elb-bgalt:${t.bgAlt};--elb-thead:${t.bgThead};
       --elb-bginput:${t.bgInput};--elb-rowhover:${t.rowHover};
-      --elb-acc:${t.accent};--elb-acc2:${t.accent2};--elb-accdim:${t.accentDim};
+      --elb-acc:${ac.accent};--elb-acc2:${ac.accent2};--elb-accdim:${ac.accentDim};
       --elb-border:${t.border};--elb-bdr:${t.border};
       --elb-border2:${t.border2};--elb-bdr2:${t.border2};
       --elb-border3:${t.border3};--elb-bdr3:${t.border3};
       --elb-border4:${t.border4};--elb-bdr4:${t.border4};
       --elb-txt:${t.text};--elb-txt-muted:${t.textMuted};--elb-txt-dim:${t.textDim};--elb-txt-bright:${t.textBright};
       --elb-muted:${t.textMuted};--elb-dim:${t.textDim};--elb-bright:${t.textBright};
-      --elb-accent:${t.accent};
+      --elb-accent:${ac.accent};
       --elb-font:${fontFamily};
       --elb-td-sz:${fontSize}px;
       --elb-th-sz:${Math.max(10, fontSize - 1)}px;
@@ -608,7 +628,7 @@ export default function ELogbook2026({ onLogout }) {
       <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-txt, #c8d6e5)" }}>
         <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-bdr, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
           <div style={{ fontSize: 38, marginBottom: 8 }}>✈</div>
-          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V5.4</div>
+          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V5.5</div>
           <div style={{ fontSize: 12, color: "#5a7a9a", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
           <div style={{ fontSize: 11, color: "#3a5a7a", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
           <button
@@ -1057,6 +1077,9 @@ export default function ELogbook2026({ onLogout }) {
       minHeight: "100vh",
       fontFamily: "var(--elb-font, 'Courier New', Courier, monospace)",
       color: "var(--elb-txt, #c8d6e5)",
+      filter: (settings.theme === "dark" && Number(settings.brightness) > 0 && Number(settings.brightness) < 100)
+        ? `brightness(${settings.brightness}%)`
+        : undefined,
     }}>
       <style>{`
         @keyframes spin    { from { transform: rotate(0deg);   } to { transform: rotate(360deg); } }
@@ -1077,7 +1100,7 @@ export default function ELogbook2026({ onLogout }) {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <span style={{ fontSize: 22, color: "#4fc3f7" }}>✈</span>
               <span style={{ fontSize: 13, letterSpacing: "0.25em", color: "#4fc3f7", textTransform: "uppercase" }}>
-                eLOGBOOK V5.4
+                eLOGBOOK V5.5
               </span>
             </div>
             <div style={{ fontSize: 13, color: "#7ab8d4", marginBottom: 2 }}>
@@ -2417,7 +2440,7 @@ export default function ELogbook2026({ onLogout }) {
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v5.4 · CAA MALAYSIA</span>
+        <span>eLOGBOOK v5.5 · CAA MALAYSIA</span>
         <span>MCAR 2016 PART 7 &amp; 8 · ICAO ANNEX 1 FORMAT</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
