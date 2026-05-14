@@ -1215,25 +1215,25 @@ export default function ELogbook2026({ onLogout }) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
               <thead>
                 <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
-                  <th rowSpan={2} style={thStyle}>#</th>
-                  <th rowSpan={2} style={thStyle}>DATE</th>
-                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>AIRCRAFT</th>
-                  <th rowSpan={2} style={thStyle}>CAPTAIN</th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                  <th rowSpan={2} style={{ ...thStyle, color: "#ffffff", fontWeight: 700 }}>#</th>
+                  <th rowSpan={2} style={{ ...thStyle, color: "#ffffff", fontWeight: 700 }}>DATE</th>
+                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#ffffff", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em", fontWeight: 700 }}>AIRCRAFT</th>
+                  <th rowSpan={2} style={{ ...thStyle, color: "#ffffff", fontWeight: 700 }}>CAPTAIN</th>
+                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4, color: "#ffffff", fontWeight: 700 }}>
                     <span style={{ display: "block" }}>HOLDER</span>
                     <span style={{ display: "block" }}>OPERATING</span>
                     <span style={{ display: "block" }}>CAPACITY</span>
                   </th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4, color: "#4fc3f7" }}>
+                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4, color: "#ffffff", fontWeight: 700 }}>
                     <span style={{ display: "block" }}>PILOT</span>
                     <span style={{ display: "block" }}>FLYING</span>
                   </th>
-                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#4fc3f7", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>SECTORS</th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#ffffff", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em", fontWeight: 700 }}>SECTORS</th>
+                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4, color: "#ffffff", fontWeight: 700 }}>
                     <span style={{ display: "block" }}>STD</span>
                     <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
                   </th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4, color: "#ffffff", fontWeight: 700 }}>
                     <span style={{ display: "block" }}>STA</span>
                     <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
                   </th>
@@ -1244,10 +1244,10 @@ export default function ELogbook2026({ onLogout }) {
                   <th rowSpan={2} style={{ ...thStyle, background: "#0a0d12", border: "none", width: 28, minWidth: 28 }}></th>
                 </tr>
                 <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
-                  <th style={thSubStyle}>TYPE</th>
-                  <th style={thSubStyle}>MARKINGS</th>
-                  <th style={thSubStyle}>DEP</th>
-                  <th style={thSubStyle}>ARR</th>
+                  <th style={{ ...thSubStyle, color: "#ffffff", fontWeight: 700 }}>TYPE</th>
+                  <th style={{ ...thSubStyle, color: "#ffffff", fontWeight: 700 }}>MARKINGS</th>
+                  <th style={{ ...thSubStyle, color: "#ffffff", fontWeight: 700 }}>DEP</th>
+                  <th style={{ ...thSubStyle, color: "#ffffff", fontWeight: 700 }}>ARR</th>
                   <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
                   <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
                   <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>
@@ -1594,11 +1594,11 @@ export default function ELogbook2026({ onLogout }) {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 800 }}>
                   <thead>
                     <tr style={{ background: "#0b1320" }}>
-                      <th rowSpan={2} style={{ ...thStyle, width: 80, minWidth: 80, maxWidth: 80 }}>MONTH</th>
-                      <th rowSpan={2} style={{ ...thStyle, width: 55, minWidth: 55, maxWidth: 55 }}>SECTORS</th>
+                      <th rowSpan={2} style={{ ...thStyle, width: 80, minWidth: 80, maxWidth: 80, color: "#ffffff", fontWeight: 700 }}>MONTH</th>
+                      <th rowSpan={2} style={{ ...thStyle, width: 55, minWidth: 55, maxWidth: 55, color: "#ffffff", fontWeight: 700 }}>SECTORS</th>
                       <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
                       <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
-                      <th rowSpan={2} style={thStyle}>TOTAL</th>
+                      <th rowSpan={2} style={{ ...thStyle, color: "#ffffff", fontWeight: 700 }}>TOTAL</th>
                     </tr>
                     <tr style={{ background: "#0b1320" }}>
                       <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
@@ -1752,10 +1752,10 @@ export default function ELogbook2026({ onLogout }) {
                   <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
                     <thead>
                       <tr style={{ background: "#0b1320" }}>
-                        <th rowSpan={2} style={{ ...thStyle, textAlign: "left", paddingLeft: 10, minWidth: 90 }}>AIRCRAFT<br />TYPE</th>
+                        <th rowSpan={2} style={{ ...thStyle, textAlign: "left", paddingLeft: 10, minWidth: 90, color: "#ffffff", fontWeight: 700 }}>AIRCRAFT<br />TYPE</th>
                         <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
                         <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
-                        <th rowSpan={2} style={thStyle}>TOTAL</th>
+                        <th rowSpan={2} style={{ ...thStyle, color: "#ffffff", fontWeight: 700 }}>TOTAL</th>
                       </tr>
                       <tr style={{ background: "#0b1320" }}>
                         <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
