@@ -48,7 +48,7 @@ const TAB_HINTS = {
   profile:     "Profile changes update your logbook defaults immediately.",
   appearance:  "Appearance changes apply after saving.",
   preferences: "⚠ Recalculation may take a moment on large logbooks.",
-  misc:        "Version 5.5 · claudeborne.my",
+  misc:        "Version 5.4 · claudeborne.my",
 };
 
 // ── Carry-forward helpers ────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
         {/* ── HEADER ── */}
         <div className="elb-modal-header">
           <div>
-            <div className="elb-modal-label">eLOGBOOK V5.5 · CONFIGURATION</div>
+            <div className="elb-modal-label">eLOGBOOK V5.4 · CONFIGURATION</div>
             <div className="elb-modal-title">⚙ SETTINGS</div>
           </div>
           <button className="elb-modal-close" onClick={onClose} title="Close">✕</button>
@@ -602,37 +602,15 @@ function MiscTab({ onDeleteAccount }) {
 
           <div className="elb-changelog-entry">
             <div className="elb-changelog-ver">
-              <span className="elb-changelog-tag">V5.5 <span className="elb-tag elb-tag-new">CURRENT</span></span>
+              <span className="elb-changelog-tag">V5.4 <span className="elb-tag elb-tag-new">CURRENT</span></span>
               <span className="elb-changelog-date">14 MAY 2026</span>
             </div>
             <div className="elb-changelog-section">
-              <div className="elb-changelog-subsection">Appearance</div>
+              <div className="elb-changelog-subsection">Data Management</div>
               <ul className="elb-changelog-items">
-                <li><span className="elb-tag elb-tag-new">NEW</span> Font size slider — 12px to 18px with live preview</li>
-                <li><span className="elb-tag elb-tag-new">NEW</span> Font type selector — 5 monospace options</li>
-                <li><span className="elb-tag elb-tag-new">NEW</span> Accent colour — 8 swatches (Cyan, Amber, Green, Purple, Orange, Pink, Red, Teal)</li>
-                <li><span className="elb-tag elb-tag-new">NEW</span> Screen brightness dimmer — Dark Mode only (60–100%)</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="elb-changelog-entry">
-            <div className="elb-changelog-ver">
-              <span className="elb-changelog-tag">V5.4</span>
-              <span className="elb-changelog-date">14 MAY 2026</span>
-            </div>
-            <div className="elb-changelog-section">
-              <div className="elb-changelog-subsection">Appearance</div>
-              <ul className="elb-changelog-items">
-                <li><span className="elb-tag elb-tag-new">NEW</span> Light Mode theme — bright background for office and daytime use</li>
-                <li><span className="elb-tag elb-tag-new">NEW</span> Font size selector — Small (12px), Default (14px), Large (16px)</li>
-                <li><span className="elb-tag elb-tag-new">NEW</span> Table density — Compact, Default, and Relaxed row spacing</li>
-              </ul>
-            </div>
-            <div className="elb-changelog-section">
-              <div className="elb-changelog-subsection">Bug Fixes</div>
-              <ul className="elb-changelog-items">
-                <li><span className="elb-tag elb-tag-fix">FIX</span> Dynamic day/night method reverting to Fixed after autosave</li>
+                <li><span className="elb-tag elb-tag-imp">IMP</span> PDF export now includes comprehensive logbook format with pilot profile, carry forward hours, and monthly organization</li>
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Monthly subtotals and grand total calculations included in PDF for better financial tracking</li>
+                <li><span className="elb-tag elb-tag-imp">IMP</span> PDF export now EASA FCL.050 compliant with professional formatting and page break handling</li>
               </ul>
             </div>
           </div>
