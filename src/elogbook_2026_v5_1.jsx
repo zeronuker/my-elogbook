@@ -1205,7 +1205,7 @@ export default function ELogbook2026({ onLogout }) {
             ))}
           </div>
           {/* ── AUTOSAVE STATUS & SAVE NOW BUTTON ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, letterSpacing: "0.1em", flex: 1, justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, letterSpacing: "0.1em", flex: 1, justifyContent: "flex-end" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               {saveStatus === "saving" && (
                 <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f5c542", fontWeight: 700 }}>
