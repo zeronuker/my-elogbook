@@ -626,8 +626,26 @@ export default function ELogbook2026({ onLogout }) {
       while (current.length <= rowIdx) {
         current.push({ id: current.length + 1, ...EMPTY_ROW() });
       }
+      // Normalize time inputs (HHMM format) to HH:MM format
+      let normalizedValue = value;
+      if (timeCols.includes(field) && value && value.trim()) {
+        const trimmed = value.trim();
+        if (!trimmed.includes(":")) {
+          // Convert HHMM to HH:MM
+          const digitsOnly = trimmed.replace(/\D/g, "");
+          if (digitsOnly.length >= 3) {
+            const h = digitsOnly.slice(0, -2).padStart(2, "0");
+            const m = digitsOnly.slice(-2).padStart(2, "0");
+            normalizedValue = `${h}:${m}`;
+          } else if (digitsOnly.length === 2) {
+            normalizedValue = `00:${digitsOnly.padStart(2, "0")}`;
+          } else if (digitsOnly.length === 1) {
+            normalizedValue = `0${digitsOnly}:00`;
+          }
+        }
+      }
       const newRows = current.map((r, i) =>
-        i === rowIdx ? { ...r, [field]: value } : r
+        i === rowIdx ? { ...r, [field]: normalizedValue } : r
       );
       return { ...prev, [monthKey]: newRows };
     });
