@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V5.5 Changelog Preview</title>
+<style>
+  :root {
+    --bg:#0a0d12;--surface:#0d1520;--surface2:#0b1828;
+    --border:#1e3a5f;--border2:#0f1e2d;
+    --accent:#4fc3f7;--green:#22c55e;--yellow:#eab308;--red:#ef4444;
+    --text:#ffffff;--muted:#b8d6e5;--dim:#2a4a6a;
+    --mono:'Courier New',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);padding:20px;min-height:100vh;}
+
+  .container{max-width:600px;margin:0 auto;}
+  .header{margin-bottom:24px;text-align:center;}
+  .title{font-size:20px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px;}
+  .subtitle{font-size:12px;color:var(--muted);letter-spacing:0.08em;}
+
+  /* Changelog Styling */
+  .elb-changelog-scroll{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:20px;
+    max-height:600px;
+    overflow-y:auto;
+  }
+
+  .elb-changelog-entry{
+    margin-bottom:28px;
+    padding-bottom:20px;
+    border-bottom:1px solid var(--border2);
+  }
+
+  .elb-changelog-entry:last-child{
+    border-bottom:none;
+    margin-bottom:0;
+    padding-bottom:0;
+  }
+
+  .elb-changelog-ver{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+  }
+
+  .elb-changelog-tag{
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.1em;
+    color:var(--accent);
+  }
+
+  .elb-changelog-date{
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:0.08em;
+  }
+
+  .elb-changelog-section{
+    margin-bottom:16px;
+  }
+
+  .elb-changelog-subsection{
+    font-size:12px;
+    font-weight:700;
+    color:var(--text);
+    letter-spacing:0.1em;
+    margin-bottom:10px;
+    text-transform:uppercase;
+  }
+
+  .elb-changelog-items{
+    list-style:none;
+    margin-left:0;
+  }
+
+  .elb-changelog-items li{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:8px;
+    line-height:1.6;
+    padding-left:12px;
+  }
+
+  .elb-changelog-items li:last-child{
+    margin-bottom:0;
+  }
+
+  .elb-tag{
+    display:inline-block;
+    font-size:9px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    padding:3px 8px;
+    border-radius:2px;
+    margin-right:8px;
+  }
+
+  .elb-tag-fix{
+    background:rgba(239,68,68,0.2);
+    color:#ef4444;
+    border:1px solid rgba(239,68,68,0.4);
+  }
+
+  .elb-tag-new{
+    background:rgba(34,197,94,0.2);
+    color:#22c55e;
+    border:1px solid rgba(34,197,94,0.4);
+  }
+
+  .elb-tag-imp{
+    background:rgba(234,179,8,0.2);
+    color:#eab308;
+    border:1px solid rgba(234,179,8,0.4);
+  }
+
+  .elb-tag-current{
+    background:rgba(79,195,247,0.2);
+    color:#4fc3f7;
+    border:1px solid rgba(79,195,247,0.4);
+    margin-left:4px;
+  }
+
+  .legend{
+    margin-top:30px;
+    padding:16px;
+    background:var(--surface2);
+    border:1px solid var(--border2);
+    border-radius:4px;
+    font-size:11px;
+  }
+
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+  }
+
+  .legend-item:last-child{
+    margin-bottom:0;
+  }
+
+  .legend-color{
+    width:12px;
+    height:12px;
+    border-radius:2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="title">⚙ SETTINGS · MISCELLANEOUS</div>
+    <div class="subtitle">V5.5 Changelog Preview</div>
+  </div>
+
+  <div class="elb-changelog-scroll">
+    <!-- V5.5 CURRENT -->
+    <div class="elb-changelog-entry">
+      <div class="elb-changelog-ver">
+        <span class="elb-changelog-tag">V5.5 <span class="elb-tag elb-tag-current">CURRENT</span></span>
+        <span class="elb-changelog-date">15 MAY 2026</span>
+      </div>
+      <div class="elb-changelog-section">
+        <div class="elb-changelog-subsection">Onboarding & Auth</div>
+        <ul class="elb-changelog-items">
+          <li><span class="elb-tag elb-tag-fix">FIX</span> Navigation after signup — "Open Logbook" button now works without refresh</li>
+          <li><span class="elb-tag elb-tag-fix">FIX</span> Google login navigation — auto-loads logbook without refresh</li>
+          <li><span class="elb-tag elb-tag-fix">FIX</span> Profile data persistence — signup details now appear in Settings</li>
+          <li><span class="elb-tag elb-tag-fix">FIX</span> Error messages — now clear when switching between login/signup screens</li>
+          <li><span class="elb-tag elb-tag-new">NEW</span> License number field in signup (Step 2)</li>
+          <li><span class="elb-tag elb-tag-imp">IMP</span> Increased text sizes for better visibility on all devices</li>
+          <li><span class="elb-tag elb-tag-imp">IMP</span> Updated compliance badge: MCAR 2016 Part 69 & Part 74</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- V5.4 PREVIOUS -->
+    <div class="elb-changelog-entry">
+      <div class="elb-changelog-ver">
+        <span class="elb-changelog-tag">V5.4</span>
+        <span class="elb-changelog-date">10 MAY 2026</span>
+      </div>
+      <div class="elb-changelog-section">
+        <div class="elb-changelog-subsection">Export/Import</div>
+        <ul class="elb-changelog-items">
+          <li><span class="elb-tag elb-tag-new">NEW</span> Intelligent Excel sheet & column auto-detection for imports</li>
+          <li><span class="elb-tag elb-tag-imp">IMP</span> Enhanced import validation with missing column warnings</li>
+          <li><span class="elb-tag elb-tag-fix">FIX</span> NaN values in time columns (export field mapping)</li>
+          <li><span class="elb-tag elb-tag-fix">FIX</span> Date formatting in exports (DD-MMM-YYYY format)</li>
+          <li><span class="elb-tag elb-tag-fix">FIX</span> Missing fields in export (dayP1US, nightP1US, autoland)</li>
+          <li><span class="elb-tag elb-tag-fix">DEP</span> PDF export removed (Excel-only for now)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <strong style="font-size:12px;display:block;margin-bottom:12px;">Legend:</strong>
+    <div class="legend-item">
+      <div class="legend-color" style="background:#ef4444;"></div>
+      <span><strong>FIX</strong> — Bug fix</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background:#22c55e;"></div>
+      <span><strong>NEW</strong> — New feature</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background:#eab308;"></div>
+      <span><strong>IMP</strong> — Improvement</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background:#4fc3f7;"></div>
+      <span><strong>CURRENT</strong> — Active version</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

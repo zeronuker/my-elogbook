@@ -617,6 +617,12 @@ function MiscTab({ onDeleteAccount }) {
                 <li><span className="elb-tag elb-tag-imp">IMP</span> Updated compliance badge: MCAR 2016 Part 69 &amp; Part 74</li>
               </ul>
             </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Help &amp; Documentation</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Interactive How-To Guide — full app mockup with guided spotlight tour and hover tooltips (Settings → Misc → HOW TO GUIDE)</li>
+              </ul>
+            </div>
           </div>
 
           <div className="elb-changelog-entry">

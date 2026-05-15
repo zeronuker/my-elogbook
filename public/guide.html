@@ -3,1627 +3,1202 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>eLOGBOOK — How To Guide</title>
+<title>eLOGBOOK V5.5 — How To Guide</title>
 <style>
-/* ── Reset & Base ─────────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  height: 100%;
-  background: #0a0d12;
-  color: #c8d6e5;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 13px;
-  overflow-x: hidden;
-}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0d12;color:#c8d6e5;font-family:'Courier New',Courier,monospace;font-size:13px;overflow-x:hidden}
 
-/* ── App Shell ────────────────────────────────────────────────────────────── */
-#app {
-  min-height: 100vh;
-  background: #0a0d12;
-  display: flex;
-  flex-direction: column;
-}
+/* ── WELCOME SPLASH ─────────────────────────────────────────────────────────── */
+#ws{position:fixed;inset:0;background:#0a0d12;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px}
+#ws.hidden{display:none}
+.ws-plane{font-size:40px;margin-bottom:8px}
+.ws-logo{color:#4fc3f7;font-size:22px;font-weight:700;letter-spacing:.3em;margin-bottom:4px}
+.ws-ver{color:#5a8aaa;font-size:11px;letter-spacing:.25em;margin-bottom:32px}
+.ws-title{color:#e8f4fd;font-size:17px;font-weight:700;letter-spacing:.1em;margin-bottom:12px}
+.ws-desc{color:#7a9aaa;font-size:12px;line-height:1.9;max-width:420px;margin-bottom:36px;letter-spacing:.03em}
+.ws-btn-primary{background:linear-gradient(135deg,#0d3a5a,#0d2a3a);border:1px solid #4fc3f7;color:#4fc3f7;font-family:'Courier New',monospace;font-size:12px;font-weight:700;letter-spacing:.2em;padding:12px 36px;cursor:pointer;margin-bottom:14px;width:100%;max-width:280px;transition:background .2s}
+.ws-btn-primary:hover{background:linear-gradient(135deg,#0d4a7a,#0d3a5a)}
+.ws-btn-skip{background:none;border:none;color:#3a5a7a;font-family:'Courier New',monospace;font-size:11px;letter-spacing:.15em;cursor:pointer;text-decoration:underline}
+.ws-btn-skip:hover{color:#7a9aaa}
 
-/* ── Header ───────────────────────────────────────────────────────────────── */
-#mock-header {
-  background: linear-gradient(135deg, #0d1117 0%, #161d2a 100%);
-  border-bottom: 1px solid #1e3a5f;
-  padding: 18px 24px 0;
-}
-#mock-header-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-#mock-header-brand { flex: 1; }
-.hd-plane { font-size: 22px; color: #4fc3f7; }
-.hd-ver   { font-size: 13px; letter-spacing: .25em; color: #4fc3f7; text-transform: uppercase; }
-.hd-reg   { font-size: 13px; color: #7ab8d4; margin-top: 2px; }
-.hd-title { font-size: 19px; font-weight: 700; color: #e8f4fd; letter-spacing: .05em; margin-top: 2px; }
-.hd-sub   { font-size: 12px; color: #5a7a9a; margin-top: 3px; }
+/* ── APP SHELL ──────────────────────────────────────────────────────────────── */
+#app{min-height:100vh;background:#0a0d12;display:flex;flex-direction:column}
 
-#mock-header-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-.user-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.user-avatar {
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1e3a5f, #2a5a7a);
-  border: 1px solid #1e3a5f;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; color: #4fc3f7;
-}
-.user-name { font-size: 11px; color: #c8d6e5; letter-spacing: .1em; font-weight: 700; }
-.user-detail { font-size: 10px; color: #4a6a8a; letter-spacing: .08em; }
-.period-label { font-size: 10px; color: #4a6a8a; letter-spacing: .15em; }
+/* ── HEADER ─────────────────────────────────────────────────────────────────── */
+#mock-header{background:linear-gradient(135deg,#0d1117 0%,#161d2a 100%);border-bottom:1px solid #1e3a5f;padding:14px 20px 0}
+#hdr-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:10px;flex-wrap:wrap}
+#hdr-left{}
+.hd-line1{display:flex;align-items:center;gap:10px;margin-bottom:3px}
+.hd-plane{font-size:18px;color:#4fc3f7}
+.hd-brand{font-size:13px;color:#4fc3f7;letter-spacing:.22em;font-weight:700}
+.hd-reg-badge{font-size:10px;color:#5a7a9a;letter-spacing:.12em;padding:1px 6px;border:1px solid #1e3a5f;border-radius:2px}
+.hd-period{font-size:11px;color:#8aaabf;letter-spacing:.15em;margin-bottom:1px}
+.hd-title{font-size:18px;font-weight:700;color:#e8f4fd;letter-spacing:.06em;margin-bottom:3px}
+.hd-sub{font-size:10px;color:#4a6a8a;letter-spacing:.1em}
 
-#mock-period-selector {
-  display: flex;
-  gap: 8px;
-}
-.mock-select {
-  background: #0b1828;
-  border: 1px solid #1e3a5f;
-  color: #c8d6e5;
-  padding: 4px 10px;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  letter-spacing: .08em;
-  border-radius: 3px;
-  cursor: default;
-  appearance: none;
-  -webkit-appearance: none;
-  min-width: 110px;
-}
-.mock-select-year { min-width: 70px; }
+#hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.user-row{display:flex;align-items:center;gap:8px}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#c2410c,#ea580c);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;color:#c8d6e5;letter-spacing:.1em;font-weight:700}
+.user-detail{font-size:10px;color:#4a6a8a;letter-spacing:.1em}
+.period-row{display:flex;align-items:center;gap:8px}
+.period-label{font-size:10px;color:#3a5a7a;letter-spacing:.15em}
+.mock-select{background:#0b1828;border:1px solid #1e3a5f;color:#c8d6e5;padding:3px 8px;font-family:'Courier New',monospace;font-size:11px;letter-spacing:.08em;border-radius:3px;cursor:default;appearance:none;min-width:90px}
+.mock-select-yr{min-width:60px}
+.toolbar-row{display:flex;align-items:center;gap:6px}
+.tb-icon{width:26px;height:26px;background:transparent;border:1px solid #1e3a5f;border-radius:3px;color:#3a6a8a;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;transition:border-color .15s,color .15s}
+.tb-icon:hover{border-color:#4fc3f7;color:#4fc3f7}
+.tb-divider{width:1px;height:18px;background:#1e3a5f;margin:0 2px}
+.save-ts{font-size:10px;color:#4fc77a;font-weight:700;font-style:italic;letter-spacing:.06em}
+.save-btn{background:linear-gradient(135deg,#0d2a3a,#0a1f30);border:1px solid #4fc3f7;border-radius:3px;color:#4fc3f7;font-family:'Courier New',monospace;font-size:10px;letter-spacing:.18em;padding:4px 10px;cursor:default;font-weight:700;box-shadow:0 0 8px rgba(79,195,247,.2)}
 
-#mock-toolbar {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.toolbar-btn {
-  width: 28px; height: 28px;
-  background: transparent;
-  border: 1px solid #1e3a5f;
-  border-radius: 4px;
-  color: #3a6a8a;
-  display: flex; align-items: center; justify-content: center;
-  cursor: default;
-  font-size: 13px;
-  transition: border-color .15s, color .15s;
-}
-.toolbar-btn:hover { border-color: #4fc3f7; color: #4fc3f7; }
-.toolbar-btn.danger:hover { border-color: #ef4444; color: #ef4444; }
+/* ── TAB BAR ─────────────────────────────────────────────────────────────────── */
+#mock-tabbar{display:flex;align-items:flex-end;justify-content:space-between;padding:0 0 0 0}
+#mock-tabs{display:flex}
+.mock-tab{background:transparent;border:none;border-top:2px solid transparent;color:#5a7a9a;padding:8px 16px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:'Courier New',monospace;transition:color .15s,border-color .15s;white-space:nowrap}
+.mock-tab.active{background:#0a0d12;border-top-color:#4fc3f7;border-left:1px solid #1e3a5f;border-right:1px solid #1e3a5f;color:#4fc3f7;margin-bottom:-1px}
+.mock-tab:not(.active):hover{color:#7aaabf}
 
-/* ── Tabs Bar ─────────────────────────────────────────────────────────────── */
-#mock-tabbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 0;
-}
-#mock-tabs {
-  display: flex;
-  gap: 0;
-}
-.mock-tab {
-  background: transparent;
-  border: none;
-  border-top: 2px solid transparent;
-  color: #5a7a9a;
-  padding: 7px 18px;
-  font-size: 13px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  cursor: pointer;
-  font-family: 'Courier New', monospace;
-  transition: color .15s, border-color .15s;
-}
-.mock-tab.active {
-  background: #0a0d12;
-  border-top-color: #4fc3f7;
-  border-left: 1px solid #1e3a5f;
-  border-right: 1px solid #1e3a5f;
-  color: #4fc3f7;
-  margin-bottom: -1px;
-}
+/* ── TAB CONTENT ─────────────────────────────────────────────────────────────── */
+.tab-pane{display:none;flex:1}
+.tab-pane.visible{display:block}
 
-#mock-save-area {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 11px;
-  letter-spacing: .1em;
-  padding-right: 4px;
-}
-.save-ts { color: #4fc77a; font-weight: 700; font-style: italic; }
-.save-btn {
-  background: linear-gradient(135deg, #0d2a3a, #0a1f30);
-  border: 1px solid #4fc3f7;
-  border-radius: 4px;
-  color: #4fc3f7;
-  font-family: 'Courier New', monospace;
-  font-size: 11px;
-  letter-spacing: .15em;
-  padding: 4px 12px;
-  cursor: default;
-  font-weight: 700;
-  box-shadow: 0 0 8px rgba(79,195,247,.2);
-}
+/* ── LOGBOOK TABLE ───────────────────────────────────────────────────────────── */
+#tab-logbook{overflow-x:auto}
+table.lb{width:100%;border-collapse:collapse;font-size:11px;min-width:1100px}
+.lb th,.lb td{border:1px solid #111820;padding:4px 6px;white-space:nowrap;text-align:center}
+.lb thead tr.grp th{background:#0c1420;font-size:9px;letter-spacing:.2em;font-weight:700;padding:4px 6px;border-bottom:1px solid #1e3a5f}
+.lb thead tr.grp th.gh-std{color:#7ab8d4}
+.lb thead tr.grp th.gh-day{color:#f59e0b}
+.lb thead tr.grp th.gh-night{color:#f59e0b}
+.lb thead tr.grp th.gh-total{color:#4fc3f7}
+.lb thead tr.grp th.gh-plain{color:#5a7a9a}
+.lb thead tr.cols th{background:#0c1420;color:#5a8aaa;font-size:9px;letter-spacing:.14em;font-weight:700}
+.lb thead tr.cols th.ch-p1d{color:#dc2626}
+.lb thead tr.cols th.ch-p1u,.lb thead tr.cols th.ch-sn{color:#22c55e}
+.lb thead tr.cols th.ch-total{color:#4fc3f7;font-weight:700}
+.lb tbody tr{background:#0a0d12}
+.lb tbody tr:nth-child(even){background:#0c1018}
+.lb tbody tr:hover{background:#0f1e2e}
+.lb td{color:#c8d6e5}
+.lb td.muted{color:#3a5a7a}
+.lb td.cyan{color:#4fc3f7}
+.lb td.red{color:#ef4444}
+.lb td.green{color:#22c55e}
+.lb td.readonly{color:#4fc3f7;background:rgba(79,195,247,.03)}
+.lb tfoot td{background:#0c1420;color:#4fc3f7;font-weight:700;font-size:10px;border-top:1px solid #1e3a5f}
+.lb tfoot td.red-total{color:#ef4444}
+.lb tfoot td.green-total{color:#22c55e}
+.hoc-btn{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.4);color:#22c55e;font-family:'Courier New',monospace;font-size:9px;letter-spacing:.1em;padding:2px 5px;border-radius:2px;cursor:default;font-weight:700}
+.chk-yes{display:inline-block;width:13px;height:13px;background:rgba(79,195,247,.12);border:1px solid #4fc3f7;border-radius:2px;position:relative}
+.chk-yes::after{content:'✓';position:absolute;top:-2px;left:1px;color:#4fc3f7;font-size:10px;font-weight:700}
+.chk-no{display:inline-block;width:13px;height:13px;background:transparent;border:1px solid #1e3a5f;border-radius:2px}
+.rem-btn{padding:2px 5px;border:1px solid #1e3a5f;background:transparent;color:#3a5a7a;border-radius:2px;font-size:9px;font-family:'Courier New',monospace;cursor:default;letter-spacing:.05em}
+.rem-btn.has{border-color:#f5c542;color:#f5c542}
+.del-btn{padding:2px 4px;border:1px solid #1e3a5f;background:transparent;color:#2d4a5a;border-radius:2px;font-size:9px;cursor:default}
+.add-sector-bar{padding:10px 16px;border-top:1px solid #0f1820;background:#080b10}
+.add-sector-btn{background:linear-gradient(135deg,#0d2a3a,#0a1f30);border:1px solid #1e3a5f;border-radius:3px;color:#4fc3f7;font-family:'Courier New',monospace;font-size:10px;letter-spacing:.15em;padding:5px 14px;cursor:default;font-weight:700}
 
-/* ── Tab Content Areas ────────────────────────────────────────────────────── */
-.tab-content { display: none; flex: 1; overflow: auto; }
-.tab-content.visible { display: block; }
+/* ── FLIGHT SUMMARY TAB ──────────────────────────────────────────────────────── */
+#tab-summary{padding:16px 20px}
+.sum-section-title{font-size:10px;letter-spacing:.2em;color:#4fc3f7;font-weight:700;padding-bottom:6px;border-bottom:1px solid #1e3a5f;margin-bottom:12px}
+.annual-wrap{overflow-x:auto;margin-bottom:24px}
+table.ann{width:100%;border-collapse:collapse;font-size:11px;min-width:700px}
+.ann th,.ann td{border:1px solid #111820;padding:4px 8px;white-space:nowrap;text-align:center}
+.ann thead tr.grp th{background:#0c1420;font-size:9px;letter-spacing:.18em;font-weight:700;color:#5a7a9a}
+.ann thead tr.grp th.gh-day{color:#f59e0b}
+.ann thead tr.grp th.gh-night{color:#f59e0b}
+.ann thead tr.grp th.gh-total{color:#4fc3f7}
+.ann thead tr.cols th{background:#0c1420;color:#5a8aaa;font-size:9px;letter-spacing:.12em;font-weight:700}
+.ann thead tr.cols th.c-p1d{color:#dc2626}
+.ann thead tr.cols th.c-p1u,.ann thead tr.cols th.c-sn{color:#22c55e}
+.ann thead tr.cols th.c-total{color:#4fc3f7}
+.ann tbody tr{background:#0a0d12}
+.ann tbody tr:nth-child(even){background:#0c1018}
+.ann tbody tr.current-month{background:#091520;border-left:2px solid #4fc3f7}
+.ann tbody tr.current-month td{color:#c8d6e5}
+.ann tbody tr.annual-total{background:#0c1a28}
+.ann tbody tr.annual-total td{color:#4fc3f7;font-weight:700;border-top:1px solid #1e3a5f;font-size:10px}
+.ann td{color:#5a7a9a}
+.ann td.month-name{text-align:left;color:#c8d6e5;padding-left:10px}
+.ann td.has-data{color:#c8d6e5}
+.ann td.p1d{color:#ef4444}
+.ann td.p1u,.ann td.sn{color:#22c55e}
+.ann td.tot{color:#4fc3f7;font-weight:700}
 
-/* ── Logbook Table ────────────────────────────────────────────────────────── */
-#mock-logbook-tab { padding: 0; }
-.table-wrap { overflow-x: auto; }
-table.lb-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-.lb-table th, .lb-table td {
-  border: 1px solid #111820;
-  padding: 5px 7px;
-  white-space: nowrap;
-  text-align: center;
-}
-.lb-table thead tr.group-row th {
-  background: #0b1320;
-  color: #4fc3f7;
-  font-size: 10px;
-  letter-spacing: .18em;
-  border-bottom: 1px solid #1e3a5f;
-  font-weight: 700;
-}
-.lb-table thead tr.col-row th {
-  background: #0b1320;
-  color: #7ab8d4;
-  font-size: 10px;
-  letter-spacing: .12em;
-  line-height: 1.4;
-  font-weight: 700;
-}
-.lb-table tbody tr { background: #0a0d12; }
-.lb-table tbody tr:nth-child(even) { background: #0d1117; }
-.lb-table tbody tr:hover { background: #122030; }
-.lb-table td { color: #c8d6e5; }
-.lb-table td.muted { color: #4a6a8a; }
-.lb-table td.accent { color: #4fc3f7; }
-.lb-table td.readonly { color: #4fc3f7; background: rgba(79,195,247,.04); }
-.lb-table tfoot td {
-  background: #0b1320;
-  color: #4fc3f7;
-  font-weight: 700;
-  font-size: 11px;
-  border-top: 1px solid #1e3a5f;
-}
-.chk-yes {
-  display: inline-block;
-  width: 14px; height: 14px;
-  background: rgba(79,195,247,.15);
-  border: 1px solid #4fc3f7;
-  border-radius: 2px;
-  position: relative;
-}
-.chk-yes::after {
-  content: '✓';
-  position: absolute; top: -1px; left: 1px;
-  color: #4fc3f7; font-size: 10px; font-weight: 700;
-}
-.chk-no {
-  display: inline-block;
-  width: 14px; height: 14px;
-  background: transparent;
-  border: 1px solid #1e3a5f;
-  border-radius: 2px;
-}
-.remarks-btn {
-  padding: 2px 6px;
-  border: 1px solid #1e3a5f;
-  background: transparent;
-  color: #4a6a8a;
-  border-radius: 3px;
-  font-size: 10px;
-  font-family: 'Courier New', monospace;
-  cursor: default;
-  letter-spacing: .06em;
-}
-.remarks-btn.has-note { border-color: #f5c542; color: #f5c542; }
-.del-btn {
-  padding: 2px 5px;
-  border: 1px solid #1e3a5f;
-  background: transparent;
-  color: #2d4a5a;
-  border-radius: 3px;
-  font-size: 10px;
-  cursor: default;
-}
-.add-sector-bar {
-  padding: 12px 20px;
-  border-top: 1px solid #0f1820;
-}
-.add-sector-btn {
-  background: linear-gradient(135deg,#0d2a3a,#0a1f30);
-  border: 1px solid #1e3a5f;
-  border-radius: 4px;
-  color: #4fc3f7;
-  font-family: 'Courier New', monospace;
-  font-size: 11px;
-  letter-spacing: .15em;
-  padding: 6px 16px;
-  cursor: default;
-  font-weight: 700;
-}
+#grand-totals{margin-top:4px}
+.gt-header{font-size:10px;letter-spacing:.18em;color:#4fc3f7;font-weight:700;padding-bottom:6px;border-bottom:1px solid #1e3a5f;margin-bottom:12px}
+.gt-date{color:#5a7a9a;font-size:10px;letter-spacing:.12em}
+table.gt{width:100%;border-collapse:collapse;font-size:11px}
+.gt th,.gt td{border:1px solid #111820;padding:5px 10px;text-align:center;white-space:nowrap}
+.gt thead th{background:#0c1420;color:#5a7a9a;font-size:9px;letter-spacing:.15em;font-weight:700}
+.gt thead th.c-p1d{color:#dc2626}
+.gt thead th.c-p1u{color:#22c55e}
+.gt thead th.c-tot{color:#4fc3f7}
+.gt tbody tr{background:#0a0d12}
+.gt tbody tr:nth-child(even){background:#0c1018}
+.gt tbody tr:hover{background:#0f1e2e}
+.gt td{color:#5a7a9a}
+.gt td.ac-name{text-align:left;color:#c8d6e5;font-weight:700;padding-left:12px}
+.gt td.has{color:#c8d6e5}
+.gt td.p1d{color:#ef4444}
+.gt td.p1u{color:#22c55e}
+.gt td.tot{color:#4fc3f7;font-weight:700}
+.gt tfoot td{background:#0c1a28;color:#4fc3f7;font-weight:700;font-size:10px;border-top:1px solid #1e3a5f}
+.gt tfoot td.p1d{color:#ef4444}
+.gt tfoot td.p1u{color:#22c55e}
 
-/* ── FTL / Limits Tab ─────────────────────────────────────────────────────── */
-#mock-ftl-tab { padding: 20px 24px; }
-.ftl-banner {
-  border-radius: 5px;
-  padding: 14px 18px;
-  margin-bottom: 20px;
-  border: 1px solid rgba(34,197,94,.3);
-  background: rgba(34,197,94,.06);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.ftl-banner.yellow {
-  border-color: rgba(234,179,8,.3);
-  background: rgba(234,179,8,.06);
-}
-.ftl-banner.red {
-  border-color: rgba(239,68,68,.3);
-  background: rgba(239,68,68,.06);
-}
-.banner-icon { font-size: 22px; }
-.banner-label { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #22c55e; }
-.ftl-banner.yellow .banner-label { color: #eab308; }
-.ftl-banner.red .banner-label { color: #ef4444; }
-.banner-text { font-size: 11px; color: #7a9aaa; margin-top: 3px; line-height: 1.5; }
+/* ── LIMITS & RECENCY TAB ───────────────────────────────────────────────────── */
+#tab-limits{padding:16px 20px}
+.compliance-banner{border-radius:4px;padding:12px 16px;margin-bottom:18px;border:1px solid rgba(34,197,94,.3);background:rgba(34,197,94,.06);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.cb-icon{font-size:20px}
+.cb-body{flex:1}
+.cb-status{font-size:11px;font-weight:700;letter-spacing:.15em;color:#22c55e;margin-bottom:4px}
+.cb-grid{display:flex;gap:24px;flex-wrap:wrap}
+.cb-item{font-size:10px;letter-spacing:.1em}
+.cb-item-label{color:#3a5a7a}
+.cb-item-val{color:#7aafaa;font-weight:700}
 
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  margin-top: 24px;
-}
-.section-header:first-of-type { margin-top: 0; }
-.section-title {
-  font-size: 11px;
-  letter-spacing: .18em;
-  color: #4fc3f7;
-  white-space: nowrap;
-}
-.section-line { flex: 1; height: 1px; background: #1a3050; }
-.section-ibtn {
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: transparent;
-  border: 1px solid #1e3a55;
-  color: #2d5070;
-  font-family: Georgia, serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 12px;
-  cursor: default;
-  display: flex; align-items: center; justify-content: center;
-}
+.lim-section{margin-bottom:20px}
+.lim-section-hdr{font-size:10px;letter-spacing:.2em;color:#f59e0b;font-weight:700;padding-bottom:6px;border-bottom:1px solid #1e3a5f;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.ftl-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px}
+.duty-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.lim-card{background:#0c1420;border:1px solid #1e3a5f;border-radius:4px;padding:12px 14px}
+.lc-label{font-size:9px;letter-spacing:.18em;color:#5a7a9a;font-weight:700;margin-bottom:8px}
+.lc-val{font-size:20px;font-weight:700;color:#22c55e;margin-bottom:2px}
+.lc-limit{font-size:9px;color:#3a5a7a;letter-spacing:.1em;margin-bottom:8px}
+.lc-bar{height:5px;background:#0f1828;border-radius:2px;overflow:hidden;margin-bottom:6px}
+.lc-fill{height:100%;border-radius:2px;background:#22c55e;transition:width .4s}
+.lc-fill.warn{background:#eab308}
+.lc-fill.danger{background:#ef4444}
+.lc-note{font-size:9px;color:#3a5a7a;letter-spacing:.08em}
 
-#mock-ftl-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.ftl-card {
-  background: #0d1520;
-  border: 1px solid #0f1e2d;
-  border-left: 3px solid #22c55e;
-  border-radius: 4px;
-  padding: 12px;
-  min-width: 200px;
-  flex: 1 1 200px;
-}
-.ftl-card.yellow { border-left-color: #eab308; }
-.ftl-card.red    { border-left-color: #ef4444; }
-.ftl-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-.ftl-card-label {
-  font-size: 10px;
-  letter-spacing: .08em;
-  color: #4a6a8a;
-  line-height: 1.4;
-  max-width: 160px;
-}
-.ftl-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  margin-top: 2px;
-  background: #22c55e;
-  box-shadow: 0 0 6px #22c55e;
-  flex-shrink: 0;
-}
-.ftl-dot.yellow { background: #eab308; box-shadow: 0 0 6px #eab308; animation: blink 1.5s ease infinite; }
-.ftl-dot.red    { background: #ef4444; box-shadow: 0 0 6px #ef4444; animation: blink .8s ease infinite; }
-.ftl-numbers {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  margin-bottom: 8px;
-}
-.ftl-used { font-size: 24px; font-weight: 700; line-height: 1; color: #22c55e; }
-.ftl-card.yellow .ftl-used { color: #eab308; }
-.ftl-card.red    .ftl-used { color: #ef4444; }
-.ftl-slash { font-size: 15px; color: #4a6a8a; }
-.ftl-max  { font-size: 15px; color: #4a6a8a; }
-.ftl-unit { font-size: 10px; color: #4a6a8a; margin-left: 2px; }
-.ftl-bar-wrap {
-  background: #0a1018;
-  border-radius: 2px;
-  height: 4px;
-  margin-bottom: 8px;
-  overflow: hidden;
-  border: 1px solid #0f1e2d;
-}
-.ftl-bar { height: 100%; border-radius: 2px; background: #22c55e; transition: width .4s; }
-.ftl-card.yellow .ftl-bar { background: #eab308; }
-.ftl-card.red    .ftl-bar { background: #ef4444; }
-.ftl-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.ftl-remaining { font-size: 10px; letter-spacing: .04em; color: #22c55e; }
-.ftl-card.yellow .ftl-remaining { color: #eab308; }
-.ftl-card.red    .ftl-remaining { color: #ef4444; }
-.ftl-pct { font-size: 10px; color: #4a6a8a; }
+/* Recency */
+.recency-type{margin-bottom:16px}
+.rec-type-name{font-size:10px;letter-spacing:.18em;color:#7ab8d4;font-weight:700;margin-bottom:8px;padding:4px 8px;background:#0c1420;border-left:2px solid #1e3a5f;display:inline-block}
+.rec-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rec-card{background:#0c1420;border:1px solid #1e3a5f;border-radius:3px;padding:10px 12px}
+.rec-card.ok{border-color:rgba(34,197,94,.3)}
+.rec-card.warn{border-color:rgba(234,179,8,.3)}
+.rec-card.exp{border-color:rgba(239,68,68,.3)}
+.rc-title{font-size:9px;letter-spacing:.15em;color:#5a7a9a;font-weight:700;margin-bottom:6px}
+.rc-count{font-size:18px;font-weight:700;color:#22c55e;margin-bottom:3px}
+.rc-count.warn{color:#eab308}
+.rc-count.exp{color:#ef4444}
+.rc-row{display:flex;justify-content:space-between;font-size:9px;letter-spacing:.08em;margin-bottom:2px}
+.rc-key{color:#3a5a7a}
+.rc-val{color:#c8d6e5}
+.rc-val.ok{color:#22c55e}
+.rc-val.warn{color:#eab308}
+.rc-val.exp{color:#ef4444}
 
-/* ── Recency ──────────────────────────────────────────────────────────────── */
-#mock-recency-section {
-  margin-top: 8px;
-}
-.recency-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
-}
-.rec-card {
-  background: #0d1520;
-  border: 1px solid #0f1e2d;
-  border-radius: 4px;
-  padding: 12px;
-}
-.rec-label { font-size: 10px; letter-spacing: .1em; color: #4a6a8a; margin-bottom: 8px; }
-.rec-count-row {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  margin-bottom: 4px;
-}
-.rec-count { font-size: 28px; font-weight: 700; line-height: 1; color: #4fc3f7; }
-.rec-count.warn { color: #ef4444; }
-.rec-denom { font-size: 14px; color: #4a6a8a; }
-.rec-type { font-size: 10px; color: #7a9aaa; letter-spacing: .08em; }
-.rec-expiry { font-size: 10px; color: #4a6a8a; margin-top: 6px; }
-.rec-expiry span { color: #22c55e; }
+/* Autoland */
+.autoland-card{background:#0c1420;border:1px solid #1e3a5f;border-radius:4px;padding:14px 16px;max-width:360px}
 
-/* ── Settings Hint (tour-only element) ───────────────────────────────────── */
-#mock-settings-hint {
-  position: fixed;
-  bottom: 90px;
-  right: 24px;
-  background: #0d1520;
-  border: 1px solid #1e3a5f;
-  border-radius: 6px;
-  padding: 14px 18px;
-  max-width: 280px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .3s;
-  z-index: 5;
-}
-#mock-settings-hint.visible { opacity: 1; }
-.hint-icon { font-size: 20px; margin-bottom: 6px; }
-.hint-title { font-size: 11px; font-weight: 700; color: #4fc3f7; letter-spacing: .1em; margin-bottom: 4px; }
-.hint-body { font-size: 11px; color: #7a9aaa; line-height: 1.6; }
+/* ── SETTINGS MODAL ─────────────────────────────────────────────────────────── */
+#settings-modal{display:none;position:fixed;inset:0;z-index:800;align-items:flex-start;justify-content:flex-end;padding:60px 16px 16px}
+#settings-modal.open{display:flex}
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:-1}
+.settings-panel{background:#0d1117;border:1px solid #1e3a5f;border-radius:5px;width:100%;max-width:500px;max-height:calc(100vh - 80px);overflow:auto;display:flex;flex-direction:column}
+.settings-hdr{padding:16px 20px 12px;border-bottom:1px solid #1e3a5f;display:flex;align-items:center;justify-content:space-between}
+.settings-title{font-size:11px;letter-spacing:.2em;color:#4fc3f7;font-weight:700}
+.settings-close{background:none;border:none;color:#3a5a7a;font-size:16px;cursor:pointer;padding:2px 6px;font-family:inherit}
+.settings-close:hover{color:#ef4444}
+.settings-subtitle{font-size:10px;letter-spacing:.15em;color:#3a5a7a;margin-top:2px}
+.s-tabs{display:flex;border-bottom:1px solid #1e3a5f}
+.s-tab{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:#5a7a9a;padding:9px 4px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:.15em;cursor:pointer;transition:color .15s,border-color .15s;text-align:center}
+.s-tab.active{color:#4fc3f7;border-bottom-color:#4fc3f7}
+.s-tab:hover:not(.active){color:#7aaabf}
+.s-body{flex:1;overflow:auto;padding:16px 20px}
+.s-section-hdr{font-size:9px;letter-spacing:.2em;color:#4fc3f7;font-weight:700;padding-bottom:6px;border-bottom:1px solid #1e3a5f;margin-bottom:12px;margin-top:16px}
+.s-section-hdr:first-child{margin-top:0}
+.s-field{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #0f1820}
+.s-field-label{font-size:10px;letter-spacing:.1em;color:#7a9aaa}
+.s-field-val{font-size:10px;color:#c8d6e5;letter-spacing:.08em}
+.misc-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #0f1820;cursor:default}
+.misc-icon{font-size:16px;width:24px;text-align:center}
+.misc-body{flex:1}
+.misc-name{font-size:10px;letter-spacing:.12em;color:#c8d6e5;font-weight:700;margin-bottom:1px}
+.misc-desc{font-size:9px;color:#4a6a8a;letter-spacing:.05em}
+.misc-arr{color:#3a5a7a;font-size:11px}
+.ver-banner{background:#0a1220;border:1px solid #1e3a5f;border-radius:4px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.vb-logo{color:#4fc3f7;font-size:14px;font-weight:700;letter-spacing:.2em}
+.vb-ver{font-size:9px;color:#3a5a7a;letter-spacing:.15em;margin-top:2px}
 
-/* ── Animations ───────────────────────────────────────────────────────────── */
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
-@keyframes popIn { from{opacity:0;transform:scale(.96) translateY(6px)} to{opacity:1;transform:scale(1) translateY(0)} }
-@keyframes pulseRing {
-  0%   { box-shadow: 0 0 0 0 rgba(79,195,247,.6); }
-  70%  { box-shadow: 0 0 0 10px rgba(79,195,247,0); }
-  100% { box-shadow: 0 0 0 0 rgba(79,195,247,0); }
-}
+/* ── TOUR OVERLAY ───────────────────────────────────────────────────────────── */
+#tour-top,#tour-bot,#tour-left,#tour-right{position:fixed;background:rgba(4,8,14,.82);z-index:2000;pointer-events:none;transition:all .22s ease}
+#tour-panel{position:fixed;z-index:2100;background:#0d1825;border:1px solid #1e3a5f;border-radius:5px;padding:18px 20px;max-width:340px;min-width:260px;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+#tour-panel.hidden,.tour-hidden{display:none}
+.tp-step{font-size:9px;letter-spacing:.2em;color:#3a6a8a;margin-bottom:6px}
+.tp-title{font-size:13px;font-weight:700;color:#4fc3f7;letter-spacing:.12em;margin-bottom:8px}
+.tp-body{font-size:11px;color:#9abacf;line-height:1.7;letter-spacing:.03em;margin-bottom:16px}
+.tp-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tp-btn{background:linear-gradient(135deg,#0d2a3a,#091f30);border:1px solid #1e3a5f;color:#7aaabf;font-family:'Courier New',monospace;font-size:9px;letter-spacing:.18em;padding:6px 12px;cursor:pointer;border-radius:3px;transition:border-color .15s,color .15s}
+.tp-btn:hover{border-color:#4fc3f7;color:#4fc3f7}
+.tp-btn.primary{border-color:#4fc3f7;color:#4fc3f7}
+.tp-btn.primary:hover{background:linear-gradient(135deg,#0d3a5a,#0a2a40)}
+.tp-end{background:none;border:none;color:#3a5a7a;font-family:'Courier New',monospace;font-size:9px;letter-spacing:.12em;cursor:pointer}
+.tp-end:hover{color:#7a9aaa;text-decoration:underline}
 
-/* ── Tour Overlay ─────────────────────────────────────────────────────────── */
-#tour-overlay-top, #tour-overlay-bottom,
-#tour-overlay-left, #tour-overlay-right {
-  position: fixed;
-  background: rgba(0,0,0,.78);
-  z-index: 200;
-  pointer-events: all;
-  transition: all .3s ease;
-}
-#tour-overlay-center {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.82);
-  z-index: 200;
-  display: none;
-}
+/* Progress bar */
+#tour-progress{position:fixed;top:0;left:0;right:0;height:2px;background:#0f1828;z-index:2200;pointer-events:none}
+#tour-progress-fill{height:100%;background:#4fc3f7;transition:width .3s ease}
 
-/* ── Tour Bubble ──────────────────────────────────────────────────────────── */
-#tour-bubble {
-  position: fixed;
-  z-index: 300;
-  background: #0d1520;
-  border: 1px solid #4fc3f7;
-  border-radius: 8px;
-  padding: 18px 20px;
-  max-width: 340px;
-  min-width: 280px;
-  box-shadow: 0 4px 32px rgba(0,0,0,.6), 0 0 0 1px rgba(79,195,247,.1);
-  animation: popIn .2s ease;
-  pointer-events: none;
-  display: none;
-}
-.bubble-step {
-  font-size: 10px;
-  letter-spacing: .18em;
-  color: #2a5a7a;
-  margin-bottom: 6px;
-}
-.bubble-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #4fc3f7;
-  letter-spacing: .08em;
-  margin-bottom: 8px;
-  line-height: 1.3;
-}
-.bubble-body {
-  font-size: 12px;
-  color: #b8d6e5;
-  line-height: 1.7;
-}
-.bubble-arrow {
-  position: absolute;
-  width: 10px; height: 10px;
-  background: #0d1520;
-  border: 1px solid #4fc3f7;
-  transform: rotate(45deg);
-}
+/* Dots */
+#tour-dots{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:2100;pointer-events:none}
+.tour-dot{width:6px;height:6px;border-radius:50%;background:#1e3a5f;transition:background .2s}
+.tour-dot.active{background:#4fc3f7}
 
-/* ── Tour Nav ─────────────────────────────────────────────────────────────── */
-#tour-nav {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  z-index: 400;
-  background: #0d1117;
-  border-top: 1px solid #1e3a5f;
-  padding: 10px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-#tour-progress-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
-#tour-progress-label {
-  font-size: 10px;
-  letter-spacing: .15em;
-  color: #4a6a8a;
-  white-space: nowrap;
-}
-#tour-progress-bar-wrap {
-  flex: 1;
-  height: 3px;
-  background: #0f1e2d;
-  border-radius: 2px;
-  overflow: hidden;
-}
-#tour-progress-bar {
-  height: 100%;
-  background: #4fc3f7;
-  border-radius: 2px;
-  transition: width .3s ease;
-}
-#tour-buttons {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.tour-btn {
-  background: transparent;
-  border: 1px solid #1e3a5f;
-  border-radius: 4px;
-  color: #4a6a8a;
-  font-family: 'Courier New', monospace;
-  font-size: 11px;
-  letter-spacing: .12em;
-  padding: 5px 14px;
-  cursor: pointer;
-  transition: all .15s;
-}
-.tour-btn:hover { border-color: #4fc3f7; color: #4fc3f7; }
-.tour-btn.primary {
-  background: linear-gradient(135deg,#0d2a3a,#0a1f30);
-  border-color: #4fc3f7;
-  color: #4fc3f7;
-  font-weight: 700;
-  box-shadow: 0 0 8px rgba(79,195,247,.2);
-}
-.tour-btn.primary:hover { box-shadow: 0 0 14px rgba(79,195,247,.35); }
-.tour-btn.skip { color: #2d4a5a; border-color: transparent; font-size: 10px; }
-.tour-btn.skip:hover { color: #4a6a8a; border-color: #1e3a5f; }
-#tour-dots {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-}
-.tour-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: #1e3a5f;
-  transition: all .2s;
-  cursor: pointer;
-}
-.tour-dot.active { background: #4fc3f7; width: 16px; border-radius: 3px; }
-.tour-dot.done   { background: #2a5a7a; }
+/* ── ROAM BADGE ─────────────────────────────────────────────────────────────── */
+#roam-badge{display:none;position:fixed;bottom:20px;right:20px;z-index:1500;background:#0d2030;border:1px solid #4fc3f7;border-radius:20px;padding:6px 14px;font-size:9px;letter-spacing:.18em;color:#4fc3f7;font-weight:700;cursor:default;box-shadow:0 0 12px rgba(79,195,247,.15)}
+#roam-badge.visible{display:block}
 
-/* ── Welcome / Done Panel ─────────────────────────────────────────────────── */
-#tour-center-panel {
-  position: fixed;
-  inset: 0;
-  z-index: 350;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-#tour-center-panel.visible {
-  display: flex;
-}
-.center-card {
-  background: #0d1520;
-  border: 1px solid #4fc3f7;
-  border-radius: 10px;
-  padding: 36px 40px;
-  max-width: 440px;
-  width: 90%;
-  text-align: center;
-  box-shadow: 0 8px 48px rgba(0,0,0,.7);
-  animation: popIn .25s ease;
-  pointer-events: all;
-}
-.center-plane { font-size: 36px; margin-bottom: 12px; }
-.center-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #4fc3f7;
-  letter-spacing: .1em;
-  margin-bottom: 10px;
-}
-.center-body {
-  font-size: 13px;
-  color: #b8d6e5;
-  line-height: 1.8;
-  margin-bottom: 24px;
-}
-.center-body em { color: #4fc3f7; font-style: normal; }
-.center-btn {
-  background: linear-gradient(135deg,#0d2a3a,#0a1f30);
-  border: 1px solid #4fc3f7;
-  border-radius: 5px;
-  color: #4fc3f7;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  letter-spacing: .18em;
-  padding: 9px 28px;
-  cursor: pointer;
-  font-weight: 700;
-  box-shadow: 0 0 12px rgba(79,195,247,.25);
-  transition: box-shadow .15s;
-}
-.center-btn:hover { box-shadow: 0 0 20px rgba(79,195,247,.45); }
-.center-divider { width: 40px; height: 2px; background: #1e3a5f; margin: 0 auto 20px; border-radius: 1px; }
-
-/* ── Roam Badge ───────────────────────────────────────────────────────────── */
-#roam-badge {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 500;
-  background: #0d1520;
-  border: 1px solid #4fc3f7;
-  border-radius: 20px;
-  padding: 6px 14px;
-  font-size: 11px;
-  letter-spacing: .1em;
-  color: #4fc3f7;
-  cursor: pointer;
-  display: none;
-  transition: box-shadow .15s;
-  font-weight: 700;
-}
-#roam-badge:hover { box-shadow: 0 0 14px rgba(79,195,247,.4); }
-
-/* ── Hover Tooltip ────────────────────────────────────────────────────────── */
-#hover-tooltip {
-  position: fixed;
-  z-index: 600;
-  background: #0d1520;
-  border: 1px solid #4fc3f7;
-  border-radius: 5px;
-  padding: 8px 12px;
-  max-width: 260px;
-  font-size: 11px;
-  color: #b8d6e5;
-  line-height: 1.6;
-  pointer-events: none;
-  display: none;
-  box-shadow: 0 4px 16px rgba(0,0,0,.5);
-  animation: fadeIn .1s ease;
-}
-#hover-tooltip strong { color: #4fc3f7; font-weight: 700; display: block; margin-bottom: 3px; font-size: 11px; letter-spacing: .08em; }
-
-/* ── Spotlight highlight class ────────────────────────────────────────────── */
-.tour-lit {
-  position: relative;
-  z-index: 210;
-  border-radius: 4px;
-  outline: 2px solid #4fc3f7;
-  outline-offset: 4px;
-  animation: pulseRing 2s ease infinite;
-}
+/* ── HOVER TOOLTIP ───────────────────────────────────────────────────────────── */
+#htip{position:fixed;z-index:3000;background:#091520;border:1px solid #1e3a5f;border-radius:4px;padding:8px 12px;max-width:260px;pointer-events:none;display:none;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+#htip.visible{display:block}
+.htip-title{font-size:10px;font-weight:700;color:#4fc3f7;letter-spacing:.12em;margin-bottom:4px}
+.htip-body{font-size:10px;color:#7a9aaa;line-height:1.6;letter-spacing:.03em}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════════════════════════
-     APP MOCKUP
-══════════════════════════════════════════════════════════════════════════ -->
+<!-- ══ WELCOME SPLASH ══════════════════════════════════════════════════════════ -->
+<div id="ws">
+  <div class="ws-plane">✈</div>
+  <div class="ws-logo">eLOGBOOK V5.5</div>
+  <div class="ws-ver">INTERACTIVE HOW-TO GUIDE · CLAUDEBORNE</div>
+  <div class="ws-title">LEARN YOUR LOGBOOK</div>
+  <div class="ws-desc">
+    A full interactive mockup of eLOGBOOK — visually identical to the live app.<br>
+    The guided tour covers every feature step by step.<br>
+    Hover over any element after the tour to explore freely.
+  </div>
+  <button class="ws-btn-primary" onclick="startTour()">▶ START GUIDED TOUR</button>
+  <button class="ws-btn-skip" onclick="skipToRoam()">SKIP — EXPLORE FREELY</button>
+</div>
+
+<!-- ══ APP MOCKUP ══════════════════════════════════════════════════════════════ -->
 <div id="app">
 
   <!-- HEADER -->
   <div id="mock-header">
-    <div id="mock-header-top">
-
-      <!-- Brand / Title -->
-      <div id="mock-header-brand"
-           data-tip="<strong>APP HEADER</strong>Shows the app version, your name, airline, and licence. Updated whenever you save your profile in Settings.">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+    <div id="hdr-top">
+      <div id="hdr-left" id="header-brand"
+           data-tip='<strong class="htip-title">APP IDENTITY</strong><div class="htip-body">eLOGBOOK V5.5 is compliant with CAAM CAD 1901 and MCAR 2016 Part 69 &amp; Part 74. The version number updates automatically with each release.</div>'>
+        <div class="hd-line1">
           <span class="hd-plane">✈</span>
-          <span class="hd-ver">eLOGBOOK V5.4</span>
+          <span class="hd-brand">eLOGBOOK V5.5</span>
+          <span class="hd-reg-badge">CAAM · MCAR 2016</span>
         </div>
-        <div class="hd-reg">CAAM · MCAR 2016</div>
-        <div class="hd-title">MAY 2026 — FLIGHT RECORDS</div>
+        <div class="hd-period">MAY 2026 — <strong class="hd-title" style="display:inline;font-size:15px">FLIGHT RECORDS</strong></div>
         <div class="hd-sub">Compliant with CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</div>
       </div>
 
-      <!-- Right side -->
-      <div id="mock-header-right">
-        <div class="user-line"
-             data-tip="<strong>USER INFO</strong>Your Google account photo, name, airline, and licence number. Set these in Settings → Profile.">
+      <div id="hdr-right">
+        <div class="user-row" id="header-user"
+             data-tip='<strong class="htip-title">PILOT PROFILE</strong><div class="htip-body">Your name, airline, and employee ID are pulled from Settings → Profile. The orange badge is your account initial.</div>'>
           <div class="user-avatar">A</div>
           <div>
-            <div class="user-name">CAPT A. RASHID</div>
-            <div class="user-detail">AirAsia · MY-ATPL-001234</div>
+            <div class="user-name">AMIR RASHID</div>
+            <div class="user-detail">BATIK AIR MALAYSIA · 10141</div>
           </div>
         </div>
-        <div class="period-label">SELECT PERIOD</div>
-        <div id="mock-period-selector"
-             data-tip="<strong>PERIOD SELECTOR</strong>Switch between any month from January 2024 to December 2030. Each month has its own logbook grid.">
+        <div class="period-row" id="period-selector"
+             data-tip='<strong class="htip-title">PERIOD SELECTOR</strong><div class="htip-body">Choose a month and year to view that period\'s flight records. Only that month\'s sectors are displayed at once, keeping the view focused.</div>'>
+          <span class="period-label">SELECT PERIOD</span>
           <select class="mock-select" disabled>
             <option>MAY</option>
           </select>
-          <select class="mock-select mock-select-year" disabled>
+          <select class="mock-select mock-select-yr" disabled>
             <option>2026</option>
           </select>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <div id="mock-toolbar"
-               data-tip="<strong>TOOLBAR</strong>Four icon buttons: Refresh (sync from cloud), Export/Import (PDF &amp; XLSX), Settings (profile &amp; preferences), and Sign Out.">
-            <div class="toolbar-btn" title="Refresh">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-            </div>
-            <div class="toolbar-btn" title="Export / Import">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            </div>
-            <div class="toolbar-btn" title="Settings">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </div>
-            <div class="toolbar-btn danger" title="Sign Out">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            </div>
+        <div class="toolbar-row">
+          <div id="toolbar-icons" style="display:flex;gap:6px;align-items:center"
+               data-tip='<strong class="htip-title">TOOLBAR ACTIONS</strong><div class="htip-body">⚙ Settings · ↑ Export logbook · ↓ Import data · + Add new flight sector</div>'>
+            <button class="tb-icon" title="Settings" onclick="openSettings()">⚙</button>
+            <button class="tb-icon" title="Export">↑</button>
+            <button class="tb-icon" title="Import">↓</button>
+            <button class="tb-icon" title="Add Sector">✚</button>
+          </div>
+          <div class="tb-divider"></div>
+          <div id="save-btn-area" style="display:flex;align-items:center;gap:8px"
+               data-tip='<strong class="htip-title">SAVE</strong><div class="htip-body">eLOGBOOK auto-saves when you navigate away. SAVE NOW forces an immediate cloud sync. The green timestamp shows when data was last saved.</div>'>
+            <span class="save-ts">✓ 14:22 UTC</span>
+            <button class="save-btn">SAVE NOW</button>
           </div>
         </div>
       </div>
-    </div><!-- /header-top -->
+    </div>
 
-    <!-- Tab bar -->
     <div id="mock-tabbar">
-      <div id="mock-tabs"
-           data-tip="<strong>MAIN TABS</strong>Three sections: LOGBOOK (enter flights), FLIGHT SUMMARY (grand totals by aircraft type), and LIMITS &amp; RECENCY (regulatory compliance).">
-        <button class="mock-tab active" onclick="switchTab('logbook',this)">📋 LOGBOOK</button>
-        <button class="mock-tab" onclick="switchTab('summary',this)">📊 FLIGHT SUMMARY</button>
-        <button class="mock-tab" onclick="switchTab('ftl',this)">⏱ LIMITS &amp; RECENCY</button>
-      </div>
-      <div id="mock-save-area"
-           data-tip="<strong>AUTOSAVE</strong>eLOGBOOK saves your data to the cloud automatically every 5 minutes. The timestamp shows the last successful save. Use SAVE NOW to save immediately.">
-        <span class="save-ts">✓ 14:32:07</span>
-        <div class="save-btn">💾 SAVE NOW</div>
+      <div id="mock-tabs">
+        <button class="mock-tab active" onclick="switchTab('logbook',this)">LOGBOOK</button>
+        <button class="mock-tab" onclick="switchTab('summary',this)">FLIGHT SUMMARY</button>
+        <button class="mock-tab" onclick="switchTab('limits',this)">LIMITS &amp; RECENCY</button>
+        <button class="mock-tab" onclick="switchTab('duty',this)">DUTY RECORDS</button>
       </div>
     </div>
   </div><!-- /mock-header -->
 
-  <!-- ── LOGBOOK TAB ───────────────────────────────────────────────────────── -->
-  <div id="logbook-tab" class="tab-content visible">
-    <div class="table-wrap">
-      <table class="lb-table" id="mock-logbook-table">
+  <!-- ══ TAB: LOGBOOK ══════════════════════════════════════════════════════════ -->
+  <div id="tab-logbook" class="tab-pane visible">
+    <div style="overflow-x:auto">
+    <table class="lb">
+      <thead>
+        <tr class="grp">
+          <th class="gh-plain" rowspan="2">#</th>
+          <th class="gh-plain" rowspan="2">DATE</th>
+          <th class="gh-std" colspan="2">AIRCRAFT</th>
+          <th class="gh-std" rowspan="2">CAPTAIN</th>
+          <th class="gh-std" rowspan="2">HOLDER OPERATING<br>CAPACITY</th>
+          <th class="gh-std" rowspan="2">PILOT<br>FLYING</th>
+          <th class="gh-std" colspan="2">SECTORS</th>
+          <th class="gh-std" rowspan="2">STD<br>(UTC)</th>
+          <th class="gh-std" rowspan="2">STA<br>(UTC)</th>
+          <th class="gh-day" colspan="4">DAY</th>
+          <th class="gh-night" colspan="4">NIGHT</th>
+          <th class="gh-total" rowspan="2">TOTAL</th>
+          <th class="gh-plain" rowspan="2">ADD<br>REMARKS</th>
+          <th class="gh-plain" rowspan="2">✕</th>
+        </tr>
+        <tr class="cols">
+          <th>TYPE</th><th>MARKINGS</th>
+          <th>DEP</th><th>ARR</th>
+          <th class="ch-p1d">P1</th><th>P1U</th><th>S</th><th>P2</th>
+          <th class="ch-p1u">P1</th><th class="ch-p1u">P1U</th><th class="ch-sn">S</th><th>P2</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-tip='<strong class="htip-title">FLIGHT ROW</strong><div class="htip-body">Each row is one flight sector. Date, aircraft, routing, UTC times, and hours are recorded. Day P1 time appears in red; Total in cyan.</div>'>
+          <td class="muted">1</td>
+          <td>01 MAY</td>
+          <td>ATR72-600</td><td>9M-LME</td>
+          <td>RAHMAN</td>
+          <td><button class="hoc-btn">P1 ▾</button></td>
+          <td><span class="chk-yes"></span></td>
+          <td>KUL</td><td>LGK</td>
+          <td class="readonly">01:45</td><td class="readonly">03:05</td>
+          <td class="red">01:20</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>
+          <td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>
+          <td class="cyan">01:20</td>
+          <td><button class="rem-btn">+ NOTE</button></td>
+          <td><button class="del-btn">✕</button></td>
+        </tr>
+        <tr>
+          <td class="muted">2</td>
+          <td>01 MAY</td>
+          <td>ATR72-600</td><td>9M-LME</td>
+          <td>RAHMAN</td>
+          <td><button class="hoc-btn">P1 ▾</button></td>
+          <td><span class="chk-yes"></span></td>
+          <td>LGK</td><td>KUL</td>
+          <td class="readonly">03:55</td><td class="readonly">05:20</td>
+          <td class="red">01:25</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>
+          <td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>
+          <td class="cyan">01:25</td>
+          <td><button class="rem-btn">+ NOTE</button></td>
+          <td><button class="del-btn">✕</button></td>
+        </tr>
+        <tr data-tip='<strong class="htip-title">NIGHT SECTOR</strong><div class="htip-body">This was a night sector flown as P1U (Pilot in Command Under Supervision). Night P1U time appears in green. PF checkbox unchecked = co-pilot flying.</div>'>
+          <td class="muted">3</td>
+          <td>05 MAY</td>
+          <td>B737-8</td><td>9M-LOB</td>
+          <td>SELF</td>
+          <td><button class="hoc-btn" style="background:rgba(79,195,247,.06);border-color:rgba(79,195,247,.3);color:#4fc3f7">P1U▾</button></td>
+          <td><span class="chk-no"></span></td>
+          <td>KUL</td><td>BKI</td>
+          <td class="readonly">23:30</td><td class="readonly">01:15</td>
+          <td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>
+          <td class="muted">—</td><td class="green">01:45</td><td class="muted">—</td><td class="muted">—</td>
+          <td class="cyan">01:45</td>
+          <td><button class="rem-btn has">★ NOTE</button></td>
+          <td><button class="del-btn">✕</button></td>
+        </tr>
+        <tr>
+          <td class="muted">4</td>
+          <td>12 MAY</td>
+          <td>ATR72-600</td><td>9M-LMF</td>
+          <td>ABD RAHIM</td>
+          <td><button class="hoc-btn">P1 ▾</button></td>
+          <td><span class="chk-yes"></span></td>
+          <td>KUL</td><td>AOR</td>
+          <td class="readonly">06:15</td><td class="readonly">07:25</td>
+          <td class="red">01:10</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>
+          <td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>
+          <td class="cyan">01:10</td>
+          <td><button class="rem-btn">+ NOTE</button></td>
+          <td><button class="del-btn">✕</button></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="11" style="text-align:right;letter-spacing:.12em;color:#3a6a8a">MAY 2026 TOTALS →</td>
+          <td class="red-total">03:55</td><td>—</td><td>—</td><td>—</td>
+          <td>—</td><td class="green-total">01:45</td><td>—</td><td>—</td>
+          <td style="color:#4fc3f7">05:40</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+    <div class="add-sector-bar"
+         data-tip='<strong class="htip-title">ADD FLIGHT SECTOR</strong><div class="htip-body">Click to add a new row. Fill in aircraft, routing, times, and your role. Hours are calculated automatically from STD/STA and day/night split.</div>'>
+      <button class="add-sector-btn">✚ ADD SECTOR</button>
+    </div>
+  </div><!-- /tab-logbook -->
+
+  <!-- ══ TAB: FLIGHT SUMMARY ══════════════════════════════════════════════════ -->
+  <div id="tab-summary" class="tab-pane">
+    <div style="padding:16px 20px">
+    <div class="sum-section-title">2026 ANNUAL OVERVIEW — ALL MONTHS</div>
+    <div class="annual-wrap">
+    <table class="ann">
+      <thead>
+        <tr class="grp">
+          <th rowspan="2" style="text-align:left;padding-left:10px">MONTH</th>
+          <th rowspan="2">SECTORS</th>
+          <th class="gh-day" colspan="4">DAY</th>
+          <th class="gh-night" colspan="4">NIGHT</th>
+          <th class="gh-total" rowspan="2">TOTAL</th>
+        </tr>
+        <tr class="cols">
+          <th class="c-p1d">P1</th><th class="c-p1u">P1U</th><th>S</th><th>P2</th>
+          <th class="c-p1d">P1</th><th class="c-p1u">P1U</th><th class="c-sn">S</th><th>P2</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="month-name">JAN</td><td class="has-data">18</td><td class="p1d">22:10</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="tot">22:10</td></tr>
+        <tr><td class="month-name">FEB</td><td class="has-data">24</td><td class="p1d">28:45</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="p1u">03:20</td><td>—</td><td>—</td><td class="tot">32:05</td></tr>
+        <tr><td class="month-name">MAR</td><td class="has-data">22</td><td class="p1d">26:30</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="p1u">01:45</td><td>—</td><td>—</td><td class="tot">28:15</td></tr>
+        <tr><td class="month-name">APR</td><td class="has-data">20</td><td class="p1d">24:15</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="tot">24:15</td></tr>
+        <tr class="current-month">
+          <td class="month-name" style="color:#4fc3f7;font-weight:700">MAY ◀</td>
+          <td class="has-data" style="color:#c8d6e5">4</td>
+          <td class="p1d">03:55</td><td>—</td><td>—</td><td>—</td>
+          <td>—</td><td class="p1u">01:45</td><td>—</td><td>—</td>
+          <td class="tot">05:40</td>
+        </tr>
+        <tr><td class="month-name">JUN</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td class="month-name">JUL</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td class="month-name">AUG</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td class="month-name">SEP</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td class="month-name">OCT</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td class="month-name">NOV</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td class="month-name">DEC</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr class="annual-total">
+          <td style="text-align:left;padding-left:10px">ANNUAL TOTAL</td>
+          <td>88</td>
+          <td class="p1d" style="color:#ef4444">105:35</td><td>—</td><td>—</td><td>—</td>
+          <td>—</td><td class="p1u" style="color:#22c55e">06:50</td><td>—</td><td>—</td>
+          <td class="tot">112:25</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div id="grand-totals"
+         data-tip='<strong class="htip-title">GRAND TOTAL HOURS</strong><div class="htip-body">Your lifetime flight hours broken down by aircraft type. This is the data used for licence applications, type rating renewals, and recency checks.</div>'>
+      <div class="gt-header">
+        GRAND TOTAL HOURS AS OF: <span class="gt-date">16 MAY 2026</span>
+      </div>
+      <table class="gt">
         <thead>
-          <tr class="group-row" id="mock-table-header">
-            <th></th>
-            <th colspan="2" id="mock-aircraft-cols"
-                data-tip="<strong>AIRCRAFT</strong>Enter the ICAO aircraft type (e.g. B737, A320) and the aircraft registration (markings).">AIRCRAFT</th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th colspan="2" id="mock-sector-cols"
-                data-tip="<strong>SECTORS</strong>DEP is the departure airport ICAO code, ARR is the arrival airport ICAO code. Used for recency tracking and FTL calculations.">SECTORS</th>
-            <th></th>
-            <th></th>
-            <th colspan="3"
-                data-tip="<strong>DAY TIME</strong>Automatically calculated from STD/STA and split by your role (P1, P2, or P1 U/S). You cannot edit these cells directly.">DAY</th>
-            <th colspan="3"
-                data-tip="<strong>NIGHT TIME</strong>Same as Day columns — auto-calculated. Night = 11:30–23:30 UTC (fixed method) or sunset±20 min (dynamic method).">NIGHT</th>
-            <th></th>
-            <th></th>
-            <th></th>
-          </tr>
-          <tr class="col-row">
-            <th data-tip="<strong>DATE</strong>Day of the month. Enter 1–31 depending on the selected month.">DATE</th>
-            <th data-tip="<strong>TYPE</strong>Aircraft type e.g. B737, A320. Auto-filled from your default in Settings.">TYPE</th>
-            <th data-tip="<strong>MARKINGS</strong>Aircraft registration e.g. 9M-AHX.">MARKINGS</th>
-            <th data-tip="<strong>CAPTAIN</strong>The captain's name for this sector. Auto-filled from your default in Settings.">CAPTAIN</th>
-            <th style="line-height:1.3" data-tip="<strong>HOLDER OPERATING CAPACITY</strong>Your role on this sector: P1 (Captain), P2 (First Officer), or P1 U/S (Captain under supervision). This determines how flight time is categorised.">HOLDER<br>OP CAP</th>
-            <th style="line-height:1.3" data-tip="<strong>PILOT FLYING</strong>Check this if you were the handling pilot (flew the aircraft). Each checked sector counts as one takeoff and one landing for recency purposes.">PILOT<br>FLYING</th>
-            <th data-tip="<strong>DEPARTURE</strong>ICAO code of the departure airport e.g. WMKK for Kuala Lumpur.">DEP</th>
-            <th data-tip="<strong>ARRIVAL</strong>ICAO code of the arrival airport.">ARR</th>
-            <th style="line-height:1.3" data-tip="<strong>STD (UTC)</strong>Scheduled Time of Departure in UTC. Enter as HH:MM or HHMM — both formats are accepted.">STD<br>(UTC)</th>
-            <th style="line-height:1.3" data-tip="<strong>STA (UTC)</strong>Scheduled Time of Arrival in UTC. The day/night split and total are calculated automatically once STD and STA are set.">STA<br>(UTC)</th>
-            <th data-tip="<strong>DAY P1</strong>Day flight time as Pilot-in-Command. Auto-calculated — read only.">P1</th>
-            <th data-tip="<strong>DAY P1 U/S</strong>Day flight time as Captain Under Supervision. Auto-calculated.">P1 U/S</th>
-            <th data-tip="<strong>DAY P2</strong>Day flight time as First Officer. Auto-calculated.">P2</th>
-            <th data-tip="<strong>NIGHT P1</strong>Night flight time as Pilot-in-Command. Auto-calculated.">P1</th>
-            <th data-tip="<strong>NIGHT P1 U/S</strong>Night flight time as Captain Under Supervision. Auto-calculated.">P1 U/S</th>
-            <th data-tip="<strong>NIGHT P2</strong>Night flight time as First Officer. Auto-calculated.">P2</th>
-            <th data-tip="<strong>TOTAL</strong>Total block time for this sector (STD to STA). Auto-calculated.">TOTAL</th>
-            <th data-tip="<strong>REMARKS</strong>Open the remarks panel to add notes — approach type, autoland, simulator details, etc.">RMK</th>
-            <th data-tip="<strong>DELETE ROW</strong>Removes this row from the logbook. Cannot be undone.">DEL</th>
+          <tr>
+            <th style="text-align:left;padding-left:12px">AIRCRAFT TYPE</th>
+            <th class="c-p1d">P1</th><th class="c-p1u">P1U</th><th>S</th><th>P2</th>
+            <th class="c-tot">TOTAL</th>
           </tr>
         </thead>
-        <tbody id="mock-sample-rows">
-          <!-- Row 1 -->
-          <tr id="mock-entry-row"
-              data-tip="<strong>LOGBOOK ROW</strong>Each row is one flight sector. Fill in the date, aircraft, captain, your role (CAP), and times — the rest is calculated for you.">
-            <td>15</td>
-            <td>B737</td>
-            <td>9M-AHX</td>
-            <td style="max-width:70px;overflow:hidden;text-overflow:ellipsis">RAZIF</td>
-            <td class="accent">P1</td>
-            <td><div class="chk-yes"></div></td>
-            <td>WMKK</td>
-            <td>WMKP</td>
-            <td id="mock-std-cell" data-tip="<strong>STD</strong>Enter departure time in UTC. Accepted formats: 0625 or 06:25.">06:25</td>
-            <td id="mock-sta-cell" data-tip="<strong>STA</strong>Enter arrival time in UTC. Once you fill this in, day/night columns update automatically.">07:35</td>
-            <td class="readonly">01:10</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly accent">01:10</td>
-            <td><button class="remarks-btn">+ RMK</button></td>
-            <td><button class="del-btn">✕</button></td>
-          </tr>
-          <!-- Row 2 -->
-          <tr>
-            <td>15</td>
-            <td>B737</td>
-            <td>9M-AHX</td>
-            <td style="max-width:70px;overflow:hidden;text-overflow:ellipsis">RAZIF</td>
-            <td class="accent">P1</td>
-            <td><div class="chk-yes"></div></td>
-            <td>WMKP</td>
-            <td>WMKK</td>
-            <td>09:20</td>
-            <td>10:25</td>
-            <td class="readonly">01:05</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly accent">01:05</td>
-            <td><button class="remarks-btn has-note">📝 RMK</button></td>
-            <td><button class="del-btn">✕</button></td>
-          </tr>
-          <!-- Row 3 -->
-          <tr>
-            <td>12</td>
-            <td>A320</td>
-            <td>9M-AHB</td>
-            <td style="max-width:70px;overflow:hidden;text-overflow:ellipsis">HASSAN</td>
-            <td class="accent">P2</td>
-            <td><div class="chk-yes"></div></td>
-            <td>WMKK</td>
-            <td>WBGG</td>
-            <td>11:15</td>
-            <td>13:05</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly">01:50</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly accent">01:50</td>
-            <td><button class="remarks-btn">+ RMK</button></td>
-            <td><button class="del-btn">✕</button></td>
-          </tr>
-          <!-- Row 4 -->
-          <tr>
-            <td>12</td>
-            <td>A320</td>
-            <td>9M-AHB</td>
-            <td style="max-width:70px;overflow:hidden;text-overflow:ellipsis">HASSAN</td>
-            <td class="accent">P1 U/S</td>
-            <td><div class="chk-no"></div></td>
-            <td>WBGG</td>
-            <td>WMKK</td>
-            <td>14:20</td>
-            <td>16:05</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly">01:45</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly accent">01:45</td>
-            <td><button class="remarks-btn">+ RMK</button></td>
-            <td><button class="del-btn">✕</button></td>
-          </tr>
-          <!-- Row 5 night crossing -->
-          <tr>
-            <td>08</td>
-            <td>B737</td>
-            <td>9M-AFR</td>
-            <td style="max-width:70px;overflow:hidden;text-overflow:ellipsis">WANG</td>
-            <td class="accent">P1</td>
-            <td><div class="chk-yes"></div></td>
-            <td>WMKK</td>
-            <td>WBKK</td>
-            <td>23:00</td>
-            <td>01:20</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly">02:20</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly muted">—</td>
-            <td class="readonly accent">02:20</td>
-            <td><button class="remarks-btn">+ RMK</button></td>
-            <td><button class="del-btn">✕</button></td>
-          </tr>
-          <!-- 10 empty rows -->
-          <tr><td class="muted">—</td><td></td><td></td><td></td><td></td><td><div class="chk-no"></div></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td><button class="remarks-btn">+ RMK</button></td><td><button class="del-btn">✕</button></td></tr>
-          <tr><td class="muted">—</td><td></td><td></td><td></td><td></td><td><div class="chk-no"></div></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td><button class="remarks-btn">+ RMK</button></td><td><button class="del-btn">✕</button></td></tr>
+        <tbody>
+          <tr><td class="ac-name">ATR72-500</td><td class="p1d">412:30</td><td>—</td><td>—</td><td>—</td><td class="tot">412:30</td></tr>
+          <tr><td class="ac-name">ATR72-600</td><td class="p1d">887:45</td><td>—</td><td>—</td><td>—</td><td class="tot">887:45</td></tr>
+          <tr><td class="ac-name">B737-8</td><td>—</td><td class="p1u">184:20</td><td>—</td><td>—</td><td class="tot">184:20</td></tr>
+          <tr><td class="ac-name">B737-800</td><td>—</td><td>—</td><td>—</td><td class="has">112:15</td><td class="tot">112:15</td></tr>
+          <tr><td class="ac-name">DA42</td><td>—</td><td>—</td><td class="has">48:10</td><td>—</td><td class="tot">48:10</td></tr>
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="10" style="text-align:right;color:#4a6a8a;letter-spacing:.1em;">MAY 2026 TOTAL</td>
-            <td>02:15</td>
-            <td>01:45</td>
-            <td>01:50</td>
-            <td>02:20</td>
-            <td>—</td>
-            <td>—</td>
-            <td>08:10</td>
-            <td colspan="2"></td>
+            <td style="text-align:left;padding-left:12px">GRAND TOTAL</td>
+            <td class="p1d">1300:15</td><td class="p1u">184:20</td><td>48:10</td><td>112:15</td>
+            <td style="color:#4fc3f7;font-weight:700">1645:00</td>
           </tr>
         </tfoot>
       </table>
     </div>
-
-    <div class="add-sector-bar"
-         id="mock-add-sector"
-         data-tip="<strong>ADD SECTOR</strong>Adds a new row to the bottom of the current month. New rows are pre-filled with your default aircraft type, markings, and captain from Settings.">
-      <button class="add-sector-btn">＋ ADD SECTOR</button>
     </div>
-  </div><!-- /logbook-tab -->
+  </div><!-- /tab-summary -->
 
-  <!-- ── FLIGHT SUMMARY TAB (minimal) ─────────────────────────────────────── -->
-  <div id="summary-tab" class="tab-content">
-    <div style="padding:40px 24px;text-align:center;color:#4a6a8a;">
-      <div style="font-size:32px;margin-bottom:12px;">📊</div>
-      <div style="font-size:13px;letter-spacing:.15em;color:#4fc3f7;margin-bottom:8px;">FLIGHT SUMMARY</div>
-      <div style="font-size:12px;line-height:1.8;">
-        Shows your grand total flying hours broken down by aircraft type,<br>
-        including carry-forward hours from previous logbooks.<br>
-        <span style="color:#7a9aaa;">Set a cutoff date to calculate totals up to any point in time.</span>
+  <!-- ══ TAB: LIMITS & RECENCY ════════════════════════════════════════════════ -->
+  <div id="tab-limits" class="tab-pane">
+    <div style="padding:16px 20px">
+
+    <!-- Compliance Banner -->
+    <div class="compliance-banner"
+         data-tip='<strong class="htip-title">COMPLIANCE STATUS</strong><div class="htip-body">eLOGBOOK calculates your compliance in real time. Green = fully within limits. Click Limits &amp; Recency any time to check your status before a flight.</div>'>
+      <div class="cb-icon">✅</div>
+      <div class="cb-body">
+        <div class="cb-status">FULLY COMPLIANT</div>
+        <div class="cb-grid">
+          <div class="cb-item"><span class="cb-item-label">AS OF DATE · </span><span class="cb-item-val">16 MAY 2026</span></div>
+          <div class="cb-item"><span class="cb-item-label">WORST LIMIT · </span><span class="cb-item-val">234/280 HRS (28-DAY FT)</span></div>
+          <div class="cb-item"><span class="cb-item-label">REGULATION · </span><span class="cb-item-val">MCAR 2016 PART 69</span></div>
+        </div>
       </div>
+    </div>
+
+    <!-- Flight Time Limits -->
+    <div class="lim-section">
+      <div class="lim-section-hdr">✈ FLIGHT TIME LIMITS</div>
+      <div class="ftl-cards"
+           data-tip='<strong class="htip-title">FLIGHT TIME LIMITS</strong><div class="htip-body">Monitored over rolling 28-day and 365-day windows. Limits are set per MCAR 2016 Part 69. The bar shows how much of your allowance you have used.</div>'>
+        <div class="lim-card">
+          <div class="lc-label">LAST 28 DAYS</div>
+          <div class="lc-val">23:20</div>
+          <div class="lc-limit">LIMIT: 100:00 HRS</div>
+          <div class="lc-bar"><div class="lc-fill" style="width:23%"></div></div>
+          <div class="lc-note">23:20 of 100:00 used · 76:40 remaining</div>
+        </div>
+        <div class="lim-card">
+          <div class="lc-label">LAST 365 DAYS</div>
+          <div class="lc-val">112:25</div>
+          <div class="lc-limit">LIMIT: 1000:00 HRS</div>
+          <div class="lc-bar"><div class="lc-fill" style="width:11%"></div></div>
+          <div class="lc-note">112:25 of 1000:00 used · 887:35 remaining</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cumulative Duty Hours -->
+    <div class="lim-section">
+      <div class="lim-section-hdr">▣ CUMULATIVE DUTY HOURS</div>
+      <div class="duty-cards"
+           data-tip='<strong class="htip-title">DUTY HOUR LIMITS</strong><div class="htip-body">Total duty time (not just flight time) monitored over 7, 28, and 365-day rolling windows. Includes pre-flight briefing, post-flight duties, and standby.</div>'>
+        <div class="lim-card">
+          <div class="lc-label">LAST 7 DAYS</div>
+          <div class="lc-val" style="font-size:16px">24:00</div>
+          <div class="lc-limit">LIMIT: 60:00 HRS</div>
+          <div class="lc-bar"><div class="lc-fill" style="width:40%"></div></div>
+          <div class="lc-note">40% used</div>
+        </div>
+        <div class="lim-card">
+          <div class="lc-label">LAST 28 DAYS</div>
+          <div class="lc-val" style="font-size:16px">89:30</div>
+          <div class="lc-limit">LIMIT: 190:00 HRS</div>
+          <div class="lc-bar"><div class="lc-fill" style="width:47%"></div></div>
+          <div class="lc-note">47% used</div>
+        </div>
+        <div class="lim-card">
+          <div class="lc-label">LAST 365 DAYS</div>
+          <div class="lc-val" style="font-size:16px">823:00</div>
+          <div class="lc-limit">LIMIT: 2000:00 HRS</div>
+          <div class="lc-bar"><div class="lc-fill" style="width:41%"></div></div>
+          <div class="lc-note">41% used</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recency -->
+    <div class="lim-section" id="recency-section"
+         data-tip='<strong class="htip-title">TAKEOFF &amp; LANDING RECENCY</strong><div class="htip-body">Per aircraft type, eLOGBOOK tracks your T/O and landing counts in the last 90 days vs. regulatory requirement. Expiry dates help you plan recency training.</div>'>
+      <div class="lim-section-hdr">↻ TAKEOFF &amp; LANDING RECENCY</div>
+
+      <div class="recency-type">
+        <div class="rec-type-name">ATR72-600</div>
+        <div class="rec-cards">
+          <div class="rec-card ok">
+            <div class="rc-title">DAY T/O</div>
+            <div class="rc-count">3</div>
+            <div class="rc-row"><span class="rc-key">REQ</span><span class="rc-val ok">3</span></div>
+            <div class="rc-row"><span class="rc-key">CURRENT</span><span class="rc-val ok">✓ CURRENT</span></div>
+            <div class="rc-row"><span class="rc-key">EXP</span><span class="rc-val">28 JUL 2026</span></div>
+          </div>
+          <div class="rec-card ok">
+            <div class="rc-title">DAY LDG</div>
+            <div class="rc-count">3</div>
+            <div class="rc-row"><span class="rc-key">REQ</span><span class="rc-val ok">3</span></div>
+            <div class="rc-row"><span class="rc-key">CURRENT</span><span class="rc-val ok">✓ CURRENT</span></div>
+            <div class="rc-row"><span class="rc-key">EXP</span><span class="rc-val">28 JUL 2026</span></div>
+          </div>
+          <div class="rec-card ok">
+            <div class="rc-title">NIGHT T/O</div>
+            <div class="rc-count">1</div>
+            <div class="rc-row"><span class="rc-key">REQ</span><span class="rc-val ok">1</span></div>
+            <div class="rc-row"><span class="rc-key">CURRENT</span><span class="rc-val ok">✓ CURRENT</span></div>
+            <div class="rc-row"><span class="rc-key">EXP</span><span class="rc-val">02 AUG 2026</span></div>
+          </div>
+          <div class="rec-card ok">
+            <div class="rc-title">NIGHT LDG</div>
+            <div class="rc-count">1</div>
+            <div class="rc-row"><span class="rc-key">REQ</span><span class="rc-val ok">1</span></div>
+            <div class="rc-row"><span class="rc-key">CURRENT</span><span class="rc-val ok">✓ CURRENT</span></div>
+            <div class="rc-row"><span class="rc-key">EXP</span><span class="rc-val">02 AUG 2026</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="recency-type">
+        <div class="rec-type-name">B737-8</div>
+        <div class="rec-cards">
+          <div class="rec-card warn">
+            <div class="rc-title">DAY T/O</div>
+            <div class="rc-count warn">1</div>
+            <div class="rc-row"><span class="rc-key">REQ</span><span class="rc-val">3</span></div>
+            <div class="rc-row"><span class="rc-key">CURRENT</span><span class="rc-val warn">⚠ EXPIRING SOON</span></div>
+            <div class="rc-row"><span class="rc-key">EXP</span><span class="rc-val warn">04 JUN 2026</span></div>
+          </div>
+          <div class="rec-card warn">
+            <div class="rc-title">DAY LDG</div>
+            <div class="rc-count warn">1</div>
+            <div class="rc-row"><span class="rc-key">REQ</span><span class="rc-val">3</span></div>
+            <div class="rc-row"><span class="rc-key">CURRENT</span><span class="rc-val warn">⚠ EXPIRING SOON</span></div>
+            <div class="rc-row"><span class="rc-key">EXP</span><span class="rc-val warn">04 JUN 2026</span></div>
+          </div>
+          <div class="rec-card ok">
+            <div class="rc-title">NIGHT T/O</div>
+            <div class="rc-count">1</div>
+            <div class="rc-row"><span class="rc-key">REQ</span><span class="rc-val ok">1</span></div>
+            <div class="rc-row"><span class="rc-key">CURRENT</span><span class="rc-val ok">✓ CURRENT</span></div>
+            <div class="rc-row"><span class="rc-key">EXP</span><span class="rc-val">04 AUG 2026</span></div>
+          </div>
+          <div class="rec-card ok">
+            <div class="rc-title">NIGHT LDG</div>
+            <div class="rc-count">1</div>
+            <div class="rc-row"><span class="rc-key">REQ</span><span class="rc-val ok">1</span></div>
+            <div class="rc-row"><span class="rc-key">CURRENT</span><span class="rc-val ok">✓ CURRENT</span></div>
+            <div class="rc-row"><span class="rc-key">EXP</span><span class="rc-val">04 AUG 2026</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Autoland -->
+    <div class="lim-section">
+      <div class="lim-section-hdr">○ AUTOLAND RECENCY</div>
+      <div class="autoland-card"
+           data-tip='<strong class="htip-title">AUTOLAND RECENCY</strong><div class="htip-body">Tracks your autoland currency per aircraft type. Required approaches are monitored over a rolling 6-month window per MCAR 2016 Part 69.</div>'>
+        <div class="lc-label" style="margin-bottom:10px">B737-8 · CAT III</div>
+        <div class="rc-row"><span class="rc-key">AUTOLAND COUNT (6 MTH)</span><span class="rc-val ok">3 / 3 REQ</span></div>
+        <div class="rc-row" style="margin-top:4px"><span class="rc-key">STATUS</span><span class="rc-val ok">✓ CURRENT</span></div>
+        <div class="rc-row" style="margin-top:4px"><span class="rc-key">EXPIRY</span><span class="rc-val">05 NOV 2026</span></div>
+      </div>
+    </div>
+
+    </div>
+  </div><!-- /tab-limits -->
+
+  <!-- ══ TAB: DUTY RECORDS (placeholder) ══════════════════════════════════════ -->
+  <div id="tab-duty" class="tab-pane">
+    <div style="padding:60px 20px;text-align:center">
+      <div style="color:#3a5a7a;font-size:11px;letter-spacing:.2em;margin-bottom:8px">DUTY RECORDS</div>
+      <div style="color:#2a4a6a;font-size:10px;letter-spacing:.12em">Feature coming in a future version.</div>
     </div>
   </div>
-
-  <!-- ── FTL / LIMITS & RECENCY TAB ────────────────────────────────────────── -->
-  <div id="ftl-tab" class="tab-content">
-    <div id="mock-ftl-tab">
-
-      <!-- Compliance Banner -->
-      <div class="ftl-banner yellow"
-           data-tip="<strong>COMPLIANCE BANNER</strong>A quick summary of your overall FTL status. Green = all limits within range. Yellow = approaching a limit (within 10%). Red = a limit has been exceeded.">
-        <div class="banner-icon">⚠️</div>
-        <div>
-          <div class="banner-label">APPROACHING LIMIT — ACTION REQUIRED</div>
-          <div class="banner-text">One or more limits are within 10% of the regulatory maximum. Monitor closely before accepting your next duty assignment.</div>
-        </div>
-      </div>
-
-      <!-- Flight Time Limits -->
-      <div class="section-header">
-        <div class="section-title">✈ FLIGHT TIME LIMITS</div>
-        <div class="section-line"></div>
-        <div class="section-ibtn">i</div>
-      </div>
-
-      <div id="mock-ftl-cards"
-           data-tip="<strong>FTL CARDS</strong>Each card shows one rolling limit — how many hours you've used versus the maximum allowed. The colour-coded dot and bar tell you at a glance how close you are.">
-        <!-- 28 days - green -->
-        <div class="ftl-card">
-          <div class="ftl-card-header">
-            <div class="ftl-card-label">ANY 28 CONSECUTIVE DAYS</div>
-            <div class="ftl-dot"></div>
-          </div>
-          <div class="ftl-numbers">
-            <div class="ftl-used">68:30</div>
-            <div class="ftl-slash">/</div>
-            <div class="ftl-max">100:00</div>
-            <div class="ftl-unit">HR</div>
-          </div>
-          <div class="ftl-bar-wrap"><div class="ftl-bar" style="width:68.5%"></div></div>
-          <div class="ftl-footer">
-            <div class="ftl-remaining">✓ 31:30 REMAINING</div>
-            <div class="ftl-pct">68.5% USED</div>
-          </div>
-        </div>
-        <!-- 12 months - yellow -->
-        <div class="ftl-card yellow">
-          <div class="ftl-card-header">
-            <div class="ftl-card-label">ANY 12 MONTHS (END OF PREV MONTH)</div>
-            <div class="ftl-dot yellow"></div>
-          </div>
-          <div class="ftl-numbers">
-            <div class="ftl-used">826:15</div>
-            <div class="ftl-slash">/</div>
-            <div class="ftl-max">900:00</div>
-            <div class="ftl-unit">HR</div>
-          </div>
-          <div class="ftl-bar-wrap"><div class="ftl-bar" style="width:91.8%"></div></div>
-          <div class="ftl-footer">
-            <div class="ftl-remaining">⚠ 73:45 REMAINING</div>
-            <div class="ftl-pct">91.8% USED</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Duty Limits -->
-      <div class="section-header" style="margin-top:18px;">
-        <div class="section-title">⏱ CUMULATIVE DUTY LIMITS</div>
-        <div class="section-line"></div>
-        <div class="section-ibtn">i</div>
-      </div>
-
-      <div style="display:flex;flex-wrap:wrap;gap:12px;">
-        <!-- 7D duty - green -->
-        <div class="ftl-card" data-tip="<strong>DUTY CARD</strong>Duty time includes a pre-flight buffer (default 1hr 15min before STD) and post-flight buffer (default 15min after STA). Adjust these in Settings → Preferences.">
-          <div class="ftl-card-header">
-            <div class="ftl-card-label">DUTY — ANY 7 CONSECUTIVE DAYS</div>
-            <div class="ftl-dot"></div>
-          </div>
-          <div class="ftl-numbers">
-            <div class="ftl-used">28:45</div>
-            <div class="ftl-slash">/</div>
-            <div class="ftl-max">55:00</div>
-            <div class="ftl-unit">HR</div>
-          </div>
-          <div class="ftl-bar-wrap"><div class="ftl-bar" style="width:52.3%"></div></div>
-          <div class="ftl-footer">
-            <div class="ftl-remaining">✓ 26:15 REMAINING</div>
-            <div class="ftl-pct">52.3% USED</div>
-          </div>
-        </div>
-        <!-- 14D duty - green -->
-        <div class="ftl-card">
-          <div class="ftl-card-header">
-            <div class="ftl-card-label">DUTY — ANY 14 CONSECUTIVE DAYS</div>
-            <div class="ftl-dot"></div>
-          </div>
-          <div class="ftl-numbers">
-            <div class="ftl-used">57:10</div>
-            <div class="ftl-slash">/</div>
-            <div class="ftl-max">95:00</div>
-            <div class="ftl-unit">HR</div>
-          </div>
-          <div class="ftl-bar-wrap"><div class="ftl-bar" style="width:60.2%"></div></div>
-          <div class="ftl-footer">
-            <div class="ftl-remaining">✓ 37:50 REMAINING</div>
-            <div class="ftl-pct">60.2% USED</div>
-          </div>
-        </div>
-        <!-- 28D duty - red -->
-        <div class="ftl-card red">
-          <div class="ftl-card-header">
-            <div class="ftl-card-label">DUTY — ANY 28 CONSECUTIVE DAYS</div>
-            <div class="ftl-dot red"></div>
-          </div>
-          <div class="ftl-numbers">
-            <div class="ftl-used">194:20</div>
-            <div class="ftl-slash">/</div>
-            <div class="ftl-max">190:00</div>
-            <div class="ftl-unit">HR</div>
-          </div>
-          <div class="ftl-bar-wrap"><div class="ftl-bar" style="width:100%"></div></div>
-          <div class="ftl-footer">
-            <div class="ftl-remaining">🚨 04:20 OVER LIMIT</div>
-            <div class="ftl-pct">102.3% USED</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recency -->
-      <div class="section-header" style="margin-top:20px;" id="mock-recency-section">
-        <div class="section-title">🎯 TAKEOFF &amp; LANDING RECENCY</div>
-        <div class="section-line"></div>
-        <div class="section-ibtn">i</div>
-      </div>
-      <div style="font-size:11px;color:#4a6a8a;margin-bottom:10px;letter-spacing:.06em;">
-        Showing recency for: <span style="color:#4fc3f7;font-weight:700;">B737</span> &nbsp;·&nbsp;
-        Requires 3 T/O + 3 LDG in past 90 days — tracked separately for day and night
-      </div>
-
-      <div class="recency-grid"
-           data-tip="<strong>RECENCY CARDS</strong>These count your takeoffs and landings in the last 90 days, split by day and night. You need at least 3 of each to remain current as Pilot-in-Command. If the count drops below 3, the number turns red.">
-        <div class="rec-card">
-          <div class="rec-label">DAY TAKEOFFS — LAST 90 DAYS</div>
-          <div class="rec-count-row">
-            <div class="rec-count">7</div>
-            <div class="rec-denom">/ 3 req</div>
-          </div>
-          <div class="rec-type">PILOT FLYING SECTORS</div>
-          <div class="rec-expiry">Expiry: <span>12 AUG 2026</span></div>
-        </div>
-        <div class="rec-card">
-          <div class="rec-label">NIGHT TAKEOFFS — LAST 90 DAYS</div>
-          <div class="rec-count-row">
-            <div class="rec-count">2</div>
-            <div class="rec-denom">/ 3 req</div>
-          </div>
-          <div class="rec-type">PILOT FLYING SECTORS</div>
-          <div class="rec-expiry" style="color:#ef4444;">Below minimum — not current for night ops</div>
-        </div>
-        <div class="rec-card">
-          <div class="rec-label">DAY LANDINGS — LAST 90 DAYS</div>
-          <div class="rec-count-row">
-            <div class="rec-count">7</div>
-            <div class="rec-denom">/ 3 req</div>
-          </div>
-          <div class="rec-type">PILOT FLYING SECTORS</div>
-          <div class="rec-expiry">Expiry: <span>12 AUG 2026</span></div>
-        </div>
-        <div class="rec-card">
-          <div class="rec-label">NIGHT LANDINGS — LAST 90 DAYS</div>
-          <div class="rec-count-row">
-            <div class="rec-count">2</div>
-            <div class="rec-denom">/ 3 req</div>
-          </div>
-          <div class="rec-type">PILOT FLYING SECTORS</div>
-          <div class="rec-expiry" style="color:#ef4444;">Below minimum — not current for night ops</div>
-        </div>
-      </div>
-
-      <!-- Autoland Recency -->
-      <div class="section-header" style="margin-top:20px;" id="mock-autoland-section">
-        <div class="section-title">🛬 AUTOLAND RECENCY</div>
-        <div class="section-line"></div>
-        <div class="section-ibtn">i</div>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:12px;"
-           data-tip="<strong>AUTOLAND RECENCY</strong>Tracks your coupled autoland approaches in the last 6 months. You need at least 3 to maintain CAT III currency. Tick the AUTOLAND checkbox in the remarks panel to log one.">
-        <div class="rec-card">
-          <div class="rec-label">AUTOLANDS — LAST 6 MONTHS</div>
-          <div class="rec-count-row">
-            <div class="rec-count">4</div>
-            <div class="rec-denom">/ 3 req</div>
-          </div>
-          <div class="rec-type">ALL AIRCRAFT TYPES</div>
-          <div class="rec-expiry">Last autoland: <span>02 MAR 2026</span></div>
-        </div>
-      </div>
-
-    </div><!-- /mock-ftl-tab -->
-  </div><!-- /ftl-tab -->
 
 </div><!-- /app -->
 
-<!-- Bottom padding so content isn't hidden behind nav -->
-<div style="height:56px;"></div>
-
-<!-- ══════════════════════════════════════════════════════════════════════════
-     TOUR OVERLAY (4 pieces)
-══════════════════════════════════════════════════════════════════════════ -->
-<div id="tour-overlay-top"></div>
-<div id="tour-overlay-bottom"></div>
-<div id="tour-overlay-left"></div>
-<div id="tour-overlay-right"></div>
-<div id="tour-overlay-center"></div>
-
-<!-- ── Tour Bubble ─────────────────────────────────────────────────────────── -->
-<div id="tour-bubble">
-  <div class="bubble-step" id="bubble-step">STEP 1 OF 13</div>
-  <div class="bubble-title" id="bubble-title">Welcome</div>
-  <div class="bubble-body" id="bubble-body">Body text here.</div>
-</div>
-
-<!-- ── Center Panel (Welcome / Done) ─────────────────────────────────────── -->
-<div id="tour-center-panel">
-  <div class="center-card" id="center-card">
-    <div class="center-plane" id="center-icon">✈</div>
-    <div class="center-title" id="center-title">Title</div>
-    <div class="center-divider"></div>
-    <div class="center-body" id="center-body">Body.</div>
-    <button class="center-btn" id="center-btn" onclick="centerBtnClick()">START TOUR</button>
-  </div>
-</div>
-
-<!-- ── Tour Nav ────────────────────────────────────────────────────────────── -->
-<div id="tour-nav">
-  <div id="tour-progress-wrap">
-    <div id="tour-progress-label">STEP 1 OF 13</div>
-    <div id="tour-progress-bar-wrap">
-      <div id="tour-progress-bar" style="width:0%"></div>
+<!-- ══ SETTINGS MODAL ══════════════════════════════════════════════════════════ -->
+<div id="settings-modal">
+  <div class="settings-overlay" onclick="closeSettings()"></div>
+  <div class="settings-panel">
+    <div class="settings-hdr">
+      <div>
+        <div class="settings-title">⚙ SETTINGS</div>
+        <div class="settings-subtitle">eLOGBOOK V5.5 · CONFIGURATION</div>
+      </div>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="s-tabs">
+      <button class="s-tab active" onclick="switchSettingsTab('profile',this)">PROFILE</button>
+      <button class="s-tab" onclick="switchSettingsTab('appearance',this)">APPEARANCE</button>
+      <button class="s-tab" onclick="switchSettingsTab('preferences',this)">PREFERENCES</button>
+      <button class="s-tab" onclick="switchSettingsTab('misc',this)">MISCELLANEOUS</button>
+    </div>
+    <div class="s-body">
+      <!-- Profile Tab -->
+      <div id="stab-profile" class="s-tab-pane">
+        <div class="s-section-hdr">PERSONAL INFO</div>
+        <div class="s-field"><span class="s-field-label">FULL NAME</span><span class="s-field-val">AMIR RASHID</span></div>
+        <div class="s-field"><span class="s-field-label">EMAIL</span><span class="s-field-val">zero.nuker@gmail.com</span></div>
+        <div class="s-section-hdr">LICENCE &amp; RATINGS</div>
+        <div class="s-field"><span class="s-field-label">LICENCE NUMBER</span><span class="s-field-val">10141</span></div>
+        <div class="s-field"><span class="s-field-label">LICENCE TYPE</span><span class="s-field-val">ATPL(A)</span></div>
+        <div class="s-field"><span class="s-field-label">AIRLINE / ORGANISATION</span><span class="s-field-val">BATIK AIR MALAYSIA</span></div>
+        <div class="s-field"><span class="s-field-label">EMPLOYEE ID</span><span class="s-field-val">10141</span></div>
+      </div>
+      <!-- Appearance Tab -->
+      <div id="stab-appearance" class="s-tab-pane" style="display:none">
+        <div class="s-section-hdr">DISPLAY</div>
+        <div class="s-field"><span class="s-field-label">THEME</span><span class="s-field-val" style="color:#4fc3f7">DARK COCKPIT</span></div>
+        <div class="s-field"><span class="s-field-label">FONT SIZE</span><span class="s-field-val">14px</span></div>
+        <div class="s-field"><span class="s-field-label">DATE FORMAT</span><span class="s-field-val">DD MMM</span></div>
+        <div class="s-field"><span class="s-field-label">TIME ZONE</span><span class="s-field-val">UTC</span></div>
+      </div>
+      <!-- Preferences Tab -->
+      <div id="stab-preferences" class="s-tab-pane" style="display:none">
+        <div class="s-section-hdr">LOGBOOK DEFAULTS</div>
+        <div class="s-field"><span class="s-field-label">DEFAULT HOC</span><span class="s-field-val">P1</span></div>
+        <div class="s-field"><span class="s-field-label">AUTO NIGHT SPLIT</span><span class="s-field-val" style="color:#22c55e">ON</span></div>
+        <div class="s-field"><span class="s-field-label">CARRY FORWARD TOTALS</span><span class="s-field-val" style="color:#22c55e">ON</span></div>
+        <div class="s-section-hdr">NOTIFICATIONS</div>
+        <div class="s-field"><span class="s-field-label">RECENCY ALERTS</span><span class="s-field-val" style="color:#22c55e">ON</span></div>
+        <div class="s-field"><span class="s-field-label">FTL WARNING THRESHOLD</span><span class="s-field-val">85%</span></div>
+      </div>
+      <!-- Misc Tab -->
+      <div id="stab-misc" class="s-tab-pane" style="display:none">
+        <div class="ver-banner">
+          <div>
+            <div class="vb-logo">✈ eLOGBOOK V5.5</div>
+            <div class="vb-ver">CLAUDEBORNE · BUILD 2026.05</div>
+          </div>
+        </div>
+        <div class="s-section-hdr">SUPPORT</div>
+        <div class="misc-item">
+          <div class="misc-icon">✉</div>
+          <div class="misc-body">
+            <div class="misc-name">CONTACT SUPPORT</div>
+            <div class="misc-desc">Report bugs or request features</div>
+          </div>
+          <div class="misc-arr">›</div>
+        </div>
+        <div class="misc-item">
+          <div class="misc-icon">💬</div>
+          <div class="misc-body">
+            <div class="misc-name">USER FORUM</div>
+            <div class="misc-desc">Community discussion and tips</div>
+          </div>
+          <div class="misc-arr">›</div>
+        </div>
+        <div class="misc-item" style="border-color:#4fc3f7;background:rgba(79,195,247,.04)">
+          <div class="misc-icon">📖</div>
+          <div class="misc-body">
+            <div class="misc-name" style="color:#4fc3f7">HOW TO GUIDE</div>
+            <div class="misc-desc">Step-by-step instructions — you are here</div>
+          </div>
+          <div class="misc-arr" style="color:#4fc3f7">›</div>
+        </div>
+        <div class="s-section-hdr">CHANGELOG</div>
+        <div style="font-size:10px;color:#3a5a7a;letter-spacing:.08em;line-height:1.8;padding:4px 0">
+          <div style="color:#4fc3f7;font-weight:700;letter-spacing:.15em;margin-bottom:2px">V5.5 · MAY 2026</div>
+          <div>· Auth navigation race condition fix</div>
+          <div>· Profile data persistence in Settings</div>
+          <div>· Badge sizing improved to 13px</div>
+          <div>· Time display fix for 00:00 entries</div>
+          <div>· Responsive save button for mobile</div>
+        </div>
+      </div>
     </div>
   </div>
-  <div id="tour-dots"></div>
-  <div id="tour-buttons">
-    <button class="tour-btn skip" onclick="skipTour()">SKIP TOUR</button>
-    <button class="tour-btn" id="btn-prev" onclick="prevStep()" style="display:none">← PREV</button>
-    <button class="tour-btn primary" id="btn-next" onclick="nextStep()">START TOUR →</button>
+</div>
+
+<!-- ══ TOUR OVERLAY ════════════════════════════════════════════════════════════ -->
+<div id="tour-progress" class="tour-hidden"><div id="tour-progress-fill" style="width:0%"></div></div>
+<div id="tour-top" class="tour-hidden"></div>
+<div id="tour-bot" class="tour-hidden"></div>
+<div id="tour-left" class="tour-hidden"></div>
+<div id="tour-right" class="tour-hidden"></div>
+
+<div id="tour-panel" class="hidden">
+  <div class="tp-step" id="tp-step-label">STEP 1 OF 14</div>
+  <div class="tp-title" id="tp-title"></div>
+  <div class="tp-body" id="tp-body"></div>
+  <div class="tp-footer">
+    <button class="tp-btn" id="tp-prev" onclick="prevStep()">← PREV</button>
+    <button class="tp-end" onclick="endTour()">END TOUR</button>
+    <button class="tp-btn primary" id="tp-next" onclick="nextStep()">NEXT →</button>
   </div>
 </div>
 
-<!-- ── Roam Badge ──────────────────────────────────────────────────────────── -->
-<div id="roam-badge" onclick="restartTour()">📖 RESTART TOUR</div>
+<div id="tour-dots" class="tour-hidden"></div>
 
-<!-- ── Hover Tooltip ───────────────────────────────────────────────────────── -->
-<div id="hover-tooltip"></div>
+<!-- ══ ROAM BADGE ══════════════════════════════════════════════════════════════ -->
+<div id="roam-badge">◎ ROAM MODE — HOVER TO EXPLORE</div>
 
-<!-- ══════════════════════════════════════════════════════════════════════════
-     SCRIPT
-══════════════════════════════════════════════════════════════════════════ -->
+<!-- ══ HOVER TOOLTIP ══════════════════════════════════════════════════════════ -->
+<div id="htip"></div>
+
 <script>
-// ── Tab switcher ─────────────────────────────────────────────────────────────
-function switchTab(id, btn) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('visible'));
-  document.querySelectorAll('.mock-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById(id + '-tab').classList.add('visible');
-  if (btn) btn.classList.add('active');
-}
-
-// ── Tour Steps ────────────────────────────────────────────────────────────────
+/* ─── TOUR STEPS ──────────────────────────────────────────────────────────── */
 const STEPS = [
   {
-    target: null,
-    center: true,
-    title:  'Your Digital Pilot Logbook',
-    body:   'eLOGBOOK is where you record your flights, track regulatory compliance, and export your logbook. This tour walks you through the key features — it takes about 2 minutes.',
-    tab:    'logbook',
+    target: '#mock-header',
+    tab: null,
+    title: 'WELCOME TO eLOGBOOK V5.5',
+    body: 'This is a full interactive mockup of your logbook — identical in appearance to the live app. Use NEXT to walk through each feature, or END TOUR at any time to explore freely.',
+    pos: 'bottom',
   },
   {
-    target: '#mock-header-brand',
-    title:  'App Header',
-    body:   'The header shows the current app version and which month you\'re viewing. Your name, airline, and licence number are pulled from your profile in Settings.',
-    tab:    'logbook',
-    pos:    'bottom',
+    target: '#hdr-left',
+    tab: null,
+    title: 'APP IDENTITY',
+    body: 'The header shows eLOGBOOK version, regulatory compliance badge (CAAM · MCAR 2016), and the current period. The title line updates to reflect the selected month and year.',
+    pos: 'bottom',
   },
   {
-    target: '#mock-period-selector',
-    title:  'Period Selector',
-    body:   'Use these two dropdowns to jump to any month between January 2024 and December 2030. Each month has its own logbook grid — your data is stored per month.',
-    tab:    'logbook',
-    pos:    'bottom',
+    target: '#header-user',
+    tab: null,
+    title: 'PILOT PROFILE',
+    body: 'Your name, airline, and employee ID appear here, pulled from Settings → Profile. The orange initial badge identifies your account. This section is always visible so you know whose logbook you are viewing.',
+    pos: 'bottom-left',
   },
   {
-    target: '#mock-toolbar',
-    title:  'Toolbar',
-    body:   'Four icon buttons on the top right. From left to right: Refresh (pull latest data from the cloud), Export/Import (download PDF or XLSX, or import data), Settings (profile and preferences), and Sign Out.',
-    tab:    'logbook',
-    pos:    'bottom',
+    target: '#period-selector',
+    tab: null,
+    title: 'PERIOD SELECTOR',
+    body: 'Use the month and year dropdowns to navigate between periods. eLOGBOOK displays only the selected month\'s sectors, keeping the logbook focused and uncluttered.',
+    pos: 'bottom-left',
   },
   {
-    target: '#mock-save-area',
-    title:  'Autosave',
-    body:   'eLOGBOOK automatically saves your data to the cloud every 5 minutes. The timestamp shows when the last save completed. Hit SAVE NOW to save immediately at any time.',
-    tab:    'logbook',
-    pos:    'bottom',
+    target: '#toolbar-icons',
+    tab: null,
+    title: 'TOOLBAR ACTIONS',
+    body: '⚙ opens Settings · ↑ exports your logbook to Excel or PDF · ↓ imports data from a backup · ✚ adds a new flight sector. These four buttons are your primary controls.',
+    pos: 'bottom-left',
+  },
+  {
+    target: '#save-btn-area',
+    tab: null,
+    title: 'SAVING YOUR DATA',
+    body: 'eLOGBOOK syncs to the cloud automatically. SAVE NOW forces an immediate sync. The green timestamp on the left shows when data was last successfully saved.',
+    pos: 'bottom-left',
   },
   {
     target: '#mock-tabs',
-    title:  'Main Sections',
-    body:   'There are three sections. LOGBOOK is where you enter flight data. FLIGHT SUMMARY shows your grand totals by aircraft type including carry-forward hours. LIMITS & RECENCY tracks your FTL compliance in real time.',
-    tab:    'logbook',
-    pos:    'bottom',
+    tab: null,
+    title: 'MAIN TABS',
+    body: 'Four sections: LOGBOOK (your flight entries), FLIGHT SUMMARY (annual overview), LIMITS & RECENCY (regulatory compliance), and DUTY RECORDS. The active tab has a cyan top border.',
+    pos: 'bottom',
   },
   {
-    target: '#mock-table-header',
-    title:  'Logbook Table',
-    body:   'Each row in the table is one flight sector. Columns are grouped: Aircraft (type and registration), Sectors (departure and arrival airports), UTC times, and auto-calculated Day and Night time columns on the right.',
-    tab:    'logbook',
-    pos:    'bottom',
+    target: '#tab-logbook',
+    tab: 'logbook',
+    title: 'LOGBOOK — FLIGHT RECORDS',
+    body: 'Each row is one flight sector. The table records aircraft, routing, UTC times, and hours broken down by role (P1, P1U, S, P2) and lighting condition (Day / Night).',
+    pos: 'top',
   },
   {
-    target: '#mock-entry-row',
-    title:  'Filling in a Row',
-    body:   'Enter the date, aircraft type, registration, and captain. The HOLDER OP CAP column (P1, P2, or P1 U/S) tells the app your role on that sector — this determines which time column gets credited.',
-    tab:    'logbook',
-    pos:    'top',
+    target: '.lb',
+    tab: 'logbook',
+    title: 'COLUMN STRUCTURE',
+    body: 'Columns are grouped by AIRCRAFT (type + markings), SECTORS (DEP/ARR), TIME (STD/STA), and HOURS. Day P1 hours appear in red, Night P1U/S in green, and TOTAL in cyan — matching the live app.',
+    pos: 'bottom',
   },
   {
-    target: '#mock-std-cell',
-    title:  'STD and STA',
-    body:   'Enter departure and arrival times in UTC. Both HH:MM and HHMM formats work. Once STA is set, the Day and Night columns and the Total are calculated automatically — you cannot edit those cells directly.',
-    tab:    'logbook',
-    pos:    'top',
+    target: '.hoc-btn',
+    tab: 'logbook',
+    title: 'HOLDER OPERATING CAPACITY',
+    body: 'This dropdown sets your role for the sector: P1 (Pilot in Command), P1U (PIC Under Supervision), S (Student/Trainee), or P2 (Co-Pilot). The selection determines which column receives the hours.',
+    pos: 'bottom',
   },
   {
-    target: '#mock-add-sector',
-    title:  'Adding Rows and Remarks',
-    body:   'Click ADD SECTOR to add a new row. New rows are pre-filled with your default aircraft type, markings, and captain. The RMK button opens a remarks panel — use it for approach type, autoland, or simulator notes. The ✕ button removes the row.',
-    tab:    'logbook',
-    pos:    'top',
+    target: '#tab-summary',
+    tab: 'summary',
+    title: 'FLIGHT SUMMARY',
+    body: 'A year-at-a-glance table. Each row is one month; the current month is highlighted with a cyan left border. Hours are split by role and day/night. ANNUAL TOTAL accumulates all months.',
+    pos: 'top',
+    onEnter: () => switchTab('summary', document.querySelectorAll('.mock-tab')[1]),
   },
   {
-    target: '#mock-ftl-cards',
-    title:  'FTL Compliance Cards',
-    body:   'Switch to the LIMITS & RECENCY tab to see your real-time regulatory status. Each card tracks one rolling limit — the colour tells you where you stand. Green is fine, yellow means you\'re within 10% of the limit, and red means the limit has been exceeded.',
-    tab:    'ftl',
-    pos:    'bottom',
-    onEnter: () => {
-      switchTab('ftl', document.querySelectorAll('.mock-tab')[2]);
-    },
+    target: '#grand-totals',
+    tab: 'summary',
+    title: 'GRAND TOTAL HOURS',
+    body: 'Your lifetime hours as of today, broken down by aircraft type. Every type you\'ve flown — ATR72-500, ATR72-600, B737-8, B737-800, DA42 — is tracked separately. Essential for type rating applications.',
+    pos: 'top',
   },
   {
-    target: '#mock-recency-section',
-    title:  'Takeoff & Landing Recency',
-    body:   'This section counts your takeoffs and landings in the last 90 days, split by day and night. You need at least 3 of each to remain current as Pilot-in-Command. Tick the PILOT FLYING box on sectors where you were the handling pilot — each one counts as one takeoff and one landing.',
-    tab:    'ftl',
-    pos:    'top',
+    target: '#tab-limits',
+    tab: 'limits',
+    title: 'LIMITS & RECENCY',
+    body: 'Real-time regulatory monitoring. The compliance banner gives an instant status. Sections below cover Flight Time Limits, Cumulative Duty Hours, and Takeoff/Landing Recency per aircraft type.',
+    pos: 'top',
+    onEnter: () => switchTab('limits', document.querySelectorAll('.mock-tab')[2]),
   },
   {
-    target: null,
-    center: true,
-    title:  'Tour Complete',
-    body:   'That\'s the full tour. You can now explore the app freely — <em>hover over any element</em> to see what it does.\n\nTo set up your profile, open ⚙ Settings. To export your logbook, click the globe icon. The RESTART TOUR badge in the corner brings you back here any time.',
-    tab:    'ftl',
-    done:   true,
+    target: '#recency-section',
+    tab: 'limits',
+    title: 'TAKEOFF & LANDING RECENCY',
+    body: 'For each aircraft type, four cards track Day T/O, Day LDG, Night T/O, and Night LDG counts against your regulatory minimum. Expiry dates help you plan recency training before currency lapses.',
+    pos: 'top',
+  },
+  {
+    target: '#settings-modal',
+    tab: 'settings',
+    title: 'SETTINGS',
+    body: 'The Settings panel holds your pilot profile, display preferences, and app configuration. Access it via ⚙ in the toolbar. Your data is securely stored in the cloud and synced across all devices.',
+    pos: 'center',
+    onEnter: () => openSettings(),
   },
 ];
 
-// ── State ─────────────────────────────────────────────────────────────────────
 let currentStep = -1;
-let tourActive  = false;
-let roamMode    = false;
+let tourActive = false;
+let roamActive = false;
 
-// ── Tour nav elements ─────────────────────────────────────────────────────────
-const oTop    = document.getElementById('tour-overlay-top');
-const oBot    = document.getElementById('tour-overlay-bottom');
-const oLft    = document.getElementById('tour-overlay-left');
-const oRgt    = document.getElementById('tour-overlay-right');
-const oCenter = document.getElementById('tour-overlay-center');
-const bubble  = document.getElementById('tour-bubble');
-const navEl   = document.getElementById('tour-nav');
-const progBar = document.getElementById('tour-progress-bar');
-const progLbl = document.getElementById('tour-progress-label');
-const btnPrev = document.getElementById('btn-prev');
-const btnNext = document.getElementById('btn-next');
-const dotsEl  = document.getElementById('tour-dots');
-const centerPanel = document.getElementById('tour-center-panel');
-const centerTitle = document.getElementById('center-title');
-const centerBody  = document.getElementById('center-body');
-const centerIcon  = document.getElementById('center-icon');
-const centerBtn   = document.getElementById('center-btn');
-const roamBadge   = document.getElementById('roam-badge');
+/* ─── WELCOME ─────────────────────────────────────────────────────────────── */
+function startTour() {
+  document.getElementById('ws').classList.add('hidden');
+  tourActive = true;
+  currentStep = 0;
+  buildDots();
+  showTourUI();
+  renderStep(0);
+}
 
-// ── Build dots ────────────────────────────────────────────────────────────────
+function skipToRoam() {
+  document.getElementById('ws').classList.add('hidden');
+  activateRoam();
+}
+
+/* ─── TAB SWITCHING ───────────────────────────────────────────────────────── */
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('visible'));
+  document.querySelectorAll('.mock-tab').forEach(b => b.classList.remove('active'));
+  const pane = document.getElementById('tab-' + tabId);
+  if (pane) pane.classList.add('visible');
+  if (btn) btn.classList.add('active');
+}
+
+/* ─── SETTINGS MODAL ──────────────────────────────────────────────────────── */
+function openSettings() {
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open');
+}
+function switchSettingsTab(tab, btn) {
+  document.querySelectorAll('.s-tab-pane').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.s-tab').forEach(b => b.classList.remove('active'));
+  const pane = document.getElementById('stab-' + tab);
+  if (pane) pane.style.display = '';
+  if (btn) btn.classList.add('active');
+}
+
+/* ─── TOUR ENGINE ─────────────────────────────────────────────────────────── */
+function showTourUI() {
+  ['tour-top','tour-bot','tour-left','tour-right'].forEach(id => {
+    document.getElementById(id).classList.remove('tour-hidden');
+  });
+  document.getElementById('tour-progress').classList.remove('tour-hidden');
+  document.getElementById('tour-dots').classList.remove('tour-hidden');
+  document.getElementById('tour-panel').classList.remove('hidden');
+}
+
+function hideTourUI() {
+  ['tour-top','tour-bot','tour-left','tour-right'].forEach(id => {
+    document.getElementById(id).classList.add('tour-hidden');
+  });
+  document.getElementById('tour-progress').classList.add('tour-hidden');
+  document.getElementById('tour-dots').classList.add('tour-hidden');
+  document.getElementById('tour-panel').classList.add('hidden');
+}
+
 function buildDots() {
-  dotsEl.innerHTML = '';
-  STEPS.forEach((s, i) => {
-    if (s.center) return; // skip center steps from dots
+  const container = document.getElementById('tour-dots');
+  container.innerHTML = '';
+  STEPS.forEach((_, i) => {
     const d = document.createElement('div');
-    d.className = 'tour-dot';
-    d.onclick = () => goToStep(i);
-    dotsEl.appendChild(d);
+    d.className = 'tour-dot' + (i === 0 ? ' active' : '');
+    container.appendChild(d);
   });
 }
-buildDots();
 
-// ── Spotlight ─────────────────────────────────────────────────────────────────
-const PAD = 10;
-function setSpotlight(el) {
-  clearHighlight();
-  if (!el) {
-    // Full overlay for center panels
-    oTop.style.cssText    = '';
-    oBot.style.cssText    = '';
-    oLft.style.cssText    = '';
-    oRgt.style.cssText    = '';
-    oCenter.style.display = 'block';
-    return;
-  }
-  oCenter.style.display = 'none';
-  const r = el.getBoundingClientRect();
-  const t = r.top    - PAD;
-  const l = r.left   - PAD;
-  const b = r.bottom + PAD;
-  const ri = r.right + PAD;
-  const W = window.innerWidth, H = window.innerHeight;
-
-  const base = 'position:fixed;background:rgba(0,0,0,.78);z-index:200;pointer-events:all;transition:all .25s ease;';
-  oTop.style.cssText    = `${base}top:0;left:0;right:0;height:${Math.max(0,t)}px;`;
-  oBot.style.cssText    = `${base}top:${Math.min(H,b)}px;left:0;right:0;bottom:0;`;
-  oLft.style.cssText    = `${base}top:${Math.max(0,t)}px;left:0;width:${Math.max(0,l)}px;height:${b-t}px;`;
-  oRgt.style.cssText    = `${base}top:${Math.max(0,t)}px;left:${Math.min(W,ri)}px;right:0;height:${b-t}px;`;
-
-  el.classList.add('tour-lit');
+function updateDots(n) {
+  document.querySelectorAll('.tour-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === n);
+  });
 }
 
-function clearSpotlight() {
-  oTop.style.cssText    = '';
-  oBot.style.cssText    = '';
-  oLft.style.cssText    = '';
-  oRgt.style.cssText    = '';
-  oCenter.style.display = 'none';
-}
+function renderStep(n) {
+  const step = STEPS[n];
+  if (!step) return;
 
-function clearHighlight() {
-  document.querySelectorAll('.tour-lit').forEach(e => e.classList.remove('tour-lit'));
-}
-
-// ── Bubble positioning ────────────────────────────────────────────────────────
-function positionBubble(el, pos) {
-  bubble.style.display = 'block';
-  bubble.style.animation = 'none';
-  void bubble.offsetWidth;
-  bubble.style.animation = 'popIn .2s ease';
-
-  if (!el) { bubble.style.display = 'none'; return; }
-
-  const r  = el.getBoundingClientRect();
-  const bW = bubble.offsetWidth  || 320;
-  const bH = bubble.offsetHeight || 120;
-  const W  = window.innerWidth;
-  const H  = window.innerHeight;
-  const margin = 16;
-
-  let top, left;
-
-  if (pos === 'bottom') {
-    top  = r.bottom + PAD + margin;
-    left = r.left + r.width/2 - bW/2;
-  } else if (pos === 'top') {
-    top  = r.top - PAD - margin - bH;
-    left = r.left + r.width/2 - bW/2;
-  } else if (pos === 'left') {
-    top  = r.top + r.height/2 - bH/2;
-    left = r.left - PAD - margin - bW;
-  } else {
-    top  = r.top + r.height/2 - bH/2;
-    left = r.right + PAD + margin;
+  // Handle tab switch
+  if (step.tab === 'summary') {
+    switchTab('summary', document.querySelectorAll('.mock-tab')[1]);
+  } else if (step.tab === 'limits') {
+    switchTab('limits', document.querySelectorAll('.mock-tab')[2]);
+    closeSettings();
+  } else if (step.tab === 'logbook' || step.tab === null) {
+    if (step.tab === 'logbook') switchTab('logbook', document.querySelectorAll('.mock-tab')[0]);
+    closeSettings();
+  } else if (step.tab === 'settings') {
+    openSettings();
   }
 
-  // Clamp to viewport
-  left = Math.max(margin, Math.min(W - bW - margin, left));
-  top  = Math.max(margin, Math.min(H - bH - margin - 60, top));
-
-  bubble.style.top  = top  + 'px';
-  bubble.style.left = left + 'px';
-}
-
-// ── Go to step ────────────────────────────────────────────────────────────────
-function goToStep(idx) {
-  if (idx < 0 || idx >= STEPS.length) return;
-  currentStep = idx;
-  const step  = STEPS[idx];
-
-  // Switch tab if needed
+  // Run custom onEnter
   if (step.onEnter) step.onEnter();
-  else if (step.tab) {
-    const tabs = ['logbook','summary','ftl'];
-    const tabBtns = document.querySelectorAll('.mock-tab');
-    if (step.tab === 'logbook') switchTab('logbook', tabBtns[0]);
-    else if (step.tab === 'ftl') switchTab('ftl', tabBtns[2]);
-  }
 
-  // Scroll target into view
-  const el = step.target ? document.querySelector(step.target) : null;
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    setTimeout(() => renderStep(idx, el), 250);
-  } else {
-    renderStep(idx, null);
-  }
-}
+  // Update panel text
+  document.getElementById('tp-step-label').textContent = `STEP ${n + 1} OF ${STEPS.length}`;
+  document.getElementById('tp-title').textContent = step.title;
+  document.getElementById('tp-body').textContent = step.body;
 
-function renderStep(idx, el) {
-  const step = STEPS[idx];
-  const total = STEPS.length;
+  // Prev button state
+  document.getElementById('tp-prev').style.opacity = n === 0 ? '0.3' : '1';
+  document.getElementById('tp-prev').style.pointerEvents = n === 0 ? 'none' : '';
 
-  // Center panel
-  if (step.center) {
-    centerPanel.classList.add('visible');
-    centerIcon.textContent  = step.done ? '🎉' : '✈';
-    centerTitle.textContent = step.title;
-    // Handle newlines and em tags
-    centerBody.innerHTML = step.body
-      .replace(/\n/g, '<br>')
-      .replace(/<em>/g, '<em style="color:#4fc3f7;font-style:normal;">');
-    centerBtn.textContent = step.done ? 'EXPLORE FREELY' : 'START TOUR →';
-    clearSpotlight();
-    clearHighlight();
-    bubble.style.display = 'none';
-  } else {
-    centerPanel.classList.remove('visible');
-    setSpotlight(el);
-    // Fill bubble
-    document.getElementById('bubble-step').textContent = `STEP ${idx + 1} OF ${total}`;
-    document.getElementById('bubble-title').textContent = step.title;
-    document.getElementById('bubble-body').textContent  = step.body;
-    positionBubble(el, step.pos || 'bottom');
-  }
+  const nextBtn = document.getElementById('tp-next');
+  nextBtn.textContent = n === STEPS.length - 1 ? 'FINISH ✓' : 'NEXT →';
 
-  // Progress
-  const pct = ((idx + 1) / total) * 100;
-  progBar.style.width = pct + '%';
-  progLbl.textContent = `STEP ${idx + 1} OF ${total}`;
-
-  // Prev / Next buttons
-  btnPrev.style.display = idx > 0 ? 'inline-block' : 'none';
-  if (step.done) {
-    btnNext.style.display = 'none';
-  } else {
-    btnNext.textContent = idx === 0 ? 'START TOUR →' : (idx === total - 2 ? 'FINISH →' : 'NEXT →');
-    btnNext.style.display = 'inline-block';
-  }
+  // Progress bar
+  const pct = ((n + 1) / STEPS.length) * 100;
+  document.getElementById('tour-progress-fill').style.width = pct + '%';
 
   // Dots
-  let dotIdx = 0;
-  STEPS.forEach((s, i) => {
-    if (s.center) return;
-    const dot = dotsEl.children[dotIdx++];
-    if (!dot) return;
-    dot.className = 'tour-dot' + (i === idx ? ' active' : i < idx ? ' done' : '');
-  });
-}
+  updateDots(n);
 
-// ── Navigation ────────────────────────────────────────────────────────────────
-function nextStep() { goToStep(currentStep + 1); }
-function prevStep() { goToStep(currentStep - 1); }
-
-function centerBtnClick() {
-  const step = STEPS[currentStep];
-  if (step && step.done) {
-    enterRoamMode();
+  // Spotlight
+  if (step.tab === 'settings') {
+    // Center spotlight for settings modal
+    positionSpotlightCenter();
+    positionPanelCenter();
   } else {
-    nextStep();
+    setTimeout(() => {
+      const el = document.querySelector(step.target);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          positionSpotlight(el);
+          positionPanel(el, step.pos);
+        }, 300);
+      } else {
+        positionSpotlightCenter();
+        positionPanelCenter();
+      }
+    }, 50);
   }
 }
 
-function skipTour() { enterRoamMode(); }
+function positionSpotlight(el) {
+  const PAD = 8;
+  const r = el.getBoundingClientRect();
+  const top = r.top - PAD;
+  const bot = r.bottom + PAD;
+  const left = r.left - PAD;
+  const right = r.right + PAD;
+  const W = window.innerWidth;
+  const H = window.innerHeight;
 
-function restartTour() {
-  exitRoamMode();
-  goToStep(0);
+  Object.assign(document.getElementById('tour-top').style,
+    { top:'0', left:'0', width:W+'px', height: Math.max(0,top)+'px' });
+  Object.assign(document.getElementById('tour-bot').style,
+    { top: bot+'px', left:'0', width:W+'px', height: Math.max(0,H-bot)+'px' });
+  Object.assign(document.getElementById('tour-left').style,
+    { top: top+'px', left:'0', width: Math.max(0,left)+'px', height: (bot-top)+'px' });
+  Object.assign(document.getElementById('tour-right').style,
+    { top: top+'px', left: right+'px', width: Math.max(0,W-right)+'px', height: (bot-top)+'px' });
 }
 
-// ── Roam Mode ─────────────────────────────────────────────────────────────────
-function enterRoamMode() {
-  roamMode = true;
-  clearSpotlight();
-  clearHighlight();
-  centerPanel.classList.remove('visible');
-  bubble.style.display = 'none';
-  navEl.style.display  = 'none';
-  roamBadge.style.display = 'block';
-  document.getElementById('hover-tooltip').style.display = 'none';
+function positionSpotlightCenter() {
+  const W = window.innerWidth, H = window.innerHeight;
+  const cx = W/2, cy = H/2, hw = 260, hh = 200;
+  Object.assign(document.getElementById('tour-top').style,
+    { top:'0', left:'0', width:W+'px', height: (cy-hh)+'px' });
+  Object.assign(document.getElementById('tour-bot').style,
+    { top: (cy+hh)+'px', left:'0', width:W+'px', height: (H-cy-hh)+'px' });
+  Object.assign(document.getElementById('tour-left').style,
+    { top: (cy-hh)+'px', left:'0', width: (cx-hw)+'px', height: (hh*2)+'px' });
+  Object.assign(document.getElementById('tour-right').style,
+    { top: (cy-hh)+'px', left: (cx+hw)+'px', width: (W-cx-hw)+'px', height: (hh*2)+'px' });
 }
 
-function exitRoamMode() {
-  roamMode = false;
-  navEl.style.display = 'flex';
-  roamBadge.style.display = 'none';
-  document.getElementById('hover-tooltip').style.display = 'none';
+function positionPanel(el, pos) {
+  const panel = document.getElementById('tour-panel');
+  const r = el.getBoundingClientRect();
+  const PW = panel.offsetWidth || 300;
+  const PH = panel.offsetHeight || 180;
+  const GAP = 16;
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  let top, left;
+
+  if (pos === 'bottom' || pos === 'bottom-left') {
+    top = r.bottom + GAP;
+    left = pos === 'bottom-left' ? Math.min(r.right - PW, W - PW - 10) : r.left;
+  } else if (pos === 'top') {
+    top = r.top - PH - GAP;
+    left = r.left;
+  } else {
+    positionPanelCenter(); return;
+  }
+
+  // Clamp
+  left = Math.max(10, Math.min(left, W - PW - 10));
+  top  = Math.max(10, Math.min(top,  H - PH - 10));
+
+  panel.style.top  = top  + 'px';
+  panel.style.left = left + 'px';
+  panel.style.transform = 'none';
 }
 
-// ── Hover Tooltip ─────────────────────────────────────────────────────────────
-const tooltip = document.getElementById('hover-tooltip');
-let tipTimer;
+function positionPanelCenter() {
+  const panel = document.getElementById('tour-panel');
+  panel.style.top  = '50%';
+  panel.style.left = '50%';
+  panel.style.transform = 'translate(-50%, -50%)';
+}
+
+function nextStep() {
+  if (currentStep >= STEPS.length - 1) { endTour(); return; }
+  currentStep++;
+  renderStep(currentStep);
+}
+
+function prevStep() {
+  if (currentStep <= 0) return;
+  currentStep--;
+  renderStep(currentStep);
+}
+
+function endTour() {
+  hideTourUI();
+  tourActive = false;
+  closeSettings();
+  switchTab('logbook', document.querySelectorAll('.mock-tab')[0]);
+  activateRoam();
+}
+
+/* ─── ROAM MODE ───────────────────────────────────────────────────────────── */
+function activateRoam() {
+  roamActive = true;
+  document.getElementById('roam-badge').classList.add('visible');
+}
+
+/* ─── HOVER TOOLTIPS ──────────────────────────────────────────────────────── */
+const htip = document.getElementById('htip');
+let tipTimeout;
 
 document.addEventListener('mousemove', function(e) {
-  if (!roamMode) return;
-  const el = document.elementFromPoint(e.clientX, e.clientY);
-  if (!el) return;
-
-  // Walk up to find data-tip
-  let target = el;
-  let tip = null;
-  while (target && target !== document.body) {
-    if (target.dataset && target.dataset.tip) { tip = target.dataset.tip; break; }
-    target = target.parentElement;
+  if (!roamActive) return;
+  const el = e.target.closest('[data-tip]');
+  if (el) {
+    clearTimeout(tipTimeout);
+    htip.innerHTML = el.getAttribute('data-tip');
+    const x = e.clientX + 16;
+    const y = e.clientY + 12;
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    htip.style.left = Math.min(x, W - 280) + 'px';
+    htip.style.top  = Math.min(y, H - 120) + 'px';
+    htip.classList.add('visible');
+  } else {
+    tipTimeout = setTimeout(() => htip.classList.remove('visible'), 80);
   }
-
-  clearTimeout(tipTimer);
-  if (!tip) {
-    tooltip.style.display = 'none';
-    return;
-  }
-
-  tipTimer = setTimeout(() => {
-    tooltip.innerHTML = tip;
-    tooltip.style.display = 'block';
-
-    const tw = tooltip.offsetWidth;
-    const th = tooltip.offsetHeight;
-    let tx = e.clientX + 14;
-    let ty = e.clientY + 14;
-    if (tx + tw > window.innerWidth  - 12) tx = e.clientX - tw - 14;
-    if (ty + th > window.innerHeight - 12) ty = e.clientY - th - 14;
-    tooltip.style.left = tx + 'px';
-    tooltip.style.top  = ty + 'px';
-  }, 120);
 });
 
 document.addEventListener('mouseleave', function() {
-  clearTimeout(tipTimer);
-  tooltip.style.display = 'none';
+  htip.classList.remove('visible');
 });
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-window.addEventListener('load', function() {
-  goToStep(0);
+/* ─── RESIZE ──────────────────────────────────────────────────────────────── */
+window.addEventListener('resize', function() {
+  if (tourActive && currentStep >= 0) {
+    const step = STEPS[currentStep];
+    if (step && step.tab !== 'settings') {
+      const el = document.querySelector(step.target);
+      if (el) { positionSpotlight(el); positionPanel(el, step.pos); }
+    }
+  }
 });
 </script>
 </body>
