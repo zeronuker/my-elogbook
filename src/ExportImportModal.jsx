@@ -60,32 +60,57 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   const getRowsInDateRange = () => {
     if (!dateFrom || !dateTo) return [];
 
-    // Parse dates in YYYY-MM-DD format
     const fromDate = new Date(dateFrom + 'T00:00:00Z');
     const toDate = new Date(dateTo + 'T23:59:59Z');
     const rows = [];
 
+    console.log('=== DATE RANGE DEBUG ===');
+    console.log('dateFrom:', dateFrom, 'toDate:', dateTo);
+    console.log('monthData:', monthData);
+    console.log('monthData.keys:', Object.keys(monthData));
+    console.log('monthData type:', typeof monthData);
+
+    if (!monthData || typeof monthData !== 'object' || Object.keys(monthData).length === 0) {
+      console.log('ERROR: monthData is empty or invalid');
+      return [];
+    }
+
     Object.entries(monthData).forEach(([key, monthRows]) => {
-      // key format: "0-2025" (monthIndex-year)
+      console.log(`Processing key: ${key}, rows:`, monthRows);
+
       const [monthIdx, year] = key.split('-');
-      if (!monthIdx || !year) return;
+      if (!monthIdx || !year) {
+        console.log(`Invalid key format: ${key}`);
+        return;
+      }
 
       const month = String(parseInt(monthIdx) + 1).padStart(2, '0');
 
-      (monthRows || []).forEach(row => {
-        if (!row || !row.date) return;
+      if (!Array.isArray(monthRows)) {
+        console.log(`monthRows is not array for key ${key}, type:`, typeof monthRows);
+        return;
+      }
 
-        // row.date is just the day (e.g., "05", "15")
+      monthRows.forEach((row, idx) => {
+        if (!row || !row.date) {
+          console.log(`Row ${idx} has no date:`, row);
+          return;
+        }
+
         const day = String(row.date).padStart(2, '0');
         const fullDateStr = `${year}-${month}-${day}`;
         const rowDate = new Date(fullDateStr + 'T00:00:00Z');
+        const inRange = rowDate >= fromDate && rowDate <= toDate;
 
-        if (rowDate >= fromDate && rowDate <= toDate) {
+        console.log(`Row ${idx}: date=${row.date}, full=${fullDateStr}, inRange=${inRange}`);
+
+        if (inRange) {
           rows.push(row);
         }
       });
     });
 
+    console.log('Total rows found:', rows.length);
     return rows;
   };
 
