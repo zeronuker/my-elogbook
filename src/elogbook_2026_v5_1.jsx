@@ -1109,6 +1109,14 @@ export default function ELogbook2026({ onLogout }) {
         @keyframes blink   { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
         @keyframes popIn   { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
         ${themeCss}
+        @media (max-width: 768px) {
+          .save-status-text { display: none; }
+          .save-button-text { display: none; }
+          .save-button { padding: 4px 8px !important; }
+        }
+        @media (min-width: 769px) {
+          .save-button-icon { display: none; }
+        }
       `}</style>
 
       {/* ── HEADER ── */}
@@ -1278,11 +1286,11 @@ export default function ELogbook2026({ onLogout }) {
                   <svg style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
                   </svg>
-                  <span>SAVING...</span>
+                  <span className="save-status-text">SAVING...</span>
                 </span>
               )}
               {saveStatus === "saved" && lastSaveTime && (
-                <span style={{ color: "#4fc77a", fontWeight: 700, fontStyle: "italic" }}>
+                <span style={{ color: "#4fc77a", fontWeight: 700, fontStyle: "italic" }} className="save-status-text">
                   ✓ {lastSaveTime}
                 </span>
               )}
@@ -1291,7 +1299,7 @@ export default function ELogbook2026({ onLogout }) {
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                   </svg>
-                  <span>SAVE ERROR</span>
+                  <span className="save-status-text">SAVE ERROR</span>
                 </span>
               )}
             </div>
@@ -1299,6 +1307,7 @@ export default function ELogbook2026({ onLogout }) {
               onClick={saveData}
               disabled={saveStatus === "saving"}
               title="Save data to cloud"
+              className="save-button"
               style={{
                 flexShrink: 0,
                 background: saveStatus === "error"  ? "linear-gradient(135deg, #3a0d0d, #2a0a0a)"
@@ -1316,7 +1325,8 @@ export default function ELogbook2026({ onLogout }) {
                 fontWeight: 700,
               }}
             >
-              {saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}
+              <span className="save-button-text">{saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}</span>
+              <span className="save-button-icon">{saveStatus === "saving" ? "⏳" : saveStatus === "error" ? "❌" : "💾"}</span>
             </button>
           </div>
         </div>
