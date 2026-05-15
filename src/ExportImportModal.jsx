@@ -179,7 +179,15 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       ["Aircraft Type", "Day P1", "Day P1 U/S", "Day P2", "Night P1", "Night P1 U/S", "Night P2"],
     ];
     Object.entries(cfByType).forEach(([type, cf]) => {
-      cfData.push([type, cf.dayP1 || "0:00", cf.dayP1US || "0:00", cf.dayP2 || "0:00", cf.nightP1 || "0:00", cf.nightP1US || "0:00", cf.nightP2 || "0:00"]);
+      cfData.push([
+        type,
+        timeToDecimal(cf.dayP1 || "0:00"),
+        timeToDecimal(cf.dayP1US || "0:00"),
+        timeToDecimal(cf.dayP2 || "0:00"),
+        timeToDecimal(cf.nightP1 || "0:00"),
+        timeToDecimal(cf.nightP1US || "0:00"),
+        timeToDecimal(cf.nightP2 || "0:00")
+      ]);
     });
     const wsCF = XLSX.utils.aoa_to_sheet(cfData);
     wsCF['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
@@ -251,19 +259,19 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     });
 
     const summaryHeaders = ["Month", "Day P1", "Day P1 U/S", "Day P2", "Night P1", "Night P1 U/S", "Night P2", "Flights", "Total"];
-    const summaryData = Object.entries(monthlySummary)
+    const summaryRows = Object.entries(monthlySummary)
       .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([month, data]) => [
+      .map(([month, data]) => ({
         month,
-        timeToDecimal(minutesToTime(data.dayP1)),
-        timeToDecimal(minutesToTime(data.dayP1US)),
-        timeToDecimal(minutesToTime(data.dayP2)),
-        timeToDecimal(minutesToTime(data.nightP1)),
-        timeToDecimal(minutesToTime(data.nightP1US)),
-        timeToDecimal(minutesToTime(data.nightP2)),
-        data.flights,
-        timeToDecimal(minutesToTime(data.total)),
-      ]);
+        dayP1: data.dayP1,
+        dayP1US: data.dayP1US,
+        dayP2: data.dayP2,
+        nightP1: data.nightP1,
+        nightP1US: data.nightP1US,
+        nightP2: data.nightP2,
+        flights: data.flights,
+        total: data.total,
+      }));
 
     const cfTotals = { dayP1: 0, dayP1US: 0, dayP2: 0, nightP1: 0, nightP1US: 0, nightP2: 0 };
     Object.values(cfByType).forEach(cf => {
@@ -275,18 +283,28 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       cfTotals.nightP2 += parseTimeToMinutes(cf.nightP2) || 0;
     });
 
-    const summaryHours = summaryData.slice(0, -1).map(row => [parseTimeToMinutes(minutesToTime(Math.round(row[1] * 24 * 60))), parseTimeToMinutes(minutesToTime(Math.round(row[2] * 24 * 60))), parseTimeToMinutes(minutesToTime(Math.round(row[3] * 24 * 60))), parseTimeToMinutes(minutesToTime(Math.round(row[4] * 24 * 60))), parseTimeToMinutes(minutesToTime(Math.round(row[5] * 24 * 60))), parseTimeToMinutes(minutesToTime(Math.round(row[6] * 24 * 60))), row[7], parseTimeToMinutes(minutesToTime(Math.round(row[8] * 24 * 60)))]);
-
     const grandTotal = {
-      dayP1: cfTotals.dayP1 + summaryHours.reduce((sum, row) => sum + row[0], 0),
-      dayP1US: cfTotals.dayP1US + summaryHours.reduce((sum, row) => sum + row[1], 0),
-      dayP2: cfTotals.dayP2 + summaryHours.reduce((sum, row) => sum + row[2], 0),
-      nightP1: cfTotals.nightP1 + summaryHours.reduce((sum, row) => sum + row[3], 0),
-      nightP1US: cfTotals.nightP1US + summaryHours.reduce((sum, row) => sum + row[4], 0),
-      nightP2: cfTotals.nightP2 + summaryHours.reduce((sum, row) => sum + row[5], 0),
-      flights: summaryHours.reduce((sum, row) => sum + row[6], 0),
-      total: cfTotals.dayP1 + cfTotals.dayP1US + cfTotals.dayP2 + cfTotals.nightP1 + cfTotals.nightP1US + cfTotals.nightP2 + summaryHours.reduce((sum, row) => sum + row[7], 0),
+      dayP1: cfTotals.dayP1 + summaryRows.reduce((sum, row) => sum + row.dayP1, 0),
+      dayP1US: cfTotals.dayP1US + summaryRows.reduce((sum, row) => sum + row.dayP1US, 0),
+      dayP2: cfTotals.dayP2 + summaryRows.reduce((sum, row) => sum + row.dayP2, 0),
+      nightP1: cfTotals.nightP1 + summaryRows.reduce((sum, row) => sum + row.nightP1, 0),
+      nightP1US: cfTotals.nightP1US + summaryRows.reduce((sum, row) => sum + row.nightP1US, 0),
+      nightP2: cfTotals.nightP2 + summaryRows.reduce((sum, row) => sum + row.nightP2, 0),
+      flights: summaryRows.reduce((sum, row) => sum + row.flights, 0),
+      total: cfTotals.dayP1 + cfTotals.dayP1US + cfTotals.dayP2 + cfTotals.nightP1 + cfTotals.nightP1US + cfTotals.nightP2 + summaryRows.reduce((sum, row) => sum + row.total, 0),
     };
+
+    const summaryData = summaryRows.map(row => [
+      row.month,
+      timeToDecimal(minutesToTime(row.dayP1)),
+      timeToDecimal(minutesToTime(row.dayP1US)),
+      timeToDecimal(minutesToTime(row.dayP2)),
+      timeToDecimal(minutesToTime(row.nightP1)),
+      timeToDecimal(minutesToTime(row.nightP1US)),
+      timeToDecimal(minutesToTime(row.nightP2)),
+      row.flights,
+      timeToDecimal(minutesToTime(row.total)),
+    ]);
 
     summaryData.push(["GRAND TOTAL", timeToDecimal(minutesToTime(grandTotal.dayP1)), timeToDecimal(minutesToTime(grandTotal.dayP1US)), timeToDecimal(minutesToTime(grandTotal.dayP2)), timeToDecimal(minutesToTime(grandTotal.nightP1)), timeToDecimal(minutesToTime(grandTotal.nightP1US)), timeToDecimal(minutesToTime(grandTotal.nightP2)), grandTotal.flights, timeToDecimal(minutesToTime(grandTotal.total))]);
 
