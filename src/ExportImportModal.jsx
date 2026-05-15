@@ -66,15 +66,18 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     const rows = [];
 
     Object.entries(monthData).forEach(([key, monthRows]) => {
+      // key format: "0-2025" (monthIndex-year)
+      const [monthIdx, year] = key.split('-');
+      const month = String(parseInt(monthIdx) + 1).padStart(2, '0');
+
       monthRows.forEach(row => {
         if (!row.date) return;
-        // Parse row date: if string like "2026-02-05", convert to date at midnight
-        let rowDate;
-        if (typeof row.date === 'string') {
-          rowDate = new Date(row.date + 'T00:00:00Z');
-        } else {
-          rowDate = new Date(row.date);
-        }
+
+        // row.date is just the day (e.g., "05", "15")
+        // Construct full ISO date: YYYY-MM-DD
+        const day = String(row.date).padStart(2, '0');
+        const fullDateStr = `${year}-${month}-${day}`;
+        const rowDate = new Date(fullDateStr + 'T00:00:00Z');
 
         if (rowDate >= fromDate && rowDate <= toDate) {
           rows.push(row);
