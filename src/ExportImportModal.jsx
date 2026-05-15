@@ -596,40 +596,22 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
           {tab === "export" && (
             <div>
               <div className="elb-form-field">
-                <label className="elb-form-label">FROM (DD-MM-YYYY)</label>
+                <label className="elb-form-label">FROM</label>
                 <input
-                  type="text"
+                  type="date"
                   className="elb-form-input"
-                  placeholder="01-01-2025"
-                  value={dateFrom ? dateFrom.split('-').reverse().join('-') : ''}
-                  onChange={e => {
-                    const val = e.target.value.trim();
-                    if (!val) {
-                      setDateFrom('');
-                    } else if (/^\d{2}-\d{2}-\d{4}$/.test(val)) {
-                      const [d, m, y] = val.split('-');
-                      setDateFrom(`${y}-${m}-${d}`);
-                    }
-                  }}
+                  value={dateFrom}
+                  onChange={e => setDateFrom(e.target.value)}
                 />
               </div>
 
               <div className="elb-form-field">
-                <label className="elb-form-label">TO (DD-MM-YYYY)</label>
+                <label className="elb-form-label">TO</label>
                 <input
-                  type="text"
+                  type="date"
                   className="elb-form-input"
-                  placeholder="30-04-2026"
-                  value={dateTo ? dateTo.split('-').reverse().join('-') : ''}
-                  onChange={e => {
-                    const val = e.target.value.trim();
-                    if (!val) {
-                      setDateTo('');
-                    } else if (/^\d{2}-\d{2}-\d{4}$/.test(val)) {
-                      const [d, m, y] = val.split('-');
-                      setDateTo(`${y}-${m}-${d}`);
-                    }
-                  }}
+                  value={dateTo}
+                  onChange={e => setDateTo(e.target.value)}
                 />
               </div>
 
