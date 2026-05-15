@@ -77,53 +77,37 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     const toDate = new Date(dateTo + 'T23:59:59Z');
     const rows = [];
 
-    console.log('=== DATE RANGE DEBUG ===');
-    console.log('dateFrom:', dateFrom, 'toDate:', dateTo);
-    console.log('monthData:', monthData);
-    console.log('monthData.keys:', Object.keys(monthData));
-    console.log('monthData type:', typeof monthData);
-
-    if (!monthData || typeof monthData !== 'object' || Object.keys(monthData).length === 0) {
-      console.log('ERROR: monthData is empty or invalid');
-      return [];
-    }
+    if (!monthData || typeof monthData !== 'object') return [];
 
     Object.entries(monthData).forEach(([key, monthRows]) => {
-      console.log(`Processing key: ${key}, rows:`, monthRows);
+      if (!Array.isArray(monthRows)) return;
 
-      const [monthIdx, year] = key.split('-');
-      if (!monthIdx || !year) {
-        console.log(`Invalid key format: ${key}`);
-        return;
-      }
+      monthRows.forEach(row => {
+        if (!row || !row.date) return;
 
-      const month = String(parseInt(monthIdx) + 1).padStart(2, '0');
-
-      if (!Array.isArray(monthRows)) {
-        console.log(`monthRows is not array for key ${key}, type:`, typeof monthRows);
-        return;
-      }
-
-      monthRows.forEach((row, idx) => {
-        if (!row || !row.date) {
-          console.log(`Row ${idx} has no date:`, row);
+        // row.date is DD/MM/YYYY format (e.g., "05/03/2025")
+        let rowDate;
+        if (typeof row.date === 'string' && row.date.includes('/')) {
+          const parts = row.date.split('/');
+          if (parts.length === 3) {
+            const day = parts[0].padStart(2, '0');
+            const month = parts[1].padStart(2, '0');
+            const year = parts[2];
+            const isoDateStr = `${year}-${month}-${day}`;
+            rowDate = new Date(isoDateStr + 'T00:00:00Z');
+          } else {
+            return;
+          }
+        } else {
           return;
         }
 
-        const day = String(row.date).padStart(2, '0');
-        const fullDateStr = `${year}-${month}-${day}`;
-        const rowDate = new Date(fullDateStr + 'T00:00:00Z');
-        const inRange = rowDate >= fromDate && rowDate <= toDate;
-
-        console.log(`Row ${idx}: date=${row.date}, full=${fullDateStr}, inRange=${inRange}`);
-
-        if (inRange) {
+        if (rowDate >= fromDate && rowDate <= toDate) {
           rows.push(row);
         }
       });
     });
 
-    console.log('Total rows found:', rows.length);
     return rows;
   };
 
