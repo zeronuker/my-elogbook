@@ -56,16 +56,12 @@ function App() {
                 { onboardingComplete: true },
                 { merge: true }
               )
-            }
-
-            // Check if onboarding is complete
-            const isComplete = profileData.onboardingComplete || profileData.emailVerified
-            if (isComplete) {
-              console.log('Setting showOnboarding to false')
               setShowOnboarding(false)
             } else {
-              console.log('Setting showOnboarding to true')
-              setShowOnboarding(true)
+              // Check if onboarding is complete (BUG 1 & 6 FIX)
+              const isComplete = profileData.onboardingComplete === true || profileData.emailVerified === true
+              console.log('Onboarding complete:', isComplete, 'showOnboarding will be:', !isComplete)
+              setShowOnboarding(!isComplete)
             }
           } else {
             console.log('No profile, setting showOnboarding to true')
@@ -73,6 +69,7 @@ function App() {
           }
         } catch (err) {
           console.error('Error checking profile:', err)
+          setShowOnboarding(true)
         }
       }
     })
@@ -216,12 +213,16 @@ function App() {
           doc(db, 'users', user.uid, 'profile', 'data'),
           {
             ...profileData,
-            onboardingComplete: true
+            // Map organization from signup to airline for Settings compatibility
+            airline: profileData.organization || profileData.airline || '',
+            onboardingComplete: true,
+            emailVerified: true
           },
           { merge: true }
         )
+        // Explicitly trigger onboarding complete state
+        setShowOnboarding(false)
       }
-      setShowOnboarding(false)
     } catch (err) {
       console.error('Error completing onboarding:', err)
     }
@@ -255,6 +256,7 @@ function App() {
         signupError={signupError}
         isLoading={isSigningUp}
         showLogoutConfirm={showLogoutConfirm}
+        onClearError={() => setSignupError(null)}
       />
     )
   }
