@@ -481,6 +481,28 @@ export default function ELogbook2026({ onLogout }) {
           setSettings(merged);
         }
       }
+
+      // Load profile data and merge into settings
+      try {
+        const profileRef = doc(db, "users", uid, "profile", "data");
+        const profileSnap = await getDoc(profileRef);
+        if (profileSnap.exists()) {
+          const profileData = profileSnap.data();
+          // Merge profile fields into current settings
+          const updated = {
+            ...settingsRef.current,
+            fullName: profileData.fullName || settingsRef.current.fullName || "",
+            airline: profileData.airline || profileData.organization || settingsRef.current.airline || "",
+            licenceNumber: profileData.licenceNumber || settingsRef.current.licenceNumber || "",
+            licenceType: profileData.licenceType || settingsRef.current.licenceType || "ATPL(A)"
+          };
+          settingsRef.current = updated;
+          setSettings(updated);
+          console.log("Profile data merged into settings:", updated);
+        }
+      } catch (profileErr) {
+        console.error("Profile load error:", profileErr);
+      }
     } catch (e) {
       console.error("Load error:", e);
     }
