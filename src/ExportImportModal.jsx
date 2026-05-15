@@ -183,6 +183,14 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     });
     const wsCF = XLSX.utils.aoa_to_sheet(cfData);
     wsCF['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+    for (let i = 4; i <= cfData.length; i++) {
+      ['B', 'C', 'D', 'E', 'F', 'G'].forEach(col => {
+        const cell = wsCF[`${col}${i}`];
+        if (cell && cell.v !== null) {
+          cell.z = '[h]:mm:ss';
+        }
+      });
+    }
     XLSX.utils.book_append_sheet(wb, wsCF, "Carry Forward");
 
     // SHEET 3: FLIGHT DETAILS with proper date/time formats
@@ -217,7 +225,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     for (let i = 2; i <= flightData.length + 1; i++) {
       wsFlights[`A${i}`].z = 'dd-mm-yyyy';
       ['J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q'].forEach(col => {
-        if (wsFlights[`${col}${i}`]) wsFlights[`${col}${i}`].z = 'hh:mm';
+        if (wsFlights[`${col}${i}`]) wsFlights[`${col}${i}`].z = '[h]:mm:ss';
       });
     }
 
@@ -287,7 +295,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
     for (let i = 2; i <= summaryData.length + 1; i++) {
       ['B', 'C', 'D', 'E', 'F', 'G', 'I'].forEach(col => {
-        if (wsSummary[`${col}${i}`]) wsSummary[`${col}${i}`].z = 'hh:mm';
+        if (wsSummary[`${col}${i}`]) wsSummary[`${col}${i}`].z = '[h]:mm:ss';
       });
     }
 
@@ -575,11 +583,16 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                   type="text"
                   className="elb-form-input"
                   placeholder="01-01-2025"
-                  value={dateFrom}
+                  value={dateFrom ? dateFrom.split('-').reverse().join('-') : ''}
                   onChange={e => {
                     const val = e.target.value;
-                    if (val && val.includes('-')) {
-                      const [d, m, y] = val.split('-');
+                    if (!val) {
+                      setDateFrom('');
+                    } else if (val.includes('-') && val.split('-').length === 3) {
+                      const parts = val.split('-');
+                      const d = parts[0].padStart(2, '0');
+                      const m = parts[1].padStart(2, '0');
+                      const y = parts[2];
                       setDateFrom(`${y}-${m}-${d}`);
                     }
                   }}
@@ -595,8 +608,13 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                   value={dateTo ? dateTo.split('-').reverse().join('-') : ''}
                   onChange={e => {
                     const val = e.target.value;
-                    if (val && val.includes('-')) {
-                      const [d, m, y] = val.split('-');
+                    if (!val) {
+                      setDateTo('');
+                    } else if (val.includes('-') && val.split('-').length === 3) {
+                      const parts = val.split('-');
+                      const d = parts[0].padStart(2, '0');
+                      const m = parts[1].padStart(2, '0');
+                      const y = parts[2];
                       setDateTo(`${y}-${m}-${d}`);
                     }
                   }}
