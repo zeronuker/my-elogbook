@@ -603,14 +603,11 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                   placeholder="01-01-2025"
                   value={dateFrom ? dateFrom.split('-').reverse().join('-') : ''}
                   onChange={e => {
-                    const val = e.target.value;
+                    const val = e.target.value.trim();
                     if (!val) {
                       setDateFrom('');
-                    } else if (val.includes('-') && val.split('-').length === 3) {
-                      const parts = val.split('-');
-                      const d = parts[0].padStart(2, '0');
-                      const m = parts[1].padStart(2, '0');
-                      const y = parts[2];
+                    } else if (/^\d{2}-\d{2}-\d{4}$/.test(val)) {
+                      const [d, m, y] = val.split('-');
                       setDateFrom(`${y}-${m}-${d}`);
                     }
                   }}
@@ -625,14 +622,11 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                   placeholder="30-04-2026"
                   value={dateTo ? dateTo.split('-').reverse().join('-') : ''}
                   onChange={e => {
-                    const val = e.target.value;
+                    const val = e.target.value.trim();
                     if (!val) {
                       setDateTo('');
-                    } else if (val.includes('-') && val.split('-').length === 3) {
-                      const parts = val.split('-');
-                      const d = parts[0].padStart(2, '0');
-                      const m = parts[1].padStart(2, '0');
-                      const y = parts[2];
+                    } else if (/^\d{2}-\d{2}-\d{4}$/.test(val)) {
+                      const [d, m, y] = val.split('-');
                       setDateTo(`${y}-${m}-${d}`);
                     }
                   }}
