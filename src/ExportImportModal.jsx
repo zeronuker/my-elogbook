@@ -60,24 +60,31 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   const getRowsInDateRange = () => {
     if (!dateFrom || !dateTo) return [];
 
-    // Parse dates consistently: ensure we compare dates, not times
+    // Parse dates consistently
     const fromDate = new Date(dateFrom + 'T00:00:00Z');
     const toDate = new Date(dateTo + 'T23:59:59Z');
     const rows = [];
 
+    console.log('monthData keys:', Object.keys(monthData));
+    console.log('dateFrom:', dateFrom, '→', fromDate);
+    console.log('dateTo:', dateTo, '→', toDate);
+
     Object.entries(monthData).forEach(([key, monthRows]) => {
       // key format: "0-2025" (monthIndex-year)
       const [monthIdx, year] = key.split('-');
+      if (!monthIdx || !year) return;
+
       const month = String(parseInt(monthIdx) + 1).padStart(2, '0');
 
-      monthRows.forEach(row => {
-        if (!row.date) return;
+      (monthRows || []).forEach(row => {
+        if (!row || !row.date) return;
 
         // row.date is just the day (e.g., "05", "15")
-        // Construct full ISO date: YYYY-MM-DD
         const day = String(row.date).padStart(2, '0');
         const fullDateStr = `${year}-${month}-${day}`;
         const rowDate = new Date(fullDateStr + 'T00:00:00Z');
+
+        console.log(`Row date: ${fullDateStr} (${rowDate.toISOString()}), in range: ${rowDate >= fromDate && rowDate <= toDate}`);
 
         if (rowDate >= fromDate && rowDate <= toDate) {
           rows.push(row);
@@ -85,6 +92,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       });
     });
 
+    console.log('Found rows:', rows.length);
     return rows;
   };
 
