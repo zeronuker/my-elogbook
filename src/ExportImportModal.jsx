@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
 
 const DARK_COCKPIT_THEME = {
   bg:        "#0a0d12",
@@ -25,7 +23,6 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   const [tab, setTab] = useState("export");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [format, setFormat] = useState("excel");
   const [file, setFile] = useState(null);
   const [importPreview, setImportPreview] = useState(null);
   const [importStatus, setImportStatus] = useState(null);
@@ -62,21 +59,44 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
   const getRowsInDateRange = () => {
     if (!dateFrom || !dateTo) return [];
-    const from = new Date(dateFrom);
-    const to = new Date(dateTo);
+
+    // Parse dates consistently: ensure we compare dates, not times
+    const fromDate = new Date(dateFrom + 'T00:00:00Z');
+    const toDate = new Date(dateTo + 'T23:59:59Z');
     const rows = [];
 
     Object.entries(monthData).forEach(([key, monthRows]) => {
       monthRows.forEach(row => {
         if (!row.date) return;
-        const rowDate = new Date(row.date);
-        if (rowDate >= from && rowDate <= to) {
+        // Parse row date: if string like "2026-02-05", convert to date at midnight
+        let rowDate;
+        if (typeof row.date === 'string') {
+          rowDate = new Date(row.date + 'T00:00:00Z');
+        } else {
+          rowDate = new Date(row.date);
+        }
+
+        if (rowDate >= fromDate && rowDate <= toDate) {
           rows.push(row);
         }
       });
     });
 
     return rows;
+  };
+
+  const formatDateForExcel = (dateStr) => {
+    if (!dateStr) return "";
+    try {
+      const date = typeof dateStr === 'string' ? new Date(dateStr + 'T00:00:00Z') : new Date(dateStr);
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const month = months[date.getUTCMonth()];
+      const year = date.getUTCFullYear();
+      return `${day}-${month}-${year}`;
+    } catch (e) {
+      return dateStr || "";
+    }
   };
 
   const exportToExcel = () => {
@@ -88,9 +108,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
     const wb = XLSX.utils.book_new();
 
-    // ─────────────────────────────────────────────────────────────────
     // SHEET 1: PILOT PROFILE
-    // ─────────────────────────────────────────────────────────────────
     const profileData = [
       ["PILOT PROFILE"],
       [],
@@ -99,107 +117,101 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       ["License Type", settings?.licenceType || ""],
       ["Airline", settings?.airline || ""],
       ["Home Base", settings?.homeBase || ""],
-      ["Report Period", `${dateFrom} to ${dateTo}`],
+      ["Report Period", `${formatDateForExcel(dateFrom)} to ${formatDateForExcel(dateTo)}`],
     ];
     const wsProfile = XLSX.utils.aoa_to_sheet(profileData);
     wsProfile['!cols'] = [{ wch: 20 }, { wch: 40 }];
     XLSX.utils.book_append_sheet(wb, wsProfile, "Profile");
 
-    // ─────────────────────────────────────────────────────────────────
     // SHEET 2: CARRY FORWARD HOURS
-    // ─────────────────────────────────────────────────────────────────
     const cf = settings?.carryForward?.[0] || {};
     const cfData = [
       ["CARRY FORWARD HOURS"],
       [],
       ["Category", "Hours"],
       ["Day P1", cf.dayP1 || "0:00"],
+      ["Day P1 U/S", cf.dayP1US || "0:00"],
       ["Day P2", cf.dayP2 || "0:00"],
       ["Night P1", cf.nightP1 || "0:00"],
+      ["Night P1 U/S", cf.nightP1US || "0:00"],
       ["Night P2", cf.nightP2 || "0:00"],
-      ["Day P1 US", cf.dayP1US || "0:00"],
-      ["Night P1 US", cf.nightP1US || "0:00"],
     ];
     const wsCF = XLSX.utils.aoa_to_sheet(cfData);
     wsCF['!cols'] = [{ wch: 20 }, { wch: 15 }];
     XLSX.utils.book_append_sheet(wb, wsCF, "Carry Forward");
 
-    // ─────────────────────────────────────────────────────────────────
-    // SHEET 3: FLIGHT DETAILS (sorted by date)
-    // ─────────────────────────────────────────────────────────────────
-    const flightHeaders = ["Date", "Type", "Aircraft", "Markings", "Captain", "Dep", "Arr", "STD", "STA", "Day P1", "Day P2", "Night P1", "Night P2", "Total", "Remarks"];
-    const flightData = rows.map(row => [
-      row.date ? new Date(row.date) : "",
-      row.type || "",
-      row.aircraft || "",
-      row.markings || "",
-      row.captain || "",
-      row.departure || "",
-      row.arrival || "",
-      row.std || "",
-      row.sta || "",
-      row.dayP1 || "",
-      row.dayP2 || "",
-      row.nightP1 || "",
-      row.nightP2 || "",
-      row.total || "",
-      row.remarks || "",
-    ]);
+    // SHEET 3: FLIGHT DETAILS (sorted by date, all 20 fields)
+    const flightHeaders = COLUMN_ORDER.map(col => {
+      const headerMap = {
+        date: "DATE", type: "TYPE", markings: "MARKINGS", captain: "CAPTAIN",
+        cap: "CAP", pilotFlying: "FLYING", sectors: "SECTORS",
+        departure: "DEPARTURE", arrival: "ARRIVAL", std: "STD", sta: "STA",
+        dayP1: "DAY P1", dayP1US: "DAY P1 U/S", dayP2: "DAY P2",
+        nightP1: "NIGHT P1", nightP1US: "NIGHT P1 U/S", nightP2: "NIGHT P2",
+        total: "TOTAL", remarks: "REMARKS", autoland: "AUTOLAND"
+      };
+      return headerMap[col] || col.toUpperCase();
+    });
+
+    const flightData = rows.map(row => COLUMN_ORDER.map(col => {
+      if (col === 'date') return formatDateForExcel(row.date);
+      return row[col] || "";
+    }));
 
     const wsFlights = XLSX.utils.aoa_to_sheet([flightHeaders, ...flightData]);
-    wsFlights['!cols'] = [
-      { wch: 12 }, { wch: 8 }, { wch: 18 }, { wch: 10 }, { wch: 15 },
-      { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 },
-      { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 20 }
-    ];
+    const colWidths = [14, 10, 12, 12, 6, 8, 8, 11, 11, 8, 8, 10, 12, 10, 10, 12, 10, 10, 10, 10];
+    wsFlights['!cols'] = colWidths.map(wch => ({ wch }));
     XLSX.utils.book_append_sheet(wb, wsFlights, "Flights");
 
-    // ─────────────────────────────────────────────────────────────────
     // SHEET 4: MONTHLY SUMMARY
-    // ─────────────────────────────────────────────────────────────────
     const monthlySummary = {};
     rows.forEach(row => {
       if (!row.date) return;
-      const date = new Date(row.date);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const date = new Date(row.date + 'T00:00:00Z');
+      const monthKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
       if (!monthlySummary[monthKey]) {
-        monthlySummary[monthKey] = { dayP1: 0, dayP2: 0, nightP1: 0, nightP2: 0, flights: 0, total: 0 };
+        monthlySummary[monthKey] = { dayP1: 0, dayP1US: 0, dayP2: 0, nightP1: 0, nightP1US: 0, nightP2: 0, flights: 0, total: 0 };
       }
       monthlySummary[monthKey].dayP1 += parseTimeToMinutes(row.dayP1) || 0;
+      monthlySummary[monthKey].dayP1US += parseTimeToMinutes(row.dayP1US) || 0;
       monthlySummary[monthKey].dayP2 += parseTimeToMinutes(row.dayP2) || 0;
       monthlySummary[monthKey].nightP1 += parseTimeToMinutes(row.nightP1) || 0;
+      monthlySummary[monthKey].nightP1US += parseTimeToMinutes(row.nightP1US) || 0;
       monthlySummary[monthKey].nightP2 += parseTimeToMinutes(row.nightP2) || 0;
       monthlySummary[monthKey].flights += 1;
       monthlySummary[monthKey].total += parseTimeToMinutes(row.total) || 0;
     });
 
-    const summaryHeaders = ["Month", "Day P1", "Day P2", "Night P1", "Night P2", "Flights", "Total"];
+    const summaryHeaders = ["Month", "Day P1", "Day P1 U/S", "Day P2", "Night P1", "Night P1 U/S", "Night P2", "Flights", "Total"];
     const summaryData = Object.entries(monthlySummary)
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([month, data]) => [
         month,
         minutesToTime(data.dayP1),
+        minutesToTime(data.dayP1US),
         minutesToTime(data.dayP2),
         minutesToTime(data.nightP1),
+        minutesToTime(data.nightP1US),
         minutesToTime(data.nightP2),
         data.flights,
         minutesToTime(data.total),
       ]);
 
-    // Add grand total row
     const grandTotal = {
       dayP1: parseTimeToMinutes(cf.dayP1) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[1]), 0),
-      dayP2: parseTimeToMinutes(cf.dayP2) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[2]), 0),
-      nightP1: parseTimeToMinutes(cf.nightP1) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[3]), 0),
-      nightP2: parseTimeToMinutes(cf.nightP2) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[4]), 0),
-      flights: summaryData.reduce((sum, row) => sum + row[5], 0),
-      total: parseTimeToMinutes(cf.dayP1) + parseTimeToMinutes(cf.dayP2) + parseTimeToMinutes(cf.nightP1) + parseTimeToMinutes(cf.nightP2) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[6]), 0),
+      dayP1US: parseTimeToMinutes(cf.dayP1US) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[2]), 0),
+      dayP2: parseTimeToMinutes(cf.dayP2) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[3]), 0),
+      nightP1: parseTimeToMinutes(cf.nightP1) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[4]), 0),
+      nightP1US: parseTimeToMinutes(cf.nightP1US) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[5]), 0),
+      nightP2: parseTimeToMinutes(cf.nightP2) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[6]), 0),
+      flights: summaryData.reduce((sum, row) => sum + row[7], 0),
+      total: parseTimeToMinutes(cf.dayP1) + parseTimeToMinutes(cf.dayP1US) + parseTimeToMinutes(cf.dayP2) + parseTimeToMinutes(cf.nightP1) + parseTimeToMinutes(cf.nightP1US) + parseTimeToMinutes(cf.nightP2) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[8]), 0),
     };
 
-    summaryData.push(["GRAND TOTAL", minutesToTime(grandTotal.dayP1), minutesToTime(grandTotal.dayP2), minutesToTime(grandTotal.nightP1), minutesToTime(grandTotal.nightP2), grandTotal.flights, minutesToTime(grandTotal.total)]);
+    summaryData.push(["GRAND TOTAL", minutesToTime(grandTotal.dayP1), minutesToTime(grandTotal.dayP1US), minutesToTime(grandTotal.dayP2), minutesToTime(grandTotal.nightP1), minutesToTime(grandTotal.nightP1US), minutesToTime(grandTotal.nightP2), grandTotal.flights, minutesToTime(grandTotal.total)]);
 
     const wsSummary = XLSX.utils.aoa_to_sheet([summaryHeaders, ...summaryData]);
-    wsSummary['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
+    wsSummary['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
     XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
 
     const fileName = `ClaudeBorne_${dateFrom}_to_${dateTo}.xlsx`;
@@ -226,257 +238,13 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     return `${h}:${String(m).padStart(2, "0")}`;
   };
 
-  const exportToPDF = () => {
-    const rows = getRowsInDateRange().sort((a, b) => new Date(a.date) - new Date(b.date));
-    if (rows.length === 0) {
-      alert("No flights found in selected date range");
-      return;
-    }
-
-    const doc = new jsPDF({ orientation: "landscape" });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    let yPosition = 10;
-
-    // ─────────────────────────────────────────────────────────────────
-    // HEADER: PILOT PROFILE
-    // ─────────────────────────────────────────────────────────────────
-    doc.setFontSize(14);
-    doc.setTextColor(79, 195, 247);
-    doc.text("CLAUDEBORNE PILOT LOGBOOK", pageWidth / 2, yPosition, { align: "center" });
-    yPosition += 8;
-
-    doc.setFontSize(9);
-    doc.setTextColor(184, 214, 229);
-    const profileText = `${settings?.fullName || ""}  •  License: ${settings?.licenceNumber || ""}  •  Type: ${settings?.licenceType || ""}`;
-    doc.text(profileText, pageWidth / 2, yPosition, { align: "center" });
-    yPosition += 6;
-
-    doc.setFontSize(8);
-    doc.setTextColor(122, 154, 170);
-    const periodText = `Report Period: ${dateFrom} to ${dateTo}`;
-    doc.text(periodText, pageWidth / 2, yPosition, { align: "center" });
-    yPosition += 10;
-
-    // ─────────────────────────────────────────────────────────────────
-    // CARRY FORWARD HOURS
-    // ─────────────────────────────────────────────────────────────────
-    const cf = settings?.carryForward?.[0] || {};
-    doc.setFontSize(10);
-    doc.setTextColor(79, 195, 247);
-    doc.text("CARRY FORWARD HOURS", 14, yPosition);
-    yPosition += 6;
-
-    const cfTable = [
-      ["DAY P1", "DAY P2", "NIGHT P1", "NIGHT P2", "DAY P1 US", "NIGHT P1 US"],
-      [cf.dayP1 || "0:00", cf.dayP2 || "0:00", cf.nightP1 || "0:00", cf.nightP2 || "0:00", cf.dayP1US || "0:00", cf.nightP1US || "0:00"]
-    ];
-
-    doc.autoTable({
-      head: cfTable.slice(0, 1),
-      body: cfTable.slice(1),
-      startY: yPosition,
-      margin: { left: 14, right: 14 },
-      styles: {
-        font: "courier",
-        fontSize: 8,
-        cellPadding: 3,
-        textColor: [184, 214, 229],
-        lineColor: [30, 58, 95],
-      },
-      headStyles: {
-        fillColor: [13, 30, 48],
-        textColor: [79, 195, 247],
-        fontStyle: "bold",
-        lineColor: [30, 58, 95],
-      },
-      alternateRowStyles: {
-        fillColor: [11, 19, 32],
-      },
-    });
-
-    yPosition = doc.lastAutoTable.finalY + 10;
-
-    // ─────────────────────────────────────────────────────────────────
-    // FLIGHTS BY MONTH
-    // ─────────────────────────────────────────────────────────────────
-    const monthlyFlights = {};
-    rows.forEach(row => {
-      if (!row.date) return;
-      const date = new Date(row.date);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      if (!monthlyFlights[monthKey]) {
-        monthlyFlights[monthKey] = [];
-      }
-      monthlyFlights[monthKey].push(row);
-    });
-
-    const monthlyTotals = {};
-
-    Object.entries(monthlyFlights)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .forEach(([monthKey, monthRows]) => {
-        // Month header
-        if (yPosition > pageHeight - 40) {
-          doc.addPage();
-          yPosition = 10;
-        }
-
-        doc.setFontSize(10);
-        doc.setTextColor(79, 195, 247);
-        doc.text(`${monthKey.split("-")[0]}-${monthKey.split("-")[1]}`, 14, yPosition);
-        yPosition += 6;
-
-        // Flight table for this month
-        const flightHeaders = ["DATE", "TYPE", "AIRCRAFT", "CAPT", "DEP", "ARR", "DAY P1", "DAY P2", "NIGHT P1", "NIGHT P2", "TOTAL", "RMK"];
-        const flightData = monthRows.map(row => [
-          row.date ? new Date(row.date).toLocaleDateString("en-GB") : "",
-          row.type || "",
-          row.aircraft || "",
-          row.captain ? "Y" : "",
-          row.departure || "",
-          row.arrival || "",
-          row.dayP1 || "",
-          row.dayP2 || "",
-          row.nightP1 || "",
-          row.nightP2 || "",
-          row.total || "",
-          row.remarks ? row.remarks.substring(0, 8) : "",
-        ]);
-
-        doc.autoTable({
-          head: [flightHeaders],
-          body: flightData,
-          startY: yPosition,
-          margin: { left: 14, right: 14 },
-          styles: {
-            font: "courier",
-            fontSize: 7,
-            cellPadding: 2,
-            textColor: [184, 214, 229],
-            lineColor: [30, 58, 95],
-          },
-          headStyles: {
-            fillColor: [13, 30, 48],
-            textColor: [79, 195, 247],
-            fontStyle: "bold",
-            lineColor: [30, 58, 95],
-          },
-          alternateRowStyles: {
-            fillColor: [11, 19, 32],
-          },
-          columnStyles: {
-            0: { halign: "center", cellWidth: 16 },
-            1: { halign: "center", cellWidth: 12 },
-            2: { halign: "center", cellWidth: 18 },
-            3: { halign: "center", cellWidth: 10 },
-            4: { halign: "center", cellWidth: 10 },
-            5: { halign: "center", cellWidth: 10 },
-            6: { halign: "right", cellWidth: 14 },
-            7: { halign: "right", cellWidth: 14 },
-            8: { halign: "right", cellWidth: 14 },
-            9: { halign: "right", cellWidth: 14 },
-            10: { halign: "right", cellWidth: 14 },
-            11: { halign: "left", cellWidth: 16 },
-          },
-        });
-
-        yPosition = doc.lastAutoTable.finalY + 4;
-
-        // Monthly subtotal
-        const monthTotal = {
-          dayP1: monthRows.reduce((sum, r) => sum + parseTimeToMinutes(r.dayP1), 0),
-          dayP2: monthRows.reduce((sum, r) => sum + parseTimeToMinutes(r.dayP2), 0),
-          nightP1: monthRows.reduce((sum, r) => sum + parseTimeToMinutes(r.nightP1), 0),
-          nightP2: monthRows.reduce((sum, r) => sum + parseTimeToMinutes(r.nightP2), 0),
-          total: monthRows.reduce((sum, r) => sum + parseTimeToMinutes(r.total), 0),
-        };
-
-        monthlyTotals[monthKey] = monthTotal;
-
-        doc.setFontSize(8);
-        doc.setTextColor(245, 197, 66);
-        const subtotalText = `MONTH TOTAL: Day P1 ${minutesToTime(monthTotal.dayP1)} | Day P2 ${minutesToTime(monthTotal.dayP2)} | Night P1 ${minutesToTime(monthTotal.nightP1)} | Night P2 ${minutesToTime(monthTotal.nightP2)} | TOTAL ${minutesToTime(monthTotal.total)}`;
-        doc.text(subtotalText, 14, yPosition);
-        yPosition += 8;
-      });
-
-    // ─────────────────────────────────────────────────────────────────
-    // GRAND TOTAL
-    // ─────────────────────────────────────────────────────────────────
-    if (yPosition > pageHeight - 30) {
-      doc.addPage();
-      yPosition = 10;
-    }
-
-    const grandTotal = {
-      dayP1: parseTimeToMinutes(cf.dayP1) + Object.values(monthlyTotals).reduce((sum, m) => sum + m.dayP1, 0),
-      dayP2: parseTimeToMinutes(cf.dayP2) + Object.values(monthlyTotals).reduce((sum, m) => sum + m.dayP2, 0),
-      nightP1: parseTimeToMinutes(cf.nightP1) + Object.values(monthlyTotals).reduce((sum, m) => sum + m.nightP1, 0),
-      nightP2: parseTimeToMinutes(cf.nightP2) + Object.values(monthlyTotals).reduce((sum, m) => sum + m.nightP2, 0),
-      total: parseTimeToMinutes(cf.dayP1) + parseTimeToMinutes(cf.dayP2) + parseTimeToMinutes(cf.nightP1) + parseTimeToMinutes(cf.nightP2) + Object.values(monthlyTotals).reduce((sum, m) => sum + m.total, 0),
-      flights: rows.length,
-    };
-
-    doc.setFontSize(10);
-    doc.setTextColor(34, 197, 94);
-    doc.text("GRAND TOTAL", 14, yPosition);
-    yPosition += 6;
-
-    const grandTotalTable = [
-      ["DAY P1", "DAY P2", "NIGHT P1", "NIGHT P2", "TOTAL FLIGHTS", "TOTAL TIME"],
-      [minutesToTime(grandTotal.dayP1), minutesToTime(grandTotal.dayP2), minutesToTime(grandTotal.nightP1), minutesToTime(grandTotal.nightP2), String(grandTotal.flights), minutesToTime(grandTotal.total)]
-    ];
-
-    doc.autoTable({
-      head: grandTotalTable.slice(0, 1),
-      body: grandTotalTable.slice(1),
-      startY: yPosition,
-      margin: { left: 14, right: 14 },
-      styles: {
-        font: "courier",
-        fontSize: 8,
-        cellPadding: 3,
-        textColor: [184, 214, 229],
-        lineColor: [30, 58, 95],
-      },
-      headStyles: {
-        fillColor: [13, 30, 48],
-        textColor: [34, 197, 94],
-        fontStyle: "bold",
-        lineColor: [30, 58, 95],
-      },
-      alternateRowStyles: {
-        fillColor: [11, 19, 32],
-      },
-    });
-
-    yPosition = doc.lastAutoTable.finalY + 8;
-
-    // ─────────────────────────────────────────────────────────────────
-    // FOOTER
-    // ─────────────────────────────────────────────────────────────────
-    doc.setFontSize(7);
-    doc.setTextColor(122, 154, 170);
-    doc.text("ClaudeBorne Pilot Logbook - Generated with EASA FCL.050 Compliance", pageWidth / 2, pageHeight - 5, { align: "center" });
-
-    const fileName = `ClaudeBorne_${dateFrom}_to_${dateTo}.pdf`;
-    doc.save(fileName);
-
-    setExportStatus({ success: true, count: rows.length });
-    setTimeout(() => setExportStatus(null), 3000);
-  };
 
   const handleExport = () => {
     if (!dateFrom || !dateTo) {
       alert("Please select date range");
       return;
     }
-    if (format === "excel") {
-      exportToExcel();
-    } else {
-      exportToPDF();
-    }
+    exportToExcel();
   };
 
   // ─────────────────────────────────────────────────────────────────
@@ -489,81 +257,151 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
     setFile(selectedFile);
     setImportPreview(null);
+    setImportStatus(null);
 
     try {
       const buffer = await selectedFile.arrayBuffer();
-      let data = [];
 
-      if (selectedFile.name.endsWith(".xlsx")) {
-        const workbook = XLSX.read(buffer, { type: "array" });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        data = XLSX.utils.sheet_to_json(sheet);
-      } else {
-        setImportStatus({ error: "PDF import not yet implemented. Use Excel format." });
+      if (!selectedFile.name.endsWith(".xlsx")) {
+        setImportStatus({ error: "Only .xlsx files are supported" });
         return;
       }
 
+      const workbook = XLSX.read(buffer, { type: "array" });
+
+      // Auto-detect "Flights" sheet
+      const flightsSheetName = workbook.SheetNames.find(name => name.toLowerCase() === 'flights');
+      if (!flightsSheetName) {
+        setImportStatus({ error: 'No "Flights" sheet found in workbook' });
+        return;
+      }
+
+      const sheet = workbook.Sheets[flightsSheetName];
+      const rawData = XLSX.utils.sheet_to_json(sheet);
+
+      if (rawData.length === 0) {
+        setImportStatus({ error: 'Flights sheet is empty' });
+        return;
+      }
+
+      // Get headers from first row
+      const headerRow = rawData[0];
+      const detectedHeaders = Object.keys(headerRow);
+
+      // Create column mapping (case-insensitive)
+      const headerMap = {};
+      const missingColumns = [];
+      const duplicateColumns = [];
+
+      const expectedHeaderMap = {
+        date: "DATE", type: "TYPE", markings: "MARKINGS", captain: "CAPTAIN",
+        cap: "CAP", pilotFlying: "FLYING", sectors: "SECTORS",
+        departure: "DEPARTURE", arrival: "ARRIVAL", std: "STD", sta: "STA",
+        dayP1: "DAY P1", dayP1US: "DAY P1 U/S", dayP2: "DAY P2",
+        nightP1: "NIGHT P1", nightP1US: "NIGHT P1 U/S", nightP2: "NIGHT P2",
+        total: "TOTAL", remarks: "REMARKS", autoland: "AUTOLAND"
+      };
+
+      // Map columns (case-insensitive)
+      for (const [fieldName, expectedHeader] of Object.entries(expectedHeaderMap)) {
+        const matchedHeader = detectedHeaders.find(h => h.toUpperCase() === expectedHeader.toUpperCase());
+        if (matchedHeader) {
+          headerMap[fieldName] = matchedHeader;
+        } else {
+          missingColumns.push(expectedHeader);
+        }
+      }
+
+      // Check for duplicates (multiple columns mapping to same field)
+      const reverseMap = {};
+      for (const [field, header] of Object.entries(headerMap)) {
+        if (reverseMap[header]) duplicateColumns.push(header);
+        reverseMap[header] = field;
+      }
+
+      // Show warning if columns missing or duplicated
+      if (missingColumns.length > 0 || duplicateColumns.length > 0) {
+        const warnings = [];
+        if (missingColumns.length > 0) warnings.push(`Missing: ${missingColumns.join(', ')}`);
+        if (duplicateColumns.length > 0) warnings.push(`Duplicates: ${duplicateColumns.join(', ')}`);
+        setImportStatus({ warning: warnings.join(' | ') });
+      }
+
       // Validate and create preview
-      const { validRows, errors, existing, duplicateCount } = validateImportData(data);
+      const { validRows, errors, duplicateCount } = validateImportData(rawData, headerMap);
 
       setImportPreview({
-        totalDetected: data.length,
+        totalDetected: rawData.length - 1,
         validRows,
         errors,
-        existing,
         duplicateCount,
+        headerMap,
       });
     } catch (err) {
       setImportStatus({ error: `Failed to read file: ${err.message}` });
     }
   };
 
-  const validateImportData = (data) => {
+  const validateImportData = (data, headerMap) => {
     const validRows = [];
     const errors = [];
     let duplicateCount = 0;
 
     data.forEach((row, idx) => {
-      const date = row.date?.trim();
-      const departure = row.departure?.trim();
-      const arrival = row.arrival?.trim();
+      const date = row[headerMap.date]?.toString().trim();
+      const departure = row[headerMap.departure]?.toString().trim();
+      const arrival = row[headerMap.arrival]?.toString().trim();
 
       // Check required fields
       if (!date) {
-        errors.push({ row: idx + 1, reason: 'Missing date' });
+        errors.push({ row: idx, reason: 'Missing date' });
         return;
       }
       if (!departure) {
-        errors.push({ row: idx + 1, reason: 'Missing departure' });
+        errors.push({ row: idx, reason: 'Missing departure' });
         return;
       }
       if (!arrival) {
-        errors.push({ row: idx + 1, reason: 'Missing arrival' });
+        errors.push({ row: idx, reason: 'Missing arrival' });
         return;
       }
 
-      // Validate date format
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        errors.push({ row: idx + 1, reason: 'Invalid date format (use YYYY-MM-DD)' });
-        return;
+      // Normalize date format
+      let normalizedDate = date;
+      try {
+        // Handle DD-MMM-YYYY format from export
+        if (/^\d{2}-\w{3}-\d{4}$/.test(date)) {
+          const [day, month, year] = date.split('-');
+          const monthNum = new Date(`${month} 1`).getMonth() + 1;
+          normalizedDate = `${year}-${String(monthNum).padStart(2, '0')}-${day}`;
+        }
+      } catch (e) {
+        // Keep original date if parsing fails
       }
 
       // Check if flight already exists in logbook
       const existsInLogbook = Object.values(monthData).some(monthRows =>
         monthRows.some(r =>
-          r.date === date && r.departure === departure && r.arrival === arrival
+          r.date === normalizedDate && r.departure === departure && r.arrival === arrival
         )
       );
 
       if (existsInLogbook) {
         duplicateCount++;
-        return; // Skip, don't add to validRows
+        return;
       }
 
-      validRows.push(row);
+      // Build complete row with all fields using headerMap
+      const newRow = {};
+      for (const [fieldName, headerName] of Object.entries(headerMap)) {
+        newRow[fieldName] = row[headerName]?.toString() || "";
+      }
+      newRow.date = normalizedDate;
+
+      validRows.push(newRow);
     });
 
-    return { validRows, errors, existing: duplicateCount, duplicateCount };
+    return { validRows, errors, duplicateCount };
   };
 
   const handleImport = () => {
@@ -672,31 +510,6 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                 />
               </div>
 
-              <div className="elb-form-field">
-                <label className="elb-form-label">FORMAT</label>
-                <div className="elb-format-options">
-                  <label className="elb-radio-option">
-                    <input
-                      type="radio"
-                      name="format"
-                      value="excel"
-                      checked={format === "excel"}
-                      onChange={e => setFormat(e.target.value)}
-                    />
-                    EXCEL
-                  </label>
-                  <label className="elb-radio-option">
-                    <input
-                      type="radio"
-                      name="format"
-                      value="pdf"
-                      checked={format === "pdf"}
-                      onChange={e => setFormat(e.target.value)}
-                    />
-                    PDF
-                  </label>
-                </div>
-              </div>
 
               {exportStatus?.success && (
                 <div className="elb-status-success">
@@ -716,11 +529,11 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                 <label className="elb-form-label">SELECT FILE</label>
                 <input
                   type="file"
-                  accept=".xlsx,.pdf"
+                  accept=".xlsx"
                   className="elb-form-input"
                   onChange={handleFileSelect}
                 />
-                <p className="elb-help-text">.xlsx or .pdf files only</p>
+                <p className="elb-help-text">.xlsx files only</p>
               </div>
 
               {file && (
@@ -764,6 +577,12 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
               {importStatus?.error && (
                 <div className="elb-status-error">
                   ✗ {importStatus.error}
+                </div>
+              )}
+
+              {importStatus?.warning && (
+                <div className="elb-status-warning">
+                  ⚠ {importStatus.warning}
                 </div>
               )}
 
@@ -912,6 +731,10 @@ const exportImportCss = `
   .elb-status-error{
     padding:10px;background:rgba(239,68,68,0.1);border:1px solid #ef4444;border-radius:2px;
     margin-bottom:12px;color:#ef4444;font-size:0.9em;font-weight:600;
+  }
+  .elb-status-warning{
+    padding:10px;background:rgba(245,197,66,0.1);border:1px solid #f5c542;border-radius:2px;
+    margin-bottom:12px;color:#f5c542;font-size:0.9em;font-weight:600;
   }
 
   .elb-import-actions{display:flex;gap:8px;}
