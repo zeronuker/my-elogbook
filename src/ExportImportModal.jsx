@@ -60,14 +60,10 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   const getRowsInDateRange = () => {
     if (!dateFrom || !dateTo) return [];
 
-    // Parse dates consistently
+    // Parse dates in YYYY-MM-DD format
     const fromDate = new Date(dateFrom + 'T00:00:00Z');
     const toDate = new Date(dateTo + 'T23:59:59Z');
     const rows = [];
-
-    console.log('monthData keys:', Object.keys(monthData));
-    console.log('dateFrom:', dateFrom, '→', fromDate);
-    console.log('dateTo:', dateTo, '→', toDate);
 
     Object.entries(monthData).forEach(([key, monthRows]) => {
       // key format: "0-2025" (monthIndex-year)
@@ -84,15 +80,12 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
         const fullDateStr = `${year}-${month}-${day}`;
         const rowDate = new Date(fullDateStr + 'T00:00:00Z');
 
-        console.log(`Row date: ${fullDateStr} (${rowDate.toISOString()}), in range: ${rowDate >= fromDate && rowDate <= toDate}`);
-
         if (rowDate >= fromDate && rowDate <= toDate) {
           rows.push(row);
         }
       });
     });
 
-    console.log('Found rows:', rows.length);
     return rows;
   };
 
@@ -502,20 +495,22 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
           {tab === "export" && (
             <div>
               <div className="elb-form-field">
-                <label className="elb-form-label">FROM</label>
+                <label className="elb-form-label">FROM (YYYY-MM-DD)</label>
                 <input
-                  type="date"
+                  type="text"
                   className="elb-form-input"
+                  placeholder="2025-01-01"
                   value={dateFrom}
                   onChange={e => setDateFrom(e.target.value)}
                 />
               </div>
 
               <div className="elb-form-field">
-                <label className="elb-form-label">TO</label>
+                <label className="elb-form-label">TO (YYYY-MM-DD)</label>
                 <input
-                  type="date"
+                  type="text"
                   className="elb-form-input"
+                  placeholder="2026-04-30"
                   value={dateTo}
                   onChange={e => setDateTo(e.target.value)}
                 />
