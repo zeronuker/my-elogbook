@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Badge Size Comparison</title>
+<style>
+  :root {
+    --bg:#0a0d12;--surface:#0d1520;
+    --border:#1e3a5f;--accent:#4fc3f7;--green:#22c55e;
+    --text:#ffffff;--muted:#b8d6e5;
+    --mono:'Courier New',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);padding:40px 20px;}
+
+  .container{max-width:800px;margin:0 auto;}
+  .comparison{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:50px;}
+  .section{padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:6px;}
+  .label{font-size:11px;color:var(--muted);letter-spacing:0.1em;margin-bottom:20px;font-weight:700;}
+
+  .subtitle{font-size:14px;color:var(--muted);letter-spacing:0.05em;line-height:1.65;margin-bottom:18px;}
+
+  .badges{display:flex;justify-content:center;gap:6px;margin-bottom:22px;flex-wrap:wrap;}
+  .badge{letter-spacing:0.1em;padding:5px 11px;border-radius:2px;font-weight:600;}
+  .bb{background:rgba(79,195,247,0.1);border:1px solid rgba(79,195,247,0.3);color:var(--accent);}
+  .bg{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:var(--green);}
+
+  .current{font-size:9px;}
+  .proposed{font-size:12px;}
+
+  .title{font-size:14px;color:var(--text);margin-bottom:8px;font-weight:700;}
+
+  .comparison-note{text-align:center;padding:12px;background:rgba(79,195,247,0.1);border:1px solid rgba(79,195,247,0.3);border-radius:3px;font-size:11px;color:var(--muted);margin-top:20px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1 style="font-size:18px;margin-bottom:30px;letter-spacing:0.1em;">BADGE SIZE COMPARISON</h1>
+
+  <!-- LANDING PAGE -->
+  <div style="margin-bottom:40px;">
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:20px;letter-spacing:0.08em;">LANDING PAGE</div>
+
+    <div class="comparison">
+      <div class="section">
+        <div class="label">CURRENT (9px) — TOO SMALL</div>
+        <div class="subtitle">Your CAAM-compliant digital pilot logbook.<br/>Accessible anywhere. Secure. Always in sync.</div>
+        <div class="badges">
+          <span class="badge bb current">✓ CAD 1901</span>
+          <span class="badge bb current">✓ MCAR 2016 Part 69 & Part 74</span>
+          <span class="badge bg current">✓ FREE</span>
+          <span class="badge bg current">✓ CLOUD SYNC</span>
+        </div>
+        <div class="comparison-note">Hard to read, minimal visual weight</div>
+      </div>
+
+      <div class="section">
+        <div class="label">PROPOSED (12px) — READABLE</div>
+        <div class="subtitle">Your CAAM-compliant digital pilot logbook.<br/>Accessible anywhere. Secure. Always in sync.</div>
+        <div class="badges">
+          <span class="badge bb proposed">✓ CAD 1901</span>
+          <span class="badge bb proposed">✓ MCAR 2016 Part 69 & Part 74</span>
+          <span class="badge bg proposed">✓ FREE</span>
+          <span class="badge bg proposed">✓ CLOUD SYNC</span>
+        </div>
+        <div class="comparison-note">Clear & readable, still subordinate to main text (14px)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DONE SCREEN -->
+  <div>
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:20px;letter-spacing:0.08em;">DONE SCREEN</div>
+
+    <div class="comparison">
+      <div class="section">
+        <div class="label">CURRENT (9px) — TOO SMALL</div>
+        <div style="font-size:14px;color:var(--muted);letter-spacing:0.06em;line-height:1.7;margin-bottom:22px;">Your logbook is set up and ready.<br/>Start logging your first flight now.</div>
+        <div class="badges">
+          <span class="badge bg current">✓ ACCOUNT CREATED</span>
+          <span class="badge bb current">✓ CLOUD SYNC ON</span>
+          <span class="badge bb current">✓ DATA SECURED</span>
+        </div>
+        <div class="comparison-note">Achievements feel insignificant</div>
+      </div>
+
+      <div class="section">
+        <div class="label">PROPOSED (12px) — READABLE</div>
+        <div style="font-size:14px;color:var(--muted);letter-spacing:0.06em;line-height:1.7;margin-bottom:22px;">Your logbook is set up and ready.<br/>Start logging your first flight now.</div>
+        <div class="badges">
+          <span class="badge bg proposed">✓ ACCOUNT CREATED</span>
+          <span class="badge bb proposed">✓ CLOUD SYNC ON</span>
+          <span class="badge bb proposed">✓ DATA SECURED</span>
+        </div>
+        <div class="comparison-note">Achievements stand out & feel significant</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:40px;padding:16px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:4px;font-size:12px;color:var(--green);">
+    ✓ Both badge sets increase from 9px → 12px<br/>
+    ✓ Still smaller than main text (14px subtitle)<br/>
+    ✓ Improves readability without breaking hierarchy
+  </div>
+</div>
+
+</body>
+</html>
