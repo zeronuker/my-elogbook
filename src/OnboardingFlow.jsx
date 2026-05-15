@@ -135,10 +135,14 @@ const ScreenSignUp2 = memo(({ formData, updateFormData, isLoading, goTo }) => {
             </select>
           </div>
           <div className="onb-field">
+            <label>LICENCE NUMBER (OPTIONAL)</label>
+            <input type="text" autoComplete="off" placeholder="e.g. FCB-1234567" value={formData.licenseNumber} onChange={(e) => updateFormData('licenseNumber', e.target.value)} disabled={isLoading} />
+          </div>
+          <div className="onb-field">
             <label>ORGANIZATION (OPTIONAL)</label>
             <input type="text" autoComplete="off" placeholder="e.g. MALAYSIA AIRLINES" value={formData.organization} onChange={(e) => updateFormData('organization', e.target.value)} disabled={isLoading} />
           </div>
-          <div className="onb-hint">💡 Both fields optional. You can skip and add later.</div>
+          <div className="onb-hint">💡 All fields optional. You can update anytime in Settings.</div>
           <button className="onb-btn onb-btn-p" onClick={() => goTo('done')} disabled={isLoading}>
             CONTINUE →
           </button>
@@ -157,7 +161,8 @@ function OnboardingFlow({
   onOnboardingComplete,
   signupError,
   isLoading,
-  showLogoutConfirm
+  showLogoutConfirm,
+  onClearError
 }) {
   const [authMode, setAuthMode] = useState('landing');
   const [formData, setFormData] = useState({
@@ -166,6 +171,7 @@ function OnboardingFlow({
     confirmPassword: '',
     fullName: '',
     licenseType: 'ATPL(A)',
+    licenseNumber: '',
     organization: ''
   });
 
@@ -233,6 +239,8 @@ function OnboardingFlow({
 
   const goTo = (mode) => {
     setAuthMode(mode);
+    // BUG 7 FIX: Clear error messages when navigating between screens
+    if (onClearError) onClearError();
   };
 
   // CSS
@@ -326,14 +334,15 @@ function OnboardingFlow({
     .onb-cbody { padding: 26px 30px; }
 
     .onb-slbl {
-      font-size: 11px;
+      font-size: 13px;
       letter-spacing: 0.22em;
       color: var(--muted);
       margin-bottom: 9px;
+      font-weight: 600;
     }
 
     .onb-stitle {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: 700;
       color: var(--text);
       letter-spacing: 0.06em;
@@ -342,7 +351,7 @@ function OnboardingFlow({
     }
 
     .onb-ssub {
-      font-size: 12px;
+      font-size: 14px;
       color: var(--muted);
       letter-spacing: 0.05em;
       line-height: 1.65;
@@ -350,15 +359,16 @@ function OnboardingFlow({
     }
 
     .onb-field {
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .onb-field label {
       display: block;
-      font-size: 11px;
+      font-size: 13px;
       letter-spacing: 0.15em;
       color: var(--muted);
-      margin-bottom: 5px;
+      margin-bottom: 6px;
+      font-weight: 600;
     }
 
     .onb-field input,
@@ -369,8 +379,8 @@ function OnboardingFlow({
       border-radius: 3px;
       color: var(--text);
       font-family: var(--mono);
-      font-size: 14px;
-      padding: 10px 12px;
+      font-size: 16px;
+      padding: 12px 14px;
       outline: none;
       transition: border-color 0.15s;
       letter-spacing: 0.05em;
@@ -393,14 +403,15 @@ function OnboardingFlow({
     .onb-btn {
       width: 100%;
       font-family: var(--mono);
-      font-size: 13px;
+      font-size: 15px;
       letter-spacing: 0.18em;
-      padding: 13px;
+      padding: 14px;
       cursor: pointer;
       border-radius: 3px;
       transition: all 0.15s;
-      margin-top: 8px;
+      margin-top: 10px;
       border: none;
+      font-weight: 600;
     }
 
     .onb-btn-p {
@@ -494,7 +505,7 @@ function OnboardingFlow({
     }
 
     .onb-land-title {
-      font-size: 32px;
+      font-size: 36px;
       font-weight: 700;
       color: var(--text);
       letter-spacing: 0.2em;
@@ -502,14 +513,15 @@ function OnboardingFlow({
     }
 
     .onb-land-ver {
-      font-size: 11px;
+      font-size: 13px;
       color: var(--muted);
       letter-spacing: 0.22em;
       margin-bottom: 12px;
+      font-weight: 600;
     }
 
     .onb-land-tag {
-      font-size: 13px;
+      font-size: 15px;
       color: var(--muted);
       letter-spacing: 0.08em;
       line-height: 1.75;
@@ -564,9 +576,9 @@ function OnboardingFlow({
     .onb-lbtn.signup { border-color: var(--accent); background: rgba(79,195,247,0.08); }
     .onb-lbtn.signup:hover { background: rgba(79,195,247,0.15); border-color: var(--accent); }
 
-    .onb-lbtn-icon { font-size: 28px; margin-bottom: 9px; }
-    .onb-lbtn-title { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--text); margin-bottom: 4px; }
-    .onb-lbtn-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+    .onb-lbtn-icon { font-size: 32px; margin-bottom: 12px; }
+    .onb-lbtn-title { font-size: 15px; font-weight: 700; letter-spacing: 0.1em; color: var(--text); margin-bottom: 6px; }
+    .onb-lbtn-sub { font-size: 13px; color: var(--muted); letter-spacing: 0.04em; }
 
     .onb-land-legal {
       font-size: 11px;
@@ -576,10 +588,10 @@ function OnboardingFlow({
     }
 
     .onb-hint {
-      font-size: 10px;
+      font-size: 12px;
       color: var(--muted);
       letter-spacing: 0.08em;
-      margin-top: 8px;
+      margin-top: 10px;
       font-style: italic;
     }
 
@@ -735,11 +747,11 @@ function OnboardingFlow({
     <div className="onb-land">
       <div className="onb-land-logo">✈</div>
       <div className="onb-land-title">CLAUDEBORNE</div>
-      <div className="onb-land-ver">eLOGBOOK V5.1 · CAAM / MCAR 2016</div>
+      <div className="onb-land-ver">eLOGBOOK V5.5 · CAAM / MCAR 2016</div>
       <div className="onb-land-tag">Your CAAM-compliant digital pilot logbook.<br/>Accessible anywhere. Secure. Always in sync.</div>
       <div className="onb-badges">
         <span className="onb-badge onb-badge-blue">✓ CAD 1901</span>
-        <span className="onb-badge onb-badge-blue">✓ MCAR 2016 PART 7 & 8</span>
+        <span className="onb-badge onb-badge-blue">✓ MCAR 2016 Part 69 & Part 74</span>
         <span className="onb-badge onb-badge-green">✓ FREE</span>
         <span className="onb-badge onb-badge-green">✓ CLOUD SYNC</span>
       </div>
@@ -857,6 +869,7 @@ function OnboardingFlow({
     const handleOpenLogbook = async () => {
       await onOnboardingComplete({
         licenceType: formData.licenseType,
+        licenceNumber: formData.licenseNumber,
         organization: formData.organization
       })
     }

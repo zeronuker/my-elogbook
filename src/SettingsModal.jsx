@@ -124,7 +124,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
         {/* ── HEADER ── */}
         <div className="elb-modal-header">
           <div>
-            <div className="elb-modal-label">eLOGBOOK V5.4 · CONFIGURATION</div>
+            <div className="elb-modal-label">eLOGBOOK V5.5 · CONFIGURATION</div>
             <div className="elb-modal-title">⚙ SETTINGS</div>
           </div>
           <button className="elb-modal-close" onClick={onClose} title="Close">✕</button>
@@ -602,8 +602,27 @@ function MiscTab({ onDeleteAccount }) {
 
           <div className="elb-changelog-entry">
             <div className="elb-changelog-ver">
-              <span className="elb-changelog-tag">V5.4 <span className="elb-tag elb-tag-new">CURRENT</span></span>
+              <span className="elb-changelog-tag">V5.5 <span className="elb-tag elb-tag-new">CURRENT</span></span>
               <span className="elb-changelog-date">15 MAY 2026</span>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Onboarding &amp; Auth</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Navigation after signup — &quot;Open Logbook&quot; button now works without refresh</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Google login navigation — auto-loads logbook without refresh</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Profile data persistence — signup details now appear in Settings</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Error messages — now clear when switching between login/signup screens</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> License number field in signup (Step 2)</li>
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Increased text sizes for better visibility on all devices</li>
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Updated compliance badge: MCAR 2016 Part 69 &amp; Part 74</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="elb-changelog-entry">
+            <div className="elb-changelog-ver">
+              <span className="elb-changelog-tag">V5.4</span>
+              <span className="elb-changelog-date">10 MAY 2026</span>
             </div>
             <div className="elb-changelog-section">
               <div className="elb-changelog-subsection">Export/Import</div>
