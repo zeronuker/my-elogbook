@@ -125,8 +125,27 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     }
   };
 
+  const dateToExcelSerial = (dateStr) => {
+    if (!dateStr || !dateStr.includes('/')) return null;
+    const [d, m, y] = dateStr.split('/');
+    const date = new Date(`${y}-${m}-${d}`);
+    const epoch = new Date(1900, 0, 1);
+    const diff = date - epoch;
+    return Math.floor(diff / (24 * 60 * 60 * 1000)) + 2;
+  };
+
+  const timeToDecimal = (timeStr) => {
+    if (!timeStr || !timeStr.includes(':')) return null;
+    const [h, m] = timeStr.split(':').map(Number);
+    return (h + m / 60) / 24;
+  };
+
   const exportToExcel = () => {
-    const rows = getRowsInDateRange().sort((a, b) => new Date(a.date) - new Date(b.date));
+    const rows = getRowsInDateRange().sort((a, b) => {
+      const aDate = a.date ? new Date(a.date.split('/').reverse().join('-')) : 0;
+      const bDate = b.date ? new Date(b.date.split('/').reverse().join('-')) : 0;
+      return aDate - bDate;
+    });
     if (rows.length === 0) {
       alert("No flights found in selected date range");
       return;
@@ -143,30 +162,30 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       ["License Type", settings?.licenceType || ""],
       ["Airline", settings?.airline || ""],
       ["Home Base", settings?.homeBase || ""],
-      ["Report Period", `${formatDateForExcel(dateFrom)} to ${formatDateForExcel(dateTo)}`],
+      ["Report Period", `${dateFrom.split('-').reverse().join('-')} to ${dateTo.split('-').reverse().join('-')}`],
     ];
     const wsProfile = XLSX.utils.aoa_to_sheet(profileData);
     wsProfile['!cols'] = [{ wch: 20 }, { wch: 40 }];
     XLSX.utils.book_append_sheet(wb, wsProfile, "Profile");
 
-    // SHEET 2: CARRY FORWARD HOURS
-    const cf = settings?.carryForward?.[0] || {};
+    // SHEET 2: CARRY FORWARD BY AIRCRAFT TYPE
+    const cfByType = {};
+    (settings?.carryForward || []).forEach(cf => {
+      if (cf.type) cfByType[cf.type] = cf;
+    });
     const cfData = [
       ["CARRY FORWARD HOURS"],
       [],
-      ["Category", "Hours"],
-      ["Day P1", cf.dayP1 || "0:00"],
-      ["Day P1 U/S", cf.dayP1US || "0:00"],
-      ["Day P2", cf.dayP2 || "0:00"],
-      ["Night P1", cf.nightP1 || "0:00"],
-      ["Night P1 U/S", cf.nightP1US || "0:00"],
-      ["Night P2", cf.nightP2 || "0:00"],
+      ["Aircraft Type", "Day P1", "Day P1 U/S", "Day P2", "Night P1", "Night P1 U/S", "Night P2"],
     ];
+    Object.entries(cfByType).forEach(([type, cf]) => {
+      cfData.push([type, cf.dayP1 || "0:00", cf.dayP1US || "0:00", cf.dayP2 || "0:00", cf.nightP1 || "0:00", cf.nightP1US || "0:00", cf.nightP2 || "0:00"]);
+    });
     const wsCF = XLSX.utils.aoa_to_sheet(cfData);
-    wsCF['!cols'] = [{ wch: 20 }, { wch: 15 }];
+    wsCF['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
     XLSX.utils.book_append_sheet(wb, wsCF, "Carry Forward");
 
-    // SHEET 3: FLIGHT DETAILS (sorted by date, all 20 fields)
+    // SHEET 3: FLIGHT DETAILS with proper date/time formats
     const flightHeaders = COLUMN_ORDER.map(col => {
       const headerMap = {
         date: "DATE", type: "TYPE", markings: "MARKINGS", captain: "CAPTAIN",
@@ -180,21 +199,36 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     });
 
     const flightData = rows.map(row => COLUMN_ORDER.map(col => {
-      if (col === 'date') return formatDateForExcel(row.date);
+      if (col === 'date') {
+        const serial = dateToExcelSerial(row.date);
+        return serial;
+      }
+      if (['std', 'sta', 'dayP1', 'dayP1US', 'dayP2', 'nightP1', 'nightP1US', 'nightP2', 'total'].includes(col)) {
+        const decimal = timeToDecimal(row[col]);
+        return decimal;
+      }
       return row[col] || "";
     }));
 
     const wsFlights = XLSX.utils.aoa_to_sheet([flightHeaders, ...flightData]);
-    const colWidths = [14, 10, 12, 12, 6, 8, 8, 11, 11, 8, 8, 10, 12, 10, 10, 12, 10, 10, 10, 10];
-    wsFlights['!cols'] = colWidths.map(wch => ({ wch }));
+    wsFlights['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 6 }, { wch: 8 }, { wch: 8 }, { wch: 11 }, { wch: 11 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }];
+
+    // Set date/time formats
+    for (let i = 2; i <= flightData.length + 1; i++) {
+      wsFlights[`A${i}`].z = 'dd-mm-yyyy';
+      ['J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q'].forEach(col => {
+        if (wsFlights[`${col}${i}`]) wsFlights[`${col}${i}`].z = 'hh:mm';
+      });
+    }
+
     XLSX.utils.book_append_sheet(wb, wsFlights, "Flights");
 
     // SHEET 4: MONTHLY SUMMARY
     const monthlySummary = {};
     rows.forEach(row => {
-      if (!row.date) return;
-      const date = new Date(row.date + 'T00:00:00Z');
-      const monthKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+      if (!row.date || !row.date.includes('/')) return;
+      const [d, m, y] = row.date.split('/');
+      const monthKey = `${y}-${m}`;
       if (!monthlySummary[monthKey]) {
         monthlySummary[monthKey] = { dayP1: 0, dayP1US: 0, dayP2: 0, nightP1: 0, nightP1US: 0, nightP2: 0, flights: 0, total: 0 };
       }
@@ -213,31 +247,50 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([month, data]) => [
         month,
-        minutesToTime(data.dayP1),
-        minutesToTime(data.dayP1US),
-        minutesToTime(data.dayP2),
-        minutesToTime(data.nightP1),
-        minutesToTime(data.nightP1US),
-        minutesToTime(data.nightP2),
+        timeToDecimal(minutesToTime(data.dayP1)),
+        timeToDecimal(minutesToTime(data.dayP1US)),
+        timeToDecimal(minutesToTime(data.dayP2)),
+        timeToDecimal(minutesToTime(data.nightP1)),
+        timeToDecimal(minutesToTime(data.nightP1US)),
+        timeToDecimal(minutesToTime(data.nightP2)),
         data.flights,
-        minutesToTime(data.total),
+        timeToDecimal(minutesToTime(data.total)),
       ]);
 
+    const cfTotals = { dayP1: 0, dayP1US: 0, dayP2: 0, nightP1: 0, nightP1US: 0, nightP2: 0 };
+    Object.values(cfByType).forEach(cf => {
+      cfTotals.dayP1 += parseTimeToMinutes(cf.dayP1) || 0;
+      cfTotals.dayP1US += parseTimeToMinutes(cf.dayP1US) || 0;
+      cfTotals.dayP2 += parseTimeToMinutes(cf.dayP2) || 0;
+      cfTotals.nightP1 += parseTimeToMinutes(cf.nightP1) || 0;
+      cfTotals.nightP1US += parseTimeToMinutes(cf.nightP1US) || 0;
+      cfTotals.nightP2 += parseTimeToMinutes(cf.nightP2) || 0;
+    });
+
+    const summaryHours = summaryData.slice(0, -1).map(row => [parseTimeToMinutes(minutesToTime(Math.round(row[1] * 24 * 60))), parseTimeToMinutes(minutesToTime(Math.round(row[2] * 24 * 60))), parseTimeToMinutes(minutesToTime(Math.round(row[3] * 24 * 60))), parseTimeToMinutes(minutesToTime(Math.round(row[4] * 24 * 60))), parseTimeToMinutes(minutesToTime(Math.round(row[5] * 24 * 60))), parseTimeToMinutes(minutesToTime(Math.round(row[6] * 24 * 60))), row[7], parseTimeToMinutes(minutesToTime(Math.round(row[8] * 24 * 60)))]);
+
     const grandTotal = {
-      dayP1: parseTimeToMinutes(cf.dayP1) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[1]), 0),
-      dayP1US: parseTimeToMinutes(cf.dayP1US) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[2]), 0),
-      dayP2: parseTimeToMinutes(cf.dayP2) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[3]), 0),
-      nightP1: parseTimeToMinutes(cf.nightP1) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[4]), 0),
-      nightP1US: parseTimeToMinutes(cf.nightP1US) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[5]), 0),
-      nightP2: parseTimeToMinutes(cf.nightP2) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[6]), 0),
-      flights: summaryData.reduce((sum, row) => sum + row[7], 0),
-      total: parseTimeToMinutes(cf.dayP1) + parseTimeToMinutes(cf.dayP1US) + parseTimeToMinutes(cf.dayP2) + parseTimeToMinutes(cf.nightP1) + parseTimeToMinutes(cf.nightP1US) + parseTimeToMinutes(cf.nightP2) + summaryData.reduce((sum, row) => sum + parseTimeToMinutes(row[8]), 0),
+      dayP1: cfTotals.dayP1 + summaryHours.reduce((sum, row) => sum + row[0], 0),
+      dayP1US: cfTotals.dayP1US + summaryHours.reduce((sum, row) => sum + row[1], 0),
+      dayP2: cfTotals.dayP2 + summaryHours.reduce((sum, row) => sum + row[2], 0),
+      nightP1: cfTotals.nightP1 + summaryHours.reduce((sum, row) => sum + row[3], 0),
+      nightP1US: cfTotals.nightP1US + summaryHours.reduce((sum, row) => sum + row[4], 0),
+      nightP2: cfTotals.nightP2 + summaryHours.reduce((sum, row) => sum + row[5], 0),
+      flights: summaryHours.reduce((sum, row) => sum + row[6], 0),
+      total: cfTotals.dayP1 + cfTotals.dayP1US + cfTotals.dayP2 + cfTotals.nightP1 + cfTotals.nightP1US + cfTotals.nightP2 + summaryHours.reduce((sum, row) => sum + row[7], 0),
     };
 
-    summaryData.push(["GRAND TOTAL", minutesToTime(grandTotal.dayP1), minutesToTime(grandTotal.dayP1US), minutesToTime(grandTotal.dayP2), minutesToTime(grandTotal.nightP1), minutesToTime(grandTotal.nightP1US), minutesToTime(grandTotal.nightP2), grandTotal.flights, minutesToTime(grandTotal.total)]);
+    summaryData.push(["GRAND TOTAL", timeToDecimal(minutesToTime(grandTotal.dayP1)), timeToDecimal(minutesToTime(grandTotal.dayP1US)), timeToDecimal(minutesToTime(grandTotal.dayP2)), timeToDecimal(minutesToTime(grandTotal.nightP1)), timeToDecimal(minutesToTime(grandTotal.nightP1US)), timeToDecimal(minutesToTime(grandTotal.nightP2)), grandTotal.flights, timeToDecimal(minutesToTime(grandTotal.total))]);
 
     const wsSummary = XLSX.utils.aoa_to_sheet([summaryHeaders, ...summaryData]);
     wsSummary['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
+
+    for (let i = 2; i <= summaryData.length + 1; i++) {
+      ['B', 'C', 'D', 'E', 'F', 'G', 'I'].forEach(col => {
+        if (wsSummary[`${col}${i}`]) wsSummary[`${col}${i}`].z = 'hh:mm';
+      });
+    }
+
     XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
 
     const fileName = `ClaudeBorne_${dateFrom}_to_${dateTo}.xlsx`;
@@ -517,24 +570,36 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
           {tab === "export" && (
             <div>
               <div className="elb-form-field">
-                <label className="elb-form-label">FROM (YYYY-MM-DD)</label>
+                <label className="elb-form-label">FROM (DD-MM-YYYY)</label>
                 <input
                   type="text"
                   className="elb-form-input"
-                  placeholder="2025-01-01"
+                  placeholder="01-01-2025"
                   value={dateFrom}
-                  onChange={e => setDateFrom(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val && val.includes('-')) {
+                      const [d, m, y] = val.split('-');
+                      setDateFrom(`${y}-${m}-${d}`);
+                    }
+                  }}
                 />
               </div>
 
               <div className="elb-form-field">
-                <label className="elb-form-label">TO (YYYY-MM-DD)</label>
+                <label className="elb-form-label">TO (DD-MM-YYYY)</label>
                 <input
                   type="text"
                   className="elb-form-input"
-                  placeholder="2026-04-30"
-                  value={dateTo}
-                  onChange={e => setDateTo(e.target.value)}
+                  placeholder="30-04-2026"
+                  value={dateTo ? dateTo.split('-').reverse().join('-') : ''}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val && val.includes('-')) {
+                      const [d, m, y] = val.split('-');
+                      setDateTo(`${y}-${m}-${d}`);
+                    }
+                  }}
                 />
               </div>
 
