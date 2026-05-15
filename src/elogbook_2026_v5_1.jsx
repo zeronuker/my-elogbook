@@ -107,7 +107,7 @@ function parseHHMM(val) {
 }
 
 function toHHMM(mins) {
-  if (!mins) return "";
+  if (mins == null || isNaN(mins)) return "";
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
