@@ -37,19 +37,18 @@ function App() {
       prevUserRef.current = currentUser
       setUser(currentUser)
       setAuthLoading(false)
-
-      // Immediately show logbook for authenticated users (faster UX)
-      if (currentUser) {
-        setShowOnboarding(false)
-      }
+      // Profile check in separate effect will determine showOnboarding
     })
 
     return unsubscribe
   }, [])
 
-  // Check profile asynchronously after user is set (doesn't block UI)
+  // Check profile and set onboarding state (waits for profile before deciding)
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      setShowOnboarding(true) // No user, show onboarding
+      return
+    }
 
     const checkProfile = async () => {
       try {
@@ -59,8 +58,12 @@ function App() {
         if (profileSnap.exists()) {
           const profileData = profileSnap.data()
 
-          // Only show onboarding if user is truly new (no verified email AND not completed)
-          if (!profileData.emailVerified && !profileData.onboardingComplete) {
+          // If onboarding is complete, show logbook
+          if (profileData.onboardingComplete === true || profileData.emailVerified === true) {
+            console.log('Onboarding complete, showing logbook')
+            setShowOnboarding(false)
+          } else {
+            // New user, show onboarding
             console.log('New user detected, showing onboarding')
             setShowOnboarding(true)
           }
@@ -80,6 +83,7 @@ function App() {
         }
       } catch (err) {
         console.error('Error checking profile:', err)
+        setShowOnboarding(true) // Fallback to onboarding on error
       }
     }
 
