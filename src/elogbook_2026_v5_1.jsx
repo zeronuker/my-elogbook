@@ -107,7 +107,7 @@ function parseHHMM(val) {
 }
 
 function toHHMM(mins) {
-  if (mins == null || isNaN(mins)) return "";
+  if (!mins && mins !== 0) return "";
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
@@ -1458,7 +1458,7 @@ export default function ELogbook2026({ onLogout }) {
                             }
                           }
                           else if (timeCols.includes(col.key)) {
-                            displayVal = toHHMM(parseHHMM(row[col.key])) || "";
+                            displayVal = row[col.key] ? toHHMM(parseHHMM(row[col.key])) : "";
                           }
                           else displayVal = row[col.key] || "";
 
