@@ -537,10 +537,11 @@ function OnboardingFlow({
     }
 
     .onb-badge {
-      font-size: 7px;
+      font-size: 13px;
       letter-spacing: 0.1em;
-      padding: 3px 9px;
+      padding: 5px 11px;
       border-radius: 2px;
+      font-weight: 700;
     }
 
     .onb-badge-blue {
