@@ -38,8 +38,21 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       setImportPreview(null);
       setImportStatus(null);
       setExportStatus(null);
+
+      // Debug: Log data structure
+      console.log('=== EXPORT MODAL OPENED ===');
+      console.log('monthData type:', typeof monthData);
+      console.log('monthData keys:', monthData ? Object.keys(monthData) : 'null');
+      if (monthData) {
+        const firstKey = Object.keys(monthData)[0];
+        console.log('First key:', firstKey);
+        console.log('First month data:', monthData[firstKey]);
+        if (monthData[firstKey] && monthData[firstKey].length > 0) {
+          console.log('First row sample:', monthData[firstKey][0]);
+        }
+      }
     }
-  }, [open]);
+  }, [open, monthData]);
 
   // ESC closes
   useEffect(() => {
