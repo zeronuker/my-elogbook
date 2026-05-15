@@ -592,7 +592,7 @@ function MiscTab({ onDeleteAccount }) {
                   href="mailto:zero.nuker@gmail.com?subject=eLOGBOOK%20Bug%20Report" />
         <MiscItem icon="📖" name="HOW TO GUIDE"
                   desc="Step-by-step instructions for using eLOGBOOK"
-                  href="#" />
+                  href="/guide.html" />
       </div>
 
       <div className="elb-form-section">
@@ -603,14 +603,17 @@ function MiscTab({ onDeleteAccount }) {
           <div className="elb-changelog-entry">
             <div className="elb-changelog-ver">
               <span className="elb-changelog-tag">V5.4 <span className="elb-tag elb-tag-new">CURRENT</span></span>
-              <span className="elb-changelog-date">14 MAY 2026</span>
+              <span className="elb-changelog-date">15 MAY 2026</span>
             </div>
             <div className="elb-changelog-section">
-              <div className="elb-changelog-subsection">Data Management</div>
+              <div className="elb-changelog-subsection">Export/Import</div>
               <ul className="elb-changelog-items">
-                <li><span className="elb-tag elb-tag-imp">IMP</span> PDF export now includes comprehensive logbook format with pilot profile, carry forward hours, and monthly organization</li>
-                <li><span className="elb-tag elb-tag-imp">IMP</span> Monthly subtotals and grand total calculations included in PDF for better financial tracking</li>
-                <li><span className="elb-tag elb-tag-imp">IMP</span> PDF export now EASA FCL.050 compliant with professional formatting and page break handling</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Intelligent Excel sheet &amp; column auto-detection for imports</li>
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Enhanced import validation with missing column warnings</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> NaN values in time columns (export field mapping)</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Date formatting in exports (DD-MMM-YYYY format)</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Missing fields in export (dayP1US, nightP1US, autoland)</li>
+                <li><span className="elb-tag elb-tag-dep">DEP</span> PDF export removed (Excel-only for now)</li>
               </ul>
             </div>
           </div>
