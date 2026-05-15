@@ -25,7 +25,7 @@ function App() {
 
   // Listen to auth state
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       console.log('Auth state changed, user:', currentUser?.email)
 
       // Detect logout: user was authenticated, now is null
@@ -38,44 +38,53 @@ function App() {
       setUser(currentUser)
       setAuthLoading(false)
 
+      // Immediately show logbook for authenticated users (faster UX)
       if (currentUser) {
-        // Check if profile exists and onboarding is complete
-        try {
-          const profileSnap = await getDoc(doc(db, 'users', currentUser.uid, 'profile', 'data'))
-          console.log('Profile check - exists:', profileSnap.exists(), 'onboardingComplete:', profileSnap.data()?.onboardingComplete)
-
-          if (profileSnap.exists()) {
-            const profileData = profileSnap.data()
-
-            // If profile exists and email is verified, assume onboarding is complete
-            // (handles existing users created before onboarding feature)
-            if (profileData.emailVerified && !profileData.onboardingComplete) {
-              console.log('Auto-completing onboarding for verified user')
-              await setDoc(
-                doc(db, 'users', currentUser.uid, 'profile', 'data'),
-                { onboardingComplete: true },
-                { merge: true }
-              )
-              setShowOnboarding(false)
-            } else {
-              // Check if onboarding is complete (BUG 1 & 6 FIX)
-              const isComplete = profileData.onboardingComplete === true || profileData.emailVerified === true
-              console.log('Onboarding complete:', isComplete, 'showOnboarding will be:', !isComplete)
-              setShowOnboarding(!isComplete)
-            }
-          } else {
-            console.log('No profile, setting showOnboarding to true')
-            setShowOnboarding(true)
-          }
-        } catch (err) {
-          console.error('Error checking profile:', err)
-          setShowOnboarding(true)
-        }
+        setShowOnboarding(false)
       }
     })
 
     return unsubscribe
   }, [])
+
+  // Check profile asynchronously after user is set (doesn't block UI)
+  useEffect(() => {
+    if (!user) return
+
+    const checkProfile = async () => {
+      try {
+        const profileSnap = await getDoc(doc(db, 'users', user.uid, 'profile', 'data'))
+        console.log('Profile check - exists:', profileSnap.exists(), 'onboardingComplete:', profileSnap.data()?.onboardingComplete)
+
+        if (profileSnap.exists()) {
+          const profileData = profileSnap.data()
+
+          // Only show onboarding if user is truly new (no verified email AND not completed)
+          if (!profileData.emailVerified && !profileData.onboardingComplete) {
+            console.log('New user detected, showing onboarding')
+            setShowOnboarding(true)
+          }
+
+          // Auto-complete onboarding for old verified users
+          if (profileData.emailVerified && !profileData.onboardingComplete) {
+            console.log('Auto-completing onboarding for verified user')
+            await setDoc(
+              doc(db, 'users', user.uid, 'profile', 'data'),
+              { onboardingComplete: true },
+              { merge: true }
+            )
+          }
+        } else {
+          console.log('No profile found, showing onboarding')
+          setShowOnboarding(true)
+        }
+      } catch (err) {
+        console.error('Error checking profile:', err)
+      }
+    }
+
+    checkProfile()
+  }, [user])
 
   // Signup with email/password
   const handleSignup = async (email, password, fullName) => {
