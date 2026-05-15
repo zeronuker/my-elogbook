@@ -133,7 +133,30 @@ function App() {
     setSignupError(null)
 
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const loginUser = userCredential.user
+      console.log('Email/password login successful, user:', loginUser.email)
+
+      // Check if profile exists and onboarding is complete
+      const profileSnap = await getDoc(doc(db, 'users', loginUser.uid, 'profile', 'data'))
+      console.log('Profile exists:', profileSnap.exists())
+
+      if (profileSnap.exists()) {
+        const profileData = profileSnap.data()
+        const isComplete = profileData.onboardingComplete || profileData.emailVerified
+        console.log('Existing user, onboarding complete:', isComplete)
+
+        setUser(loginUser)
+        if (isComplete) {
+          // Skip onboarding for existing users
+          setShowOnboarding(false)
+        }
+      } else {
+        console.log('No profile found, staying on onboarding')
+        setUser(loginUser)
+        setShowOnboarding(true)
+      }
+
       setIsSigningUp(false)
       return { success: true }
     } catch (error) {
