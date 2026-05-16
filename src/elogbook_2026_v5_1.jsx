@@ -648,11 +648,11 @@ export default function ELogbook2026({ onLogout }) {
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" />
       <style>{themeCss}</style>
       <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-txt, #c8d6e5)" }}>
-        <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-bdr, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
+        <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-border, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
           <div style={{ fontSize: 38, marginBottom: 8 }}>✈</div>
           <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V5.5</div>
-          <div style={{ fontSize: 12, color: "#5a7a9a", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
-          <div style={{ fontSize: 11, color: "#3a5a7a", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
+          <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
+          <div style={{ fontSize: 11, color: "var(--elb-txt-muted, #3a5a7a)", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
           <button
             onClick={handleSignIn}
             style={{
@@ -675,7 +675,7 @@ export default function ELogbook2026({ onLogout }) {
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.5 26.8 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.6l6.2 5.2C36.9 40.2 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
             SIGN IN WITH GOOGLE
           </button>
-          <div style={{ fontSize: 11, color: "#2a4a6a", marginTop: 20 }}>
+          <div style={{ fontSize: 11, color: "var(--elb-txt-muted, #2a4a6a)", marginTop: 20 }}>
             Your logbook data is private and linked to your Google account
           </div>
         </div>
@@ -1004,7 +1004,7 @@ export default function ELogbook2026({ onLogout }) {
     return (
       <div key={l.key} style={{
         background: "var(--elb-bg2, #0d1520)",
-        border: `1px solid #0f1e2d`,
+        border: `1px solid var(--elb-border2, #0f1e2d)`,
         borderLeft: `3px solid ${c}`,
         borderRadius: 4,
         padding: 12,
@@ -1013,7 +1013,7 @@ export default function ELogbook2026({ onLogout }) {
       }}>
         {/* Header row */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ fontSize: 11, letterSpacing: "0.08em", color: "#4a6a8a", lineHeight: 1.4 }}>{l.label}</div>
+          <div style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--elb-txt-muted, #4a6a8a)", lineHeight: 1.4 }}>{l.label}</div>
           <div style={{
             width: 7, height: 7, borderRadius: "50%", marginTop: 2, flexShrink: 0,
             background: c,
@@ -1026,19 +1026,19 @@ export default function ELogbook2026({ onLogout }) {
           <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1, color: c, fontFamily: "'Courier New',monospace" }}>
             {toHHMM(l.used) || "00:00"}
           </div>
-          <div style={{ fontSize: 15, color: "#4a6a8a" }}>&nbsp;/&nbsp;</div>
-          <div style={{ fontSize: 15, color: "#4a6a8a" }}>{toHHMM(l.max)}</div>
-          <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", marginLeft: 2 }}>HR</div>
+          <div style={{ fontSize: 15, color: "var(--elb-txt-muted, #4a6a8a)" }}>&nbsp;/&nbsp;</div>
+          <div style={{ fontSize: 15, color: "var(--elb-txt-muted, #4a6a8a)" }}>{toHHMM(l.max)}</div>
+          <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", marginLeft: 2 }}>HR</div>
         </div>
         {/* Progress bar */}
-        <div style={{ background: "var(--elb-bg3, #0a1018)", borderRadius: 2, height: 4, marginBottom: 8, overflow: "hidden", border: "1px solid #0f1e2d" }}>
+        <div style={{ background: "var(--elb-bg3, #0a1018)", borderRadius: 2, height: 4, marginBottom: 8, overflow: "hidden", border: "1px solid var(--elb-border2, #0f1e2d)" }}>
           <div style={{ height: "100%", borderRadius: 2, background: c, width: `${pct.toFixed(1)}%`, transition: "width 0.4s ease" }} />
         </div>
         {/* Footer */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontSize: 11, letterSpacing: "0.04em", color: c }}>{remStr}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a" }}>{l.rawPct.toFixed(1)}% USED</div>
+            <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)" }}>{l.rawPct.toFixed(1)}% USED</div>
             <button
               onClick={() => setActivePopup(l.popupId)}
               title="View regulatory reference"
@@ -1067,24 +1067,24 @@ export default function ELogbook2026({ onLogout }) {
   // ── Section header helper ──────────────────────────────────────────────────
   const SectionHeader = ({ icon, title, popupId }) => (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, marginTop: 20 }}>
-      <div style={{ fontSize: "var(--elb-th-sz)", letterSpacing: "0.18em", color: "#4fc3f7", whiteSpace: "nowrap" }}>
+      <div style={{ fontSize: "var(--elb-th-sz)", letterSpacing: "0.18em", color: "var(--elb-acc, #4fc3f7)", whiteSpace: "nowrap" }}>
         {icon} {title}
       </div>
-      <div style={{ flex: 1, height: 1, background: "#1a3050" }} />
+      <div style={{ flex: 1, height: 1, background: "var(--elb-border2, #1a3050)" }} />
       {popupId && (
         <button
           onClick={() => setActivePopup(popupId)}
           title="View regulatory reference"
           style={{
             width: 16, height: 16, borderRadius: "50%",
-            background: "transparent", border: "1px solid #1e3a55",
-            color: "#2d5070", fontFamily: "Georgia,serif",
+            background: "transparent", border: "1px solid var(--elb-border, #1e3a55)",
+            color: "var(--elb-txt-muted, #2d5070)", fontFamily: "Georgia,serif",
             fontStyle: "italic", fontWeight: 700, fontSize: 12,
             cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             padding: 0, lineHeight: 1, flexShrink: 0,
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#2d5070"; }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--elb-acc, #4fc3f7)"; e.currentTarget.style.color = "var(--elb-acc, #4fc3f7)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-border, #1e3a55)"; e.currentTarget.style.color = "var(--elb-txt-muted, #2d5070)"; }}
         >i</button>
       )}
     </div>
@@ -1128,18 +1128,18 @@ export default function ELogbook2026({ onLogout }) {
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
           <div style={{ flex: 1, textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-              <span style={{ fontSize: 22, color: "#4fc3f7" }}>✈</span>
-              <span style={{ fontSize: 13, letterSpacing: "0.25em", color: "#4fc3f7", textTransform: "uppercase" }}>
+              <span style={{ fontSize: 22, color: "var(--elb-acc, #4fc3f7)" }}>✈</span>
+              <span style={{ fontSize: 13, letterSpacing: "0.25em", color: "var(--elb-acc, #4fc3f7)", textTransform: "uppercase" }}>
                 eLOGBOOK V5.5
               </span>
             </div>
-            <div style={{ fontSize: 13, color: "#7ab8d4", marginBottom: 2 }}>
+            <div style={{ fontSize: 13, color: "var(--elb-txt-muted, #7ab8d4)", marginBottom: 2 }}>
               CAAM • MCAR 2016
             </div>
-            <div style={{ fontSize: 19, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.05em" }}>
+            <div style={{ fontSize: 19, fontWeight: 700, color: "var(--elb-txt, #e8f4fd)", letterSpacing: "0.05em" }}>
               {MONTHS[selectedMonth].toUpperCase()} {selectedYear} — FLIGHT RECORDS
             </div>
-            <div style={{ fontSize: 12, color: "#5a7a9a", marginTop: 3 }}>
+            <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", marginTop: 3 }}>
               Compliant with CAD 1901 • MCAR 2016 Part 69 & Part 74
             </div>
           </div>
@@ -1147,19 +1147,19 @@ export default function ELogbook2026({ onLogout }) {
           {/* Right side: user info + period selector */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {user.photoURL && <img src={user.photoURL} alt="avatar" style={{ width: 22, height: 22, borderRadius: "50%", border: "1px solid #1e3a5f" }} />}
+              {user.photoURL && <img src={user.photoURL} alt="avatar" style={{ width: 22, height: 22, borderRadius: "50%", border: "1px solid var(--elb-border, #1e3a5f)" }} />}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
-                <span style={{ fontSize: 11, color: "#c8d6e5", letterSpacing: "0.1em", fontWeight: 700 }}>
+                <span style={{ fontSize: 11, color: "var(--elb-txt, #c8d6e5)", letterSpacing: "0.1em", fontWeight: 700 }}>
                   {settings.fullName || user.displayName || user.email}
                 </span>
                 {(settings.airline || settings.licenceNumber) && (
-                  <span style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.08em" }}>
+                  <span style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.08em" }}>
                     {[settings.airline, settings.licenceNumber].filter(Boolean).join(" · ")}
                   </span>
                 )}
               </div>
             </div>
-            <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", letterSpacing: "0.15em" }}>SELECT PERIOD</div>
+            <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.15em" }}>SELECT PERIOD</div>
             <div style={{ display: "flex", gap: 8 }}>
               <select
                 value={selectedMonth}
@@ -1185,7 +1185,7 @@ export default function ELogbook2026({ onLogout }) {
                 <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
               )}
               {refreshStatus === "refreshed" && (
-                <span style={{ fontSize: 11, color: "#4fc77a", letterSpacing: "0.1em", fontWeight: 700 }}>✓ REFRESHED</span>
+                <span style={{ fontSize: 11, color: "#22c55e", letterSpacing: "0.1em", fontWeight: 700 }}>✓ REFRESHED</span>
               )}
               {/* Refresh */}
               <button
@@ -1239,11 +1239,11 @@ export default function ELogbook2026({ onLogout }) {
                 title="Sign out"
                 style={{
                   ...iconBtnStyle,
-                  color: "#3a6a8a",
-                  borderColor: "#1e3a5f",
+                  color: "var(--elb-txt-muted, #3a6a8a)",
+                  borderColor: "var(--elb-border, #1e3a5f)",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a5f"; e.currentTarget.style.color = "#3a6a8a"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-border, #1e3a5f)"; e.currentTarget.style.color = "var(--elb-txt-muted, #3a6a8a)"; }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
@@ -1265,9 +1265,9 @@ export default function ELogbook2026({ onLogout }) {
                 background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
                 border: "none",
                 borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
-                borderLeft: "1px solid " + (activeTab === tab.id ? "var(--elb-bdr, #1e3a5f)" : "transparent"),
-                borderRight: "1px solid " + (activeTab === tab.id ? "var(--elb-bdr, #1e3a5f)" : "transparent"),
-                color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "#5a7a9a",
+                borderLeft: "1px solid " + (activeTab === tab.id ? "var(--elb-border, #1e3a5f)" : "transparent"),
+                borderRight: "1px solid " + (activeTab === tab.id ? "var(--elb-border, #1e3a5f)" : "transparent"),
+                color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #5a7a9a)",
                 padding: "7px 18px",
                 fontSize: 13,
                 letterSpacing: "0.12em",
@@ -1290,7 +1290,7 @@ export default function ELogbook2026({ onLogout }) {
                 </span>
               )}
               {saveStatus === "saved" && lastSaveTime && (
-                <span style={{ color: "#4fc77a", fontWeight: 700, fontStyle: "italic" }} className="save-status-text">
+                <span style={{ color: "#22c55e", fontWeight: 700, fontStyle: "italic" }} className="save-status-text">
                   ✓ {lastSaveTime}
                 </span>
               )}
@@ -1310,11 +1310,11 @@ export default function ELogbook2026({ onLogout }) {
               className="save-button"
               style={{
                 flexShrink: 0,
-                background: saveStatus === "error"  ? "linear-gradient(135deg, #3a0d0d, #2a0a0a)"
-                          : "linear-gradient(135deg, #0d2a3a, #0a1f30)",
-                border: `1px solid ${saveStatus === "error" ? "#f74f4f" : "#4fc3f7"}`,
+                background: saveStatus === "error"  ? "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08))"
+                          : "linear-gradient(135deg, var(--elb-bg2, #0d2a3a), #0a1f30)",
+                border: `1px solid ${saveStatus === "error" ? "#ef4444" : "var(--elb-acc, #4fc3f7)"}`,
                 borderRadius: 4,
-                color: saveStatus === "error" ? "#f74f4f" : "#4fc3f7",
+                color: saveStatus === "error" ? "#ef4444" : "var(--elb-acc, #4fc3f7)",
                 fontFamily: "'Courier New', monospace",
                 fontSize: 11,
                 letterSpacing: "0.15em",
@@ -1388,8 +1388,8 @@ export default function ELogbook2026({ onLogout }) {
                   <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
                   <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
                   <th rowSpan={2} style={thStyle}>TOTAL</th>
-                  <th rowSpan={2} style={{ ...thStyle, background: "#0a0d12", border: "none" }}></th>
-                  <th rowSpan={2} style={{ ...thStyle, background: "#0a0d12", border: "none", width: 28, minWidth: 28 }}></th>
+                  <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none" }}></th>
+                  <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
                 </tr>
                 <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                   <th style={thSubStyle}>TYPE</th>
@@ -1514,7 +1514,7 @@ export default function ELogbook2026({ onLogout }) {
                                   }}
                                 >
                                   {["","P1","P2","P1 U/S"].map(opt => (
-                                    <option key={opt} value={opt} style={{ background: "#0d1520", color: "#c8d6e5" }}>
+                                    <option key={opt} value={opt} style={{ background: "var(--elb-bg2, #0d1520)", color: "var(--elb-txt, #c8d6e5)" }}>
                                       {opt || "—"}
                                     </option>
                                   ))}
@@ -1601,7 +1601,7 @@ export default function ELogbook2026({ onLogout }) {
                         return cells;
                       })()}
                       {/* ── REMARKS BUTTON ── */}
-                      <td style={{ background: "#0a0d12", border: "none", borderRight: "none", textAlign: "center", padding: "3px 4px" }}>
+                      <td style={{ background: "var(--elb-bg, #0a0d12)", border: "none", borderRight: "none", textAlign: "center", padding: "3px 4px" }}>
                         {(() => {
                           const hasRemarks = row.remarks && row.remarks.trim().length > 0;
                           const hasAutoland = row.autoland;
@@ -1649,7 +1649,7 @@ export default function ELogbook2026({ onLogout }) {
                         })()}
                       </td>
                       {/* ── DELETE BUTTON ── */}
-                      <td style={{ background: "#0a0d12", border: "none", borderRight: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
+                      <td style={{ background: "var(--elb-bg, #0a0d12)", border: "none", borderRight: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
                         <button
                           onClick={() => deleteRow(rowIdx)}
                           title="Delete row"
@@ -1714,14 +1714,14 @@ export default function ELogbook2026({ onLogout }) {
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 800 }}>
                   <thead>
-                    <tr style={{ background: "#0b1320" }}>
+                    <tr style={{ background: "var(--elb-bg2, #0b1320)" }}>
                       <th rowSpan={2} style={{ ...thStyle, width: 80, minWidth: 80, maxWidth: 80 }}>MONTH</th>
                       <th rowSpan={2} style={{ ...thStyle, width: 55, minWidth: 55, maxWidth: 55 }}>SECTORS</th>
                       <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
                       <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
                       <th rowSpan={2} style={thStyle}>TOTAL</th>
                     </tr>
-                    <tr style={{ background: "#0b1320" }}>
+                    <tr style={{ background: "var(--elb-bg2, #0b1320)" }}>
                       <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
                       <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
                       <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>
@@ -1748,9 +1748,9 @@ export default function ELogbook2026({ onLogout }) {
                           key={i}
                           onClick={() => { setSelectedMonth(i); setActiveTab("logbook"); }}
                           style={{
-                            background: isSelected ? "rgba(79,195,247,0.08)" : i % 2 === 0 ? "#0d1520" : "#0a1018",
+                            background: isSelected ? "rgba(79,195,247,0.08)" : i % 2 === 0 ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)",
                             cursor: "pointer",
-                            borderLeft: isSelected ? "3px solid #4fc3f7" : "3px solid transparent",
+                            borderLeft: isSelected ? "3px solid var(--elb-acc, #4fc3f7)" : "3px solid transparent",
                           }}
                         >
                           <td style={{ ...tdStyle, width: 80, minWidth: 80, maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", color: isSelected ? "#4fc3f7" : "#9bbcd4", fontWeight: isSelected ? 700 : 400 }}>{m.toUpperCase()}</td>
@@ -1852,7 +1852,7 @@ export default function ELogbook2026({ onLogout }) {
                   onClick={() => setGrandTotalDate(new Date().toISOString().split("T")[0])}
                   style={{
                     background: "rgba(79,195,247,0.08)", border: "1px solid #1e3a5f",
-                    borderRadius: 3, color: "#4a6a8a",
+                    borderRadius: 3, color: "var(--elb-txt-muted, #4a6a8a)",
                     fontFamily: "var(--elb-font, 'Courier New', monospace)",
                     fontSize: 10, letterSpacing: "0.12em", padding: "3px 8px",
                     cursor: "pointer", transition: "all 0.15s", lineHeight: 1.4,
@@ -1954,26 +1954,26 @@ export default function ELogbook2026({ onLogout }) {
                 <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: FTL_COLOR[bannerCls] }}>
                   {bannerInfo.label}
                 </div>
-                <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", marginTop: 3, letterSpacing: "0.04em", lineHeight: 1.5 }}>
+                <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", marginTop: 3, letterSpacing: "0.04em", lineHeight: 1.5 }}>
                   {bannerInfo.text}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap", flexShrink: 0 }}>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em" }}>AS OF DATE</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em" }}>AS OF DATE</div>
                   <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "#4fc3f7" }}>
                     {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em" }}>WORST LIMIT</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em" }}>WORST LIMIT</div>
                   <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: FTL_COLOR[bannerCls] }}>
                     {worstLimit ? worstLimit.label : "NONE"}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em" }}>REGULATION</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "#4a6a8a" }}>CAD 1901</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em" }}>REGULATION</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "var(--elb-txt-muted, #4a6a8a)" }}>CAD 1901</div>
                 </div>
               </div>
             </div>
@@ -2007,7 +2007,7 @@ export default function ELogbook2026({ onLogout }) {
             {aircraftTypes.length === 0 ? (
               <div style={{
                 background: "var(--elb-bg2, #0d1520)", border: "1px solid #0f1e2d", borderRadius: 4,
-                padding: 24, textAlign: "center", color: "#4a6a8a",
+                padding: 24, textAlign: "center", color: "var(--elb-txt-muted, #4a6a8a)",
                 fontSize: 11, letterSpacing: "0.12em",
               }}>
                 NO AIRCRAFT TYPES IN LOGBOOK
@@ -2041,7 +2041,7 @@ export default function ELogbook2026({ onLogout }) {
                             padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
                             background: "rgba(79,195,247,0.12)", border: "1px solid rgba(79,195,247,0.3)", color: "#4fc3f7",
                           }}>{type}</div>
-                          <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", letterSpacing: "0.08em" }}>
+                          <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.08em" }}>
                             TAKEOFF &amp; LANDING RECENCY · LAST 90 DAYS · MINIMUM 3 EACH
                           </div>
                         </div>
@@ -2068,7 +2068,7 @@ export default function ELogbook2026({ onLogout }) {
                               borderTop: `2px solid ${c}`,
                               borderRadius: 3, padding: "10px 6px",
                             }}>
-                              <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em", marginBottom: 4 }}>{label}</div>
+                              <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em", marginBottom: 4 }}>{label}</div>
                               <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: c, fontFamily: "'Courier New',monospace" }}>
                                 {count}
                               </div>
@@ -2117,7 +2117,7 @@ export default function ELogbook2026({ onLogout }) {
                     padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
                     background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.3)", color: "#c084fc",
                   }}>CAT III AUTOLAND</div>
-                  <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", letterSpacing: "0.08em" }}>
+                  <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.08em" }}>
                     ALL AIRCRAFT TYPES · LAST 6 MONTHS · MINIMUM 3
                   </div>
                 </div>
@@ -2133,7 +2133,7 @@ export default function ELogbook2026({ onLogout }) {
                     background: "var(--elb-bg3, #080b10)", border: "1px solid rgba(234,179,8,0.2)",
                     borderRadius: 3, padding: "12px 10px", textAlign: "center",
                   }}>
-                    <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em", marginBottom: 6 }}>LAST AUTOLAND</div>
+                    <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em", marginBottom: 6 }}>LAST AUTOLAND</div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#4fc3f7", marginBottom: 3 }}>
                       {fmtRecencyDate(lastAutolandDate)}
                     </div>
@@ -2146,11 +2146,11 @@ export default function ELogbook2026({ onLogout }) {
                     borderTop: `2px solid ${autolandCurrent ? "#22c55e" : "#ef4444"}`,
                     borderRadius: 3, padding: "12px 10px", textAlign: "center",
                   }}>
-                    <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.1em", marginBottom: 6 }}>STATUS · 6 MONTHS</div>
+                    <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em", marginBottom: 6 }}>STATUS · 6 MONTHS</div>
                     <div style={{ fontSize: 30, fontWeight: 700, lineHeight: 1, color: autolandCurrent ? "#22c55e" : "#ef4444", fontFamily: "'Courier New',monospace", marginBottom: 3 }}>
                       {autoland6m}
                     </div>
-                    <div style={{ fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", marginBottom: 6 }}>
+                    <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", marginBottom: 6 }}>
                       {autolandCurrent ? "REQ: 3 ✓" : "REQ: 3 — NEED " + (3 - autoland6m)}
                     </div>
                     <div style={{ fontSize: 11, fontWeight: 700, color: autolandCurrent ? "#22c55e" : "#ef4444", letterSpacing: "0.08em" }}>
@@ -2167,7 +2167,7 @@ export default function ELogbook2026({ onLogout }) {
                   <div style={{ fontSize: "var(--elb-desc-sz)", color: "#eab308", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
                     ⏳ NO AUTOLAND ENTRIES FOUND
                   </div>
-                  <div style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", lineHeight: 1.8, letterSpacing: "0.03em" }}>
+                  <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", lineHeight: 1.8, letterSpacing: "0.03em" }}>
                     Check the <span style={{ color: "#4fc3f7" }}>AUTOLAND checkbox</span> in the remarks window when logging autoland landings.
                   </div>
                 </div>
@@ -2178,7 +2178,7 @@ export default function ELogbook2026({ onLogout }) {
             <div style={{
               background: "rgba(79,195,247,0.04)", border: "1px solid rgba(79,195,247,0.1)",
               borderRadius: 4, padding: "10px 14px", marginTop: 20,
-              fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", letterSpacing: "0.04em", lineHeight: 1.7,
+              fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.04em", lineHeight: 1.7,
             }}>
               <span style={{ color: "#4fc3f7" }}>⚠ DISCLAIMER:</span> This FTL display is for{" "}
               <span style={{ color: "#4fc3f7" }}>reference purposes only</span> and is based solely on
@@ -2230,7 +2230,7 @@ export default function ELogbook2026({ onLogout }) {
                   onClick={() => setRemarksModal(null)}
                   style={{
                     background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
-                    color: "#4a6a8a", fontFamily: "'Courier New',monospace", fontSize: 12,
+                    color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace", fontSize: 12,
                     width: 22, height: 22, cursor: "pointer", flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}
@@ -2281,7 +2281,7 @@ export default function ELogbook2026({ onLogout }) {
                   onClick={() => setRemarksModal(null)}
                   style={{
                     background: "transparent", border: "1px solid #1e3a5f", borderRadius: 4,
-                    color: "#4a6a8a", fontFamily: "'Courier New',monospace",
+                    color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace",
                     fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px", cursor: "pointer",
                   }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
@@ -2345,7 +2345,7 @@ export default function ELogbook2026({ onLogout }) {
                   onClick={() => setActivePopup(null)}
                   style={{
                     background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
-                    color: "#4a6a8a", fontFamily: "'Courier New',monospace", fontSize: 12,
+                    color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace", fontSize: 12,
                     width: 22, height: 22, cursor: "pointer", flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}
@@ -2356,7 +2356,7 @@ export default function ELogbook2026({ onLogout }) {
               <div style={{ height: 1, background: "#1a3050", marginBottom: 14 }} />
               {/* Body */}
               <div
-                style={{ fontSize: "var(--elb-desc-sz)", color: "#4a6a8a", lineHeight: 1.9, letterSpacing: "0.03em" }}
+                style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", lineHeight: 1.9, letterSpacing: "0.03em" }}
                 dangerouslySetInnerHTML={{ __html: p.body }}
               />
               {/* Note */}
@@ -2367,7 +2367,7 @@ export default function ELogbook2026({ onLogout }) {
                     background: "rgba(79,195,247,0.05)",
                     borderLeft: "2px solid rgba(79,195,247,0.25)",
                     borderRadius: "0 3px 3px 0",
-                    fontSize: "var(--elb-hint-sz)", color: "#4a6a8a", lineHeight: 1.75, letterSpacing: "0.03em",
+                    fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", lineHeight: 1.75, letterSpacing: "0.03em",
                   }}
                   dangerouslySetInnerHTML={{ __html: p.note }}
                 />
@@ -2411,7 +2411,7 @@ export default function ELogbook2026({ onLogout }) {
                 onClick={() => setSaveStatus("idle")}
                 style={{
                   background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
-                  color: "#4a6a8a", fontFamily: "'Courier New',monospace", fontSize: 12,
+                  color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace", fontSize: 12,
                   width: 22, height: 22, cursor: "pointer", flexShrink: 0,
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}
@@ -2432,7 +2432,7 @@ export default function ELogbook2026({ onLogout }) {
                   background: "transparent",
                   border: "1px solid #1e3a55",
                   borderRadius: 4,
-                  color: "#4a6a8a", fontFamily: "'Courier New',monospace",
+                  color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace",
                   fontSize: 11, letterSpacing: "0.12em", padding: "6px 18px", cursor: "pointer",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
@@ -2485,9 +2485,9 @@ export default function ELogbook2026({ onLogout }) {
 
 const iconBtnStyle = {
   background: "transparent",
-  border: "1px solid #1e3a5f",
+  border: "1px solid var(--elb-border, #1e3a5f)",
   borderRadius: 4,
-  color: "#3a6a8a",
+  color: "var(--elb-txt-muted, #3a6a8a)",
   cursor: "pointer",
   padding: "5px 7px",
   display: "flex",
@@ -2497,10 +2497,10 @@ const iconBtnStyle = {
 };
 
 const selectStyle = {
-  background: "#0d1520",
-  border: "1px solid #1e3a5f",
+  background: "var(--elb-bg2, #0d1520)",
+  border: "1px solid var(--elb-border, #1e3a5f)",
   borderRadius: 4,
-  color: "#4fc3f7",
+  color: "var(--elb-acc, #4fc3f7)",
   fontSize: 15,
   fontFamily: "'Courier New', monospace",
   fontWeight: 700,
@@ -2514,11 +2514,11 @@ const selectStyle = {
 const thStyle = {
   padding: "7px 8px",
   textAlign: "center",
-  color: "#3a6a8a",
+  color: "var(--elb-txt-muted, #3a6a8a)",
   fontSize: "var(--elb-th-sz, 10px)",
   letterSpacing: "0.12em",
-  borderBottom: "1px solid var(--elb-bdr2, #1a3050)",
-  borderRight: "1px solid var(--elb-bdr4, #111820)",
+  borderBottom: "1px solid var(--elb-border2, #1a3050)",
+  borderRight: "1px solid var(--elb-border4, #111820)",
   whiteSpace: "nowrap",
   fontWeight: 700,
   textTransform: "uppercase",
@@ -2527,15 +2527,15 @@ const thStyle = {
 
 const thSubStyle = {
   ...thStyle,
-  color: "#3a6a8a",
-  background: "var(--elb-thead, #090d14)",
+  color: "var(--elb-txt-muted, #3a6a8a)",
+  background: "var(--elb-bg2, #090d14)",
   fontSize: "var(--elb-ths-sz, 9px)",
   fontWeight: 700,
 };
 
 const tdStyle = {
   padding: "var(--elb-row-pad, 6px 8px)",
-  borderBottom: "1px solid var(--elb-bdr3, #0f1820)",
+  borderBottom: "1px solid var(--elb-border3, #0f1820)",
   borderRight: "1px solid var(--elb-bg2, #0d1520)",
   whiteSpace: "nowrap",
   fontSize: "var(--elb-td-sz, 13px)",
