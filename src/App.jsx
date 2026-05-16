@@ -244,7 +244,7 @@ function App() {
           // Skip onboarding for existing users
           authSuccessRef.current = true
           setCountdown(3)
-          setShowOnboarding(false)
+          // Profile check effect will set showOnboarding(false) based on profile data
         }
       }
 
