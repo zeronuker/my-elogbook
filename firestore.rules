@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow users to read/write their own data
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth.uid == uid;
+    }
+
+    // Public data (if needed)
+    match /public/{document=**} {
+      allow read: if true;
+    }
+  }
+}
