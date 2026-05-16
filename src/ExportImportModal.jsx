@@ -590,6 +590,19 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       addedCount++;
     });
 
+    // Sort rows within each month by date (chronological order)
+    Object.keys(newMonthData).forEach(key => {
+      newMonthData[key].sort((a, b) => {
+        const aDate = a.date ? new Date(a.date.split('/').reverse().join('-')) : new Date(0);
+        const bDate = b.date ? new Date(b.date.split('/').reverse().join('-')) : new Date(0);
+        return aDate - bDate;
+      });
+      // Reassign IDs after sorting
+      newMonthData[key].forEach((row, idx) => {
+        row.id = idx + 1;
+      });
+    });
+
     // Return updated monthData to parent
     // (Parent component will handle state update)
     window.dispatchEvent(new CustomEvent("importComplete", {
