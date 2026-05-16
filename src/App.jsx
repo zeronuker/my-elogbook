@@ -13,6 +13,7 @@ import { doc, setDoc, getDoc } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import ELogbook2026 from './elogbook_2026_v5_1'
 import OnboardingFlow from './OnboardingFlow'
+import LoadingOverlay from './LoadingOverlay'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -21,7 +22,10 @@ function App() {
   const [signupError, setSignupError] = useState(null)
   const [isSigningUp, setIsSigningUp] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
+  const [countdown, setCountdown] = useState(3)
   const prevUserRef = useRef(null)
+  const authSuccessRef = useRef(false)
 
   // Listen to auth state
   useEffect(() => {
@@ -43,6 +47,34 @@ function App() {
     return unsubscribe
   }, [])
 
+  // Safety timeout: if auth succeeded but showOnboarding didn't update after 3 sec, refresh
+  useEffect(() => {
+    if (!authSuccessRef.current || !user) return
+
+    if (showOnboarding === false) {
+      // Auth succeeded and user navigated to logbook, clear overlay
+      setShowLoadingOverlay(false)
+      authSuccessRef.current = false
+      return
+    }
+
+    // Auth succeeded but still on onboarding, start countdown
+    setShowLoadingOverlay(true)
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          // 3 seconds elapsed, refresh if still on onboarding
+          console.warn('Safety timeout: forcing page refresh')
+          window.location.reload()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [user, showOnboarding, authSuccessRef.current])
+
   // Check profile and set onboarding state (waits for profile before deciding)
   useEffect(() => {
     if (!user) {
@@ -52,7 +84,10 @@ function App() {
 
     const checkProfile = async () => {
       try {
+        const start = performance.now()
         const profileSnap = await getDoc(doc(db, 'users', user.uid, 'profile', 'data'))
+        const duration = performance.now() - start
+        console.log('Profile query took:', duration.toFixed(2), 'ms')
         console.log('Profile check - exists:', profileSnap.exists(), 'onboardingComplete:', profileSnap.data()?.onboardingComplete)
 
         if (profileSnap.exists()) {
@@ -117,6 +152,8 @@ function App() {
       try {
         await sendEmailVerification(newUser)
         console.log('Verification email sent to:', newUser.email)
+        authSuccessRef.current = true
+        setCountdown(3)
       } catch (emailError) {
         console.error('Email verification error:', emailError)
       }
@@ -147,6 +184,8 @@ function App() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password)
+      authSuccessRef.current = true
+      setCountdown(3)
       // Auth listener will handle user state and navigation
       setIsSigningUp(false)
       return { success: true }
@@ -205,6 +244,8 @@ function App() {
         setUser(googleUser)
         if (isComplete) {
           // Skip onboarding for existing users
+          authSuccessRef.current = true
+          setCountdown(3)
           setShowOnboarding(false)
         }
       }
@@ -234,6 +275,9 @@ function App() {
           },
           { merge: true }
         )
+        // Trigger safety timeout before navigation
+        authSuccessRef.current = true
+        setCountdown(3)
         // Explicitly trigger onboarding complete state
         setShowOnboarding(false)
       }
@@ -261,21 +305,29 @@ function App() {
 
   if (showOnboarding || showLogoutConfirm) {
     return (
-      <OnboardingFlow
-        user={user}
-        onSignup={handleSignup}
-        onLogin={handleLogin}
-        onGoogleAuth={handleGoogleAuth}
-        onOnboardingComplete={handleOnboardingComplete}
-        signupError={signupError}
-        isLoading={isSigningUp}
-        showLogoutConfirm={showLogoutConfirm}
-        onClearError={() => setSignupError(null)}
-      />
+      <>
+        <OnboardingFlow
+          user={user}
+          onSignup={handleSignup}
+          onLogin={handleLogin}
+          onGoogleAuth={handleGoogleAuth}
+          onOnboardingComplete={handleOnboardingComplete}
+          signupError={signupError}
+          isLoading={isSigningUp}
+          showLogoutConfirm={showLogoutConfirm}
+          onClearError={() => setSignupError(null)}
+        />
+        {showLoadingOverlay && <LoadingOverlay countdown={countdown} />}
+      </>
     )
   }
 
-  return <ELogbook2026 onLogout={() => signOut(auth)} onDeleteAccount={handleDeleteAccount} />
+  return (
+    <>
+      <ELogbook2026 onLogout={() => signOut(auth)} onDeleteAccount={handleDeleteAccount} />
+      {showLoadingOverlay && <LoadingOverlay countdown={countdown} />}
+    </>
+  )
 }
 
 export default App
