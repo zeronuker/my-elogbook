@@ -152,8 +152,6 @@ function App() {
       try {
         await sendEmailVerification(newUser)
         console.log('Verification email sent to:', newUser.email)
-        authSuccessRef.current = true
-        setCountdown(3)
       } catch (emailError) {
         console.error('Email verification error:', emailError)
       }

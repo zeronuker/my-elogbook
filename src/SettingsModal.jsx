@@ -613,7 +613,7 @@ function MiscTab({ onDeleteAccount }) {
                 <li><span className="elb-tag elb-tag-fix">FIX</span> Profile data persistence — signup details now appear in Settings</li>
                 <li><span className="elb-tag elb-tag-fix">FIX</span> Error messages — now clear when switching between login/signup screens</li>
                 <li><span className="elb-tag elb-tag-fix">FIX</span> Persistent refresh requirement on login/signup — 3-second safety timeout with auto-refresh fallback</li>
-                <li><span className="elb-tag elb-tag-new">NEW</span> Loading overlay with dynamic status messages during auth flow (email verification, profile sync, account setup)</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Loading overlay with dynamic status messages after login and onboarding completion</li>
                 <li><span className="elb-tag elb-tag-new">NEW</span> License number field in signup (Step 2)</li>
                 <li><span className="elb-tag elb-tag-imp">IMP</span> Increased text sizes for better visibility on all devices</li>
                 <li><span className="elb-tag elb-tag-imp">IMP</span> Updated compliance badge: MCAR 2016 Part 69 &amp; Part 74</li>
