@@ -447,15 +447,39 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     }
   };
 
+  const excelDateToDD_MM_YYYY = (excelDate) => {
+    let dateObj;
+    if (typeof excelDate === 'number') {
+      // Excel serial date: days since 1900-01-01
+      dateObj = new Date((excelDate - 25569) * 86400 * 1000);
+    } else if (excelDate instanceof Date) {
+      dateObj = excelDate;
+    } else {
+      return null;
+    }
+    const day = String(dateObj.getUTCDate()).padStart(2, '0');
+    const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+    const year = dateObj.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const validateImportData = (data, headerMap) => {
     const validRows = [];
     const errors = [];
     let duplicateCount = 0;
 
     data.forEach((row, idx) => {
-      const date = row[headerMap.date]?.toString().trim();
+      let dateRaw = row[headerMap.date];
       const departure = row[headerMap.departure]?.toString().trim();
       const arrival = row[headerMap.arrival]?.toString().trim();
+
+      // Convert Excel dates (number or Date object) to DD/MM/YYYY string
+      let date;
+      if (typeof dateRaw === 'number' || dateRaw instanceof Date) {
+        date = excelDateToDD_MM_YYYY(dateRaw);
+      } else {
+        date = dateRaw?.toString().trim();
+      }
 
       // Check required fields
       if (!date) {
@@ -471,11 +495,14 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
         return;
       }
 
-      // Normalize date format
+      // Normalize date format: convert DD/MM/YYYY to YYYY-MM-DD
       let normalizedDate = date;
       try {
-        // Handle DD-MMM-YYYY format from export
-        if (/^\d{2}-\w{3}-\d{4}$/.test(date)) {
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+          const [day, month, year] = date.split('/');
+          normalizedDate = `${year}-${month}-${day}`;
+        } else if (/^\d{2}-\w{3}-\d{4}$/.test(date)) {
+          // Handle DD-MMM-YYYY format from export
           const [day, month, year] = date.split('-');
           const monthNum = new Date(`${month} 1`).getMonth() + 1;
           normalizedDate = `${year}-${String(monthNum).padStart(2, '0')}-${day}`;
@@ -485,10 +512,16 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       }
 
       // Check if flight already exists in logbook
+      // Convert logbook date (DD/MM/YYYY) to YYYY-MM-DD for comparison
       const existsInLogbook = Object.values(monthData).some(monthRows =>
-        monthRows.some(r =>
-          r.date === normalizedDate && r.departure === departure && r.arrival === arrival
-        )
+        monthRows.some(r => {
+          let rDateNorm = r.date;
+          if (r.date && /^\d{2}\/\d{2}\/\d{4}$/.test(r.date)) {
+            const [day, month, year] = r.date.split('/');
+            rDateNorm = `${year}-${month}-${day}`;
+          }
+          return rDateNorm === normalizedDate && r.departure === departure && r.arrival === arrival;
+        })
       );
 
       if (existsInLogbook) {
@@ -499,9 +532,25 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       // Build complete row with all fields using headerMap
       const newRow = {};
       for (const [fieldName, headerName] of Object.entries(headerMap)) {
-        newRow[fieldName] = row[headerName]?.toString() || "";
+        const val = row[headerName];
+        // Convert time values (timedelta from Excel) to HH:MM format
+        if (['std', 'sta', 'dayP1', 'dayP1US', 'dayP2', 'nightP1', 'nightP1US', 'nightP2', 'total'].includes(fieldName) && val) {
+          if (val.seconds !== undefined) {
+            // Excel timedelta: convert seconds to HH:MM
+            const totalSeconds = val.seconds || 0;
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            newRow[fieldName] = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+          } else {
+            newRow[fieldName] = val.toString();
+          }
+        } else {
+          newRow[fieldName] = val?.toString() || "";
+        }
       }
-      newRow.date = normalizedDate;
+      // Store date in DD/MM/YYYY format for logbook
+      const [yyyy, mm, dd] = normalizedDate.split('-');
+      newRow.date = `${dd}/${mm}/${yyyy}`;
 
       validRows.push(newRow);
     });
