@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClaudeBorne — Onboarding BUG FIXES Mockup</title>
+<style>
+  :root {
+    --bg:#0a0d12;--surface:#0d1520;--surface2:#0b1828;
+    --border:#1e3a5f;--border2:#0f1e2d;
+    --accent:#4fc3f7;--green:#22c55e;--yellow:#eab308;--red:#ef4444;
+    --text:#ffffff;--muted:#b8d6e5;--dim:#2a4a6a;
+    --mono:'Courier New',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;
+    background-image:linear-gradient(rgba(79,195,247,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(79,195,247,0.025) 1px,transparent 1px);
+    background-size:40px 40px;pointer-events:none;z-index:0;}
+
+  .screen{position:fixed;inset:0;display:none;flex-direction:column;
+    align-items:center;justify-content:center;padding:20px;z-index:10;
+    animation:fi 0.35s ease;overflow-y:auto;}
+  .screen.active{display:flex;}
+  @keyframes fi{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  .prog-bar{position:fixed;top:0;left:0;right:0;height:2px;background:var(--border2);z-index:100;}
+  .prog-fill{height:100%;background:var(--accent);transition:width 0.5s ease;box-shadow:0 0 8px rgba(79,195,247,0.6);}
+  .dots-wrap{position:fixed;top:14px;left:50%;transform:translateX(-50%);
+    display:flex;gap:6px;align-items:center;z-index:100;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:all 0.3s;}
+  .dot.active{background:var(--accent);width:18px;border-radius:3px;}
+  .dot.done{background:var(--green);}
+  .scr-tag{position:fixed;top:12px;right:16px;font-size:7px;letter-spacing:0.2em;color:var(--dim);z-index:100;}
+
+  .dev-nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+    display:flex;gap:8px;align-items:center;z-index:200;}
+  .dev-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);
+    font-family:var(--mono);font-size:8px;letter-spacing:0.1em;padding:4px 10px;
+    cursor:pointer;border-radius:3px;}
+  .dev-btn:hover{color:var(--accent);border-color:var(--accent);}
+  .dev-lbl{font-size:8px;color:var(--dim);letter-spacing:0.1em;padding:4px 8px;min-width:140px;text-align:center;}
+
+  /* Card */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:6px;width:100%;overflow:hidden;}
+  .cbar{height:3px;background:linear-gradient(90deg,var(--accent),#2196f3);}
+  .cbody{padding:26px 30px;}
+
+  /* Type — INCREASED SIZES */
+  .slbl{font-size:13px;letter-spacing:0.22em;color:var(--muted);margin-bottom:9px;font-weight:600;}
+  .stitle{font-size:28px;font-weight:700;color:var(--text);letter-spacing:0.06em;margin-bottom:7px;line-height:1.25;}
+  .ssub{font-size:14px;color:var(--muted);letter-spacing:0.05em;line-height:1.65;margin-bottom:18px;}
+
+  /* Fields */
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:13px;letter-spacing:0.15em;color:var(--muted);margin-bottom:6px;font-weight:600;}
+  .field input,.field select{width:100%;background:#080b10;border:1px solid var(--border);
+    border-radius:3px;color:var(--text);font-family:var(--mono);font-size:16px;
+    padding:12px 14px;outline:none;transition:border-color 0.15s;letter-spacing:0.05em;}
+  .field input:focus,.field select:focus{border-color:var(--accent);}
+  .field input::placeholder{color:var(--muted);}
+  .field select option{background:#0d1520;}
+  .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  /* Buttons */
+  .btn{width:100%;font-family:var(--mono);font-size:15px;letter-spacing:0.18em;
+    padding:14px;cursor:pointer;border-radius:3px;transition:all 0.15s;margin-top:10px;font-weight:600;}
+  .btn-p{background:rgba(79,195,247,0.1);border:1px solid var(--accent);color:var(--accent);}
+  .btn-p:hover{background:rgba(79,195,247,0.2);}
+  .btn-g{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:14px;}
+  .btn-g:hover{border-color:var(--muted);color:var(--text);}
+  .btn-done{background:rgba(34,197,94,0.12);border:1px solid var(--green);color:var(--green);}
+  .btn-done:hover{background:rgba(34,197,94,0.22);}
+  .btn-google{background:#080b10;border:1px solid var(--border);color:var(--text);
+    display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;letter-spacing:0.12em;}
+  .btn-google:hover{border-color:#e8453c;}
+
+  /* Divider */
+  .divider{display:flex;align-items:center;gap:10px;margin:14px 0;}
+  .dl{flex:1;height:1px;background:var(--border2);}
+  .dt{font-size:9px;color:var(--dim);letter-spacing:0.1em;font-weight:600;}
+
+  /* Landing */
+  .land{text-align:center;max-width:440px;width:100%;}
+  .land-logo{font-size:56px;margin-bottom:18px;filter:drop-shadow(0 0 24px rgba(79,195,247,0.5));}
+  .land-title{font-size:36px;font-weight:700;color:var(--text);letter-spacing:0.2em;margin-bottom:5px;}
+  .land-ver{font-size:13px;color:var(--muted);letter-spacing:0.22em;margin-bottom:12px;font-weight:600;}
+  .land-tag{font-size:15px;color:var(--muted);letter-spacing:0.08em;line-height:1.75;margin-bottom:20px;}
+  .land-badges{display:flex;justify-content:center;gap:6px;margin-bottom:22px;flex-wrap:wrap;}
+  .badge{font-size:9px;letter-spacing:0.1em;padding:5px 11px;border-radius:2px;font-weight:600;}
+  .bb{background:rgba(79,195,247,0.1);border:1px solid rgba(79,195,247,0.3);color:var(--accent);}
+  .bg{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:var(--green);}
+
+  .land-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+  .lbtn{background:var(--surface);border:1px solid var(--border);border-radius:4px;
+    padding:24px 16px;cursor:pointer;transition:all 0.2s;text-align:center;}
+  .lbtn:hover{border-color:var(--muted);}
+  .lbtn.signup{border-color:var(--accent);background:rgba(79,195,247,0.08);}
+  .lbtn.signup:hover{background:rgba(79,195,247,0.15);border-color:var(--accent);}
+  .lbtn .li{font-size:32px;margin-bottom:12px;}
+  .lbtn .lt{font-size:15px;font-weight:700;letter-spacing:0.1em;color:var(--text);margin-bottom:6px;}
+  .lbtn .ls{font-size:13px;color:var(--muted);letter-spacing:0.04em;}
+  .land-legal{font-size:13px;color:var(--muted);letter-spacing:0.04em;line-height:1.65;}
+
+  /* Back btn */
+  .back{display:flex;align-items:center;gap:6px;background:none;border:none;
+    color:var(--muted);font-family:var(--mono);font-size:13px;letter-spacing:0.1em;
+    cursor:pointer;margin-bottom:18px;padding:0;font-weight:600;}
+  .back:hover{color:var(--accent);}
+
+  /* Done */
+  .done{text-align:center;max-width:380px;width:100%;}
+  .done-ico{font-size:72px;margin-bottom:20px;animation:pop .5s ease;}
+  @keyframes pop{0%{transform:scale(.4);opacity:0;}70%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+  .done-ttl{font-size:30px;font-weight:700;color:var(--green);letter-spacing:0.12em;margin-bottom:10px;}
+  .done-sub{font-size:14px;color:var(--muted);letter-spacing:0.06em;line-height:1.7;margin-bottom:22px;}
+  .done-pills{display:flex;justify-content:center;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
+
+  /* Badge hint */
+  .hint{font-size:12px;color:var(--muted);letter-spacing:0.08em;margin-top:10px;font-style:italic;}
+
+  /* Error message — BUG 7 FIX */
+  .err-box{background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#ef4444;padding:12px 14px;border-radius:3px;font-size:13px;margin-bottom:16px;font-weight:600;}
+
+  /* Settings panel */
+  .settings-panel{background:var(--surface);border:1px solid var(--border);border-radius:6px;width:100%;padding:24px;max-width:500px;}
+  .settings-field{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border2);}
+  .settings-field:last-child{border-bottom:none;margin-bottom:0;}
+  .settings-label{font-size:12px;letter-spacing:0.15em;color:var(--muted);margin-bottom:4px;font-weight:600;}
+  .settings-value{font-size:15px;color:var(--text);font-weight:600;}
+
+  /* BUG FIX BADGE */
+  .bug-badge{position:absolute;top:10px;right:10px;background:#22c55e;color:#0a0d12;
+    font-size:7px;letter-spacing:0.1em;padding:3px 7px;border-radius:2px;font-weight:700;}
+
+</style>
+</head>
+<body>
+
+<div class="prog-bar"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+<div class="dots-wrap" id="dots"></div>
+<div class="scr-tag" id="stag"></div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 0: LANDING — BUG 5 FIX (BADGE TEXT) -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="screen active" id="s0">
+  <div class="land">
+    <div class="land-logo">✈</div>
+    <div class="land-title">CLAUDEBORNE</div>
+    <div class="land-ver">eLOGBOOK V5.1 · CAAM / MCAR 2016</div>
+    <div class="land-tag">Your CAAM-compliant digital pilot logbook.<br>Accessible anywhere. Secure. Always in sync.</div>
+    <div class="land-badges">
+      <span class="badge bb">✓ CAD 1901</span>
+      <span class="badge bb" style="position:relative;">✓ MCAR 2016 Part 69 & Part 74 <span class="bug-badge">BUG 5</span></span>
+      <span class="badge bg">✓ FREE</span>
+      <span class="badge bg">✓ CLOUD SYNC</span>
+    </div>
+    <div class="land-btns">
+      <div class="lbtn" onclick="goTo(1)">
+        <div class="li">🔑</div>
+        <div class="lt">LOG IN</div>
+        <div class="ls">Access your existing logbook</div>
+      </div>
+      <div class="lbtn signup" onclick="goTo(2)">
+        <div class="li">✨</div>
+        <div class="lt">SIGN UP FREE</div>
+        <div class="ls">Create your pilot logbook today</div>
+      </div>
+    </div>
+    <div class="land-legal">By continuing you agree to our Terms of Service.<br>Your data is stored securely and privately.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 1: LOG IN — BUG 7 FIX (ERROR CLEARS ON NAV) -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="screen" id="s1">
+  <div style="max-width:420px;width:100%;position:relative;">
+    <button class="back" onclick="goTo(0)">← BACK</button>
+    <div class="card">
+      <div class="cbar"></div>
+      <div class="cbody">
+        <div class="slbl">RETURNING PILOT</div>
+        <div class="stitle">WELCOME BACK</div>
+        <div class="ssub">Sign in to access your logbook from any device.</div>
+
+        <!-- BUG 7: Show error, but will clear when navigating -->
+        <div class="err-box" id="loginErr" style="display:none;">❌ Login failed. Check your email and password. <span class="bug-badge">BUG 7</span></div>
+
+        <div class="field"><label>EMAIL ADDRESS</label><input type="email" placeholder="your@email.com"></div>
+        <div class="field"><label>PASSWORD</label><input type="password" placeholder="••••••••"></div>
+        <div style="text-align:right;margin-bottom:8px;">
+          <span style="font-size:10px;color:var(--accent);cursor:pointer;letter-spacing:0.08em;font-weight:600;">FORGOT PASSWORD?</span>
+        </div>
+        <button class="btn btn-p" onclick="showLoginError()">LOG IN →</button>
+        <div class="divider"><div class="dl"></div><div class="dt">OR</div><div class="dl"></div></div>
+        <button class="btn btn-google" onclick="goTo(7)">
+          <span style="font-size:16px;color:#e8453c;font-weight:700;">G</span>CONTINUE WITH GOOGLE
+        </button>
+        <div style="text-align:center;margin-top:14px;font-size:10px;color:var(--muted);letter-spacing:0.06em;font-weight:600;">
+          No account? <span style="color:var(--accent);cursor:pointer;" onclick="goTo(2)">SIGN UP FREE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 2: SIGN UP STEP 1 — BUG 3, 4 FIX (LICENSE + FONT) -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="screen" id="s2">
+  <div style="max-width:420px;width:100%;">
+    <button class="back" onclick="goTo(0)">← BACK</button>
+    <div class="card">
+      <div class="cbar"></div>
+      <div class="cbody">
+        <div class="slbl">NEW PILOT · STEP 1 OF 2</div>
+        <div class="stitle">CREATE YOUR ACCOUNT</div>
+        <div class="ssub">Free forever. No credit card required.</div>
+        <div class="field"><label>EMAIL ADDRESS</label><input type="email" placeholder="your@email.com"></div>
+        <div class="frow">
+          <div class="field"><label>PASSWORD</label><input type="password" placeholder="Min. 8 chars"></div>
+          <div class="field"><label>CONFIRM PASSWORD</label><input type="password" placeholder="Repeat"></div>
+        </div>
+        <div class="field"><label>FULL NAME (OPTIONAL)</label><input type="text" placeholder="e.g. AMIR RASHID"></div>
+        <div class="hint">💡 Leave blank if you prefer anonymity</div>
+        <button class="btn btn-p" onclick="goTo(3)">NEXT →</button>
+        <div class="divider"><div class="dl"></div><div class="dt">OR</div><div class="dl"></div></div>
+        <button class="btn btn-google" onclick="goTo(3)">
+          <span style="font-size:16px;color:#e8453c;font-weight:700;">G</span>CONTINUE WITH GOOGLE
+        </button>
+        <div style="text-align:center;margin-top:14px;font-size:10px;color:var(--muted);letter-spacing:0.06em;font-weight:600;">
+          Already have an account? <span style="color:var(--accent);cursor:pointer;" onclick="goTo(1)">LOG IN</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 3: EMAIL VERIFICATION -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="screen" id="s3">
+  <div class="card" style="max-width:480px;">
+    <div class="cbar"></div>
+    <div class="cbody">
+      <div class="slbl">NEW PILOT · STEP 2 OF 2</div>
+      <div class="stitle">VERIFY YOUR EMAIL</div>
+      <div class="ssub">We sent a verification link to your email. Click it to continue.</div>
+
+      <div style="background: #080b10; border: 1px solid #1e3a5f; border-radius: 4px; padding: 22px; margin: 22px 0; text-align: center;">
+        <div style="font-size: 36px; margin-bottom: 14px;">✉️</div>
+        <div style="font-size: 15px; color: #ffffff; font-weight: 700; margin-bottom: 8px;">check-your-email@example.com</div>
+        <div style="font-size: 13px; color: #b8d6e5; line-height: 1.6;">Click the verification link in your email to proceed. The link expires in 24 hours.</div>
+      </div>
+
+      <div style="font-size: 13px; color: #b8d6e5; text-align: center; margin-bottom: 20px; line-height: 1.6;">
+        💡 Didn't receive the email? Check your spam folder or<br><span style="color: #4fc3f7; cursor: pointer;font-weight:600;">resend verification email</span>
+      </div>
+
+      <button class="btn btn-g" style="opacity: 0.6; cursor: not-allowed;" disabled>WAITING FOR VERIFICATION...</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 4: SIGN UP STEP 2 (CREDENTIALS) — BUG 3 FIX (LICENSE #) -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="screen" id="s4">
+  <div class="card" style="max-width:480px;">
+    <div class="cbar"></div>
+    <div class="cbody">
+      <div class="slbl">NEW PILOT · STEP 2 OF 2</div>
+      <div class="stitle">PILOT CREDENTIALS</div>
+      <div class="ssub">Quick setup. Update anytime in Settings.</div>
+
+      <div class="field">
+        <label>LICENCE TYPE (DEFAULT: ATPL(A))</label>
+        <select><option selected>ATPL(A)</option><option>CPL(A)</option><option>MPL</option><option>PPL(A)</option></select>
+      </div>
+
+      <!-- BUG 3: NEW LICENSE NUMBER FIELD -->
+      <div class="field" style="position:relative;">
+        <label>LICENCE NUMBER (OPTIONAL) <span class="bug-badge">BUG 3</span></label>
+        <input type="text" placeholder="e.g. FCB-1234567">
+      </div>
+
+      <div class="field"><label>ORGANIZATION (OPTIONAL)</label><input type="text" placeholder="e.g. MALAYSIA AIRLINES"></div>
+
+      <div class="hint">💡 All fields optional. You can update anytime in Settings.</div>
+
+      <button class="btn btn-p" onclick="goTo(5)">CONTINUE →</button>
+      <button class="btn btn-g" onclick="goTo(5)">SKIP TO LOGBOOK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 5: DONE — BUG 1 FIX (BUTTON WORKS) -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="screen" id="s5">
+  <div class="done">
+    <div class="done-ico">✅</div>
+    <div class="done-ttl">YOU'RE READY TO FLY</div>
+    <div class="done-sub">Your logbook is set up and ready.<br>Start logging your first flight now.</div>
+    <div class="done-pills">
+      <span class="badge bg">✓ ACCOUNT CREATED</span>
+      <span class="badge bb">✓ CLOUD SYNC ON</span>
+      <span class="badge bb">✓ DATA SECURED</span>
+    </div>
+    <!-- BUG 1 & 6: Buttons now properly navigate -->
+    <button class="btn btn-done" onclick="goTo(6)" style="position:relative;">
+      OPEN MY LOGBOOK → <span class="bug-badge">BUG 1,6</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 6: LOGBOOK LOADED — BUG 1 & 6 FIX DEMO -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="screen" id="s6">
+  <div style="text-align:center;max-width:420px;">
+    <div style="font-size:40px;margin-bottom:16px;">✈</div>
+    <div style="font-size:16px;font-weight:700;color:var(--accent);letter-spacing:0.2em;margin-bottom:10px;">LOGBOOK LOADED</div>
+    <div style="font-size:13px;color:var(--muted);letter-spacing:0.06em;line-height:1.7;margin-bottom:24px;">
+      ✓ Navigation works immediately after signup<br>
+      ✓ No refresh required (BUG 1 & 6 FIXED)<br>
+      <span style="font-size:11px;margin-top:12px;display:block;">In the live app, your full logbook table appears here.</span>
+    </div>
+    <button class="btn btn-g" style="max-width:220px;margin:0 auto;" onclick="goTo(0)">↩ BACK TO LANDING</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 7: SETTINGS PROFILE TAB — BUG 2 FIX (DATA DISPLAY) -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="screen" id="s7">
+  <div style="max-width:500px;width:100%;">
+    <button class="back" onclick="goTo(0)">← BACK</button>
+    <div class="settings-panel">
+      <div style="font-size:16px;font-weight:700;color:var(--accent);letter-spacing:0.1em;margin-bottom:20px;">PROFILE</div>
+
+      <!-- BUG 2: Data from signup now displays -->
+      <div class="settings-field" style="position:relative;">
+        <div class="settings-label">EMAIL</div>
+        <div class="settings-value">amir@example.com <span class="bug-badge">BUG 2</span></div>
+      </div>
+
+      <div class="settings-field">
+        <div class="settings-label">FULL NAME</div>
+        <div class="settings-value">AMIR RASHID</div>
+      </div>
+
+      <div class="settings-field">
+        <div class="settings-label">LICENCE TYPE</div>
+        <div class="settings-value">ATPL(A)</div>
+      </div>
+
+      <!-- BUG 3: LICENSE NUMBER DISPLAYS -->
+      <div class="settings-field" style="position:relative;">
+        <div class="settings-label">LICENCE NUMBER</div>
+        <div class="settings-value">FCB-1234567 <span class="bug-badge">BUG 3</span></div>
+      </div>
+
+      <div class="settings-field">
+        <div class="settings-label">ORGANIZATION</div>
+        <div class="settings-value">MALAYSIA AIRLINES</div>
+      </div>
+
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border2);font-size:11px;color:var(--dim);letter-spacing:0.08em;">
+        ✓ All signup data persists in profile<br>
+        ✓ Can edit fields anytime
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dev nav -->
+<div class="dev-nav">
+  <button class="dev-btn" onclick="navPrev()">← PREV</button>
+  <span class="dev-lbl" id="dlbl">LANDING</span>
+  <button class="dev-btn" onclick="navNext()">NEXT →</button>
+</div>
+
+<script>
+  const SEQ = [0,1,2,3,4,5,6,7];
+  const LABELS = {
+    0:'LANDING (BUG 5: UPDATED BADGE)',
+    1:'LOG IN (BUG 7: ERROR CLEARS ON NAV)',
+    2:'SIGN UP — STEP 1',
+    3:'SIGN UP — STEP 2 (EMAIL VERIFY)',
+    4:'SIGN UP — STEP 2 (CREDENTIALS + BUG 3)',
+    5:'ALL DONE (BUG 1 & 6: BUTTON WORKS)',
+    6:'LOGBOOK LOADED (NO REFRESH NEEDED)',
+    7:'SETTINGS PROFILE (BUG 2 & 3: DATA SHOWS)'
+  };
+  const SIGNUP = [2,3,4,5,6];
+
+  let cur=0, si=0;
+
+  function goTo(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('s'+id).classList.add('active');
+    document.getElementById('loginErr').style.display='none'; // BUG 7: clear error on nav
+    cur=id; si=SEQ.indexOf(id); if(si<0)si=SEQ.length-1;
+    update();
+  }
+
+  function showLoginError(){
+    document.getElementById('loginErr').style.display='block';
+  }
+
+  function navNext(){goTo(SEQ[Math.min(si+1,SEQ.length-1)]);}
+  function navPrev(){goTo(SEQ[Math.max(si-1,0)]);}
+
+  function update(){
+    const isSU=SIGNUP.includes(cur);
+    const sn=SIGNUP.indexOf(cur);
+    document.getElementById('prog').style.width=isSU?((sn+1)/SIGNUP.length*100)+'%':'0%';
+    const d=document.getElementById('dots');
+    d.innerHTML=isSU?SIGNUP.map((s,i)=>{
+      const c=s<cur?'done':s===cur?'active':'';
+      return`<div class="dot ${c}"></div>`;}).join(''):'';
+    const lbl=LABELS[cur]||'';
+    document.getElementById('stag').textContent=lbl;
+    document.getElementById('dlbl').textContent=lbl;
+  }
+
+  update();
+</script>
+</body>
+</html>

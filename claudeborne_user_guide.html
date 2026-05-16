@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClaudeBorne — How-To Guide</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0d12;color:#fff;font-family:'Courier New',monospace;font-size:14px;min-height:100vh;overflow-x:hidden}
+
+/* WELCOME */
+#ws{position:fixed;inset:0;background:#0a0d12;z-index:600;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+#ws.h{display:none}
+.wl{color:#4fc3f7;font-size:28px;font-weight:bold;letter-spacing:4px;margin-bottom:4px}
+.wb{color:#b8d6e5;font-size:12px;letter-spacing:3px;margin-bottom:36px}
+.wt{color:#fff;font-size:18px;margin-bottom:12px}
+.wd{color:#b8d6e5;font-size:13px;line-height:1.8;max-width:440px;margin-bottom:34px}
+.wb1{background:#4fc3f7;color:#0a0d12;border:none;padding:12px 36px;font-family:inherit;font-size:13px;font-weight:bold;letter-spacing:2px;cursor:pointer;display:block;margin-bottom:12px}
+.ws2{background:none;border:none;color:#b8d6e5;font-family:inherit;font-size:12px;cursor:pointer;text-decoration:underline}
+
+/* APP */
+#app{max-width:1000px;margin:0 auto;border:1px solid #1e3a5f;min-height:100vh}
+
+/* TOOLBAR */
+#toolbar{background:#060a0f;border-bottom:2px solid #1e3a5f;padding:9px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tl{color:#4fc3f7;font-size:15px;font-weight:bold;letter-spacing:3px}
+.tdiv{width:1px;height:20px;background:#1e3a5f}
+.mnav{display:flex;align-items:center;gap:5px}
+.marr{background:#0d1117;border:1px solid #1e3a5f;color:#4fc3f7;padding:3px 9px;cursor:pointer;font-family:inherit;font-size:12px}
+.mlbl{color:#fff;font-weight:bold;min-width:80px;text-align:center;font-size:13px}
+.ysel{background:#0d1117;border:1px solid #1e3a5f;color:#4fc3f7;padding:3px 7px;font-family:inherit;font-size:13px}
+.tsp{flex:1}
+.tset{background:none;border:1px solid #1e3a5f;color:#b8d6e5;padding:4px 12px;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:1px}
+
+/* TABS */
+#tabs{display:flex;background:#060a0f;border-bottom:1px solid #1e3a5f;overflow-x:auto}
+.tbtn{background:none;border:none;border-bottom:2px solid transparent;color:#b8d6e5;padding:10px 16px;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:1px;white-space:nowrap;transition:all .2s}
+.tbtn:hover,.tbtn.act{color:#4fc3f7}
+.tbtn.act{border-bottom-color:#4fc3f7}
+
+/* CONTENT */
+.tc{display:none;padding:16px}
+.tc.act{display:block}
+.sl{color:#4fc3f7;font-size:10px;letter-spacing:2px;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid #1e3a5f}
+
+/* LOG TABLE */
+.lt{width:100%;border-collapse:collapse}
+.lt th{background:#060a0f;color:#4fc3f7;padding:7px 8px;text-align:left;border-bottom:1px solid #1e3a5f;font-size:10px;letter-spacing:1px;white-space:nowrap}
+.lt td{padding:6px 8px;border-bottom:1px solid #0d1a2a;color:#b8d6e5;font-size:12px;vertical-align:middle}
+.lt tr:hover td{background:#0a1520}
+.inp{background:#0d1117;border:1px solid #1e3a5f;color:#fff;padding:3px 6px;font-family:inherit;font-size:12px}
+.dt{color:#e0e0e0}.nt{color:#4fc3f7;font-weight:bold}
+.hb{display:inline-block;padding:2px 6px;font-size:10px;border-radius:2px;letter-spacing:1px}
+.hp1{background:rgba(79,195,247,.15);color:#4fc3f7;border:1px solid #4fc3f7}
+.hp2{background:rgba(184,214,229,.1);color:#b8d6e5;border:1px solid #b8d6e5}
+.hpu{background:rgba(102,187,106,.15);color:#66bb6a;border:1px solid #66bb6a}
+.tr2 td{background:#071220;color:#4fc3f7;font-weight:bold;border-top:1px solid #1e3a5f}
+.lnote{margin-top:9px;color:#b8d6e5;font-size:11px;opacity:.7}
+.scr{overflow-x:auto}
+
+/* SUMMARY */
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:560px){.sc-grid{grid-template-columns:1fr}}
+.scard{background:#0d1117;border:1px solid #1e3a5f;padding:16px}
+.sclbl{color:#b8d6e5;font-size:10px;letter-spacing:1px;margin-bottom:6px}
+.scval{font-size:24px;font-weight:bold}
+.scsub{color:#b8d6e5;font-size:11px;margin-top:5px}
+.stbl{background:#0d1117;border:1px solid #1e3a5f;padding:14px;margin-bottom:12px}
+.stbl h4{color:#4fc3f7;font-size:10px;letter-spacing:1px;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #1e3a5f}
+.brow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #0d1a2a;font-size:12px;color:#b8d6e5}
+.brow:last-child{border-bottom:none}
+.bv{color:#fff}
+
+/* LIMITS */
+.dbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.dlbl{color:#4fc3f7;font-size:10px;letter-spacing:1px}
+.sb{background:#0d1117;border:1px solid #1e3a5f;color:#b8d6e5;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:10px;letter-spacing:1px}
+.sb:hover{border-color:#4fc3f7;color:#4fc3f7}
+.sb.sg{border-color:#66bb6a;color:#66bb6a;background:rgba(102,187,106,.08)}
+.sb.sa{border-color:#ffa726;color:#ffa726;background:rgba(255,167,38,.08)}
+.sb.sr{border-color:#ef5350;color:#ef5350;background:rgba(239,83,80,.08)}
+.ls{display:none}.ls.act{display:block}
+.lbn{padding:9px 14px;margin-bottom:14px;font-size:12px;letter-spacing:1px}
+.lbn.g{background:rgba(102,187,106,.08);border:1px solid #66bb6a;color:#66bb6a}
+.lbn.a{background:rgba(255,167,38,.08);border:1px solid #ffa726;color:#ffa726}
+.lbn.r{background:rgba(239,83,80,.1);border:1px solid #ef5350;color:#ef5350}
+.lsec{background:#0d1117;border:1px solid #1e3a5f;padding:14px;margin-bottom:12px}
+.lsec h4{color:#4fc3f7;font-size:10px;letter-spacing:1px;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid #1e3a5f}
+.li{margin-bottom:14px}.li:last-child{margin-bottom:0}
+.lhdr{display:flex;justify-content:space-between;margin-bottom:5px;font-size:11px;flex-wrap:wrap;gap:4px}
+.ll{color:#b8d6e5}.lv{font-size:11px}
+.pb{height:7px;background:#1e3a5f;border-radius:2px;overflow:hidden}
+.pf{height:100%;border-radius:2px;transition:width .4s}
+.fg{background:#66bb6a}.fa{background:#ffa726}.fr{background:#ef5350}
+.ln{color:#b8d6e5;font-size:10px;margin-top:4px}.ln.r{color:#ef5350}
+.bdg{display:inline-block;padding:1px 5px;font-size:9px;margin-left:4px}
+.bok{background:rgba(102,187,106,.2);color:#66bb6a;border:1px solid #66bb6a}
+.bwn{background:rgba(255,167,38,.2);color:#ffa726;border:1px solid #ffa726}
+.bex{background:rgba(239,83,80,.2);color:#ef5350;border:1px solid #ef5350}
+
+/* SETTINGS */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.sgrid{grid-template-columns:1fr}}
+.ssec{background:#0d1117;border:1px solid #1e3a5f;padding:14px}
+.ssec h4{color:#4fc3f7;font-size:10px;letter-spacing:1px;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid #1e3a5f}
+.fg2{margin-bottom:10px}
+.fl{color:#b8d6e5;font-size:10px;display:block;margin-bottom:4px;letter-spacing:1px}
+.fi{background:#060a0f;border:1px solid #1e3a5f;color:#fff;padding:6px 9px;font-family:inherit;font-size:12px;width:100%}
+.rg{display:flex;flex-direction:column;gap:9px}
+.ro{display:flex;align-items:center;gap:7px;color:#b8d6e5;font-size:12px;cursor:pointer}
+.svb{background:#4fc3f7;color:#0a0d12;border:none;padding:7px 20px;font-family:inherit;font-size:11px;font-weight:bold;letter-spacing:1px;cursor:pointer;margin-top:7px}
+.exb{background:#1e3a5f;color:#4fc3f7;border:1px solid #4fc3f7;padding:7px 16px;font-family:inherit;font-size:11px;cursor:pointer;margin-top:4px;letter-spacing:1px}
+.sn{color:#b8d6e5;font-size:11px;line-height:1.7;margin-top:9px}
+
+/* OVERLAY */
+#ov{position:fixed;inset:0;background:rgba(0,0,0,0);pointer-events:none;z-index:200;transition:background .3s}
+#ov.act{pointer-events:all;background:rgba(0,0,0,.78)}
+.spt{position:relative!important;z-index:201!important;box-shadow:0 0 0 9999px rgba(0,0,0,.78),0 0 18px rgba(79,195,247,.2)!important;border-radius:3px}
+
+/* CALLOUT */
+#cal{position:fixed;z-index:300;background:#0d1117;border:1px solid #4fc3f7;padding:18px;width:320px;display:none;max-width:calc(100vw - 20px);box-shadow:0 8px 32px rgba(0,0,0,.6)}
+#cal.vis{display:block}
+.cdots{display:flex;gap:4px;margin-bottom:9px;flex-wrap:wrap}
+.dot{width:6px;height:6px;border-radius:50%;background:#1e3a5f}
+.dot.d{background:#4fc3f7}.dot.c{background:#4fc3f7;box-shadow:0 0 5px #4fc3f7}
+.cst{color:#4fc3f7;font-size:10px;letter-spacing:2px;margin-bottom:5px}
+.cti{color:#fff;font-size:14px;font-weight:bold;margin-bottom:9px}
+.ctx{color:#b8d6e5;font-size:12px;line-height:1.65;margin-bottom:14px}
+.cbtns{display:flex;gap:7px;align-items:center}
+.csk{background:none;border:1px solid #1e3a5f;color:#b8d6e5;padding:5px 10px;cursor:pointer;font-family:inherit;font-size:11px}
+.cbk{background:none;border:1px solid #1e3a5f;color:#b8d6e5;padding:5px 12px;cursor:pointer;font-family:inherit;font-size:11px}
+.cnx{background:#4fc3f7;border:none;color:#0a0d12;padding:5px 16px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:bold;margin-left:auto}
+.cfn{background:#66bb6a;border:none;color:#0a0d12;padding:5px 16px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:bold;margin-left:auto}
+
+/* EXPLORE HINT */
+#hint{position:fixed;bottom:0;left:0;right:0;background:#060a0f;border-top:1px solid #1e3a5f;padding:9px 16px;text-align:center;color:#b8d6e5;font-size:11px;z-index:400;display:none}
+#hint span{color:#4fc3f7}
+
+/* DONE BANNER */
+#done{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:#66bb6a;color:#0a0d12;padding:9px 24px;font-weight:bold;font-size:12px;letter-spacing:1px;z-index:500;display:none;white-space:nowrap;box-shadow:0 4px 18px rgba(102,187,106,.4)}
+
+/* TOOLTIPS */
+.ton [data-tip]{position:relative;cursor:help;outline:1px dashed rgba(79,195,247,.2);outline-offset:2px}
+.ton [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#0d1117;border:1px solid #4fc3f7;color:#b8d6e5;padding:8px 11px;font-size:11px;z-index:500;pointer-events:none;max-width:240px;white-space:normal;line-height:1.55;min-width:130px}
+.ton [data-tip]:hover::before{content:'';position:absolute;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#4fc3f7;z-index:501;pointer-events:none}
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<div id="ws">
+  <div class="wl">CLAUDEBORNE</div>
+  <div class="wb">ELECTRONIC FLIGHT LOGBOOK</div>
+  <div class="wt">How-To Guide</div>
+  <div class="wd">This interactive guide walks you through ClaudeBorne step by step. After the tour, hover over any element to see what it does.</div>
+  <button class="wb1" onclick="startTour()">▶&nbsp; START TOUR</button>
+  <button class="ws2" onclick="skipX()">Skip — explore freely</button>
+</div>
+
+<!-- APP MOCKUP -->
+<div id="app">
+
+  <div id="toolbar" data-tip="Main toolbar: navigate months, select year, open settings.">
+    <span class="tl" data-tip="ClaudeBorne — your secure cloud-synced electronic pilot logbook.">CLAUDEBORNE</span>
+    <div class="tdiv"></div>
+    <div class="mnav" id="mnav" data-tip="Use ◀ ▶ to move between months. Each month stores up to 31 entries.">
+      <button class="marr">◀</button>
+      <span class="mlbl">MAY 2026</span>
+      <button class="marr">▶</button>
+    </div>
+    <select class="ysel" data-tip="Switch between years 2024–2030."><option>2026</option><option>2025</option><option>2024</option></select>
+    <div class="tsp"></div>
+    <button class="tset" data-tip="Open Settings: profile, preferences, export, and changelog.">⚙ SETTINGS</button>
+  </div>
+
+  <div id="tabs">
+    <button class="tbtn act" id="t-logbook" data-tab="logbook" data-tip="Logbook: enter and view flight entries for the selected month.">LOGBOOK</button>
+    <button class="tbtn" id="t-summary" data-tab="summary" data-tip="Summary: monthly totals and HOC breakdown.">SUMMARY</button>
+    <button class="tbtn" id="t-limits" data-tab="limits" data-tip="Limits & Recency: track regulatory flying limits under CAD 1901.">LIMITS &amp; RECENCY</button>
+    <button class="tbtn" id="t-settings" data-tab="settings" data-tip="Settings: pilot profile, HOC default, day/night method, export.">SETTINGS</button>
+  </div>
+
+  <!-- LOGBOOK -->
+  <div id="tab-logbook" class="tc act">
+    <div class="sl">MAY 2026 — FLIGHT LOG</div>
+    <div class="scr">
+    <table class="lt" id="log-table" data-tip="Your monthly flight log — one row per flight sector.">
+      <thead><tr>
+        <th>#</th>
+        <th data-tip="Day of month (DD). Month/year set from toolbar.">DATE</th>
+        <th data-tip="Departure airport — 4-letter ICAO code (e.g. WMKK = KL Intl)">DEP</th>
+        <th data-tip="Arrival airport — 4-letter ICAO code">ARR</th>
+        <th data-tip="Block time in HH:MM — total time off-blocks to on-blocks">BLK</th>
+        <th data-tip="Day hours — auto-calculated using sunrise data for the departure airport">DAY</th>
+        <th data-tip="Night hours — auto-calculated. Night = 20 min after sunset to 20 min before sunrise (CAD-6)">NIGHT</th>
+        <th data-tip="HOC: P1=Captain, P2=First Officer, P1 U/S=Captain Under Supervision">HOC</th>
+        <th data-tip="Free-text remarks — route, conditions, notes">REMARKS</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>1</td><td>01</td>
+          <td><input class="inp" value="WMKK" style="width:54px" data-tip="Type the 4-letter ICAO departure code"></td>
+          <td><input class="inp" value="WMBT" style="width:54px"></td>
+          <td><input class="inp" value="1:15" style="width:44px" data-tip="Block time in HH:MM — Day/Night is auto-calculated from this"></td>
+          <td class="dt">0:45</td><td class="nt">0:30</td>
+          <td id="hd1"><span class="hb hp1" data-tip="P1 = Captain. Click to change your role for this sector.">P1</span></td>
+          <td><input class="inp" value="KL–KT VFR ops" style="width:130px"></td>
+        </tr>
+        <tr>
+          <td>2</td><td>03</td>
+          <td><input class="inp" value="WMBT" style="width:54px"></td><td><input class="inp" value="WMKP" style="width:54px"></td>
+          <td><input class="inp" value="0:45" style="width:44px"></td>
+          <td class="dt">0:45</td><td class="nt">0:00</td>
+          <td><span class="hb hp1">P1</span></td>
+          <td><input class="inp" value="KT–PG day sector" style="width:130px"></td>
+        </tr>
+        <tr id="rn">
+          <td>3</td><td>05</td>
+          <td><input class="inp" value="WMKP" style="width:54px" data-tip="DEP airport ICAO is used to look up sunrise/sunset for this location"></td>
+          <td><input class="inp" value="WMKK" style="width:54px"></td>
+          <td><input class="inp" value="2:10" style="width:44px"></td>
+          <td class="dt">0:00</td><td class="nt">2:10</td>
+          <td><span class="hb hp2" data-tip="P2 = First Officer on this sector">P2</span></td>
+          <td><input class="inp" value="PG–KL full night dep" style="width:130px"></td>
+        </tr>
+        <tr>
+          <td>4</td><td>07</td>
+          <td><input class="inp" value="WMKK" style="width:54px"></td><td><input class="inp" value="WBKK" style="width:54px"></td>
+          <td><input class="inp" value="1:45" style="width:44px"></td>
+          <td class="dt">1:00</td><td class="nt">0:45</td>
+          <td><span class="hb hpu" data-tip="P1 U/S = Captain Under Supervision — used for training flights">P1 U/S</span></td>
+          <td><input class="inp" value="KL–KCH route check" style="width:130px"></td>
+        </tr>
+        <tr>
+          <td>5</td><td>09</td>
+          <td><input class="inp" value="WBKK" style="width:54px"></td><td><input class="inp" value="WMKK" style="width:54px"></td>
+          <td><input class="inp" value="1:50" style="width:44px"></td>
+          <td class="dt">1:50</td><td class="nt">0:00</td>
+          <td><span class="hb hp1">P1</span></td>
+          <td><input class="inp" value="KCH–KL return" style="width:130px"></td>
+        </tr>
+        <tr>
+          <td>6</td><td>12</td>
+          <td><input class="inp" value="WMKK" style="width:54px"></td><td><input class="inp" value="WSSS" style="width:54px"></td>
+          <td><input class="inp" value="0:50" style="width:44px"></td>
+          <td class="dt">0:30</td><td class="nt">0:20</td>
+          <td><span class="hb hp1">P1</span></td>
+          <td><input class="inp" value="KL–SIN evening" style="width:130px"></td>
+        </tr>
+        <tr>
+          <td>7</td><td>14</td>
+          <td><input class="inp" value="WSSS" style="width:54px"></td><td><input class="inp" value="WMKK" style="width:54px"></td>
+          <td><input class="inp" value="0:55" style="width:44px"></td>
+          <td class="dt">0:55</td><td class="nt">0:00</td>
+          <td><span class="hb hp2">P2</span></td>
+          <td><input class="inp" value="SIN–KL return" style="width:130px"></td>
+        </tr>
+        <tr>
+          <td>8</td><td>16</td>
+          <td><input class="inp" value="WMKK" style="width:54px"></td><td><input class="inp" value="VTBD" style="width:54px"></td>
+          <td><input class="inp" value="2:25" style="width:44px"></td>
+          <td class="dt">2:25</td><td class="nt">0:00</td>
+          <td><span class="hb hp1">P1</span></td>
+          <td><input class="inp" value="KL–BKK daytime" style="width:130px"></td>
+        </tr>
+        <tr id="tr" class="tr2" data-tip="Monthly totals — auto-summed from all entries. Feeds into Summary and Limits tabs.">
+          <td colspan="4" style="text-align:right;color:#b8d6e5;font-weight:normal;font-size:11px">MONTHLY TOTAL</td>
+          <td>11:55</td><td>08:10</td><td>03:45</td><td colspan="2"></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="lnote">Rows 9–31 available · Day/Night auto-calculated from DEP airport sunrise/sunset data</p>
+  </div>
+
+  <!-- SUMMARY -->
+  <div id="tab-summary" class="tc">
+    <div class="sl">MAY 2026 — FLIGHT SUMMARY</div>
+    <div class="sc-grid">
+      <div class="scard" data-tip="Total block hours for the month — all sectors combined.">
+        <div class="sclbl">TOTAL BLOCK</div>
+        <div class="scval" style="color:#4fc3f7">11:55</div>
+        <div class="scsub">8 flights logged</div>
+      </div>
+      <div class="scard" data-tip="Total daytime hours — auto-calculated from sunrise/sunset.">
+        <div class="sclbl">DAY HOURS</div>
+        <div class="scval" style="color:#e0e0e0">08:10</div>
+        <div class="scsub">68% of block time</div>
+      </div>
+      <div class="scard" data-tip="Total night hours — 20 min after sunset to 20 min before sunrise (CAD-6).">
+        <div class="sclbl">NIGHT HOURS</div>
+        <div class="scval" style="color:#4fc3f7">03:45</div>
+        <div class="scsub">32% of block time</div>
+      </div>
+    </div>
+    <div class="stbl" data-tip="Hours broken down by role. Used for regulatory reporting.">
+      <h4>HOC BREAKDOWN — MAY 2026</h4>
+      <div class="brow"><span>Captain (P1)</span><span class="bv" style="color:#4fc3f7">07:20</span></div>
+      <div class="brow"><span>First Officer (P2)</span><span class="bv" style="color:#b8d6e5">03:00</span></div>
+      <div class="brow"><span>Captain U/S (P1 U/S)</span><span class="bv" style="color:#66bb6a">01:35</span></div>
+      <div class="brow" style="border-top:1px solid #1e3a5f;padding-top:9px;margin-top:3px"><span style="color:#4fc3f7">TOTAL</span><span class="bv" style="color:#4fc3f7;font-weight:bold">11:55</span></div>
+    </div>
+    <div class="stbl" data-tip="Cumulative totals from January to current month — helps track against annual limits.">
+      <h4>YEAR TO DATE — JAN–MAY 2026</h4>
+      <div class="brow"><span>Total Block</span><span class="bv">142:30</span></div>
+      <div class="brow"><span>Day Hours</span><span class="bv">98:15</span></div>
+      <div class="brow"><span>Night Hours</span><span class="bv">44:15</span></div>
+      <div class="brow"><span>P1 Total</span><span class="bv" style="color:#4fc3f7">89:40</span></div>
+      <div class="brow"><span>P2 Total</span><span class="bv" style="color:#b8d6e5">41:10</span></div>
+      <div class="brow"><span>P1 U/S Total</span><span class="bv" style="color:#66bb6a">11:40</span></div>
+    </div>
+  </div>
+
+  <!-- LIMITS -->
+  <div id="tab-limits" class="tc">
+    <div class="sl">LIMITS &amp; RECENCY — CAD 1901</div>
+    <div class="dbar" data-tip="Toggle between 3 demo states. In the real app your actual hours determine the state automatically.">
+      <span class="dlbl">DEMO:</span>
+      <button class="sb sg" id="bg" onclick="setLS('good')">✓ ALL GOOD</button>
+      <button class="sb" id="ba" onclick="setLS('approaching')">⚠ APPROACHING</button>
+      <button class="sb" id="br" onclick="setLS('exceeded')">✕ EXCEEDED</button>
+    </div>
+
+    <!-- GREEN -->
+    <div id="lg" class="ls act">
+      <div class="lbn g">✓ ALL LIMITS WITHIN BOUNDS — NO RESTRICTIONS APPLY</div>
+      <div class="lsec" data-tip="Flight time limits under CAD 1901 — hard regulatory caps on flying hours.">
+        <h4>FLIGHT TIME LIMITS</h4>
+        <div class="li" data-tip="28-day rolling total — max 100 hours in any 28 consecutive days."><div class="lhdr"><span class="ll">28-DAY ROLLING</span><span class="lv" style="color:#66bb6a">42:30 / 100:00 <span class="bdg bok">OK</span></span></div><div class="pb"><div class="pf fg" style="width:42.5%"></div></div><div class="ln">42.5% used — 57:30 remaining</div></div>
+        <div class="li" data-tip="12-month rolling total — max 900 hours in any 12 consecutive months."><div class="lhdr"><span class="ll">12-MONTH ROLLING</span><span class="lv" style="color:#66bb6a">312:00 / 900:00 <span class="bdg bok">OK</span></span></div><div class="pb"><div class="pf fg" style="width:34.7%"></div></div><div class="ln">34.7% used — 588:00 remaining</div></div>
+      </div>
+      <div class="lsec" data-tip="Duty hour limits — total time on duty (report-in to release), not just flying time.">
+        <h4>DUTY HOUR LIMITS</h4>
+        <div class="li"><div class="lhdr"><span class="ll">7-DAY DUTY</span><span class="lv" style="color:#66bb6a">28:00 / 55:00 <span class="bdg bok">OK</span></span></div><div class="pb"><div class="pf fg" style="width:50.9%"></div></div><div class="ln">50.9% used</div></div>
+        <div class="li"><div class="lhdr"><span class="ll">14-DAY DUTY</span><span class="lv" style="color:#66bb6a">52:00 / 95:00 <span class="bdg bok">OK</span></span></div><div class="pb"><div class="pf fg" style="width:54.7%"></div></div><div class="ln">54.7% used</div></div>
+        <div class="li"><div class="lhdr"><span class="ll">28-DAY DUTY</span><span class="lv" style="color:#66bb6a">98:00 / 190:00 <span class="bdg bok">OK</span></span></div><div class="pb"><div class="pf fg" style="width:51.6%"></div></div><div class="ln">51.6% used</div></div>
+      </div>
+      <div class="lsec" data-tip="Recency: minimum landings needed to stay legally current as PIC or SIC.">
+        <h4>RECENCY</h4>
+        <div class="li" data-tip="Night recency: 3 night landings required in the past 90 days."><div class="lhdr"><span class="ll">NIGHT RECENCY (3 landings / 90 days)</span><span class="lv" style="color:#66bb6a">3/3 <span class="bdg bok">CURRENT</span></span></div><div class="pb"><div class="pf fg" style="width:100%"></div></div><div class="ln">Last night landing: 09 MAY 2026</div></div>
+        <div class="li"><div class="lhdr"><span class="ll">DAY RECENCY (3 landings / 90 days)</span><span class="lv" style="color:#66bb6a">6/3 <span class="bdg bok">CURRENT</span></span></div><div class="pb"><div class="pf fg" style="width:100%"></div></div><div class="ln">Last day landing: 16 MAY 2026</div></div>
+      </div>
+    </div>
+
+    <!-- AMBER -->
+    <div id="la" class="ls">
+      <div class="lbn a">⚠ APPROACHING LIMITS — MONITOR CAREFULLY. CONSIDER REDUCING FLYING.</div>
+      <div class="lsec">
+        <h4>FLIGHT TIME LIMITS</h4>
+        <div class="li"><div class="lhdr"><span class="ll">28-DAY ROLLING</span><span class="lv" style="color:#ffa726">83:45 / 100:00 <span class="bdg bwn">WARN</span></span></div><div class="pb"><div class="pf fa" style="width:83.75%"></div></div><div class="ln">83.7% used — only 16:15 remaining</div></div>
+        <div class="li"><div class="lhdr"><span class="ll">12-MONTH ROLLING</span><span class="lv" style="color:#ffa726">781:00 / 900:00 <span class="bdg bwn">WARN</span></span></div><div class="pb"><div class="pf fa" style="width:86.8%"></div></div><div class="ln">86.8% used — 119:00 remaining for the year</div></div>
+      </div>
+      <div class="lsec">
+        <h4>DUTY HOUR LIMITS</h4>
+        <div class="li"><div class="lhdr"><span class="ll">7-DAY DUTY</span><span class="lv" style="color:#ffa726">47:30 / 55:00 <span class="bdg bwn">WARN</span></span></div><div class="pb"><div class="pf fa" style="width:86.4%"></div></div><div class="ln">86.4% used — 7:30 remaining</div></div>
+        <div class="li"><div class="lhdr"><span class="ll">14-DAY DUTY</span><span class="lv" style="color:#66bb6a">71:00 / 95:00 <span class="bdg bok">OK</span></span></div><div class="pb"><div class="pf fg" style="width:74.7%"></div></div><div class="ln">74.7% used</div></div>
+        <div class="li"><div class="lhdr"><span class="ll">28-DAY DUTY</span><span class="lv" style="color:#ffa726">161:00 / 190:00 <span class="bdg bwn">WARN</span></span></div><div class="pb"><div class="pf fa" style="width:84.7%"></div></div><div class="ln">84.7% used — 29:00 remaining</div></div>
+      </div>
+      <div class="lsec">
+        <h4>RECENCY</h4>
+        <div class="li"><div class="lhdr"><span class="ll">NIGHT RECENCY (3 / 90 days)</span><span class="lv" style="color:#ffa726">3/3 <span class="bdg bwn">EXPIRING</span></span></div><div class="pb"><div class="pf fa" style="width:100%"></div></div><div class="ln">⚠ Last night landing: 15 FEB 2026 — expires in 12 days</div></div>
+        <div class="li"><div class="lhdr"><span class="ll">DAY RECENCY (3 / 90 days)</span><span class="lv" style="color:#66bb6a">4/3 <span class="bdg bok">CURRENT</span></span></div><div class="pb"><div class="pf fg" style="width:100%"></div></div><div class="ln">Last day landing: 16 MAY 2026</div></div>
+      </div>
+    </div>
+
+    <!-- RED -->
+    <div id="lr" class="ls">
+      <div class="lbn r">✕ LIMITS EXCEEDED — GROUNDED. CONTACT OPERATIONS IMMEDIATELY.</div>
+      <div class="lsec">
+        <h4>FLIGHT TIME LIMITS</h4>
+        <div class="li"><div class="lhdr"><span class="ll">28-DAY ROLLING</span><span class="lv" style="color:#ef5350">107:15 / 100:00 <span class="bdg bex">EXCEEDED</span></span></div><div class="pb"><div class="pf fr" style="width:100%"></div></div><div class="ln r">Exceeded by 7:15 — flying not permitted until limit resets</div></div>
+        <div class="li"><div class="lhdr"><span class="ll">12-MONTH ROLLING</span><span class="lv" style="color:#ef5350">912:00 / 900:00 <span class="bdg bex">EXCEEDED</span></span></div><div class="pb"><div class="pf fr" style="width:100%"></div></div><div class="ln r">Exceeded by 12:00 — annual limit reached</div></div>
+      </div>
+      <div class="lsec">
+        <h4>DUTY HOUR LIMITS</h4>
+        <div class="li"><div class="lhdr"><span class="ll">7-DAY DUTY</span><span class="lv" style="color:#ef5350">61:30 / 55:00 <span class="bdg bex">EXCEEDED</span></span></div><div class="pb"><div class="pf fr" style="width:100%"></div></div><div class="ln r">Exceeded by 6:30</div></div>
+        <div class="li"><div class="lhdr"><span class="ll">14-DAY DUTY</span><span class="lv" style="color:#ef5350">98:30 / 95:00 <span class="bdg bex">EXCEEDED</span></span></div><div class="pb"><div class="pf fr" style="width:100%"></div></div><div class="ln r">Exceeded by 3:30</div></div>
+        <div class="li"><div class="lhdr"><span class="ll">28-DAY DUTY</span><span class="lv" style="color:#ffa726">172:00 / 190:00 <span class="bdg bwn">WARN</span></span></div><div class="pb"><div class="pf fa" style="width:90.5%"></div></div><div class="ln">90.5% used — 18:00 remaining</div></div>
+      </div>
+      <div class="lsec">
+        <h4>RECENCY</h4>
+        <div class="li"><div class="lhdr"><span class="ll">NIGHT RECENCY (3 / 90 days)</span><span class="lv" style="color:#ef5350">1/3 <span class="bdg bex">NOT CURRENT</span></span></div><div class="pb"><div class="pf fr" style="width:33%"></div></div><div class="ln r">Last night landing: 10 FEB 2026 — 90-day window expired</div></div>
+        <div class="li"><div class="lhdr"><span class="ll">DAY RECENCY (3 / 90 days)</span><span class="lv" style="color:#66bb6a">5/3 <span class="bdg bok">CURRENT</span></span></div><div class="pb"><div class="pf fg" style="width:100%"></div></div><div class="ln">Last day landing: 16 MAY 2026</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="tab-settings" class="tc">
+    <div class="sl">SETTINGS &amp; PROFILE</div>
+    <div class="sgrid">
+      <div class="ssec" id="sp" data-tip="Pilot profile: name, licence, and employer appear on exports and reports.">
+        <h4>PILOT PROFILE</h4>
+        <div class="fg2"><label class="fl">FULL NAME</label><input class="fi" value="Captain Amir Rashid"></div>
+        <div class="fg2"><label class="fl">LICENCE NUMBER</label><input class="fi" value="CPL/IR-MY-12345"></div>
+        <div class="fg2"><label class="fl">EMPLOYER / OPERATOR</label><input class="fi" value="Malaysia Airlines Berhad"></div>
+        <button class="svb">SAVE PROFILE</button>
+      </div>
+      <div class="ssec" data-tip="Default HOC: pre-selected each time you start a new entry row.">
+        <h4>DEFAULT HOC</h4>
+        <div class="rg">
+          <label class="ro"><input type="radio" name="hoc" checked> P1 — Captain in command</label>
+          <label class="ro"><input type="radio" name="hoc"> P2 — First Officer</label>
+          <label class="ro"><input type="radio" name="hoc"> P1 U/S — Captain under supervision</label>
+        </div>
+      </div>
+      <div class="ssec" data-tip="Dynamic mode uses real sunrise/sunset data — more accurate for any timezone. Fixed uses a UTC time window.">
+        <h4>DAY / NIGHT METHOD</h4>
+        <div class="rg">
+          <label class="ro"><input type="radio" name="dn" checked> Dynamic (CAD-6 Part 1) — recommended</label>
+          <label class="ro"><input type="radio" name="dn"> Fixed (23:30–11:30 UTC)</label>
+        </div>
+        <div class="sn">Dynamic uses sunrise/sunset at DEP airport. Use Fixed if airport ICAO is not found in the database.</div>
+      </div>
+      <div class="ssec" data-tip="Export your entire logbook to Excel for backup or printing. All years and months included.">
+        <h4>EXPORT &amp; BACKUP</h4>
+        <div class="sn" style="margin-bottom:12px">Download your complete logbook as .xlsx. All months and years (2024–2030) in one file.</div>
+        <button class="exb">⬇ EXPORT TO EXCEL (.xlsx)</button>
+        <div class="sn" style="margin-top:9px">Includes all entries, totals, and HOC breakdown per month.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end app -->
+
+<div id="ov"></div>
+
+<div id="cal">
+  <div class="cdots" id="cdots"></div>
+  <div class="cst" id="cst">STEP 1 OF 13</div>
+  <div class="cti" id="cti">Welcome</div>
+  <div class="ctx" id="ctx"></div>
+  <div class="cbtns">
+    <button class="csk" onclick="skipTour()">Skip</button>
+    <button class="cbk" id="cbk" onclick="prevS()">← Back</button>
+    <button class="cnx" id="cnx" onclick="nextS()">Next →</button>
+  </div>
+</div>
+
+<div id="done">✓ TOUR COMPLETE — Hover any element to learn more</div>
+<div id="hint"><span>FREE EXPLORE MODE</span> — Hover over any highlighted element to see what it does. Tap the tabs to explore sections.</div>
+
+<script>
+const S=[
+  {ti:'Welcome to ClaudeBorne',tx:'This guided tour walks you through the main features of your electronic pilot logbook. Use Next and Back to navigate, or Skip to explore freely.',el:null,tab:null,ls:null,p:'c'},
+  {ti:'Navigation Toolbar',tx:'The toolbar is your main control. Use ◀ ▶ to move between months — each month holds up to 31 flight entries. The year dropdown covers 2024–2030.',el:'#toolbar',tab:'logbook',ls:null,p:'b'},
+  {ti:'Main Navigation Tabs',tx:'ClaudeBorne has four sections: Logbook (enter flights), Summary (monthly totals), Limits & Recency (regulatory tracking), and Settings (your profile and preferences).',el:'#tabs',tab:'logbook',ls:null,p:'b'},
+  {ti:'Your Flight Log',tx:'Each row is one flight sector. Fill in the date, departure ICAO, arrival ICAO, and block time (HH:MM). Day and Night hours are calculated for you automatically.',el:'#log-table',tab:'logbook',ls:null,p:'b'},
+  {ti:'HOC — Your Pilot Role',tx:'The HOC (Holder Operating Capacity) records your role: P1 for Captain, P2 for First Officer, or P1 U/S for Captain Under Supervision. This drives your regulatory hour totals.',el:'#hd1',tab:'logbook',ls:null,p:'r'},
+  {ti:'Auto Day / Night Split',tx:'Row 3 flew entirely after sunset — ClaudeBorne calculated 2:10 night and 0:00 day automatically. It uses real sunrise/sunset data for the departure airport, accurate worldwide.',el:'#rn',tab:'logbook',ls:null,p:'t'},
+  {ti:'Monthly Totals',tx:'The TOTAL row sums all your entries for the month — total block, day, and night hours. These figures flow automatically into the Summary and Limits & Recency tabs.',el:'#tr',tab:'logbook',ls:null,p:'t'},
+  {ti:'Flight Summary',tx:'The Summary tab shows your monthly hours at a glance: total block, day/night split, and a breakdown by role (P1/P2/P1 U/S). Year to Date tracks cumulative hours from January.',el:'#tab-summary',tab:'summary',ls:null,p:'r'},
+  {ti:'Limits & Recency',tx:'This tab tracks your regulatory limits under CAD 1901. Progress bars show how much of each limit has been used. Three possible states exist — use the demo buttons to explore them.',el:'#tab-limits',tab:'limits',ls:null,p:'r'},
+  {ti:'State: All Good ✓',tx:'Green bars mean all limits are well within bounds. No restrictions apply. This is the normal state for a pilot mid-roster with typical monthly hours.',el:'#lg',tab:'limits',ls:'good',p:'r'},
+  {ti:'State: Approaching ⚠',tx:'Amber bars (75–90% used) warn that a limit is approaching. You can still fly, but should plan ahead and reduce hours if possible. Check if night recency is expiring.',el:'#la',tab:'limits',ls:'approaching',p:'r'},
+  {ti:'State: Exceeded ✕',tx:'Red means a limit has been breached. You are grounded for that limit type. The logbook shows exactly which limits are exceeded and by how much. Contact operations immediately.',el:'#lr',tab:'limits',ls:'exceeded',p:'r'},
+  {ti:'Settings & Profile',tx:'Set up your pilot profile (name, licence, employer), default HOC role, and day/night calculation method. Export your full logbook to Excel for backup or printing.',el:'#tab-settings',tab:'settings',ls:null,p:'r'}
+];
+
+let cur=0,go=false;
+
+function startTour(){document.getElementById('ws').classList.add('h');go=true;show(0)}
+function skipX(){document.getElementById('ws').classList.add('h');explore()}
+
+function show(i){
+  const s=S[i];
+  if(s.tab)_tab(s.tab);
+  if(s.ls)setLS(s.ls);
+  document.querySelectorAll('.spt').forEach(e=>e.classList.remove('spt'));
+  const ov=document.getElementById('ov');
+  if(s.el){const el=document.querySelector(s.el);if(el){el.classList.add('spt');ov.classList.add('act');setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),60)}}
+  else ov.classList.remove('act');
+  const c=document.getElementById('cal');c.classList.add('vis');
+  document.getElementById('cst').textContent=`STEP ${i+1} OF ${S.length}`;
+  document.getElementById('cti').textContent=s.ti;
+  document.getElementById('ctx').textContent=s.tx;
+  document.getElementById('cdots').innerHTML=S.map((_,j)=>`<div class="dot${j<i?' d':j===i?' c':''}"></div>`).join('');
+  document.getElementById('cbk').style.visibility=i===0?'hidden':'visible';
+  const bn=document.getElementById('cnx');
+  bn.textContent=i===S.length-1?'Finish ✓':'Next →';
+  bn.className=i===S.length-1?'cfn':'cnx';
+  posC(s);cur=i;
+}
+
+function posC(s){
+  const c=document.getElementById('cal'),cw=320,ch=220,mg=12;
+  c.style.transform='none';
+  if(s.p==='c'||!s.el){c.style.transform='translate(-50%,-50%)';c.style.top='50%';c.style.left='50%';return}
+  const el=document.querySelector(s.el);
+  if(!el){c.style.top='50%';c.style.left='50%';c.style.transform='translate(-50%,-50%)';return}
+  const r=el.getBoundingClientRect(),ww=window.innerWidth,wh=window.innerHeight;
+  if(s.p==='b'){c.style.top=Math.min(r.bottom+mg,wh-ch-8)+'px';c.style.left=Math.max(8,Math.min(r.left,ww-cw-8))+'px'}
+  else if(s.p==='t'){c.style.top=Math.max(8,r.top-ch-mg)+'px';c.style.left=Math.max(8,Math.min(r.left,ww-cw-8))+'px'}
+  else if(s.p==='r'){c.style.top=Math.max(8,Math.min(r.top,wh-ch-8))+'px';c.style.left=Math.min(r.right+mg,ww-cw-8)+'px'}
+  else{c.style.top=Math.max(8,Math.min(r.top,wh-ch-8))+'px';c.style.left=Math.max(8,r.left-cw-mg)+'px'}
+}
+
+function nextS(){if(cur>=S.length-1){endT();return}show(cur+1)}
+function prevS(){if(cur>0)show(cur-1)}
+function skipTour(){endT()}
+
+function endT(){
+  go=false;
+  document.querySelector('.spt')?.classList.remove('spt');
+  document.getElementById('ov').classList.remove('act');
+  document.getElementById('cal').classList.remove('vis');
+  const d=document.getElementById('done');d.style.display='block';
+  setTimeout(()=>d.style.display='none',4000);
+  explore();
+}
+
+function explore(){
+  document.getElementById('app').classList.add('ton');
+  document.getElementById('hint').style.display='block';
+}
+
+function _tab(n){
+  document.querySelectorAll('.tc').forEach(t=>t.classList.remove('act'));
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('act'));
+  document.getElementById('tab-'+n).classList.add('act');
+  document.getElementById('t-'+n).classList.add('act');
+}
+
+document.querySelectorAll('.tbtn').forEach(b=>{
+  b.addEventListener('click',function(){if(go)return;_tab(this.getAttribute('data-tab'))});
+});
+
+function setLS(s){
+  document.querySelectorAll('.ls').forEach(e=>e.classList.remove('act'));
+  document.getElementById('l'+s[0]).classList.add('act');
+  document.querySelectorAll('.sb').forEach(b=>b.className='sb');
+  const m={good:'sg',approaching:'sa',exceeded:'sr'},im={good:'bg',approaching:'ba',exceeded:'br'};
+  document.getElementById(im[s]).classList.add(m[s]);
+}
+
+document.getElementById('ov').addEventListener('click',e=>e.stopPropagation());
+</script>
+</body>
+</html>
