@@ -53,18 +53,28 @@ function App() {
 
     if (showOnboarding === false) {
       // Auth succeeded and user navigated to logbook, clear overlay
+      console.log('Safety timeout: auth success confirmed, clearing overlay')
       setShowLoadingOverlay(false)
       authSuccessRef.current = false
       return
     }
 
     // Auth succeeded but still on onboarding, start countdown
+    console.log('Safety timeout: showing overlay, starting 3-second countdown', {
+      userEmail: user?.email,
+      showOnboarding
+    })
     setShowLoadingOverlay(true)
     const timer = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
           // 3 seconds elapsed, refresh if still on onboarding
-          console.warn('Safety timeout: forcing page refresh')
+          console.warn('Safety timeout: forcing page refresh', {
+            showOnboarding,
+            authSuccessRef: authSuccessRef.current,
+            userEmail: user?.email,
+            isLoading: authLoading
+          })
           window.location.reload()
           return 0
         }
