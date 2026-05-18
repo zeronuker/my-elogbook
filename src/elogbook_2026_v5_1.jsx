@@ -82,7 +82,6 @@ function parseHHMM(val) {
     if (parts.length === 2) {
       const h = parseInt(parts[0]) || 0;
       const m = parseInt(parts[1]) || 0;
-      if (h >= 24 || m >= 60) return 0;
       return h * 60 + m;
     }
   }
@@ -93,7 +92,6 @@ function parseHHMM(val) {
     // Last 2 digits are minutes, rest are hours
     const h = parseInt(digitsOnly.slice(0, -2)) || 0;
     const m = parseInt(digitsOnly.slice(-2)) || 0;
-    if (h >= 24 || m >= 60) return 0;
     return h * 60 + m;
   } else if (digitsOnly.length === 2) {
     // 2 digits: could be HH or MM, assume MM
@@ -696,6 +694,11 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
           } else if (digitsOnly.length === 1) {
             normalizedValue = `0${digitsOnly}:00`;
           }
+        }
+        // Reject impossible flight times (hours >= 24 or minutes >= 60)
+        if (normalizedValue?.includes(":")) {
+          const [hh, mm] = normalizedValue.split(":").map(Number);
+          if (hh >= 24 || mm >= 60) normalizedValue = "";
         }
       }
       const newRows = current.map((r, i) =>
