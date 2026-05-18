@@ -453,7 +453,7 @@ export default function ELogbook2026({ onLogout }) {
     const handleImportComplete = (e) => {
       const { monthData: importedData, addedCount } = e.detail;
       setData(importedData);
-      saveData();
+      saveData(importedData);
     };
     window.addEventListener("importComplete", handleImportComplete);
     return () => window.removeEventListener("importComplete", handleImportComplete);
@@ -538,14 +538,15 @@ export default function ELogbook2026({ onLogout }) {
   };
 
   // ── Save data to Firestore ──
-  const saveData = async () => {
+  const saveData = async (dataOverride) => {
     if (!user) return;
     setSaveStatus("saving");
     try {
       // Regenerate IDs sequentially for each month to prevent duplicates
       const cleanData = {};
-      Object.keys(data).forEach(monthKey => {
-        cleanData[monthKey] = data[monthKey].map((row, idx) => ({
+      const dataToSave = dataOverride || data;
+      Object.keys(dataToSave).forEach(monthKey => {
+        cleanData[monthKey] = dataToSave[monthKey].map((row, idx) => ({
           ...row,
           id: idx + 1, // Ensure IDs are 1, 2, 3, ... in order
         }));
