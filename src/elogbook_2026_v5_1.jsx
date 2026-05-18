@@ -940,7 +940,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       const t = (row.type || "").trim().toUpperCase();
       if (!t) return;
       if (!gtByType[t]) gtByType[t] = { dayP1:0, dayP1US:0, dayP2:0, nightP1:0, nightP1US:0, nightP2:0 };
-      const ft = calcFlightTimes(row);
+      const ft = calcFlightTimes(row, settings.dayNightMethod, year, month);
       GT_KEYS.forEach(k => { gtByType[t][k] += parseHHMM(ft[k] || ""); });
     });
   });
