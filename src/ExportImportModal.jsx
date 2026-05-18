@@ -52,7 +52,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
         }
       }
     }
-  }, [open, monthData]);
+  }, [open]);
 
   // ESC closes
   useEffect(() => {
