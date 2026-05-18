@@ -124,7 +124,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
         {/* ── HEADER ── */}
         <div className="elb-modal-header">
           <div>
-            <div className="elb-modal-label">eLOGBOOK V5.5 · CONFIGURATION</div>
+            <div className="elb-modal-label">eLOGBOOK V5.6 · CONFIGURATION</div>
             <div className="elb-modal-title">⚙ SETTINGS</div>
           </div>
           <button className="elb-modal-close" onClick={onClose} title="Close">✕</button>
@@ -602,7 +602,33 @@ function MiscTab({ onDeleteAccount }) {
 
           <div className="elb-changelog-entry">
             <div className="elb-changelog-ver">
-              <span className="elb-changelog-tag">V5.5 <span className="elb-tag elb-tag-new">CURRENT</span></span>
+              <span className="elb-changelog-tag">V5.6 <span className="elb-tag elb-tag-new">CURRENT</span></span>
+              <span className="elb-changelog-date">18 MAY 2026</span>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Flight Summary</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Grand total hours table now respects light/dark mode toggle</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Account</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Account deletion now fully removes profile and logbook data from Firestore</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Google users prompted to re-authenticate before account deletion when session is old</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Limits &amp; Recency</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-fix">FIX</span> FTL sector and cutoff date calculations now parse DD/MM/YYYY dates explicitly</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="elb-changelog-entry">
+            <div className="elb-changelog-ver">
+              <span className="elb-changelog-tag">V5.5</span>
               <span className="elb-changelog-date">16 MAY 2026</span>
             </div>
             <div className="elb-changelog-section">
