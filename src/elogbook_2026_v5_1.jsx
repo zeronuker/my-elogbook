@@ -148,6 +148,7 @@ function calcDayNight(std, sta) {
   let staM = toMins(sta);
   if (staM <= stdM) staM += FULL_DAY;
   const totalMins = staM - stdM;
+  if (totalMins > 18 * 60) return { day: 0, night: 0 };
   // Overlap with night window [11:30, 23:30] — handles cross-midnight flights via +FULL_DAY second pass
   let nightMins = 0;
   nightMins += Math.max(0, Math.min(staM, NIGHT_END) - Math.max(stdM, NIGHT_START));
