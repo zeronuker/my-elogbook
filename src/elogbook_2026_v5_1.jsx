@@ -438,15 +438,17 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     return unsub;
   }, []);
 
-  // ── Auto-save every 5 minutes after login ──
+  // ── Auto-save on user-configured interval ──
   useEffect(() => {
     if (!user) return;
+    const intervalMins = Number(settings.autoSaveInterval ?? 5);
+    if (intervalMins === 0) return;
     const interval = setInterval(() => {
       saveData();
-    }, 5 * 60 * 1000);
+    }, intervalMins * 60 * 1000);
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, data]);
+  }, [user, data, settings.autoSaveInterval]);
 
   // ── Handle import — called directly by ExportImportModal ──
   const handleImport = async (importedData) => {
@@ -1317,11 +1319,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               fontSize: 12,
               color: "#7ab8d4",
               display: "flex",
-              alignItems: "center",
+              alignItems: "flex-start",
               gap: 10,
-              overflow: "hidden",
             }}>
-              <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ lineHeight: 1.6 }}>
                 <span style={{ color: "#4fc3f7", fontWeight: 700 }}>
                   {MONTHS[selectedMonth].toUpperCase()} {selectedYear} —
                 </span>
