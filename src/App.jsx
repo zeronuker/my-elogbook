@@ -24,8 +24,8 @@ function App() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
   const [countdown, setCountdown] = useState(3)
+  const [authSuccess, setAuthSuccess] = useState(false)
   const prevUserRef = useRef(null)
-  const authSuccessRef = useRef(false)
 
   // Listen to auth state
   useEffect(() => {
@@ -49,13 +49,13 @@ function App() {
 
   // Safety timeout: if auth succeeded but showOnboarding didn't update after 3 sec, refresh
   useEffect(() => {
-    if (!authSuccessRef.current || !user) return
+    if (!authSuccess || !user) return
 
     if (showOnboarding === false) {
       // Auth succeeded and user navigated to logbook, clear overlay
       console.log('Safety timeout: auth success confirmed, clearing overlay')
       setShowLoadingOverlay(false)
-      authSuccessRef.current = false
+      setAuthSuccess(false)
       return
     }
 
@@ -71,7 +71,6 @@ function App() {
           // 3 seconds elapsed, refresh if still on onboarding
           console.warn('Safety timeout: forcing page refresh', {
             showOnboarding,
-            authSuccessRef: authSuccessRef.current,
             userEmail: user?.email,
             isLoading: authLoading
           })
@@ -83,7 +82,7 @@ function App() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [user, showOnboarding, authSuccessRef.current])
+  }, [user, showOnboarding, authSuccess])
 
   // Check profile and set onboarding state (waits for profile before deciding)
   useEffect(() => {
@@ -192,7 +191,7 @@ function App() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      authSuccessRef.current = true
+      setAuthSuccess(true)
       setCountdown(3)
       // Auth listener will handle user state and navigation
       setIsSigningUp(false)
@@ -252,7 +251,7 @@ function App() {
         setUser(googleUser)
         if (isComplete) {
           // Skip onboarding for existing users
-          authSuccessRef.current = true
+          setAuthSuccess(true)
           setCountdown(3)
           // Profile check effect will set showOnboarding(false) based on profile data
         }
@@ -283,14 +282,12 @@ function App() {
           },
           { merge: true }
         )
-        // Trigger safety timeout before navigation
-        authSuccessRef.current = true
-        setCountdown(3)
-        // Explicitly trigger onboarding complete state
-        setShowOnboarding(false)
       }
     } catch (err) {
       console.error('Error completing onboarding:', err)
+    } finally {
+      // Always navigate to logbook regardless of Firestore write result
+      setShowOnboarding(false)
     }
   }
 
