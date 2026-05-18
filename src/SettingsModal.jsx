@@ -1061,13 +1061,15 @@ const settingsCss = `
   .elb-required{color:#ef4444;margin-left:2px;}
   .elb-form-input{
     background:var(--elb-bginput,#0b1828);border:1px solid #1a3050;color:#c8d6e5;
-    font-family:inherit;font-size:1em;padding:7px 10px;border-radius:3px;
+    font-family:inherit;font-size:1em;padding:0 10px;border-radius:3px;
     transition:border-color 0.15s;outline:none;width:100%;
+    height:34px;box-sizing:border-box;line-height:34px;
   }
   .elb-form-input:focus{border-color:#4fc3f7;}
   .elb-form-input:disabled{opacity:0.45;cursor:not-allowed;}
   .elb-form-input::placeholder{color:#4a6a8a;}
-  input[type="number"].elb-form-input{max-width:120px;margin:0 auto;display:block;}
+  input[type="date"].elb-form-input{line-height:normal;display:flex;align-items:center;}
+  input[type="number"].elb-form-input{max-width:120px;margin:0 auto;display:block;line-height:normal;}
   .elb-form-row.single .elb-form-input{max-width:280px;text-align:left;}
   .elb-form-hint{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);letter-spacing:0.04em;margin-top:2px;}
   select.elb-form-input{
