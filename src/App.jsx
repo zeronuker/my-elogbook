@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef } from 'react'
-import { auth, db, functions } from './firebase'
+import { auth, db } from './firebase'
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -7,10 +7,11 @@ import {
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
+  reauthenticateWithPopup,
+  deleteUser,
   sendEmailVerification
 } from 'firebase/auth'
-import { doc, setDoc, getDoc } from 'firebase/firestore'
-import { httpsCallable } from 'firebase/functions'
+import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore'
 import ELogbook2026 from './elogbook_2026_v5_1'
 import OnboardingFlow from './OnboardingFlow'
 import LoadingOverlay from './LoadingOverlay'
@@ -296,16 +297,33 @@ function App() {
     }
   }
 
-  // Delete account and all data
+  // Delete account and all data (client-side, no Cloud Function required)
   const handleDeleteAccount = async () => {
+    if (!user) return
     try {
-      const deleteUserAccount = httpsCallable(functions, 'deleteUserAccount')
-      await deleteUserAccount()
-      // Auth listener will detect logout and handle redirect
-      console.log('Account deletion initiated')
+      // Attempt deletion — may throw requires-recent-login if session is old
+      await deleteDoc(doc(db, 'users', user.uid, 'profile', 'data'))
+      await deleteDoc(doc(db, 'users', user.uid, 'logbook', 'data'))
+      await deleteUser(user)
     } catch (error) {
-      console.error('Account deletion failed:', error)
-      // User stays on page, sees error in settings
+      if (error.code === 'auth/requires-recent-login') {
+        const providerId = user.providerData[0]?.providerId
+        if (providerId === 'google.com') {
+          try {
+            await reauthenticateWithPopup(user, new GoogleAuthProvider())
+            await deleteDoc(doc(db, 'users', user.uid, 'profile', 'data'))
+            await deleteDoc(doc(db, 'users', user.uid, 'logbook', 'data'))
+            await deleteUser(user)
+          } catch (reAuthError) {
+            console.error('Re-authentication failed:', reAuthError)
+          }
+        } else {
+          // Email/password users: prompt to re-login before deleting
+          alert('For security, please sign out and sign back in before deleting your account.')
+        }
+      } else {
+        console.error('Account deletion failed:', error)
+      }
     }
   }
 
