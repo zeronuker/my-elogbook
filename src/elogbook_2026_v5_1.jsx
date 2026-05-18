@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
 import { db, auth, googleProvider } from "./firebase";
-import { signInWithPopup, signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup } from "firebase/auth";
-import { doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
+import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
 
@@ -406,7 +406,7 @@ function makeThemeCss(settings = {}) {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export default function ELogbook2026({ onLogout }) {
+export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -589,34 +589,6 @@ export default function ELogbook2026({ onLogout }) {
     setData(initialData());
   };
 
-  // ── Delete Account ──
-  const deleteAccount = async () => {
-    if (!user) return;
-    // Firebase requires a recent sign-in before sensitive ops; re-authenticate first
-    try {
-      await reauthenticateWithPopup(user, googleProvider);
-    } catch (e) {
-      console.error("Re-authentication failed or cancelled:", e);
-      return;
-    }
-    // Delete all Firestore data
-    try {
-      const ref = doc(db, "users", user.uid, "logbook", "data");
-      await deleteDoc(ref);
-    } catch (e) {
-      console.error("Firestore delete error:", e);
-    }
-    // Delete Firebase Auth account
-    try {
-      await deleteUser(user);
-    } catch (e) {
-      console.error("Auth user delete error:", e);
-    }
-    // Clear local state (auth listener will handle sign-out state)
-    setSettingsOpen(false);
-    setData(initialData());
-    setSettings(DEFAULT_SETTINGS);
-  };
 
   // ── Loading screen ──
   // Inject theme CSS vars early so loading/login screens are also themed
@@ -2447,7 +2419,7 @@ export default function ELogbook2026({ onLogout }) {
         settings={settings}
         onSave={saveSettings}
         userEmail={user?.email}
-        onDeleteAccount={deleteAccount}
+        onDeleteAccount={onDeleteAccount}
       />
 
       {/* ── EXPORT/IMPORT MODAL ── */}
