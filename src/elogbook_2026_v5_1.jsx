@@ -918,7 +918,8 @@ export default function ELogbook2026({ onLogout }) {
     if (isNaN(monthIdx) || isNaN(year)) return;
     rows.forEach(row => {
       if (row.autoland && row.date) {
-        const day = parseInt(row.date);
+        const [dd] = row.date.split('/');
+        const day = parseInt(dd);
         if (!day || day < 1 || day > 31) return;
         const d = new Date(year, monthIdx, day);
         d.setHours(12, 0, 0, 0);
