@@ -27,6 +27,7 @@ export const DEFAULT_SETTINGS = {
   // Preferences
   dateFormat: "D",      // "D" | "DD" | "DD MMM" — display format for DATE column
   rowsPerPage: 15,      // minimum rows shown per month in logbook
+  autoSaveInterval: 5,  // minutes; 0 = disabled
   dayNightMethod: "fixed", // "fixed" | "sunrise"
   useStandardFormula: true,
   preFlightBuffer: 75,
@@ -506,6 +507,18 @@ function PreferencesTab({ d, upd }) {
               <option value={20}>20 rows</option>
               <option value={30}>30 rows</option>
               <option value={50}>50 rows</option>
+            </select>
+          </Field>
+        </div>
+        <div className="elb-form-row">
+          <Field label="AUTO-SAVE INTERVAL" hint="How often your logbook is automatically saved to the cloud">
+            <select className="elb-form-input" value={d.autoSaveInterval ?? 5}
+              onChange={e => upd({ autoSaveInterval: Number(e.target.value) })}>
+              <option value={1}>Every 1 minute</option>
+              <option value={5}>Every 5 minutes (default)</option>
+              <option value={10}>Every 10 minutes</option>
+              <option value={30}>Every 30 minutes</option>
+              <option value={0}>Disabled</option>
             </select>
           </Field>
         </div>
