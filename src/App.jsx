@@ -26,6 +26,7 @@ function App() {
   const [countdown, setCountdown] = useState(3)
   const [authSuccess, setAuthSuccess] = useState(false)
   const prevUserRef = useRef(null)
+  const onboardingDoneRef = useRef(false)
 
   // Listen to auth state
   useEffect(() => {
@@ -98,6 +99,9 @@ function App() {
         const duration = performance.now() - start
         console.log('Profile query took:', duration.toFixed(2), 'ms')
         console.log('Profile check - exists:', profileSnap.exists(), 'onboardingComplete:', profileSnap.data()?.onboardingComplete)
+
+        // Don't override if user already explicitly completed onboarding
+        if (onboardingDoneRef.current) return
 
         if (profileSnap.exists()) {
           const profileData = profileSnap.data()
@@ -286,7 +290,8 @@ function App() {
     } catch (err) {
       console.error('Error completing onboarding:', err)
     } finally {
-      // Always navigate to logbook regardless of Firestore write result
+      // Block any in-flight profile checks from overriding navigation
+      onboardingDoneRef.current = true
       setShowOnboarding(false)
     }
   }
