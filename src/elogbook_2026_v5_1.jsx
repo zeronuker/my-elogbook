@@ -448,16 +448,11 @@ export default function ELogbook2026({ onLogout }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, data]);
 
-  // ── Handle import complete event ──
-  useEffect(() => {
-    const handleImportComplete = (e) => {
-      const { monthData: importedData, addedCount } = e.detail;
-      setData(importedData);
-      saveData(importedData);
-    };
-    window.addEventListener("importComplete", handleImportComplete);
-    return () => window.removeEventListener("importComplete", handleImportComplete);
-  }, []);
+  // ── Handle import — called directly by ExportImportModal ──
+  const handleImport = async (importedData) => {
+    setData(importedData);
+    await saveData(importedData);
+  };
 
   // ── Load data from Firestore ──
   const loadData = async (uid) => {
@@ -2461,6 +2456,7 @@ export default function ELogbook2026({ onLogout }) {
         monthData={data}
         settings={settings}
         user={user}
+        onImport={handleImport}
       />
 
       {/* ── FOOTER ── */}
