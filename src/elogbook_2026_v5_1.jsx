@@ -1869,13 +1869,13 @@ export default function ELogbook2026({ onLogout }) {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
                     <thead>
-                      <tr style={{ background: "var(--elb-bgthead, #0b1320)" }}>
+                      <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                         <th rowSpan={2} style={{ ...thStyle, textAlign: "left", paddingLeft: 10, minWidth: 90 }}>AIRCRAFT<br />TYPE</th>
                         <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
                         <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
                         <th rowSpan={2} style={thStyle}>TOTAL</th>
                       </tr>
-                      <tr style={{ background: "var(--elb-bgthead, #0b1320)" }}>
+                      <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                         <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
                         <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
                         <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>
