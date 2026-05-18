@@ -227,7 +227,7 @@ function getAllSectors(data, dutyBufferMins = 90) {
     if (isNaN(monthIdx) || isNaN(year)) return;
     rows.forEach(row => {
       if (!row.date || !row.std || !row.sta) return;
-      const day = parseInt(row.date);
+      const day = parseInt(row.date.split('/')[0]);
       if (!day || day < 1 || day > 31) return;
       const flightMins = parseHHMM(calcTotal(row));
       if (!flightMins) return;
@@ -932,7 +932,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     const [monthStr, yearStr] = key.split("-");
     const month = parseInt(monthStr), year = parseInt(yearStr);
     rows.forEach(row => {
-      const day = parseInt(row.date);
+      const day = parseInt(row.date?.split('/')[0]);
       if (!day || !row.type) return;
       if (new Date(year, month, day) > gtCutoff) return;
       const t = (row.type || "").trim().toUpperCase();
