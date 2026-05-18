@@ -903,6 +903,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         if (!day || day < 1 || day > 31) return;
         const d = new Date(year, monthIdx, day);
         d.setHours(12, 0, 0, 0);
+        if (d > today) return;
         autolandDates.push(d);
         if (!lastAutolandDate || d > lastAutolandDate) {
           lastAutolandDate = d;
