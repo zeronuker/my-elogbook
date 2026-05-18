@@ -146,6 +146,7 @@ function calcDayNight(std, sta) {
   let staM = toMins(sta);
   if (staM <= stdM) staM += FULL_DAY;
   const totalMins = staM - stdM;
+  if (totalMins > 18 * 60) return { day: 0, night: 0 };
   // Overlap with night window [11:30, 23:30] — handles cross-midnight flights via +FULL_DAY second pass
   let nightMins = 0;
   nightMins += Math.max(0, Math.min(staM, NIGHT_END) - Math.max(stdM, NIGHT_START));
@@ -181,6 +182,7 @@ function calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx) {
   let stdM   = toM(std), staM = toM(sta);
   if (staM <= stdM) staM += FULL;
   const totalMins = staM - stdM;
+  if (totalMins > 18 * 60) return { day: 0, night: 0 };
   const ovlp = (s, e, ns, ne) => Math.max(0, Math.min(e, ne) - Math.max(s, ns));
   let nightMins = ovlp(stdM, staM, ns1, ne1) + ovlp(stdM, staM, ns2, ne2);
   nightMins = Math.round(Math.min(Math.max(0, nightMins), totalMins));
@@ -474,6 +476,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         }
         if (docData.settings) {
           const merged = { ...DEFAULT_SETTINGS, ...docData.settings };
+          // Guard: don't replace carry-forward with empty/corrupt cloud data
+          if (!Array.isArray(merged.carryForward) || !merged.carryForward.some(r => r.type)) {
+            merged.carryForward = DEFAULT_SETTINGS.carryForward;
+          }
           settingsRef.current = merged;
           setSettings(merged);
         }
@@ -689,6 +695,11 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             normalizedValue = `0${digitsOnly}:00`;
           }
         }
+        // Reject impossible flight times (hours >= 24 or minutes >= 60)
+        if (normalizedValue?.includes(":")) {
+          const [hh, mm] = normalizedValue.split(":").map(Number);
+          if (hh >= 24 || mm >= 60) normalizedValue = "";
+        }
       }
       const newRows = current.map((r, i) =>
         i === rowIdx ? { ...r, [field]: normalizedValue } : r
@@ -897,6 +908,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         if (!day || day < 1 || day > 31) return;
         const d = new Date(year, monthIdx, day);
         d.setHours(12, 0, 0, 0);
+        if (d > today) return;
         autolandDates.push(d);
         if (!lastAutolandDate || d > lastAutolandDate) {
           lastAutolandDate = d;
@@ -940,7 +952,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       const t = (row.type || "").trim().toUpperCase();
       if (!t) return;
       if (!gtByType[t]) gtByType[t] = { dayP1:0, dayP1US:0, dayP2:0, nightP1:0, nightP1US:0, nightP2:0 };
-      const ft = calcFlightTimes(row);
+      const ft = calcFlightTimes(row, settings.dayNightMethod, year, month);
       GT_KEYS.forEach(k => { gtByType[t][k] += parseHHMM(ft[k] || ""); });
     });
   });
@@ -1716,7 +1728,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                       return (
                         <tr
                           key={i}
-                          onClick={() => { setSelectedMonth(i); setActiveTab("logbook"); }}
+                          onClick={() => { setSelectedMonth(i); setSelectedYear(selectedYear); setActiveTab("logbook"); }}
                           style={{
                             background: isSelected ? "rgba(79,195,247,0.08)" : i % 2 === 0 ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)",
                             cursor: "pointer",

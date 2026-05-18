@@ -486,6 +486,17 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
         errors.push({ row: idx, reason: 'Missing date' });
         return;
       }
+
+      // Validate DD/MM/YYYY structure for all dates regardless of source type
+      // (covers malformed Excel serial → NaN/NaN/NaN output and bad plain-text strings)
+      {
+        const dateParts = date.split('/');
+        const dd = parseInt(dateParts[0]), mm = parseInt(dateParts[1]), yyyy = parseInt(dateParts[2]);
+        if (dateParts.length !== 3 || !dd || !mm || !yyyy || dd < 1 || dd > 31 || mm < 1 || mm > 12 || yyyy < 1900 || yyyy > 2100) {
+          errors.push({ row: idx, reason: `Invalid date format: ${date}` });
+          return;
+        }
+      }
       if (!departure) {
         errors.push({ row: idx, reason: 'Missing departure' });
         return;
@@ -551,6 +562,8 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       // Store date in DD/MM/YYYY format for logbook
       const [yyyy, mm, dd] = normalizedDate.split('-');
       newRow.date = `${dd}/${mm}/${yyyy}`;
+      // Normalise aircraft type to uppercase so it groups correctly in Grand Total
+      if (newRow.type) newRow.type = newRow.type.trim().toUpperCase();
 
       validRows.push(newRow);
     });
