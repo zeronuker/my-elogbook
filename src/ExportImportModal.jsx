@@ -487,11 +487,12 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
         return;
       }
 
-      // Validate DD/MM/YYYY structure before accepting plain-text dates
-      if (typeof dateRaw === 'string' || (dateRaw && !(dateRaw instanceof Date) && typeof dateRaw !== 'number')) {
+      // Validate DD/MM/YYYY structure for all dates regardless of source type
+      // (covers malformed Excel serial → NaN/NaN/NaN output and bad plain-text strings)
+      {
         const dateParts = date.split('/');
         const dd = parseInt(dateParts[0]), mm = parseInt(dateParts[1]), yyyy = parseInt(dateParts[2]);
-        if (dateParts.length !== 3 || dd < 1 || dd > 31 || mm < 1 || mm > 12 || yyyy < 1900 || yyyy > 2100) {
+        if (dateParts.length !== 3 || !dd || !mm || !yyyy || dd < 1 || dd > 31 || mm < 1 || mm > 12 || yyyy < 1900 || yyyy > 2100) {
           errors.push({ row: idx, reason: `Invalid date format: ${date}` });
           return;
         }
