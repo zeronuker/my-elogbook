@@ -1067,7 +1067,7 @@ const settingsCss = `
   }
   .elb-form-input:focus{border-color:#4fc3f7;}
   .elb-form-input:disabled{opacity:0.45;cursor:not-allowed;}
-  .elb-form-input::placeholder{color:#4a6a8a;}
+  .elb-form-input::placeholder{color:var(--elb-txt-dim,#6a8aaa);}
   input[type="date"].elb-form-input{line-height:normal;display:flex;align-items:center;}
   input[type="number"].elb-form-input{max-width:120px;margin:0 auto;display:block;line-height:normal;}
   .elb-form-row.single .elb-form-input{max-width:280px;text-align:left;}
