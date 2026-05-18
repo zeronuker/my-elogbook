@@ -620,10 +620,28 @@ function MiscTab({ onDeleteAccount }) {
               </ul>
             </div>
             <div className="elb-changelog-section">
-              <div className="elb-changelog-subsection">Import/Export</div>
+              <div className="elb-changelog-subsection">Import / Export</div>
               <ul className="elb-changelog-items">
                 <li><span className="elb-tag elb-tag-fix">FIX</span> Imported timedeltas now convert correctly from Excel decimal format to HH:MM</li>
                 <li><span className="elb-tag elb-tag-fix">FIX</span> Imported flight times no longer display as malformed numbers</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Imported flights now land in the correct month (DD/MM/YYYY date parsing)</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Imported flights now fill from row 1 instead of row 16</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Imported flights persist after page refresh — save completes before success message</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Export modal date range no longer resets during background auto-save</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Onboarding &amp; Auth</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Auth safety timeout now fires reliably after login</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> &quot;Open Logbook&quot; no longer stuck when Firestore write is slow or fails</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Race condition — profile check can no longer override onboarding completion navigation</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Limits &amp; Recency</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Autoland date parsing made explicit — no longer relies on accidental parseInt behaviour</li>
               </ul>
             </div>
             <div className="elb-changelog-section">
