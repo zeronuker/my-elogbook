@@ -690,9 +690,12 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
           }
         }
       }
-      const newRows = current.map((r, i) =>
-        i === rowIdx ? { ...r, [field]: normalizedValue } : r
-      );
+      const AUTO_CAPTAIN_RANKS = ["Flight Examiner", "Flight Instructor", "Captain"];
+      const updatedRow = { ...current[rowIdx], [field]: normalizedValue };
+      if (field === "date" && normalizedValue && AUTO_CAPTAIN_RANKS.includes(settingsRef.current.defaultRank) && !updatedRow.captain) {
+        updatedRow.captain = "SELF";
+      }
+      const newRows = current.map((r, i) => i === rowIdx ? updatedRow : r);
       return { ...prev, [monthKey]: newRows };
     });
   };

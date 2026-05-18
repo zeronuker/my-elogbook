@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = {
   licenceNumber: "",
   licenceType: "ATPL(A)",
   airline: "",
+  defaultRank: "",
   homeBase: "",
   defaultAircraftType: "",
   defaultMarkings: "",
@@ -220,11 +221,24 @@ function ProfileTab({ d, upd, userEmail }) {
             </select>
           </Field>
         </div>
-        <div className="elb-form-row single">
+        <div className="elb-form-row">
           <Field label="AIRLINE / OPERATOR">
             <input className="elb-form-input" type="text" value={d.airline}
               onChange={e => upd({ airline: e.target.value })}
               placeholder="e.g. AirAsia" />
+          </Field>
+          <Field label="DEFAULT RANK">
+            <select className="elb-form-input" value={d.defaultRank || ""}
+              onChange={e => upd({ defaultRank: e.target.value })}>
+              <option value="">— Select rank —</option>
+              <option value="Flight Examiner">Flight Examiner</option>
+              <option value="Flight Instructor">Flight Instructor</option>
+              <option value="Captain">Captain</option>
+              <option value="Senior First Officer">Senior First Officer</option>
+              <option value="First Officer">First Officer</option>
+              <option value="Second Officer">Second Officer</option>
+              <option value="Cadet">Cadet</option>
+            </select>
           </Field>
         </div>
       </div>
