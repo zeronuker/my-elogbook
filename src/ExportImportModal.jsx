@@ -19,7 +19,7 @@ const COLUMN_ORDER = [
   "nightP1", "nightP1US", "nightP2", "total", "remarks", "autoland"
 ];
 
-export default function ExportImportModal({ open, onClose, monthData, settings, user }) {
+export default function ExportImportModal({ open, onClose, monthData, settings, user, onImport }) {
   const [tab, setTab] = useState("export");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -558,7 +558,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     return { validRows, errors, duplicateCount };
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!importPreview || importPreview.validRows.length === 0) {
       alert("No valid rows to import");
       return;
@@ -605,11 +605,8 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       });
     });
 
-    // Return updated monthData to parent
-    // (Parent component will handle state update)
-    window.dispatchEvent(new CustomEvent("importComplete", {
-      detail: { monthData: newMonthData, addedCount, skippedCount: importPreview.duplicateCount, errorCount: importPreview.errors.length }
-    }));
+    setImportStatus({ saving: true });
+    await onImport(newMonthData);
 
     setImportStatus({
       success: true,
@@ -752,6 +749,12 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
               {importStatus?.warning && (
                 <div className="elb-status-warning">
                   ⚠ {importStatus.warning}
+                </div>
+              )}
+
+              {importStatus?.saving && (
+                <div className="elb-status-warning">
+                  ⏳ Saving to cloud...
                 </div>
               )}
 
