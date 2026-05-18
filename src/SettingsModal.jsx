@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = {
   licenceNumber: "",
   licenceType: "ATPL(A)",
   airline: "",
+  defaultRank: "",
   homeBase: "",
   defaultAircraftType: "",
   defaultMarkings: "",
@@ -635,6 +636,23 @@ function MiscTab({ onDeleteAccount }) {
               <div className="elb-changelog-subsection">Limits &amp; Recency</div>
               <ul className="elb-changelog-items">
                 <li><span className="elb-tag elb-tag-fix">FIX</span> FTL sector and cutoff date calculations now parse DD/MM/YYYY dates explicitly</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Autoland recency no longer counts future-dated entries</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Totals &amp; Calculations</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Grand total day/night split now uses the correct calculation method (fixed vs. dynamic)</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Day/night calculation no longer produces incorrect splits for flights exceeding 18 hours</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Carry-forward hours (e.g. 1200:00) no longer reset to zero due to time validation</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Carry-forward data is restored to defaults if cloud data is empty or corrupt</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Import</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Malformed Excel serial dates (e.g. negative values) now rejected with a clear error</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Aircraft type normalised to uppercase on import</li>
               </ul>
             </div>
           </div>
