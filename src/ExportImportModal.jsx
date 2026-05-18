@@ -576,6 +576,8 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
       if (!newMonthData[key]) {
         newMonthData[key] = [];
+      } else {
+        newMonthData[key] = newMonthData[key].filter(row => row.date && row.date.trim());
       }
 
       // Create row object with all fields
