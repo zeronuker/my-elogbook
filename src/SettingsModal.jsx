@@ -50,7 +50,7 @@ const TAB_HINTS = {
   profile:     "Profile changes update your logbook defaults immediately.",
   appearance:  "Appearance changes apply after saving.",
   preferences: "⚠ Recalculation may take a moment on large logbooks.",
-  misc:        "Version 5.5 (16 MAY) · claudeborne.my",
+  misc:        "Version 5.6 (18 MAY) · claudeborne.my",
 };
 
 // ── Carry-forward helpers ────────────────────────────────────────────────────
@@ -221,11 +221,24 @@ function ProfileTab({ d, upd, userEmail }) {
             </select>
           </Field>
         </div>
-        <div className="elb-form-row single">
+        <div className="elb-form-row">
           <Field label="AIRLINE / OPERATOR">
             <input className="elb-form-input" type="text" value={d.airline}
               onChange={e => upd({ airline: e.target.value })}
               placeholder="e.g. AirAsia" />
+          </Field>
+          <Field label="DEFAULT RANK">
+            <select className="elb-form-input" value={d.defaultRank || ""}
+              onChange={e => upd({ defaultRank: e.target.value })}>
+              <option value="">— Select rank —</option>
+              <option value="Flight Examiner">Flight Examiner</option>
+              <option value="Flight Instructor">Flight Instructor</option>
+              <option value="Captain">Captain</option>
+              <option value="Senior First Officer">Senior First Officer</option>
+              <option value="First Officer">First Officer</option>
+              <option value="Second Officer">Second Officer</option>
+              <option value="Cadet">Cadet</option>
+            </select>
           </Field>
         </div>
       </div>
