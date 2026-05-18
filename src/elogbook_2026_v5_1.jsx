@@ -82,6 +82,7 @@ function parseHHMM(val) {
     if (parts.length === 2) {
       const h = parseInt(parts[0]) || 0;
       const m = parseInt(parts[1]) || 0;
+      if (h >= 24 || m >= 60) return 0;
       return h * 60 + m;
     }
   }
@@ -92,6 +93,7 @@ function parseHHMM(val) {
     // Last 2 digits are minutes, rest are hours
     const h = parseInt(digitsOnly.slice(0, -2)) || 0;
     const m = parseInt(digitsOnly.slice(-2)) || 0;
+    if (h >= 24 || m >= 60) return 0;
     return h * 60 + m;
   } else if (digitsOnly.length === 2) {
     // 2 digits: could be HH or MM, assume MM
