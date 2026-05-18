@@ -50,7 +50,7 @@ const TAB_HINTS = {
   profile:     "Profile changes update your logbook defaults immediately.",
   appearance:  "Appearance changes apply after saving.",
   preferences: "⚠ Recalculation may take a moment on large logbooks.",
-  misc:        "Version 5.5 (16 MAY) · claudeborne.my",
+  misc:        "Version 5.6 (18 MAY) · claudeborne.my",
 };
 
 // ── Carry-forward helpers ────────────────────────────────────────────────────
