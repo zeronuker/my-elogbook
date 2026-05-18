@@ -15,8 +15,9 @@ exports.deleteUserAccount = functions.https.onCall(async (data, context) => {
   const uid = context.auth.uid;
 
   try {
-    // Delete all user data in Firestore (entire users/{uid} document tree)
-    await db.collection('users').doc(uid).delete();
+    // Delete subcollection documents explicitly (Firestore does not cascade deletes)
+    await db.collection('users').doc(uid).collection('profile').doc('data').delete();
+    await db.collection('users').doc(uid).collection('logbook').doc('data').delete();
 
     // Delete auth user
     await auth.deleteUser(uid);
