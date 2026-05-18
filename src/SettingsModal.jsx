@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = {
   licenceNumber: "",
   licenceType: "ATPL(A)",
   airline: "",
+  defaultRank: "",
   homeBase: "",
   defaultAircraftType: "",
   defaultMarkings: "",
