@@ -362,7 +362,7 @@ const THEMES = {
     bgInput:   "#ffffff",
     accent:    "#0d7ab5", accent2:   "#2a6a8a", accentDim: "#5a9abb",
     border:    "#9ab8cc", border2:   "#a8c4d8", border3:   "#bdd0de", border4: "#c8d8e4",
-    text:      "#1a2530", textMuted: "#4a6070", textDim:   "#8aaabb", textBright: "#0a1520",
+    text:      "#1a2530", textMuted: "#4a6070", textDim:   "#4a6878", textBright: "#0a1520",
     rowHover:  "#dce8f4",
   },
 };
