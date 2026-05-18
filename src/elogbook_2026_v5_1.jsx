@@ -184,6 +184,7 @@ function calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx) {
   let stdM   = toM(std), staM = toM(sta);
   if (staM <= stdM) staM += FULL;
   const totalMins = staM - stdM;
+  if (totalMins > 18 * 60) return { day: 0, night: 0 };
   const ovlp = (s, e, ns, ne) => Math.max(0, Math.min(e, ne) - Math.max(s, ns));
   let nightMins = ovlp(stdM, staM, ns1, ne1) + ovlp(stdM, staM, ns2, ne2);
   nightMins = Math.round(Math.min(Math.max(0, nightMins), totalMins));
@@ -735,7 +736,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
   const handleYearChange = (newYear) => {
     setSelectedYear(newYear);
-    setSelectedMonth(0);
     setEditingCell(null);
   };
 
