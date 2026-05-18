@@ -734,6 +734,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
   const handleYearChange = (newYear) => {
     setSelectedYear(newYear);
+    setSelectedMonth(0);
     setEditingCell(null);
   };
 
@@ -1723,7 +1724,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                       return (
                         <tr
                           key={i}
-                          onClick={() => { setSelectedMonth(i); setActiveTab("logbook"); }}
+                          onClick={() => { setSelectedMonth(i); setSelectedYear(selectedYear); setActiveTab("logbook"); }}
                           style={{
                             background: isSelected ? "rgba(79,195,247,0.08)" : i % 2 === 0 ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)",
                             cursor: "pointer",
