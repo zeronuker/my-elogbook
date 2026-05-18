@@ -569,9 +569,9 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     let addedCount = 0;
 
     importPreview.validRows.forEach(row => {
-      const date = new Date(row.date);
-      const monthIdx = date.getMonth();
-      const year = date.getFullYear();
+      const [dd, mm, yyyy] = row.date.split('/');
+      const monthIdx = parseInt(mm) - 1;
+      const year = parseInt(yyyy);
       const key = `${monthIdx}-${year}`;
 
       if (!newMonthData[key]) {
