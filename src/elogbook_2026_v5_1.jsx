@@ -474,6 +474,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         }
         if (docData.settings) {
           const merged = { ...DEFAULT_SETTINGS, ...docData.settings };
+          // Guard: don't replace carry-forward with empty/corrupt cloud data
+          if (!Array.isArray(merged.carryForward) || !merged.carryForward.some(r => r.type)) {
+            merged.carryForward = DEFAULT_SETTINGS.carryForward;
+          }
           settingsRef.current = merged;
           setSettings(merged);
         }
