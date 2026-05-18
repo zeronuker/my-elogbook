@@ -360,9 +360,9 @@ const THEMES = {
     bg:        "#f0f4f8", bg2:       "#e8edf4", bg3:       "#ecf1f7",
     bgHeader:  "#dde5ef", bgAlt:     "#e4eaf2", bgThead:   "#dce4ee",
     bgInput:   "#ffffff",
-    accent:    "#0d7ab5", accent2:   "#2a6a8a", accentDim: "#5a9abb",
+    accent:    "#004a78", accent2:   "#1a4a68", accentDim: "#5a9abb",
     border:    "#9ab8cc", border2:   "#a8c4d8", border3:   "#bdd0de", border4: "#c8d8e4",
-    text:      "#1a2530", textMuted: "#4a6070", textDim:   "#8aaabb", textBright: "#0a1520",
+    text:      "#1a2530", textMuted: "#2a4050", textDim:   "#2a4858", textBright: "#0a1520",
     rowHover:  "#dce8f4",
   },
 };
