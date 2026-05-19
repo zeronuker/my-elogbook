@@ -449,6 +449,23 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
+  // Branded confirmation modal (replaces window.confirm)
+  const [confirmDialog, setConfirmDialog] = useState(null); // { title, body, resolve }
+  const confirmResolveRef = useRef(null);
+
+  // Show a branded confirm dialog; returns Promise<boolean>
+  const showConfirm = (title, body) => new Promise(resolve => {
+    confirmResolveRef.current = resolve;
+    setConfirmDialog({ title, body });
+  });
+  const handleConfirmYes = () => {
+    setConfirmDialog(null);
+    confirmResolveRef.current?.(true);
+  };
+  const handleConfirmNo = () => {
+    setConfirmDialog(null);
+    confirmResolveRef.current?.(false);
+  };
 
   // ── Auth listener ──
   useEffect(() => {
@@ -775,7 +792,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         id: storedRows.length + i + 1, ...EMPTY_ROW(),
       }))];
 
-  const updateCell = (rowIdx, field, value) => {
+  const updateCell = async (rowIdx, field, value) => {
     // Aircraft type: normalise to uppercase and warn if genuinely new type
     if (field === "type" && value && value.trim()) {
       const normalized = value.trim().toUpperCase();
@@ -788,11 +805,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         )
       );
       if (existingTypes.size > 0 && !existingTypes.has(normalized)) {
-        const confirmed = window.confirm(
-          `"${normalized}" is a new aircraft type not seen in your logbook.\n\n` +
-          `Adding a new aircraft type creates a separate recency tracker for takeoff & landing recency and autoland recency. ` +
-          `Flights logged on other types will not count toward this type's currency.\n\n` +
-          `Add "${normalized}" to your logbook?`
+        const confirmed = await showConfirm(
+          `Add aircraft type "${normalized}"?`,
+          `This is a new aircraft type not found in your logbook. Adding it creates a separate recency tracker for takeoff & landing recency and autoland recency. Flights logged on other types will not count toward this type's currency.`
         );
         if (!confirmed) return;
       }
@@ -2477,6 +2492,46 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         onDeleteAccount={onDeleteAccount}
       />
 
+      {/* ── BRANDED CONFIRM DIALOG (replaces window.confirm) ── */}
+      {confirmDialog && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 3000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+          fontFamily: "var(--elb-font, 'Courier New', monospace)",
+        }}>
+          <div style={{
+            background: "var(--elb-bg2, #141a2e)", border: "1px solid var(--elb-border, #1a3050)",
+            borderTop: "2px solid var(--elb-acc, #3FE0C5)", borderRadius: 4,
+            width: "100%", maxWidth: 420, padding: "24px 24px 20px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.85)",
+          }}>
+            <div style={{ fontSize: "var(--elb-th-sz)", letterSpacing: "0.1em", color: "var(--elb-acc, #3FE0C5)", marginBottom: 8 }}>
+              CONFIRM ACTION
+            </div>
+            <div style={{ fontSize: "var(--elb-td-sz)", fontWeight: 700, color: "var(--elb-txt, #e8ecf5)", marginBottom: 12, letterSpacing: "0.04em" }}>
+              {confirmDialog.title}
+            </div>
+            <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #b8c0d4)", lineHeight: 1.7, marginBottom: 20 }}>
+              {confirmDialog.body}
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button onClick={handleConfirmNo} style={{
+                background: "transparent", border: "1px solid var(--elb-border, #1a3050)",
+                color: "var(--elb-txt-muted, #b8c0d4)", fontFamily: "inherit",
+                fontSize: "var(--elb-hint-sz)", letterSpacing: "0.1em", padding: "7px 18px",
+                cursor: "pointer", borderRadius: 3,
+              }}>CANCEL</button>
+              <button onClick={handleConfirmYes} style={{
+                background: "rgba(63,224,197,0.1)", border: "1px solid var(--elb-acc, #3FE0C5)",
+                color: "var(--elb-acc, #3FE0C5)", fontFamily: "inherit",
+                fontSize: "var(--elb-hint-sz)", letterSpacing: "0.1em", padding: "7px 18px",
+                cursor: "pointer", borderRadius: 3, fontWeight: 700,
+              }}>CONFIRM</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── EXPORT/IMPORT MODAL ── */}
       <ExportImportModal
         open={exportImportOpen}
@@ -2499,7 +2554,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v5.5 · CAA MALAYSIA</span>
+        <span>eLOGBOOK v6.0 · CAA MALAYSIA</span>
         <span>MCAR 2016 PART 7 &amp; 8 · ICAO ANNEX 1 FORMAT</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
