@@ -421,7 +421,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [refreshStatus, setRefreshStatus] = useState("idle");
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
-  const [recencyType, setRecencyType] = useState("");   // selected aircraft type in recency
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -907,16 +906,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     };
   });
 
-  // Keep backward compatibility for single-type selection (for existing code)
-  const recencyData = recencyType && allRecencyByType[recencyType] ? allRecencyByType[recencyType] : {};
-  const dayTakeoffs90   = recencyData.dayTakeoffs90 || 0;
-  const nightTakeoffs90 = recencyData.nightTakeoffs90 || 0;
-  const dayLandings90   = recencyData.dayLandings90 || 0;
-  const nightLandings90 = recencyData.nightLandings90 || 0;
-  const dayTOExpiry     = recencyData.dayTOExpiry || null;
-  const nightTOExpiry   = recencyData.nightTOExpiry || null;
-  const dayLdgExpiry    = recencyData.dayLdgExpiry || null;
-  const nightLdgExpiry  = recencyData.nightLdgExpiry || null;
 
   const fmtRecencyDate = (d) =>
     d ? d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase() : null;
@@ -998,14 +987,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
     return { grandTotals: totals, gtSum: sum };
   }, [data, grandTotalDate, settings.carryForward, settings.dayNightMethod]);
-
-  const fmtGrandTotalDate = (str) => {
-    if (!str) return "—";
-    const [y, m, d] = str.split("-").map(Number);
-    return new Date(y, m - 1, d)
-      .toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-      .toUpperCase();
-  };
 
   // ── Render helper: FTL/Duty limit card ────────────────────────────────────
   const renderLimitCard = (l) => {

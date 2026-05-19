@@ -40,7 +40,6 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       setImportPreview(null);
       setImportStatus(null);
       setExportStatus(null);
-
     }
   }, [open]);
 
