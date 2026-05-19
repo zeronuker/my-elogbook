@@ -1013,7 +1013,7 @@ const settingsCss = `
     margin-top: 3px;
     max-width: 460px;
   }
-  .sm-field-control { display: flex; align-items: center; gap: 8px; }
+  .sm-field-control { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
 
   .sm-row { padding: 4px 0 12px; }
 
@@ -1025,7 +1025,8 @@ const settingsCss = `
     font-family: var(--cb-font-body);
     font-size: calc(12.5px * var(--fs));
     padding: 7px 12px;
-    min-width: 200px;
+    width: 100%;
+    min-width: 160px;
     outline: none;
     transition: border-color 120ms;
   }
