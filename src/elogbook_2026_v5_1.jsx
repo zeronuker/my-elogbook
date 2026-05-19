@@ -1501,7 +1501,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         </div>
 
         {/* ── TABS ── */}
-        <div style={{ display: "flex", gap: 0, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 0, alignItems: "center", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
           {[
             { id: "logbook",  label: "📋 LOGBOOK" },
             { id: "summary",  label: "📊 FLIGHT SUMMARY" },
