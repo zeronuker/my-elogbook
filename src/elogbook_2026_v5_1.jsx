@@ -428,7 +428,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
-  const gtDateInputRef = useRef(null);
 
   // ── Auth listener ──
   useEffect(() => {
@@ -460,54 +459,48 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
   // ── Load data from Firestore ──
   const loadData = async (uid) => {
-    try {
-      const ref = doc(db, "users", uid, "logbook", "data");
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const docData = snap.data();
-        const raw = docData.logbookData;
-        if (raw) {
-          const normalized = {};
-          Object.keys(raw).forEach(key => {
-            const [mIdx] = key.split("-").map(Number);
-            normalized[key] = normalizeMonthRows(raw[key], mIdx, null);
-          });
-          setData(normalized);
-        }
-        if (docData.settings) {
-          const merged = { ...DEFAULT_SETTINGS, ...docData.settings };
-          // Guard: don't replace carry-forward with empty/corrupt cloud data
-          if (!Array.isArray(merged.carryForward) || !merged.carryForward.some(r => r.type)) {
-            merged.carryForward = DEFAULT_SETTINGS.carryForward;
-          }
-          settingsRef.current = merged;
-          setSettings(merged);
-        }
+    const ref = doc(db, "users", uid, "logbook", "data");
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const docData = snap.data();
+      const raw = docData.logbookData;
+      if (raw) {
+        const normalized = {};
+        Object.keys(raw).forEach(key => {
+          const [mIdx] = key.split("-").map(Number);
+          normalized[key] = normalizeMonthRows(raw[key], mIdx, null);
+        });
+        setData(normalized);
       }
+      if (docData.settings) {
+        const merged = { ...DEFAULT_SETTINGS, ...docData.settings };
+        // Guard: don't replace carry-forward with empty/corrupt cloud data
+        if (!Array.isArray(merged.carryForward) || !merged.carryForward.some(r => r.type)) {
+          merged.carryForward = DEFAULT_SETTINGS.carryForward;
+        }
+        settingsRef.current = merged;
+        setSettings(merged);
+      }
+    }
 
-      // Load profile data and merge into settings
-      try {
-        const profileRef = doc(db, "users", uid, "profile", "data");
-        const profileSnap = await getDoc(profileRef);
-        if (profileSnap.exists()) {
-          const profileData = profileSnap.data();
-          // Merge profile fields into current settings
-          const updated = {
-            ...settingsRef.current,
-            fullName: profileData.fullName || settingsRef.current.fullName || "",
-            airline: profileData.airline || profileData.organization || settingsRef.current.airline || "",
-            licenceNumber: profileData.licenceNumber || settingsRef.current.licenceNumber || "",
-            licenceType: profileData.licenceType || settingsRef.current.licenceType || "ATPL(A)"
-          };
-          settingsRef.current = updated;
-          setSettings(updated);
-          console.log("Profile data merged into settings:", updated);
-        }
-      } catch (profileErr) {
-        console.error("Profile load error:", profileErr);
+    // Load profile data and merge into settings
+    try {
+      const profileRef = doc(db, "users", uid, "profile", "data");
+      const profileSnap = await getDoc(profileRef);
+      if (profileSnap.exists()) {
+        const profileData = profileSnap.data();
+        const updated = {
+          ...settingsRef.current,
+          fullName: profileData.fullName || settingsRef.current.fullName || "",
+          airline: profileData.airline || profileData.organization || settingsRef.current.airline || "",
+          licenceNumber: profileData.licenceNumber || settingsRef.current.licenceNumber || "",
+          licenceType: profileData.licenceType || settingsRef.current.licenceType || "ATPL(A)"
+        };
+        settingsRef.current = updated;
+        setSettings(updated);
       }
-    } catch (e) {
-      console.error("Load error:", e);
+    } catch (profileErr) {
+      console.error("Profile load error:", profileErr);
     }
   };
 
@@ -531,12 +524,20 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const refreshData = async () => {
     if (!user || refreshStatus === "refreshing") return;
     setRefreshStatus("refreshing");
+    const start = Date.now();
     try {
       await loadData(user.uid);
+      // Ensure spinner is visible for at least 800ms
+      const elapsed = Date.now() - start;
+      if (elapsed < 800) await new Promise(r => setTimeout(r, 800 - elapsed));
       setRefreshStatus("refreshed");
       setTimeout(() => setRefreshStatus("idle"), 2500);
     } catch (e) {
-      setRefreshStatus("idle");
+      console.error("Refresh error:", e);
+      const elapsed = Date.now() - start;
+      if (elapsed < 800) await new Promise(r => setTimeout(r, 800 - elapsed));
+      setRefreshStatus("error");
+      setTimeout(() => setRefreshStatus("idle"), 3000);
     }
   };
 
@@ -1197,14 +1198,20 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               {refreshStatus === "refreshed" && (
                 <span style={{ fontSize: 11, color: "#22c55e", letterSpacing: "0.1em", fontWeight: 700 }}>✓ REFRESHED</span>
               )}
+              {refreshStatus === "error" && (
+                <span style={{ fontSize: 11, color: "#ef4444", letterSpacing: "0.1em", fontWeight: 700 }}>✗ REFRESH FAILED</span>
+              )}
               {/* Refresh */}
               <button
                 onClick={refreshData}
-                title="Refresh data from cloud"
+                disabled={refreshStatus === "refreshing"}
+                title={refreshStatus === "refreshing" ? "Refreshing..." : "Refresh data from cloud"}
                 style={{
                   ...iconBtnStyle,
-                  color: refreshStatus === "refreshed" ? "#4fc77a" : refreshStatus === "refreshing" ? "#f5c542" : "#3a6a8a",
-                  borderColor: refreshStatus === "refreshed" ? "#4fc77a" : refreshStatus === "refreshing" ? "#f5c542" : "#1e3a5f",
+                  color: refreshStatus === "refreshed" ? "#4fc77a" : refreshStatus === "error" ? "#ef4444" : refreshStatus === "refreshing" ? "#f5c542" : "#3a6a8a",
+                  borderColor: refreshStatus === "refreshed" ? "#4fc77a" : refreshStatus === "error" ? "#ef4444" : refreshStatus === "refreshing" ? "#f5c542" : "#1e3a5f",
+                  opacity: refreshStatus === "refreshing" ? 0.6 : 1,
+                  cursor: refreshStatus === "refreshing" ? "not-allowed" : "pointer",
                 }}
               >
                 <svg
@@ -1826,32 +1833,18 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   GRAND TOTAL HOURS AS OF :
                 </span>
 
-                {/* Formatted date — clicking calls showPicker() on the hidden input */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const el = gtDateInputRef.current;
-                    if (!el) return;
-                    try { el.showPicker(); } catch { el.click(); }
-                  }}
-                  style={{
-                    background: "transparent", border: "none", padding: "0 0 2px 0",
-                    borderBottom: "1px dashed #4fc3f7", color: "#4fc3f7",
-                    fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                    fontSize: 13, letterSpacing: "0.15em", fontWeight: 700,
-                    cursor: "pointer", lineHeight: 1.4,
-                  }}
-                >
-                  {fmtGrandTotalDate(grandTotalDate)}
-                </button>
-
-                {/* Hidden real date input — triggered programmatically */}
+                {/* Visible date input styled to match cockpit theme */}
                 <input
-                  ref={gtDateInputRef}
                   type="date"
                   value={grandTotalDate}
                   onChange={e => setGrandTotalDate(e.target.value)}
-                  style={{ position: "absolute", opacity: 0, width: 0, height: 0, pointerEvents: "none" }}
+                  style={{
+                    background: "transparent", border: "none", borderBottom: "1px dashed #4fc3f7",
+                    color: "#4fc3f7", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                    fontSize: 13, letterSpacing: "0.15em", fontWeight: 700,
+                    cursor: "pointer", padding: "0 0 2px 0", outline: "none",
+                    colorScheme: "dark",
+                  }}
                 />
 
                 {/* TODAY shortcut */}

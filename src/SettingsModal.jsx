@@ -306,10 +306,22 @@ function ProfileTab({ d, upd, userEmail }) {
             </tbody>
           </table>
         </div>
-        <button type="button" className="elb-cf-add"
-          onClick={() => upd({ carryForward: [...(d.carryForward || [CF_EMPTY()]), CF_EMPTY()] })}>
-          ＋ ADD AIRCRAFT TYPE
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="button" className="elb-cf-add"
+            onClick={() => upd({ carryForward: [...(d.carryForward || [CF_EMPTY()]), CF_EMPTY()] })}>
+            ＋ ADD AIRCRAFT TYPE
+          </button>
+          {(d.carryForward || []).some(r => !r.type) && (
+            <button type="button" className="elb-cf-add"
+              style={{ color: "#ef4444", borderColor: "rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.05)" }}
+              onClick={() => {
+                const filtered = (d.carryForward || []).filter(r => r.type);
+                upd({ carryForward: filtered.length ? filtered : [CF_EMPTY()] });
+              }}>
+              ✕ REMOVE EMPTY ROWS
+            </button>
+          )}
+        </div>
       </div>
     </>
   );
@@ -673,6 +685,21 @@ function MiscTab({ onDeleteAccount }) {
               <ul className="elb-changelog-items">
                 <li><span className="elb-tag elb-tag-imp">IMP</span> Aircraft type always stored in uppercase — prevents split recency tracking from casing differences</li>
                 <li><span className="elb-tag elb-tag-new">NEW</span> Prompt shown when entering a new aircraft type not seen in logbook, with recency tracker warning</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Refresh button now shows spinner for minimum 800ms and displays error if cloud sync fails</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Refresh button disabled while in progress — prevents duplicate Firestore reads</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Grand Total date picker now directly clickable — no longer requires two clicks</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Settings</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-new">NEW</span> Remove Empty Rows button in carry-forward table clears all untitled aircraft type rows</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Export</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Date range selection preserved when closing and reopening the export modal</li>
               </ul>
             </div>
           </div>
