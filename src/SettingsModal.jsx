@@ -668,6 +668,13 @@ function MiscTab({ onDeleteAccount }) {
                 <li><span className="elb-tag elb-tag-fix">FIX</span> Aircraft type normalised to uppercase on import</li>
               </ul>
             </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Logbook</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Aircraft type always stored in uppercase — prevents split recency tracking from casing differences</li>
+                <li><span className="elb-tag elb-tag-new">NEW</span> Prompt shown when entering a new aircraft type not seen in logbook, with recency tracker warning</li>
+              </ul>
+            </div>
           </div>
 
           <div className="elb-changelog-entry">
