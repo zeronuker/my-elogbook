@@ -4,7 +4,7 @@ import { getCoords } from "./airportCoords";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import SettingsModal, { DEFAULT_SETTINGS } from "./SettingsModal";
+import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
 
 const MONTHS = [
@@ -219,7 +219,7 @@ function sumColumn(rows, key) {
 // Flatten all logbook rows across all months into a list of sectors with dates.
 // Only rows with a valid date + STD + STA are included.
 // Duty time = flight time + (preFlightBuffer + postFlightBuffer) — defaults 75 + 15 = 90 min.
-function getAllSectors(data, dutyBufferMins = 90) {
+function getAllSectors(data, dutyBufferMins = 90, dayNightMethod = "fixed") {
   const sectors = [];
   Object.entries(data).forEach(([key, rows]) => {
     if (!Array.isArray(rows)) return;
@@ -231,7 +231,7 @@ function getAllSectors(data, dutyBufferMins = 90) {
       if (!row.date || !row.std || !row.sta) return;
       const day = parseInt(row.date.split('/')[0]);
       if (!day || day < 1 || day > 31) return;
-      const flightMins = parseHHMM(calcTotal(row));
+      const flightMins = parseHHMM(calcTotal(row, dayNightMethod, year, monthIdx));
       if (!flightMins) return;
       const date = new Date(year, monthIdx, day);
       date.setHours(12, 0, 0, 0); // normalise to noon to avoid DST edge cases
@@ -328,17 +328,7 @@ const FTL_POPUPS = {
   },
 };
 
-// ─── Theme CSS variable injection ─────────────────────────────────────────────
-const ACCENT_PALETTE = {
-  "#4fc3f7": { accent: "#4fc3f7", accent2: "#7ab8d4", accentDim: "#2a5a7a" },
-  "#f5c542": { accent: "#f5c542", accent2: "#c4a030", accentDim: "#5a4a10" },
-  "#22c55e": { accent: "#22c55e", accent2: "#16a34a", accentDim: "#166534" },
-  "#a78bfa": { accent: "#a78bfa", accent2: "#8b5cf6", accentDim: "#4c1d95" },
-  "#fb923c": { accent: "#fb923c", accent2: "#f97316", accentDim: "#7c2d12" },
-  "#f472b6": { accent: "#f472b6", accent2: "#ec4899", accentDim: "#831843" },
-  "#ef4444": { accent: "#ef4444", accent2: "#dc2626", accentDim: "#7f1d1d" },
-  "#2dd4bf": { accent: "#2dd4bf", accent2: "#14b8a6", accentDim: "#134e4a" },
-};
+// ─── Theme CSS variable injection (v6 — aliases --elb-* to --cb-* tokens) ─────
 
 const FONT_FAMILIES = {
   courier:   "'Courier New', Courier, monospace",
@@ -348,59 +338,100 @@ const FONT_FAMILIES = {
   space:     "'Space Mono', monospace",
 };
 
-const THEMES = {
-  dark: {
-    bg:        "#0a0d12", bg2:       "#0d1520", bg3:       "#0a1018",
-    bgHeader:  "#0d1117", bgAlt:     "#161d2a", bgThead:   "#0b1320",
-    bgInput:   "#0b1828",
-    accent:    "#4fc3f7", accent2:   "#7ab8d4", accentDim: "#2a5a7a",
-    border:    "#1e3a5f", border2:   "#1a3050", border3:   "#0f1820", border4: "#111820",
-    text:      "#ffffff", textMuted: "#b8d6e5", textDim:   "#7a9aaa", textBright: "#ffffff",
-    rowHover:  "#122030",
-  },
-  light: {
-    bg:        "#f0f4f8", bg2:       "#e8edf4", bg3:       "#ecf1f7",
-    bgHeader:  "#dde5ef", bgAlt:     "#e4eaf2", bgThead:   "#dce4ee",
-    bgInput:   "#ffffff",
-    accent:    "#004a78", accent2:   "#1a4a68", accentDim: "#5a9abb",
-    border:    "#9ab8cc", border2:   "#a8c4d8", border3:   "#bdd0de", border4: "#c8d8e4",
-    text:      "#1a2530", textMuted: "#2a4050", textDim:   "#2a4858", textBright: "#0a1520",
-    rowHover:  "#dce8f4",
-  },
-};
-
 const DENSITY_PAD = {
   compact:  "3px 6px",
   default:  "6px 8px",
   relaxed:  "10px 8px",
 };
 
+// Resolve accent preset → single color value
+function resolveAccent(settings) {
+  const presetId = settings.accentPreset
+    || ACCENT_MIGRATION[settings.accentColor]
+    || "gradient";
+  const preset = ACCENT_PRESETS.find(p => p.id === presetId) || ACCENT_PRESETS[0];
+  const single = preset.single;
+  const isGrad = preset.colors.length > 1;
+  const grad = isGrad
+    ? `linear-gradient(135deg, ${preset.colors.join(", ")})`
+    : single;
+  const dim = single + "4d"; // ~30% opacity
+  return { accent: single, grad, dim };
+}
+
+function hexToRgb(hex) {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `${r},${g},${b}`;
+}
+
 function makeThemeCss(settings = {}) {
-  const t = THEMES[settings.theme] || THEMES.dark;
+  const isDark   = (settings.theme || "dark") === "dark";
   const fontSize = Math.min(18, Math.max(12, Number(settings.fontSize) || 14));
-  const rowPad = DENSITY_PAD[settings.tableDensity] || DENSITY_PAD.default;
-  const ac = ACCENT_PALETTE[settings.accentColor] || ACCENT_PALETTE["#4fc3f7"];
+  const rowPad   = DENSITY_PAD[settings.tableDensity] || DENSITY_PAD.default;
   const fontFamily = FONT_FAMILIES[settings.fontType] || FONT_FAMILIES.courier;
+  const { accent, grad, dim } = resolveAccent(settings);
+
+  // CB surface / ink / line tokens — mirrors brand.css values
+  const surf = isDark
+    ? { s0:"#0a1020", s1:"#141a2e", s2:"#1b2340", s3:"#232c4d",
+        ink:"#e8ecf5", ink2:"#b8c0d4", inkD:"#7c87a3",
+        line:"rgba(255,255,255,0.07)", line2:"rgba(255,255,255,0.12)" }
+    : { s0:"#f4f6fb", s1:"#ffffff", s2:"#ebeef7", s3:"#dfe3f0",
+        ink:"#0a1020", ink2:"#3a4258", inkD:"#6b7488",
+        line:"rgba(10,16,32,0.08)", line2:"rgba(10,16,32,0.16)" };
 
   return `
     :root {
-      --elb-bg:${t.bg};--elb-bg2:${t.bg2};--elb-bg3:${t.bg3};
-      --elb-bghd:${t.bgHeader};--elb-bgalt:${t.bgAlt};--elb-thead:${t.bgThead};
-      --elb-bginput:${t.bgInput};--elb-rowhover:${t.rowHover};
-      --elb-acc:${ac.accent};--elb-acc2:${ac.accent2};--elb-accdim:${ac.accentDim};
-      --elb-border:${t.border};--elb-bdr:${t.border};
-      --elb-border2:${t.border2};--elb-bdr2:${t.border2};
-      --elb-border3:${t.border3};--elb-bdr3:${t.border3};
-      --elb-border4:${t.border4};--elb-bdr4:${t.border4};
-      --elb-txt:${t.text};--elb-txt-muted:${t.textMuted};--elb-txt-dim:${t.textDim};--elb-txt-bright:${t.textBright};
-      --elb-muted:${t.textMuted};--elb-dim:${t.textDim};--elb-bright:${t.textBright};
-      --elb-accent:${ac.accent};
-      --elb-font:${fontFamily};
-      --elb-td-sz:${fontSize}px;
-      --elb-th-sz:${Math.max(10, fontSize - 1)}px;
-      --elb-ths-sz:${Math.max(9, fontSize - 2)}px;
-      --elb-desc-sz:${Math.max(11, fontSize)}px;
-      --elb-hint-sz:${Math.max(10, fontSize - 1)}px;
+      /* ── ClaudeBorne brand tokens ── */
+      --cb-surface-0:${surf.s0};--cb-surface-1:${surf.s1};
+      --cb-surface-2:${surf.s2};--cb-surface-3:${surf.s3};
+      --cb-ink:${surf.ink};--cb-ink-2:${surf.ink2};--cb-ink-dim:${surf.inkD};
+      --cb-line:${surf.line};--cb-line-2:${surf.line2};
+      --cb-accent:${accent};
+      --cb-accent-rgb:${hexToRgb(accent)};
+      --cb-grad:${grad};
+      --cb-font-body:${fontFamily};
+      --cb-font-mono:${fontFamily};
+      --fs:${(fontSize / 14).toFixed(4)};
+      --cell-pad:${rowPad};
+
+      /* ── Legacy --elb-* aliases → CB tokens ── */
+      --elb-bg:var(--cb-surface-0);
+      --elb-bg2:var(--cb-surface-1);
+      --elb-bg3:var(--cb-surface-2);
+      --elb-bghd:var(--cb-surface-1);
+      --elb-bgalt:var(--cb-surface-2);
+      --elb-thead:var(--cb-surface-2);
+      --elb-bginput:var(--cb-surface-2);
+      --elb-rowhover:var(--cb-surface-3);
+      --elb-acc:var(--cb-accent);
+      --elb-acc2:#3B8DFF;
+      --elb-accdim:${dim};
+      --elb-accent:var(--cb-accent);
+      --elb-border:var(--cb-line-2);
+      --elb-bdr:var(--cb-line-2);
+      --elb-border2:var(--cb-line);
+      --elb-bdr2:var(--cb-line);
+      --elb-border3:var(--cb-line);
+      --elb-bdr3:var(--cb-line);
+      --elb-border4:var(--cb-line);
+      --elb-bdr4:var(--cb-line);
+      --elb-txt:var(--cb-ink);
+      --elb-txt-muted:var(--cb-ink-2);
+      --elb-txt-dim:var(--cb-ink-dim);
+      --elb-txt-bright:var(--cb-ink);
+      --elb-muted:var(--cb-ink-2);
+      --elb-dim:var(--cb-ink-dim);
+      --elb-bright:var(--cb-ink);
+      --elb-font:var(--cb-font-mono);
+      --elb-td-sz:calc(${fontSize}px * var(--fs,1));
+      --elb-th-sz:calc(${Math.max(10, fontSize - 1)}px * var(--fs,1));
+      --elb-ths-sz:calc(${Math.max(9, fontSize - 2)}px * var(--fs,1));
+      --elb-desc-sz:calc(${Math.max(11, fontSize)}px * var(--fs,1));
+      --elb-hint-sz:calc(${Math.max(10, fontSize - 1)}px * var(--fs,1));
       --elb-row-pad:${rowPad};
     }
   `;
@@ -427,6 +458,23 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
+  // Branded confirmation modal (replaces window.confirm)
+  const [confirmDialog, setConfirmDialog] = useState(null); // { title, body, resolve }
+  const confirmResolveRef = useRef(null);
+
+  // Show a branded confirm dialog; returns Promise<boolean>
+  const showConfirm = (title, body) => new Promise(resolve => {
+    confirmResolveRef.current = resolve;
+    setConfirmDialog({ title, body });
+  });
+  const handleConfirmYes = () => {
+    setConfirmDialog(null);
+    confirmResolveRef.current?.(true);
+  };
+  const handleConfirmNo = () => {
+    setConfirmDialog(null);
+    confirmResolveRef.current?.(false);
+  };
 
   // ── Auth listener ──
   useEffect(() => {
@@ -512,6 +560,22 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
   // ── Keep settingsRef in sync so saveData never reads a stale closure ──
   useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+  // ── Sync data-theme attribute on <html> for brand.css dark/light tokens ──
+  useEffect(() => {
+    document.documentElement.dataset.theme = settings.theme || "dark";
+  }, [settings.theme]);
+
+  // ── One-time accent migration: legacy hex → preset id ──
+  useEffect(() => {
+    if (!settings.accentPreset && settings.accentColor) {
+      const migrated = ACCENT_MIGRATION[settings.accentColor] || "gradient";
+      const next = { ...settings, accentPreset: migrated };
+      settingsRef.current = next;
+      setSettings(next);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Save settings only (separate from logbook auto-save) ──
   const saveSettings = async (next) => {
@@ -610,7 +674,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     ? 0
     : (Number(settings.preFlightBuffer) || 0) + (Number(settings.postFlightBuffer) || 0);
 
-  const allSectors = useMemo(() => getAllSectors(data, dutyBufferMins), [data, dutyBufferMins]);
+  const allSectors = useMemo(() => getAllSectors(data, dutyBufferMins, settings.dayNightMethod), [data, dutyBufferMins, settings.dayNightMethod]);
 
   const GT_KEYS = ["dayP1", "dayP1US", "dayP2", "nightP1", "nightP1US", "nightP2"];
   const { grandTotals, gtSum } = useMemo(() => {
@@ -692,7 +756,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-txt, #c8d6e5)" }}>
         <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-border, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
           <div style={{ fontSize: 38, marginBottom: 8 }}>✈</div>
-          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V5.6</div>
+          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V6.0</div>
           <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
           <div style={{ fontSize: 11, color: "var(--elb-txt-muted, #3a5a7a)", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
           <button
@@ -737,7 +801,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         id: storedRows.length + i + 1, ...EMPTY_ROW(),
       }))];
 
-  const updateCell = (rowIdx, field, value) => {
+  const updateCell = async (rowIdx, field, value) => {
     // Aircraft type: normalise to uppercase and warn if genuinely new type
     if (field === "type" && value && value.trim()) {
       const normalized = value.trim().toUpperCase();
@@ -750,17 +814,18 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         )
       );
       if (existingTypes.size > 0 && !existingTypes.has(normalized)) {
-        const confirmed = window.confirm(
-          `"${normalized}" is a new aircraft type not seen in your logbook.\n\n` +
-          `Adding a new aircraft type creates a separate recency tracker for takeoff & landing recency and autoland recency. ` +
-          `Flights logged on other types will not count toward this type's currency.\n\n` +
-          `Add "${normalized}" to your logbook?`
+        const confirmed = await showConfirm(
+          `Add aircraft type "${normalized}"?`,
+          `This is a new aircraft type not found in your logbook. Adding it creates a separate recency tracker for takeoff & landing recency and autoland recency. Flights logged on other types will not count toward this type's currency.`
         );
         if (!confirmed) return;
       }
       // Proceed with normalised uppercase value
       value = normalized;
     }
+
+    // Mark dirty so the header chip reflects unsaved changes
+    setSaveStatus(prev => (prev === "saving" ? "saving" : "dirty"));
 
     setData(prev => {
       let current = [...(prev[monthKey] || makeMonthRows(selectedMonth, selectedYear))];
@@ -802,6 +867,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   const deleteRow = (rowIdx) => {
+    setSaveStatus(prev => (prev === "saving" ? "saving" : "dirty"));
     setData(prev => {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
       const newRows = current.filter((_, i) => i !== rowIdx);
@@ -811,6 +877,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   const addSector = () => {
+    setSaveStatus(prev => (prev === "saving" ? "saving" : "dirty"));
     setData(prev => {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
       // Next ID should be length + 1, ensuring no gaps
@@ -1123,9 +1190,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         @keyframes fadeIn  { from { opacity: 0;                } to { opacity: 1;                } }
         @keyframes blink   { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
         @keyframes popIn   { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+        @keyframes cb-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.75); } }
         ${themeCss}
         @media (max-width: 768px) {
-          .save-status-text { display: none; }
           .save-button-text { display: none; }
           .save-button { padding: 4px 8px !important; }
         }
@@ -1134,77 +1201,120 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         }
       `}</style>
 
-      {/* ── HEADER ── */}
+      {/* ── TOPBAR ── */}
       <div style={{
-        background: "linear-gradient(135deg, var(--elb-bghd, #0d1117) 0%, var(--elb-bgalt, #161d2a) 100%)",
-        borderBottom: "1px solid var(--elb-bdr, #1e3a5f)",
-        padding: "18px 24px 0",
+        background: "var(--cb-surface-0, #0a1020)",
+        borderBottom: "1px solid rgba(255,255,255,0.07)",
+        padding: "0 24px",
+        height: 52,
+        display: "flex",
+        alignItems: "center",
+        gap: 0,
+        flexShrink: 0,
       }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
-          <div style={{ flex: 1, textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-              <span style={{ fontSize: 22, color: "var(--elb-acc, #4fc3f7)" }}>✈</span>
-              <span style={{ fontSize: 13, letterSpacing: "0.25em", color: "var(--elb-acc, #4fc3f7)", textTransform: "uppercase" }}>
-                eLOGBOOK V5.6
-              </span>
-            </div>
-            <div style={{ fontSize: 13, color: "var(--elb-txt-muted, #7ab8d4)", marginBottom: 2 }}>
-              CAAM • MCAR 2016
-            </div>
-            <div style={{ fontSize: 19, fontWeight: 700, color: "var(--elb-txt, #e8f4fd)", letterSpacing: "0.05em" }}>
-              {MONTHS[selectedMonth].toUpperCase()} {selectedYear} — FLIGHT RECORDS
-            </div>
-            <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", marginTop: 3 }}>
-              Compliant with CAD 1901 • MCAR 2016 Part 69 & Part 74
-            </div>
+        {/* LEFT: Brand */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: "0 0 auto" }}>
+          <img src="/brand/icons/favicon-48.png" alt="ClaudeBorne" width="32" height="32" style={{ flexShrink: 0, display: "block" }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{
+              fontFamily: "'Tourney', system-ui, sans-serif",
+              fontWeight: 700, fontSize: 13, letterSpacing: "0.22em", lineHeight: 1,
+              background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            }}>CLAUDEBORNE</span>
+            <span style={{
+              fontFamily: "'JetBrains Mono','Courier New',monospace",
+              fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.30)", lineHeight: 1, textAlign: "left",
+            }}>ELOGBOOK · V6.0</span>
           </div>
+          <span style={{
+            marginLeft: 6,
+            fontFamily: "'JetBrains Mono','Courier New',monospace",
+            fontSize: 9, letterSpacing: "0.14em", color: "rgba(255,255,255,0.28)",
+            border: "1px solid rgba(255,255,255,0.10)", padding: "3px 8px", whiteSpace: "nowrap",
+          }}>CAAM · MCAR 2016</span>
+        </div>
 
-          {/* Right side: user info + period selector */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
-                <span style={{ fontSize: 11, color: "var(--elb-txt, #c8d6e5)", letterSpacing: "0.1em", fontWeight: 700 }}>
-                  {settings.fullName || user.displayName || user.email}
-                </span>
-                {(settings.airline || settings.licenceNumber) && (
-                  <span style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.08em" }}>
-                    {[settings.airline, settings.licenceNumber].filter(Boolean).join(" · ")}
-                  </span>
-                )}
-              </div>
-              {user.photoURL && <img src={user.photoURL} alt="avatar" style={{ width: 28, height: 28, borderRadius: "50%", border: "1px solid var(--elb-border, #1e3a5f)" }} />}
+        {/* RIGHT: User info + avatar */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "0 0 auto", marginLeft: "auto" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+            <span style={{
+              fontFamily: "'Tourney',system-ui,sans-serif",
+              fontWeight: 700, fontSize: 12, letterSpacing: "0.14em",
+              color: "var(--elb-txt,#e8f4fd)", lineHeight: 1,
+            }}>
+              {(settings.fullName || user.displayName || user.email || "").toUpperCase()}
+            </span>
+            {(settings.airline || settings.licenceType || settings.licenceNumber) && (
+              <span style={{
+                fontFamily: "'JetBrains Mono','Courier New',monospace",
+                fontSize: 9, letterSpacing: "0.16em",
+                color: "rgba(255,255,255,0.30)", lineHeight: 1,
+              }}>
+                {[settings.airline, [settings.licenceType, settings.licenceNumber].filter(Boolean).join("/")].filter(Boolean).join(" · ").toUpperCase()}
+              </span>
+            )}
+          </div>
+          {user.photoURL ? (
+            <img src={user.photoURL} alt="avatar" style={{ width: 30, height: 30, borderRadius: "50%", border: "1.5px solid #3FE0C5", flexShrink: 0 }} />
+          ) : (
+            <div style={{
+              width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
+              background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 14, color: "#0a1020",
+            }}>
+              {(settings.fullName || user.displayName || user.email || "?")[0].toUpperCase()}
             </div>
-            <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.15em" }}>SELECT PERIOD</div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <select
-                value={selectedMonth}
-                onChange={e => handleMonthChange(Number(e.target.value))}
-                style={selectStyle}
-              >
-                {MONTHS.map((m, i) => (
-                  <option key={i} value={i}>{m.toUpperCase()}</option>
-                ))}
-              </select>
-              <select
-                value={selectedYear}
-                onChange={e => handleYearChange(Number(e.target.value))}
-                style={{ ...selectStyle, minWidth: 90 }}
-              >
-                {YEARS.map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
-              {refreshStatus === "refreshing" && (
-                <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
-              )}
-              {refreshStatus === "refreshed" && (
-                <span style={{ fontSize: 11, color: "#22c55e", letterSpacing: "0.1em", fontWeight: 700 }}>✓ REFRESHED</span>
-              )}
-              {refreshStatus === "error" && (
-                <span style={{ fontSize: 11, color: "#ef4444", letterSpacing: "0.1em", fontWeight: 700 }}>✗ REFRESH FAILED</span>
-              )}
+          )}
+        </div>
+      </div>
+
+      {/* ── PAGE HEADER ── */}
+      <div style={{
+        background: "linear-gradient(135deg, var(--elb-bghd,#0d1117) 0%, var(--elb-bgalt,#161d2a) 100%)",
+        borderBottom: "1px solid var(--elb-bdr,#1e3a5f)",
+        padding: "18px 24px",
+        display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16,
+        flexShrink: 0,
+      }}>
+        {/* LEFT: Title */}
+        <div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "0.22em", lineHeight: 1 }}>
+            <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", color: "var(--elb-txt,#e8f4fd)" }}>{MONTHS[selectedMonth]}</span>
+            <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{selectedYear}</span>
+          </div>
+          <div style={{ fontFamily: "'JetBrains Mono','Courier New',monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--elb-acc,#4fc3f7)", textTransform: "uppercase", margin: "5px 0 6px", textAlign: "left" }}>
+            FLIGHT RECORDS
+          </div>
+          <div style={{ fontSize: 12, color: "var(--elb-txt-muted,#5a7a9a)", letterSpacing: "0.04em", textAlign: "left" }}>
+            Compliant with CAD 1901 · MCAR 2016 Part 69 &amp; Part 74
+          </div>
+        </div>
+
+        {/* RIGHT: Controls */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+          {/* Period row (right-aligned) */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontFamily: "'JetBrains Mono','Courier New',monospace", fontSize: 9, letterSpacing: "0.18em", color: "var(--elb-txt-muted,#4a6a8a)" }}>SELECT PERIOD</span>
+            <select value={selectedMonth} onChange={e => handleMonthChange(Number(e.target.value))} style={selectStyle}>
+              {MONTHS.map((m, i) => <option key={i} value={i}>{m.toUpperCase()}</option>)}
+            </select>
+            <select value={selectedYear} onChange={e => handleYearChange(Number(e.target.value))} style={{ ...selectStyle, minWidth: 90 }}>
+              {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+          {/* Icon buttons row */}
+          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
+            {refreshStatus === "refreshing" && (
+              <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
+            )}
+            {refreshStatus === "refreshed" && (
+              <span style={{ fontSize: 11, color: "#22c55e", letterSpacing: "0.1em", fontWeight: 700 }}>✓ REFRESHED</span>
+            )}
+            {refreshStatus === "error" && (
+              <span style={{ fontSize: 11, color: "#ef4444", letterSpacing: "0.1em", fontWeight: 700 }}>✗ REFRESH FAILED</span>
+            )}
               {/* Refresh */}
               <button
                 onClick={refreshData}
@@ -1271,64 +1381,90 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 </svg>
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* ── TABS ── */}
-        <div style={{ display: "flex", gap: 0, alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 0 }}>
-            {[
-              { id: "logbook",  label: "📋 LOGBOOK" },
-              { id: "summary",  label: "📊 FLIGHT SUMMARY" },
-              { id: "ftl",      label: "⏱ LIMITS & RECENCY" },
-            ].map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-                background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
-                border: "none",
-                borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
-                borderLeft: "1px solid " + (activeTab === tab.id ? "var(--elb-border, #1e3a5f)" : "transparent"),
-                borderRight: "1px solid " + (activeTab === tab.id ? "var(--elb-border, #1e3a5f)" : "transparent"),
-                color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #5a7a9a)",
-                padding: "7px 18px",
-                fontSize: 13,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-                fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                marginBottom: activeTab === tab.id ? "-1px" : 0,
-              }}>{tab.label}</button>
-            ))}
-          </div>
-          {/* ── AUTOSAVE STATUS & SAVE NOW BUTTON ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, letterSpacing: "0.1em", flex: 1, justifyContent: "flex-end" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {Number(settings.autoSaveInterval) === 0 && saveStatus !== "saving" && (
-                <span className="save-status-text" style={{ color: "#f5c542", fontWeight: 700, letterSpacing: "0.1em", opacity: 0.75 }}>
-                  ⚠ AUTO-SAVE OFF
-                </span>
-              )}
-              {saveStatus === "saving" && (
-                <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f5c542", fontWeight: 700 }}>
-                  <svg style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-                  </svg>
-                  <span className="save-status-text">SAVING...</span>
-                </span>
-              )}
-              {saveStatus === "saved" && lastSaveTime && (
-                <span style={{ color: "#22c55e", fontWeight: 700, fontStyle: "italic" }} className="save-status-text">
-                  ✓ {lastSaveTime}
-                </span>
-              )}
-              {saveStatus === "error" && (
-                <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f74f4f", fontWeight: 700, fontStyle: "italic" }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                  <span className="save-status-text">SAVE ERROR</span>
-                </span>
-              )}
-            </div>
+          {/* Save row: chip + SAVE NOW */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "flex-end" }}>
+            {/* Save chip */}
+            {(() => {
+              const autoOff = Number(settings.autoSaveInterval) === 0;
+              if ((saveStatus === "idle" || saveStatus === "saved") && autoOff) {
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "rgba(245,197,66,0.10)", border: "1px solid rgba(245,197,66,0.30)",
+                    borderRadius: 20, padding: "4px 12px",
+                    fontSize: 10, letterSpacing: "0.14em", fontWeight: 700, color: "#f5c542",
+                  }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    AUTO-SAVE OFF
+                  </div>
+                );
+              }
+              if (saveStatus === "dirty") {
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 7,
+                    background: "rgba(245,197,66,0.10)", border: "1px solid rgba(245,197,66,0.35)",
+                    borderRadius: 20, padding: "4px 12px",
+                    fontSize: 10, letterSpacing: "0.14em", fontWeight: 700, color: "#f5c542",
+                  }}>
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#f5c542", display: "inline-block", animation: "cb-pulse 1.4s ease-in-out infinite" }}/>
+                    UNSAVED CHANGES
+                  </div>
+                );
+              }
+              if (saveStatus === "saving") {
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "rgba(59,141,255,0.10)", border: "1px solid rgba(59,141,255,0.35)",
+                    borderRadius: 20, padding: "4px 12px",
+                    fontSize: 10, letterSpacing: "0.14em", fontWeight: 700, color: "#3B8DFF",
+                  }}>
+                    <svg style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                    SAVING…
+                  </div>
+                );
+              }
+              if (saveStatus === "saved" && lastSaveTime) {
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "rgba(34,197,94,0.10)", border: "1px solid rgba(34,197,94,0.30)",
+                    borderRadius: 20, padding: "4px 12px",
+                    fontSize: 10, letterSpacing: "0.14em", fontWeight: 700, color: "#22c55e",
+                  }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    SAVED · {lastSaveTime}
+                  </div>
+                );
+              }
+              if (saveStatus === "error") {
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.35)",
+                    borderRadius: 20, padding: "4px 12px",
+                    fontSize: 10, letterSpacing: "0.14em", fontWeight: 700, color: "#ef4444", cursor: "pointer",
+                  }}
+                    onClick={saveData}
+                    title="Click to retry save"
+                  >
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    SAVE ERROR · RETRY
+                  </div>
+                );
+              }
+              return null;
+            })()}
+            {/* SAVE NOW button */}
             <button
               onClick={saveData}
               disabled={saveStatus === "saving"}
@@ -1336,27 +1472,49 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               className="save-button"
               style={{
                 flexShrink: 0,
-                background: saveStatus === "error"  ? "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08))"
-                          : "linear-gradient(135deg, var(--elb-bg2, #0d2a3a), #0a1f30)",
-                border: `1px solid ${saveStatus === "error" ? "#ef4444" : "var(--elb-acc, #4fc3f7)"}`,
+                background: saveStatus === "error" ? "linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.08))"
+                          : saveStatus === "dirty" ? "linear-gradient(135deg,rgba(245,197,66,0.12),rgba(245,197,66,0.06))"
+                          : "linear-gradient(135deg,var(--cb-surface-2,#1b2340),var(--cb-surface-1,#141a2e))",
+                border: `1px solid ${saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc,#4fc3f7)"}`,
                 borderRadius: 4,
-                color: saveStatus === "error" ? "#ef4444" : "var(--elb-acc, #4fc3f7)",
-                fontFamily: "'Courier New', monospace",
-                fontSize: 11,
-                letterSpacing: "0.15em",
-                padding: "4px 12px",
-                cursor: saveStatus === "saving" ? "wait" : "pointer",
-                boxShadow: "0 0 8px rgba(79,195,247,0.2)",
-                opacity: saveStatus === "saving" ? 0.7 : 1,
-                fontWeight: 700,
+                color: saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc,#4fc3f7)",
+                fontFamily: "'Courier New',monospace", fontSize: 11, letterSpacing: "0.15em",
+                padding: "4px 12px", cursor: saveStatus === "saving" ? "wait" : "pointer",
+                boxShadow: saveStatus === "dirty" ? "0 0 8px rgba(245,197,66,0.25)" : "0 0 8px rgba(79,195,247,0.2)",
+                opacity: saveStatus === "saving" ? 0.7 : 1, fontWeight: 700,
               }}
             >
               <span className="save-button-text">{saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}</span>
               <span className="save-button-icon">{saveStatus === "saving" ? "⏳" : saveStatus === "error" ? "❌" : "💾"}</span>
             </button>
           </div>
+          </div>
         </div>
-      </div>
+
+        {/* ── TABS ── */}
+        <div style={{ display: "flex", gap: 0, alignItems: "center" }}>
+          {[
+            { id: "logbook",  label: "📋 LOGBOOK" },
+            { id: "summary",  label: "📊 FLIGHT SUMMARY" },
+            { id: "ftl",      label: "⏱ LIMITS & RECENCY" },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+              background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
+              border: "none",
+              borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
+              borderLeft: "1px solid " + (activeTab === tab.id ? "var(--elb-border, #1e3a5f)" : "transparent"),
+              borderRight: "1px solid " + (activeTab === tab.id ? "var(--elb-border, #1e3a5f)" : "transparent"),
+              color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #5a7a9a)",
+              padding: "7px 18px",
+              fontSize: 13,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              fontFamily: "var(--elb-font, 'Courier New', monospace)",
+              marginBottom: activeTab === tab.id ? "-1px" : 0,
+            }}>{tab.label}</button>
+          ))}
+        </div>
 
       {/* ── CONTENT ── */}
       <div style={{ padding: "18px 24px" }}>
@@ -1410,8 +1568,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     <span style={{ display: "block" }}>STA</span>
                     <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
                   </th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
+                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
+                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                   <th rowSpan={2} style={thStyle}>TOTAL</th>
                   <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none" }}></th>
                   <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
@@ -1607,9 +1765,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                                     if (e.key === "Escape") setEditingCell(null);
                                   }}
                                   style={{
-                                    width: "100%", background: "#0f2035", border: "none",
-                                    borderBottom: "1px solid #4fc3f7", color: "#e8f4fd",
-                                    fontFamily: "'Courier New', monospace", fontSize: 13,
+                                    width: "100%", background: "var(--cb-surface-2, #1b2340)", border: "none",
+                                    borderBottom: "1px solid var(--cb-accent, #4fc3f7)", color: "var(--cb-ink, #e8ecf5)",
+                                    fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 13,
                                     padding: "6px 8px", outline: "none", boxSizing: "border-box",
                                     textTransform: "uppercase",
                                   }}
@@ -1742,8 +1900,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     <tr style={{ background: "var(--elb-bg2, #0b1320)" }}>
                       <th rowSpan={2} style={{ ...thStyle, width: 80, minWidth: 80, maxWidth: 80 }}>MONTH</th>
                       <th rowSpan={2} style={{ ...thStyle, width: 55, minWidth: 55, maxWidth: 55 }}>SECTORS</th>
-                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
-                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                       <th rowSpan={2} style={thStyle}>TOTAL</th>
                     </tr>
                     <tr style={{ background: "var(--elb-bg2, #0b1320)" }}>
@@ -1870,8 +2028,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     <thead>
                       <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                         <th rowSpan={2} style={{ ...thStyle, textAlign: "left", paddingLeft: 10, minWidth: 90 }}>AIRCRAFT<br />TYPE</th>
-                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
-                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
+                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
+                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                         <th rowSpan={2} style={thStyle}>TOTAL</th>
                       </tr>
                       <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
@@ -1992,7 +2150,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             {/* Recency grid for all aircraft types */}
             {aircraftTypes.length === 0 ? (
               <div style={{
-                background: "var(--elb-bg2, #0d1520)", border: "1px solid #0f1e2d", borderRadius: 4,
+                background: "var(--elb-bg2, #0d1520)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))", borderRadius: 4,
                 padding: 24, textAlign: "center", color: "var(--elb-txt-muted, #4a6a8a)",
                 fontSize: 11, letterSpacing: "0.12em",
               }}>
@@ -2008,15 +2166,15 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   const dotCol = anyRed ? "#ef4444" : "#22c55e";
 
                   const recencyCards = [
-                    { label: "DAY TAKEOFFS",   count: data.dayTakeoffs90,   expiry: data.dayTOExpiry   },
-                    { label: "DAY LANDINGS",   count: data.dayLandings90,   expiry: data.dayLdgExpiry  },
-                    { label: "NIGHT TAKEOFFS", count: data.nightTakeoffs90, expiry: data.nightTOExpiry },
-                    { label: "NIGHT LANDINGS", count: data.nightLandings90, expiry: data.nightLdgExpiry},
+                    { label: "☀ DAY TAKEOFFS",   count: data.dayTakeoffs90,   expiry: data.dayTOExpiry   },
+                    { label: "☀ DAY LANDINGS",   count: data.dayLandings90,   expiry: data.dayLdgExpiry  },
+                    { label: "☾ NIGHT TAKEOFFS", count: data.nightTakeoffs90, expiry: data.nightTOExpiry },
+                    { label: "☾ NIGHT LANDINGS", count: data.nightLandings90, expiry: data.nightLdgExpiry},
                   ];
 
                   return (
                     <div key={type} style={{
-                      background: "var(--elb-bg2, #0d1520)", border: "1px solid #0f1e2d",
+                      background: "var(--elb-bg2, #0d1520)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))",
                       borderLeft: `3px solid ${borderCol}`, borderRadius: 4, padding: 16,
                     }}>
                       {/* Type badge + status dot */}
@@ -2093,7 +2251,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             {/* ── AUTOLAND RECENCY ── */}
             <SectionHeader icon="🎯" title="AUTOLAND RECENCY — 3 WITHIN 6 MONTHS · ALL TYPES" popupId="rec-autoland" />
             <div style={{
-              background: "var(--elb-bg2, #0d1520)", border: "1px solid #0f1e2d",
+              background: "var(--elb-bg2, #0d1520)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))",
               borderLeft: "3px solid #eab308", borderRadius: 4, padding: 16,
             }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
@@ -2196,35 +2354,35 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             }}
           >
             <div style={{
-              background: "#0c1622",
-              border: "1px solid #1a3050",
-              borderTop: "2px solid #4fc3f7",
+              background: "var(--cb-surface-1, #141a2e)",
+              border: "1px solid var(--cb-line-2, #1e3a5f)",
+              borderTop: "2px solid var(--cb-accent, #4fc3f7)",
               borderRadius: 6,
               padding: "20px 22px 18px",
               maxWidth: 520, width: "100%",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.8)",
+              boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
               animation: "popIn 0.15s ease",
-              fontFamily: "'Courier New',monospace",
+              fontFamily: "var(--elb-font, 'Courier New', monospace)",
             }}>
               {/* Header */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>{rowLabel}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.07em" }}>REMARKS</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "var(--cb-accent, #4fc3f7)", marginBottom: 5 }}>{rowLabel}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>REMARKS</div>
                 </div>
                 <button
                   onClick={() => setRemarksModal(null)}
                   style={{
-                    background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
-                    color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace", fontSize: 12,
+                    background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
+                    color: "var(--cb-ink-2, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
                     width: 22, height: 22, cursor: "pointer", flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#4a6a8a"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-2, #7c87a3)"; }}
                 >✕</button>
               </div>
-              <div style={{ height: 1, background: "#1a3050", marginBottom: 14 }} />
+              <div style={{ height: 1, background: "var(--cb-line-2, #1e3a5f)", marginBottom: 14 }} />
               {/* Textarea */}
               <textarea
                 value={remarksModal.draft}
@@ -2234,11 +2392,11 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 autoFocus
                 style={{
                   width: "100%",
-                  background: "#080f18",
-                  border: "1px solid #1a3050",
+                  background: "var(--cb-surface-0, #0a1020)",
+                  border: "1px solid var(--cb-line-2, #1e3a5f)",
                   borderRadius: 4,
-                  color: "#c8d6e5",
-                  fontFamily: "'Courier New',monospace",
+                  color: "var(--cb-ink, #e8ecf5)",
+                  fontFamily: "var(--elb-font, 'Courier New', monospace)",
                   fontSize: 13,
                   padding: "10px 12px",
                   resize: "vertical",
@@ -2246,8 +2404,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   boxSizing: "border-box",
                   lineHeight: 1.6,
                 }}
-                onFocus={e => e.target.style.borderColor = "#4fc3f7"}
-                onBlur={e => e.target.style.borderColor = "#1a3050"}
+                onFocus={e => e.target.style.borderColor = "var(--cb-accent, #4fc3f7)"}
+                onBlur={e => e.target.style.borderColor = "var(--cb-line-2, #1e3a5f)"}
               />
               {/* Autoland Checkbox */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, marginBottom: 6 }}>
@@ -2256,22 +2414,22 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   checked={remarksModal.autoland || false}
                   onChange={e => setRemarksModal(prev => ({ ...prev, autoland: e.target.checked }))}
                   style={{
-                    width: 14, height: 14, cursor: "pointer", accentColor: "#4fc3f7",
+                    width: 14, height: 14, cursor: "pointer", accentColor: "var(--cb-accent, #4fc3f7)",
                   }}
                 />
-                <label style={{ fontSize: 11, color: "#7ab8d4", letterSpacing: "0.08em", cursor: "pointer", userSelect: "none" }}>AUTOLAND</label>
+                <label style={{ fontSize: 11, color: "var(--cb-ink-2, #b8c0d4)", letterSpacing: "0.08em", cursor: "pointer", userSelect: "none" }}>AUTOLAND</label>
               </div>
               {/* Action buttons */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
                 <button
                   onClick={() => setRemarksModal(null)}
                   style={{
-                    background: "transparent", border: "1px solid #1e3a5f", borderRadius: 4,
-                    color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace",
+                    background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
+                    color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
                     fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px", cursor: "pointer",
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a5f"; e.currentTarget.style.color = "#4a6a8a"; }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--cb-accent, #4fc3f7)"; e.currentTarget.style.color = "var(--cb-accent, #4fc3f7)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
                 >CANCEL</button>
                 <button
                   onClick={() => {
@@ -2280,14 +2438,14 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     setRemarksModal(null);
                   }}
                   style={{
-                    background: "linear-gradient(135deg, #0d2a3a, #0a1f30)",
-                    border: "1px solid #4fc3f7", borderRadius: 4,
-                    color: "#4fc3f7", fontFamily: "'Courier New',monospace",
+                    background: "rgba(var(--cb-accent-rgb, 79,195,247), 0.08)",
+                    border: "1px solid var(--cb-accent, #4fc3f7)", borderRadius: 4,
+                    color: "var(--cb-accent, #4fc3f7)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
                     fontSize: 11, letterSpacing: "0.12em", padding: "6px 20px", cursor: "pointer",
-                    boxShadow: "0 0 8px rgba(79,195,247,0.2)",
+                    boxShadow: "0 0 8px rgba(79,195,247,0.15)",
                   }}
-                  onMouseEnter={e => e.currentTarget.style.background = "linear-gradient(135deg, #0d3a4a, #0a2f40)"}
-                  onMouseLeave={e => e.currentTarget.style.background = "linear-gradient(135deg, #0d2a3a, #0a1f30)"}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(79,195,247,0.15)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "rgba(79,195,247,0.08)"}
                 >SAVE REMARKS</button>
               </div>
             </div>
@@ -2311,38 +2469,38 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             }}
           >
             <div style={{
-              background: "#0c1622",
-              border: "1px solid #1a3050",
-              borderTop: "2px solid #4fc3f7",
+              background: "var(--cb-surface-1, #141a2e)",
+              border: "1px solid var(--cb-line-2, #1e3a5f)",
+              borderTop: "2px solid var(--cb-accent, #4fc3f7)",
               borderRadius: 6,
               padding: "20px 22px 18px",
               maxWidth: 480, width: "100%",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.8)",
+              boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
               animation: "popIn 0.15s ease",
-              fontFamily: "'Courier New',monospace",
+              fontFamily: "var(--elb-font, 'Courier New', monospace)",
             }}>
               {/* Header */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>{p.para}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.07em", lineHeight: 1.45 }}>{p.title}</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "var(--cb-accent, #4fc3f7)", marginBottom: 5 }}>{p.para}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em", lineHeight: 1.45 }}>{p.title}</div>
                 </div>
                 <button
                   onClick={() => setActivePopup(null)}
                   style={{
-                    background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
-                    color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace", fontSize: 12,
+                    background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
+                    color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
                     width: 22, height: 22, cursor: "pointer", flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#4a6a8a"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
                 >✕</button>
               </div>
-              <div style={{ height: 1, background: "#1a3050", marginBottom: 14 }} />
+              <div style={{ height: 1, background: "var(--cb-line-2, #1e3a5f)", marginBottom: 14 }} />
               {/* Body */}
               <div
-                style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", lineHeight: 1.9, letterSpacing: "0.03em" }}
+                style={{ fontSize: "var(--elb-desc-sz)", color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.9, letterSpacing: "0.03em" }}
                 dangerouslySetInnerHTML={{ __html: p.body }}
               />
               {/* Note */}
@@ -2350,10 +2508,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 <div
                   style={{
                     marginTop: 14, padding: "9px 12px",
-                    background: "rgba(79,195,247,0.05)",
-                    borderLeft: "2px solid rgba(79,195,247,0.25)",
+                    background: "rgba(79,195,247,0.06)",
+                    borderLeft: "2px solid var(--cb-accent, #4fc3f7)",
                     borderRadius: "0 3px 3px 0",
-                    fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", lineHeight: 1.75, letterSpacing: "0.03em",
+                    fontSize: "var(--elb-hint-sz)", color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.75, letterSpacing: "0.03em",
                   }}
                   dangerouslySetInnerHTML={{ __html: p.note }}
                 />
@@ -2366,7 +2524,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       {/* ── AUTOSAVE ERROR MODAL ── */}
       {saveStatus === "error" && (
         <div
-          onClick={e => { if (e.target === e.currentTarget) setSaveStatus("idle"); }}
+          onClick={e => { if (e.target === e.currentTarget) setSaveStatus("dirty"); }}
           style={{
             position: "fixed", inset: 0,
             background: "rgba(0,0,0,0.72)",
@@ -2376,54 +2534,62 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
           }}
         >
           <div style={{
-            background: "#0c1622",
-            border: "1px solid #3a2020",
-            borderTop: "2px solid #f74f4f",
+            background: "var(--cb-surface-1, #141a2e)",
+            border: "1px solid rgba(239,68,68,0.3)",
+            borderTop: "2px solid #ef4444",
             borderRadius: 6,
             padding: "20px 22px 18px",
             maxWidth: 420, width: "100%",
-            boxShadow: "0 12px 48px rgba(0,0,0,0.9)",
+            boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
             animation: "popIn 0.15s ease",
-            fontFamily: "'Courier New',monospace",
+            fontFamily: "var(--elb-font, 'Courier New', monospace)",
           }}>
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#f74f4f", letterSpacing: "0.08em", display: "flex", alignItems: "center", gap: 6 }}>
-                  <span>🚨</span> AUTOSAVE FAILED
-                </div>
+                <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#ef4444", marginBottom: 5 }}>SAVE ERROR</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>AUTOSAVE FAILED</div>
               </div>
               <button
-                onClick={() => setSaveStatus("idle")}
+                onClick={() => setSaveStatus("dirty")}
                 style={{
-                  background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
-                  color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace", fontSize: 12,
+                  background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
+                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
                   width: 22, height: 22, cursor: "pointer", flexShrink: 0,
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#4a6a8a"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
               >✕</button>
             </div>
-            <div style={{ height: 1, background: "#1a3050", marginBottom: 14 }} />
+            <div style={{ height: 1, background: "rgba(239,68,68,0.2)", marginBottom: 14 }} />
             {/* Message */}
-            <div style={{ fontSize: 13, color: "#9bbcd4", lineHeight: 1.7, marginBottom: 14 }}>
-              An error occurred while saving your data to the cloud. Please check your internet connection and try refreshing the page. Your local changes are safe and will be retried.
+            <div style={{ fontSize: 13, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.7, marginBottom: 14 }}>
+              Could not save to the cloud. Check your connection. Your local changes are preserved — use Retry to try again.
             </div>
-            {/* Action Button */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            {/* Action Buttons */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
               <button
-                onClick={() => setSaveStatus("idle")}
+                onClick={() => setSaveStatus("dirty")}
                 style={{
-                  background: "transparent",
-                  border: "1px solid #1e3a55",
-                  borderRadius: 4,
-                  color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace",
-                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 18px", cursor: "pointer",
+                  background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
+                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px", cursor: "pointer",
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#4a6a8a"; }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--cb-accent, #4fc3f7)"; e.currentTarget.style.color = "var(--cb-accent, #4fc3f7)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
               >DISMISS</button>
+              <button
+                onClick={() => { setSaveStatus("dirty"); saveData(); }}
+                style={{
+                  background: "rgba(239,68,68,0.10)", border: "1px solid #ef4444", borderRadius: 4,
+                  color: "#ef4444", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 20px", cursor: "pointer",
+                  fontWeight: 700,
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.18)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.10)"}
+              >↺ RETRY</button>
             </div>
           </div>
         </div>
@@ -2438,6 +2604,46 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         userEmail={user?.email}
         onDeleteAccount={onDeleteAccount}
       />
+
+      {/* ── BRANDED CONFIRM DIALOG (replaces window.confirm) ── */}
+      {confirmDialog && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 3000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+          fontFamily: "var(--elb-font, 'Courier New', monospace)",
+        }}>
+          <div style={{
+            background: "var(--elb-bg2, #141a2e)", border: "1px solid var(--elb-border, #1a3050)",
+            borderTop: "2px solid var(--elb-acc, #3FE0C5)", borderRadius: 4,
+            width: "100%", maxWidth: 420, padding: "24px 24px 20px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.85)",
+          }}>
+            <div style={{ fontSize: "var(--elb-th-sz)", letterSpacing: "0.1em", color: "var(--elb-acc, #3FE0C5)", marginBottom: 8 }}>
+              CONFIRM ACTION
+            </div>
+            <div style={{ fontSize: "var(--elb-td-sz)", fontWeight: 700, color: "var(--elb-txt, #e8ecf5)", marginBottom: 12, letterSpacing: "0.04em" }}>
+              {confirmDialog.title}
+            </div>
+            <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #b8c0d4)", lineHeight: 1.7, marginBottom: 20 }}>
+              {confirmDialog.body}
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button onClick={handleConfirmNo} style={{
+                background: "transparent", border: "1px solid var(--elb-border, #1a3050)",
+                color: "var(--elb-txt-muted, #b8c0d4)", fontFamily: "inherit",
+                fontSize: "var(--elb-hint-sz)", letterSpacing: "0.1em", padding: "7px 18px",
+                cursor: "pointer", borderRadius: 3,
+              }}>CANCEL</button>
+              <button onClick={handleConfirmYes} style={{
+                background: "rgba(63,224,197,0.1)", border: "1px solid var(--elb-acc, #3FE0C5)",
+                color: "var(--elb-acc, #3FE0C5)", fontFamily: "inherit",
+                fontSize: "var(--elb-hint-sz)", letterSpacing: "0.1em", padding: "7px 18px",
+                cursor: "pointer", borderRadius: 3, fontWeight: 700,
+              }}>CONFIRM</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── EXPORT/IMPORT MODAL ── */}
       <ExportImportModal
@@ -2461,7 +2667,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v5.5 · CAA MALAYSIA</span>
+        <span>eLOGBOOK v6.0 · CAA MALAYSIA</span>
         <span>MCAR 2016 PART 7 &amp; 8 · ICAO ANNEX 1 FORMAT</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
