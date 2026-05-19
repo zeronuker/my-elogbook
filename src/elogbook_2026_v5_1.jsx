@@ -359,6 +359,14 @@ function resolveAccent(settings) {
   return { accent: single, grad, dim };
 }
 
+function hexToRgb(hex) {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `${r},${g},${b}`;
+}
+
 function makeThemeCss(settings = {}) {
   const isDark   = (settings.theme || "dark") === "dark";
   const fontSize = Math.min(18, Math.max(12, Number(settings.fontSize) || 14));
@@ -383,6 +391,7 @@ function makeThemeCss(settings = {}) {
       --cb-ink:${surf.ink};--cb-ink-2:${surf.ink2};--cb-ink-dim:${surf.inkD};
       --cb-line:${surf.line};--cb-line-2:${surf.line2};
       --cb-accent:${accent};
+      --cb-accent-rgb:${hexToRgb(accent)};
       --cb-grad:${grad};
       --cb-font-body:${fontFamily};
       --cb-font-mono:${fontFamily};
@@ -1184,7 +1193,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         @keyframes cb-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.75); } }
         ${themeCss}
         @media (max-width: 768px) {
-          .save-status-text { display: none; }
           .save-button-text { display: none; }
           .save-button { padding: 4px 8px !important; }
         }
