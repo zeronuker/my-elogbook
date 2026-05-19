@@ -992,7 +992,7 @@ const settingsCss = `
   /* ── Field row ──────────────────────────────────────────────────── */
   .sm-field {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 1fr auto;
     gap: 18px;
     padding: 10px 0;
     align-items: center;
@@ -1013,7 +1013,7 @@ const settingsCss = `
     margin-top: 3px;
     max-width: 460px;
   }
-  .sm-field-control { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .sm-field-control { display: flex; align-items: center; gap: 8px; }
 
   .sm-row { padding: 4px 0 12px; }
 
