@@ -491,11 +491,6 @@ function AppearanceTab({ d, upd }) {
       )}
 
       <SmSectionHead title="Accent" hint="// 5 curated brand presets" />
-      <div className="sm-curated-note">
-        Curated to the ClaudeBorne palette. The previous 8 free-pick accents (Cyan / Amber / Green /
-        Purple / Orange / Pink / Red / Teal) are not available in v6 — your selection has been
-        migrated to the nearest brand-safe equivalent.
-      </div>
       <SmRow>
         <div className="sm-accent-grid">
           {ACCENT_PRESETS.map((p) => (
@@ -1013,7 +1008,7 @@ const settingsCss = `
     line-height: 1.5;
     margin-top: 3px;
   }
-  .sm-field-control { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+  .sm-field-control { flex-shrink: 0; display: flex; align-items: center; gap: 8px; width: 240px; }
 
   .sm-row { padding: 4px 0 12px; }
 
@@ -1025,13 +1020,12 @@ const settingsCss = `
     font-family: var(--cb-font-body);
     font-size: calc(12.5px * var(--fs));
     padding: 7px 12px;
-    min-width: 200px;
+    width: 100%;
     outline: none;
     transition: border-color 120ms;
   }
   .sm-input:focus, .sm-select:focus { border-color: var(--cb-mint); }
   .sm-input[readonly] { color: var(--cb-ink-2); opacity: 0.65; }
-  .sm-input-date { min-width: 160px; }
   .sm-select { cursor: pointer; }
 
   /* ── Segmented control ──────────────────────────────────────────── */
