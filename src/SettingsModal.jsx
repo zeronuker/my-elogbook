@@ -949,7 +949,7 @@ const settingsCss = `
 
   /* ── Body ───────────────────────────────────────────────────────── */
   .sm-body {
-    flex: 1; overflow-y: auto;
+    flex: 0 1 auto; min-height: 0; overflow-y: auto;
     padding: 24px 28px;
   }
   .sm-body::-webkit-scrollbar { width: 4px; }
