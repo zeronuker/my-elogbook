@@ -1383,12 +1383,12 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       }}>
         {/* LEFT: Title */}
         <div>
-          <div style={{ fontFamily: "'JetBrains Mono','Courier New',monospace", fontSize: 11, letterSpacing: "0.2em", color: "var(--elb-acc,#4fc3f7)", textTransform: "uppercase", marginBottom: 6 }}>
-            {MONTHS[selectedMonth].toUpperCase()} {selectedYear} · FLIGHT RECORDS
-          </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "0.22em", marginBottom: 8, lineHeight: 1 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "0.22em", lineHeight: 1 }}>
             <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", color: "var(--elb-txt,#e8f4fd)" }}>{MONTHS[selectedMonth]}</span>
             <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{selectedYear}</span>
+          </div>
+          <div style={{ fontFamily: "'JetBrains Mono','Courier New',monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--elb-acc,#4fc3f7)", textTransform: "uppercase", margin: "5px 0 6px" }}>
+            FLIGHT RECORDS
           </div>
           <div style={{ fontSize: 12, color: "var(--elb-txt-muted,#5a7a9a)", letterSpacing: "0.04em" }}>
             Compliant with CAD 1901 · MCAR 2016 Part 69 &amp; Part 74
