@@ -815,6 +815,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       value = normalized;
     }
 
+    // Mark dirty so the header chip reflects unsaved changes
+    setSaveStatus(prev => (prev === "saving" ? "saving" : "dirty"));
+
     setData(prev => {
       let current = [...(prev[monthKey] || makeMonthRows(selectedMonth, selectedYear))];
       // Extend stored rows if the edited row is beyond what's been saved (virtual display rows)
@@ -855,6 +858,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   const deleteRow = (rowIdx) => {
+    setSaveStatus(prev => (prev === "saving" ? "saving" : "dirty"));
     setData(prev => {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
       const newRows = current.filter((_, i) => i !== rowIdx);
@@ -864,6 +868,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   const addSector = () => {
+    setSaveStatus(prev => (prev === "saving" ? "saving" : "dirty"));
     setData(prev => {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
       // Next ID should be length + 1, ensuring no gaps
@@ -1176,6 +1181,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         @keyframes fadeIn  { from { opacity: 0;                } to { opacity: 1;                } }
         @keyframes blink   { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
         @keyframes popIn   { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+        @keyframes cb-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.75); } }
         ${themeCss}
         @media (max-width: 768px) {
           .save-status-text { display: none; }
@@ -1210,6 +1216,107 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", marginTop: 3 }}>
               Compliant with CAD 1901 • MCAR 2016 Part 69 & Part 74
             </div>
+          </div>
+
+          {/* ── SAVE STATUS CHIP (centered) ── */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: "0 0 auto", alignSelf: "center" }}>
+            {(() => {
+              const autoOff = Number(settings.autoSaveInterval) === 0;
+              // idle + auto-save off
+              if ((saveStatus === "idle" || saveStatus === "saved") && autoOff) {
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "rgba(245,197,66,0.10)", border: "1px solid rgba(245,197,66,0.30)",
+                    borderRadius: 20, padding: "5px 14px",
+                    fontSize: 10, letterSpacing: "0.14em", fontWeight: 700,
+                    color: "#f5c542",
+                  }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    AUTO-SAVE OFF
+                  </div>
+                );
+              }
+              // dirty — unsaved changes
+              if (saveStatus === "dirty") {
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 7,
+                    background: "rgba(245,197,66,0.10)", border: "1px solid rgba(245,197,66,0.35)",
+                    borderRadius: 20, padding: "5px 14px",
+                    fontSize: 10, letterSpacing: "0.14em", fontWeight: 700,
+                    color: "#f5c542",
+                  }}>
+                    <span style={{
+                      width: 7, height: 7, borderRadius: "50%",
+                      background: "#f5c542",
+                      display: "inline-block",
+                      animation: "cb-pulse 1.4s ease-in-out infinite",
+                    }}/>
+                    UNSAVED CHANGES
+                  </div>
+                );
+              }
+              // saving
+              if (saveStatus === "saving") {
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "rgba(59,141,255,0.10)", border: "1px solid rgba(59,141,255,0.35)",
+                    borderRadius: 20, padding: "5px 14px",
+                    fontSize: 10, letterSpacing: "0.14em", fontWeight: 700,
+                    color: "#3B8DFF",
+                  }}>
+                    <svg style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                    SAVING…
+                  </div>
+                );
+              }
+              // saved
+              if (saveStatus === "saved" && lastSaveTime) {
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "rgba(34,197,94,0.10)", border: "1px solid rgba(34,197,94,0.30)",
+                    borderRadius: 20, padding: "5px 14px",
+                    fontSize: 10, letterSpacing: "0.14em", fontWeight: 700,
+                    color: "#22c55e",
+                  }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    SAVED · {lastSaveTime}
+                  </div>
+                );
+              }
+              // error
+              if (saveStatus === "error") {
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.35)",
+                    borderRadius: 20, padding: "5px 14px",
+                    fontSize: 10, letterSpacing: "0.14em", fontWeight: 700,
+                    color: "#ef4444",
+                    cursor: "pointer",
+                  }}
+                    onClick={saveData}
+                    title="Click to retry save"
+                  >
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    SAVE ERROR · RETRY
+                  </div>
+                );
+              }
+              // idle (saved, no timestamp yet) — show nothing
+              return null;
+            })()}
           </div>
 
           {/* Right side: user info + period selector */}
@@ -1352,36 +1459,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               }}>{tab.label}</button>
             ))}
           </div>
-          {/* ── AUTOSAVE STATUS & SAVE NOW BUTTON ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, letterSpacing: "0.1em", flex: 1, justifyContent: "flex-end" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {Number(settings.autoSaveInterval) === 0 && saveStatus !== "saving" && (
-                <span className="save-status-text" style={{ color: "#f5c542", fontWeight: 700, letterSpacing: "0.1em", opacity: 0.75 }}>
-                  ⚠ AUTO-SAVE OFF
-                </span>
-              )}
-              {saveStatus === "saving" && (
-                <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f5c542", fontWeight: 700 }}>
-                  <svg style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-                  </svg>
-                  <span className="save-status-text">SAVING...</span>
-                </span>
-              )}
-              {saveStatus === "saved" && lastSaveTime && (
-                <span style={{ color: "#22c55e", fontWeight: 700, fontStyle: "italic" }} className="save-status-text">
-                  ✓ {lastSaveTime}
-                </span>
-              )}
-              {saveStatus === "error" && (
-                <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f74f4f", fontWeight: 700, fontStyle: "italic" }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                  <span className="save-status-text">SAVE ERROR</span>
-                </span>
-              )}
-            </div>
+          {/* ── SAVE NOW BUTTON ── */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", flex: 1 }}>
             <button
               onClick={saveData}
               disabled={saveStatus === "saving"}
@@ -1389,22 +1468,23 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               className="save-button"
               style={{
                 flexShrink: 0,
-                background: saveStatus === "error"  ? "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08))"
+                background: saveStatus === "error" ? "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08))"
+                          : saveStatus === "dirty" ? "linear-gradient(135deg, rgba(245,197,66,0.12), rgba(245,197,66,0.06))"
                           : "linear-gradient(135deg, var(--elb-bg2, #0d2a3a), #0a1f30)",
-                border: `1px solid ${saveStatus === "error" ? "#ef4444" : "var(--elb-acc, #4fc3f7)"}`,
+                border: `1px solid ${saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc, #4fc3f7)"}`,
                 borderRadius: 4,
-                color: saveStatus === "error" ? "#ef4444" : "var(--elb-acc, #4fc3f7)",
+                color: saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc, #4fc3f7)",
                 fontFamily: "'Courier New', monospace",
                 fontSize: 11,
                 letterSpacing: "0.15em",
                 padding: "4px 12px",
                 cursor: saveStatus === "saving" ? "wait" : "pointer",
-                boxShadow: "0 0 8px rgba(79,195,247,0.2)",
+                boxShadow: saveStatus === "dirty" ? "0 0 8px rgba(245,197,66,0.25)" : "0 0 8px rgba(79,195,247,0.2)",
                 opacity: saveStatus === "saving" ? 0.7 : 1,
                 fontWeight: 700,
               }}
             >
-              <span className="save-button-text">{saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}</span>
+              <span className="save-button-text">{saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "error" ? "❌ ERROR" : saveStatus === "dirty" ? "💾 SAVE NOW" : "💾 SAVE NOW"}</span>
               <span className="save-button-icon">{saveStatus === "saving" ? "⏳" : saveStatus === "error" ? "❌" : "💾"}</span>
             </button>
           </div>
