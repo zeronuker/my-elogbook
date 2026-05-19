@@ -136,7 +136,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       return aDate - bDate;
     });
     if (rows.length === 0) {
-      alert("No flights found in selected date range");
+      setExportStatus({ error: "No flights found in selected date range" });
       return;
     }
 
@@ -335,7 +335,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
   const handleExport = () => {
     if (!dateFrom || !dateTo) {
-      alert("Please select date range");
+      setExportStatus({ error: "Please select a date range" });
       return;
     }
     setIsExporting(true);
@@ -570,7 +570,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
   const handleImport = async () => {
     if (!importPreview || importPreview.validRows.length === 0) {
-      alert("No valid rows to import");
+      setImportStatus({ error: "No valid rows to import" });
       return;
     }
 
@@ -687,6 +687,11 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
               </div>
 
 
+              {exportStatus?.error && (
+                <div className="elb-status-error">
+                  ✗ {exportStatus.error}
+                </div>
+              )}
               {exportStatus?.success && (
                 <div className="elb-status-success">
                   ✓ {exportStatus.count} flights exported
