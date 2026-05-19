@@ -1341,7 +1341,7 @@ const settingsCss = `
   .cb-btn-danger:hover { background: rgba(239,68,68,0.22); }
 
   /* ── Changelog tab ──────────────────────────────────────────────── */
-  .sm-changelog { gap: 0; }
+  .sm-changelog { gap: 0; text-align: left; }
   .sm-cl-entry { padding: 18px 0; border-bottom: 1px solid var(--cb-line); }
   .sm-cl-entry:last-child { border-bottom: 0; }
   .sm-cl-entry.current {
