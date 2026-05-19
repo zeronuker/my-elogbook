@@ -1470,7 +1470,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 flexShrink: 0,
                 background: saveStatus === "error" ? "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08))"
                           : saveStatus === "dirty" ? "linear-gradient(135deg, rgba(245,197,66,0.12), rgba(245,197,66,0.06))"
-                          : "linear-gradient(135deg, var(--elb-bg2, #0d2a3a), #0a1f30)",
+                          : "linear-gradient(135deg, var(--cb-surface-2, #1b2340), var(--cb-surface-1, #141a2e))",
                 border: `1px solid ${saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc, #4fc3f7)"}`,
                 borderRadius: 4,
                 color: saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc, #4fc3f7)",
@@ -1740,9 +1740,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                                     if (e.key === "Escape") setEditingCell(null);
                                   }}
                                   style={{
-                                    width: "100%", background: "#0f2035", border: "none",
-                                    borderBottom: "1px solid #4fc3f7", color: "#e8f4fd",
-                                    fontFamily: "'Courier New', monospace", fontSize: 13,
+                                    width: "100%", background: "var(--cb-surface-2, #1b2340)", border: "none",
+                                    borderBottom: "1px solid var(--cb-accent, #4fc3f7)", color: "var(--cb-ink, #e8ecf5)",
+                                    fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 13,
                                     padding: "6px 8px", outline: "none", boxSizing: "border-box",
                                     textTransform: "uppercase",
                                   }}
@@ -1875,8 +1875,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     <tr style={{ background: "var(--elb-bg2, #0b1320)" }}>
                       <th rowSpan={2} style={{ ...thStyle, width: 80, minWidth: 80, maxWidth: 80 }}>MONTH</th>
                       <th rowSpan={2} style={{ ...thStyle, width: 55, minWidth: 55, maxWidth: 55 }}>SECTORS</th>
-                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
-                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                       <th rowSpan={2} style={thStyle}>TOTAL</th>
                     </tr>
                     <tr style={{ background: "var(--elb-bg2, #0b1320)" }}>
@@ -2125,7 +2125,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             {/* Recency grid for all aircraft types */}
             {aircraftTypes.length === 0 ? (
               <div style={{
-                background: "var(--elb-bg2, #0d1520)", border: "1px solid #0f1e2d", borderRadius: 4,
+                background: "var(--elb-bg2, #0d1520)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))", borderRadius: 4,
                 padding: 24, textAlign: "center", color: "var(--elb-txt-muted, #4a6a8a)",
                 fontSize: 11, letterSpacing: "0.12em",
               }}>
@@ -2149,7 +2149,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
                   return (
                     <div key={type} style={{
-                      background: "var(--elb-bg2, #0d1520)", border: "1px solid #0f1e2d",
+                      background: "var(--elb-bg2, #0d1520)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))",
                       borderLeft: `3px solid ${borderCol}`, borderRadius: 4, padding: 16,
                     }}>
                       {/* Type badge + status dot */}
@@ -2226,7 +2226,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             {/* ── AUTOLAND RECENCY ── */}
             <SectionHeader icon="🎯" title="AUTOLAND RECENCY — 3 WITHIN 6 MONTHS · ALL TYPES" popupId="rec-autoland" />
             <div style={{
-              background: "var(--elb-bg2, #0d1520)", border: "1px solid #0f1e2d",
+              background: "var(--elb-bg2, #0d1520)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))",
               borderLeft: "3px solid #eab308", borderRadius: 4, padding: 16,
             }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
@@ -2329,35 +2329,35 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             }}
           >
             <div style={{
-              background: "#0c1622",
-              border: "1px solid #1a3050",
-              borderTop: "2px solid #4fc3f7",
+              background: "var(--cb-surface-1, #141a2e)",
+              border: "1px solid var(--cb-line-2, #1e3a5f)",
+              borderTop: "2px solid var(--cb-accent, #4fc3f7)",
               borderRadius: 6,
               padding: "20px 22px 18px",
               maxWidth: 520, width: "100%",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.8)",
+              boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
               animation: "popIn 0.15s ease",
-              fontFamily: "'Courier New',monospace",
+              fontFamily: "var(--elb-font, 'Courier New', monospace)",
             }}>
               {/* Header */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>{rowLabel}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.07em" }}>REMARKS</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "var(--cb-accent, #4fc3f7)", marginBottom: 5 }}>{rowLabel}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>REMARKS</div>
                 </div>
                 <button
                   onClick={() => setRemarksModal(null)}
                   style={{
-                    background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
-                    color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace", fontSize: 12,
+                    background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
+                    color: "var(--cb-ink-2, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
                     width: 22, height: 22, cursor: "pointer", flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#4a6a8a"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-2, #7c87a3)"; }}
                 >✕</button>
               </div>
-              <div style={{ height: 1, background: "#1a3050", marginBottom: 14 }} />
+              <div style={{ height: 1, background: "var(--cb-line-2, #1e3a5f)", marginBottom: 14 }} />
               {/* Textarea */}
               <textarea
                 value={remarksModal.draft}
@@ -2367,11 +2367,11 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 autoFocus
                 style={{
                   width: "100%",
-                  background: "#080f18",
-                  border: "1px solid #1a3050",
+                  background: "var(--cb-surface-0, #0a1020)",
+                  border: "1px solid var(--cb-line-2, #1e3a5f)",
                   borderRadius: 4,
-                  color: "#c8d6e5",
-                  fontFamily: "'Courier New',monospace",
+                  color: "var(--cb-ink, #e8ecf5)",
+                  fontFamily: "var(--elb-font, 'Courier New', monospace)",
                   fontSize: 13,
                   padding: "10px 12px",
                   resize: "vertical",
@@ -2379,8 +2379,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   boxSizing: "border-box",
                   lineHeight: 1.6,
                 }}
-                onFocus={e => e.target.style.borderColor = "#4fc3f7"}
-                onBlur={e => e.target.style.borderColor = "#1a3050"}
+                onFocus={e => e.target.style.borderColor = "var(--cb-accent, #4fc3f7)"}
+                onBlur={e => e.target.style.borderColor = "var(--cb-line-2, #1e3a5f)"}
               />
               {/* Autoland Checkbox */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, marginBottom: 6 }}>
@@ -2389,22 +2389,22 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   checked={remarksModal.autoland || false}
                   onChange={e => setRemarksModal(prev => ({ ...prev, autoland: e.target.checked }))}
                   style={{
-                    width: 14, height: 14, cursor: "pointer", accentColor: "#4fc3f7",
+                    width: 14, height: 14, cursor: "pointer", accentColor: "var(--cb-accent, #4fc3f7)",
                   }}
                 />
-                <label style={{ fontSize: 11, color: "#7ab8d4", letterSpacing: "0.08em", cursor: "pointer", userSelect: "none" }}>AUTOLAND</label>
+                <label style={{ fontSize: 11, color: "var(--cb-ink-2, #b8c0d4)", letterSpacing: "0.08em", cursor: "pointer", userSelect: "none" }}>AUTOLAND</label>
               </div>
               {/* Action buttons */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
                 <button
                   onClick={() => setRemarksModal(null)}
                   style={{
-                    background: "transparent", border: "1px solid #1e3a5f", borderRadius: 4,
-                    color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace",
+                    background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
+                    color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
                     fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px", cursor: "pointer",
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a5f"; e.currentTarget.style.color = "#4a6a8a"; }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--cb-accent, #4fc3f7)"; e.currentTarget.style.color = "var(--cb-accent, #4fc3f7)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
                 >CANCEL</button>
                 <button
                   onClick={() => {
@@ -2413,14 +2413,14 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     setRemarksModal(null);
                   }}
                   style={{
-                    background: "linear-gradient(135deg, #0d2a3a, #0a1f30)",
-                    border: "1px solid #4fc3f7", borderRadius: 4,
-                    color: "#4fc3f7", fontFamily: "'Courier New',monospace",
+                    background: "rgba(var(--cb-accent-rgb, 79,195,247), 0.08)",
+                    border: "1px solid var(--cb-accent, #4fc3f7)", borderRadius: 4,
+                    color: "var(--cb-accent, #4fc3f7)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
                     fontSize: 11, letterSpacing: "0.12em", padding: "6px 20px", cursor: "pointer",
-                    boxShadow: "0 0 8px rgba(79,195,247,0.2)",
+                    boxShadow: "0 0 8px rgba(79,195,247,0.15)",
                   }}
-                  onMouseEnter={e => e.currentTarget.style.background = "linear-gradient(135deg, #0d3a4a, #0a2f40)"}
-                  onMouseLeave={e => e.currentTarget.style.background = "linear-gradient(135deg, #0d2a3a, #0a1f30)"}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(79,195,247,0.15)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "rgba(79,195,247,0.08)"}
                 >SAVE REMARKS</button>
               </div>
             </div>
@@ -2444,38 +2444,38 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             }}
           >
             <div style={{
-              background: "#0c1622",
-              border: "1px solid #1a3050",
-              borderTop: "2px solid #4fc3f7",
+              background: "var(--cb-surface-1, #141a2e)",
+              border: "1px solid var(--cb-line-2, #1e3a5f)",
+              borderTop: "2px solid var(--cb-accent, #4fc3f7)",
               borderRadius: 6,
               padding: "20px 22px 18px",
               maxWidth: 480, width: "100%",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.8)",
+              boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
               animation: "popIn 0.15s ease",
-              fontFamily: "'Courier New',monospace",
+              fontFamily: "var(--elb-font, 'Courier New', monospace)",
             }}>
               {/* Header */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>{p.para}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#e8f4fd", letterSpacing: "0.07em", lineHeight: 1.45 }}>{p.title}</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "var(--cb-accent, #4fc3f7)", marginBottom: 5 }}>{p.para}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em", lineHeight: 1.45 }}>{p.title}</div>
                 </div>
                 <button
                   onClick={() => setActivePopup(null)}
                   style={{
-                    background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
-                    color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace", fontSize: 12,
+                    background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
+                    color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
                     width: 22, height: 22, cursor: "pointer", flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#4a6a8a"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
                 >✕</button>
               </div>
-              <div style={{ height: 1, background: "#1a3050", marginBottom: 14 }} />
+              <div style={{ height: 1, background: "var(--cb-line-2, #1e3a5f)", marginBottom: 14 }} />
               {/* Body */}
               <div
-                style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", lineHeight: 1.9, letterSpacing: "0.03em" }}
+                style={{ fontSize: "var(--elb-desc-sz)", color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.9, letterSpacing: "0.03em" }}
                 dangerouslySetInnerHTML={{ __html: p.body }}
               />
               {/* Note */}
@@ -2483,10 +2483,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 <div
                   style={{
                     marginTop: 14, padding: "9px 12px",
-                    background: "rgba(79,195,247,0.05)",
-                    borderLeft: "2px solid rgba(79,195,247,0.25)",
+                    background: "rgba(79,195,247,0.06)",
+                    borderLeft: "2px solid var(--cb-accent, #4fc3f7)",
                     borderRadius: "0 3px 3px 0",
-                    fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", lineHeight: 1.75, letterSpacing: "0.03em",
+                    fontSize: "var(--elb-hint-sz)", color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.75, letterSpacing: "0.03em",
                   }}
                   dangerouslySetInnerHTML={{ __html: p.note }}
                 />
@@ -2499,7 +2499,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       {/* ── AUTOSAVE ERROR MODAL ── */}
       {saveStatus === "error" && (
         <div
-          onClick={e => { if (e.target === e.currentTarget) setSaveStatus("idle"); }}
+          onClick={e => { if (e.target === e.currentTarget) setSaveStatus("dirty"); }}
           style={{
             position: "fixed", inset: 0,
             background: "rgba(0,0,0,0.72)",
@@ -2509,54 +2509,62 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
           }}
         >
           <div style={{
-            background: "#0c1622",
-            border: "1px solid #3a2020",
-            borderTop: "2px solid #f74f4f",
+            background: "var(--cb-surface-1, #141a2e)",
+            border: "1px solid rgba(239,68,68,0.3)",
+            borderTop: "2px solid #ef4444",
             borderRadius: 6,
             padding: "20px 22px 18px",
             maxWidth: 420, width: "100%",
-            boxShadow: "0 12px 48px rgba(0,0,0,0.9)",
+            boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
             animation: "popIn 0.15s ease",
-            fontFamily: "'Courier New',monospace",
+            fontFamily: "var(--elb-font, 'Courier New', monospace)",
           }}>
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#f74f4f", letterSpacing: "0.08em", display: "flex", alignItems: "center", gap: 6 }}>
-                  <span>🚨</span> AUTOSAVE FAILED
-                </div>
+                <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#ef4444", marginBottom: 5 }}>SAVE ERROR</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>AUTOSAVE FAILED</div>
               </div>
               <button
-                onClick={() => setSaveStatus("idle")}
+                onClick={() => setSaveStatus("dirty")}
                 style={{
-                  background: "transparent", border: "1px solid #1e3a55", borderRadius: 3,
-                  color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace", fontSize: 12,
+                  background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
+                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
                   width: 22, height: 22, cursor: "pointer", flexShrink: 0,
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#4a6a8a"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
               >✕</button>
             </div>
-            <div style={{ height: 1, background: "#1a3050", marginBottom: 14 }} />
+            <div style={{ height: 1, background: "rgba(239,68,68,0.2)", marginBottom: 14 }} />
             {/* Message */}
-            <div style={{ fontSize: 13, color: "#9bbcd4", lineHeight: 1.7, marginBottom: 14 }}>
-              An error occurred while saving your data to the cloud. Please check your internet connection and try refreshing the page. Your local changes are safe and will be retried.
+            <div style={{ fontSize: 13, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.7, marginBottom: 14 }}>
+              Could not save to the cloud. Check your connection. Your local changes are preserved — use Retry to try again.
             </div>
-            {/* Action Button */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            {/* Action Buttons */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
               <button
-                onClick={() => setSaveStatus("idle")}
+                onClick={() => setSaveStatus("dirty")}
                 style={{
-                  background: "transparent",
-                  border: "1px solid #1e3a55",
-                  borderRadius: 4,
-                  color: "var(--elb-txt-muted, #4a6a8a)", fontFamily: "'Courier New',monospace",
-                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 18px", cursor: "pointer",
+                  background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
+                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px", cursor: "pointer",
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a55"; e.currentTarget.style.color = "#4a6a8a"; }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--cb-accent, #4fc3f7)"; e.currentTarget.style.color = "var(--cb-accent, #4fc3f7)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
               >DISMISS</button>
+              <button
+                onClick={() => { setSaveStatus("dirty"); saveData(); }}
+                style={{
+                  background: "rgba(239,68,68,0.10)", border: "1px solid #ef4444", borderRadius: 4,
+                  color: "#ef4444", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 20px", cursor: "pointer",
+                  fontWeight: 700,
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.18)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.10)"}
+              >↺ RETRY</button>
             </div>
           </div>
         </div>

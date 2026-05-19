@@ -107,6 +107,10 @@ const CHANGELOG = [
       "Dirty state: chip pulses amber when there are unsaved changes.",
       "PWA manifest wired — app is installable from supported browsers.",
       "window.confirm() replaced with branded confirmation modal.",
+      "Remarks, Regulatory reference, Save error modals migrated to CB tokens — work in light mode.",
+      "Save error modal now has a Retry button; dismiss returns to dirty (not idle).",
+      "Annual overview table: ☀ DAY / ☾ NIGHT column group headers added.",
+      "Hardcoded dark-only hex in cell editor, FTL cards, and save button replaced with CB tokens.",
     ],
   },
   {
