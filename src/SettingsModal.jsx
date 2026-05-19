@@ -1096,7 +1096,7 @@ const settingsCss = `
   }
 
   /* ── Accent grid ────────────────────────────────────────────────── */
-  .sm-accent-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 480px; }
+  .sm-accent-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
   .sm-density-grid { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start; }
   .sm-density-col { display: flex; flex-direction: column; gap: 8px; }
   .sm-density-label { font-family: var(--cb-font-mono); font-size: calc(10px * var(--fs)); letter-spacing: 0.2em; color: var(--cb-ink-dim); text-transform: uppercase; }
