@@ -1206,17 +1206,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       }}>
         {/* LEFT: Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flex: "0 0 auto" }}>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="28" height="28" aria-hidden="true" style={{ flexShrink: 0 }}>
-            <defs>
-              <linearGradient id="cb-tb-g" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#3FE0C5"/>
-                <stop offset="55%" stopColor="#3B8DFF"/>
-                <stop offset="100%" stopColor="#5B6BFF"/>
-              </linearGradient>
-            </defs>
-            <polyline points="6,18 6,4 96,4 96,96 50,96" fill="none" stroke="url(#cb-tb-g)" strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter"/>
-            <text x="50" y="74" textAnchor="middle" fill="url(#cb-tb-g)" fontFamily="'Tourney',system-ui,sans-serif" fontWeight="700" fontSize="54">C</text>
-          </svg>
+          <img src="/brand/icons/favicon-48.png" alt="ClaudeBorne" width="32" height="32" style={{ flexShrink: 0, display: "block" }} />
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <span style={{
               fontFamily: "'Tourney', system-ui, sans-serif",
