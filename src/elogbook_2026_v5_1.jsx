@@ -433,7 +433,13 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setAuthLoading(false);
-      if (u) await loadData(u.uid);
+      if (u) {
+        try {
+          await loadData(u.uid);
+        } catch (e) {
+          console.error("Initial load error:", e);
+        }
+      }
     });
     return unsub;
   }, []);
