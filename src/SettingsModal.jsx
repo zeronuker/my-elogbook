@@ -991,15 +991,14 @@ const settingsCss = `
 
   /* ── Field row ──────────────────────────────────────────────────── */
   .sm-field {
-    display: grid;
-    grid-template-columns: 1fr auto;
+    display: flex;
+    align-items: center;
     gap: 18px;
     padding: 10px 0;
-    align-items: center;
     border-bottom: 1px dashed var(--cb-line);
   }
   .sm-field:last-child { border-bottom: 0; }
-  .sm-field-meta { min-width: 0; }
+  .sm-field-meta { flex: 1; min-width: 0; }
   .sm-field-label {
     font-size: calc(13px * var(--fs));
     font-weight: 400;
@@ -1011,9 +1010,8 @@ const settingsCss = `
     color: var(--cb-ink-dim);
     line-height: 1.5;
     margin-top: 3px;
-    max-width: 460px;
   }
-  .sm-field-control { display: flex; align-items: center; gap: 8px; }
+  .sm-field-control { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
 
   .sm-row { padding: 4px 0 12px; }
 
