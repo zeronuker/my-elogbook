@@ -1025,8 +1025,7 @@ const settingsCss = `
     font-family: var(--cb-font-body);
     font-size: calc(12.5px * var(--fs));
     padding: 7px 12px;
-    width: 100%;
-    min-width: 160px;
+    min-width: 200px;
     outline: none;
     transition: border-color 120ms;
   }
