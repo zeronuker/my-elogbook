@@ -103,7 +103,7 @@ const CHANGELOG = [
       "Full visual rebuild — new logo, typography, surfaces, and gradient accents.",
       "Appearance settings curated to a brand-safe palette (5 accent presets).",
       "Day/Night column headers now carry sun/moon glyphs for color-blind safety.",
-      "Save status chip in top bar — 5 states: auto-save off / unsaved / saving / saved / error (with retry).",
+      "Save status chip in page header — 5 states: auto-save off / unsaved / saving / saved / error (with retry).",
       "Dirty state: chip pulses amber when there are unsaved changes.",
       "PWA manifest wired — app is installable from supported browsers.",
       "window.confirm() replaced with branded confirmation modal.",
