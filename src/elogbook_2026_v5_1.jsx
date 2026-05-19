@@ -219,7 +219,7 @@ function sumColumn(rows, key) {
 // Flatten all logbook rows across all months into a list of sectors with dates.
 // Only rows with a valid date + STD + STA are included.
 // Duty time = flight time + (preFlightBuffer + postFlightBuffer) — defaults 75 + 15 = 90 min.
-function getAllSectors(data, dutyBufferMins = 90) {
+function getAllSectors(data, dutyBufferMins = 90, dayNightMethod = "fixed") {
   const sectors = [];
   Object.entries(data).forEach(([key, rows]) => {
     if (!Array.isArray(rows)) return;
@@ -231,7 +231,7 @@ function getAllSectors(data, dutyBufferMins = 90) {
       if (!row.date || !row.std || !row.sta) return;
       const day = parseInt(row.date.split('/')[0]);
       if (!day || day < 1 || day > 31) return;
-      const flightMins = parseHHMM(calcTotal(row));
+      const flightMins = parseHHMM(calcTotal(row, dayNightMethod, year, monthIdx));
       if (!flightMins) return;
       const date = new Date(year, monthIdx, day);
       date.setHours(12, 0, 0, 0); // normalise to noon to avoid DST edge cases
@@ -665,7 +665,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     ? 0
     : (Number(settings.preFlightBuffer) || 0) + (Number(settings.postFlightBuffer) || 0);
 
-  const allSectors = useMemo(() => getAllSectors(data, dutyBufferMins), [data, dutyBufferMins]);
+  const allSectors = useMemo(() => getAllSectors(data, dutyBufferMins, settings.dayNightMethod), [data, dutyBufferMins, settings.dayNightMethod]);
 
   const GT_KEYS = ["dayP1", "dayP1US", "dayP2", "nightP1", "nightP1US", "nightP2"];
   const { grandTotals, gtSum } = useMemo(() => {
