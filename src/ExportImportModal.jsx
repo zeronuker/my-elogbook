@@ -137,7 +137,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   };
 
   const timeToDecimal = (timeStr) => {
-    if (!timeStr || !timeStr.includes(':')) return null;
+    if (!timeStr || !timeStr.includes(':')) return 0;
     const [h, m] = timeStr.split(':').map(Number);
     return (h + m / 60) / 24;
   };

@@ -701,6 +701,7 @@ function MiscTab({ onDeleteAccount }) {
               <ul className="elb-changelog-items">
                 <li><span className="elb-tag elb-tag-imp">IMP</span> Date range selection preserved when closing and reopening the export modal</li>
                 <li><span className="elb-tag elb-tag-imp">IMP</span> Export button shows "GENERATING..." and disables during file build — prevents UI freeze confusion</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Empty time fields now export as 00:00 instead of blank cells in Excel</li>
               </ul>
             </div>
             <div className="elb-changelog-section">
