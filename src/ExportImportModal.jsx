@@ -27,6 +27,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   const [importPreview, setImportPreview] = useState(null);
   const [importStatus, setImportStatus] = useState(null);
   const [exportStatus, setExportStatus] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -350,7 +351,15 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       alert("Please select date range");
       return;
     }
-    exportToExcel();
+    setIsExporting(true);
+    // Defer synchronous export by one frame so React can render the loading state first
+    setTimeout(() => {
+      try {
+        exportToExcel();
+      } finally {
+        setIsExporting(false);
+      }
+    }, 50);
   };
 
   // ─────────────────────────────────────────────────────────────────
@@ -697,8 +706,9 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                 </div>
               )}
 
-              <button className="elb-btn-primary" onClick={handleExport}>
-                ⬇ EXPORT
+              <button className="elb-btn-primary" onClick={handleExport} disabled={isExporting}
+                style={{ opacity: isExporting ? 0.7 : 1, cursor: isExporting ? "wait" : "pointer" }}>
+                {isExporting ? "⏳ GENERATING..." : "⬇ EXPORT"}
               </button>
             </div>
           )}

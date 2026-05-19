@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
 import { db, auth, googleProvider } from "./firebase";
@@ -810,7 +810,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const dutyBufferMins = settings.useStandardFormula === false
     ? 0
     : (Number(settings.preFlightBuffer) || 0) + (Number(settings.postFlightBuffer) || 0);
-  const allSectors = getAllSectors(data, dutyBufferMins);
+  // Memoized — only recomputes when logbook data or duty buffer changes, not on every keystroke
+  const allSectors = useMemo(() => getAllSectors(data, dutyBufferMins), [data, dutyBufferMins]);
 
   const ft28dMins   = rollingMins(allSectors, 28,  "flightMins", today);
   const ft12mMins   = rolling12MonthFlightMins(allSectors, today);
@@ -956,43 +957,47 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     ? Math.floor((today - lastAutolandDate) / (1000 * 60 * 60 * 24))
     : null;
 
-  // ── Grand Total Hours computation ─────────────────────────────────────────
+  // ── Grand Total Hours computation (memoized) ──────────────────────────────
   const GT_KEYS = ["dayP1", "dayP1US", "dayP2", "nightP1", "nightP1US", "nightP2"];
-  const gtCutoff = new Date(grandTotalDate + "T23:59:59");
-  const gtByType = {};
+  const { grandTotals, gtSum } = useMemo(() => {
+    const gtCutoff = new Date(grandTotalDate + "T23:59:59");
+    const gtByType = {};
 
-  // Carry-forward hours from profile settings
-  (settings.carryForward || []).forEach(cf => {
-    const t = (cf.type || "").trim().toUpperCase();
-    if (!t) return;
-    if (!gtByType[t]) gtByType[t] = { dayP1:0, dayP1US:0, dayP2:0, nightP1:0, nightP1US:0, nightP2:0 };
-    GT_KEYS.forEach(k => { gtByType[t][k] += parseHHMM(cf[k] || ""); });
-  });
-
-  // All logbook rows up to the cutoff date
-  Object.entries(data).forEach(([key, rows]) => {
-    const [monthStr, yearStr] = key.split("-");
-    const month = parseInt(monthStr), year = parseInt(yearStr);
-    rows.forEach(row => {
-      const day = parseInt(row.date?.split('/')[0]);
-      if (!day || !row.type) return;
-      if (new Date(year, month, day) > gtCutoff) return;
-      const t = (row.type || "").trim().toUpperCase();
+    // Carry-forward hours from profile settings
+    (settings.carryForward || []).forEach(cf => {
+      const t = (cf.type || "").trim().toUpperCase();
       if (!t) return;
       if (!gtByType[t]) gtByType[t] = { dayP1:0, dayP1US:0, dayP2:0, nightP1:0, nightP1US:0, nightP2:0 };
-      const ft = calcFlightTimes(row, settings.dayNightMethod, year, month);
-      GT_KEYS.forEach(k => { gtByType[t][k] += parseHHMM(ft[k] || ""); });
+      GT_KEYS.forEach(k => { gtByType[t][k] += parseHHMM(cf[k] || ""); });
     });
-  });
 
-  const grandTotals = Object.entries(gtByType)
-    .map(([type, t]) => ({ type, ...t }))
-    .sort((a, b) => a.type.localeCompare(b.type));
+    // All logbook rows up to the cutoff date
+    Object.entries(data).forEach(([key, rows]) => {
+      const [monthStr, yearStr] = key.split("-");
+      const month = parseInt(monthStr), year = parseInt(yearStr);
+      rows.forEach(row => {
+        const day = parseInt(row.date?.split('/')[0]);
+        if (!day || !row.type) return;
+        if (new Date(year, month, day) > gtCutoff) return;
+        const t = (row.type || "").trim().toUpperCase();
+        if (!t) return;
+        if (!gtByType[t]) gtByType[t] = { dayP1:0, dayP1US:0, dayP2:0, nightP1:0, nightP1US:0, nightP2:0 };
+        const ft = calcFlightTimes(row, settings.dayNightMethod, year, month);
+        GT_KEYS.forEach(k => { gtByType[t][k] += parseHHMM(ft[k] || ""); });
+      });
+    });
 
-  const gtSum = GT_KEYS.reduce((acc, k) => {
-    acc[k] = grandTotals.reduce((s, r) => s + r[k], 0);
-    return acc;
-  }, {});
+    const totals = Object.entries(gtByType)
+      .map(([type, t]) => ({ type, ...t }))
+      .sort((a, b) => a.type.localeCompare(b.type));
+
+    const sum = GT_KEYS.reduce((acc, k) => {
+      acc[k] = totals.reduce((s, r) => s + r[k], 0);
+      return acc;
+    }, {});
+
+    return { grandTotals: totals, gtSum: sum };
+  }, [data, grandTotalDate, settings.carryForward, settings.dayNightMethod]);
 
   const fmtGrandTotalDate = (str) => {
     if (!str) return "—";
@@ -1100,6 +1105,25 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       )}
     </div>
   );
+
+  // ── Flight Summary monthly totals (memoized) ──────────────────────────────
+  const summaryByMonth = useMemo(() =>
+    MONTHS.map((_, i) => {
+      const mRows = data[`${i}-${selectedYear}`] || makeMonthRows(i, selectedYear);
+      const filled = mRows.filter(r => r.date || r.type || r.sectors).length;
+      const sum = (key) => mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, i)[key]), 0);
+      return {
+        filled,
+        dp1:  toHHMM(sum("dayP1"))   || "00:00",
+        dp1u: toHHMM(sum("dayP1US")) || "00:00",
+        dp2:  toHHMM(sum("dayP2"))   || "00:00",
+        np1:  toHHMM(sum("nightP1")) || "00:00",
+        np1u: toHHMM(sum("nightP1US")) || "00:00",
+        np2:  toHHMM(sum("nightP2")) || "00:00",
+        tot:  toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcTotal(r)), 0)) || "00:00",
+      };
+    }),
+  [data, selectedYear, settings.dayNightMethod]);
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -1748,16 +1772,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   </thead>
                   <tbody>
                     {MONTHS.map((m, i) => {
-                      const key = `${i}-${selectedYear}`;
-                      const mRows = data[key] || makeMonthRows(i, selectedYear);
-                      const filled = mRows.filter(r => r.date || r.type || r.sectors).length;
-                      const dp1  = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP1), 0)) || "00:00";
-                      const dp1u = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP1US), 0)) || "00:00";
-                      const dp2  = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).dayP2), 0)) || "00:00";
-                      const np1  = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP1), 0)) || "00:00";
-                      const np1u = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP1US), 0)) || "00:00";
-                      const np2  = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r).nightP2), 0)) || "00:00";
-                      const tot  = toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcTotal(r)), 0)) || "00:00";
+                      const { filled, dp1, dp1u, dp2, np1, np1u, np2, tot } = summaryByMonth[i];
                       const isSelected = i === selectedMonth;
                       return (
                         <tr
@@ -1786,18 +1801,17 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     <tr style={{ background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
                       <td style={{ ...tdStyle, width: 80, minWidth: 80, maxWidth: 80, whiteSpace: "normal", wordBreak: "break-word", color: "#4fc3f7", fontWeight: 700 }}>ANNUAL TOTAL</td>
                       <td style={{ ...tdStyle, width: 55, minWidth: 55, maxWidth: 55, textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
-                        {Object.values(MONTHS).reduce((acc, _, i) => {
-                          const mRows = data[`${i}-${selectedYear}`] || makeMonthRows(i, selectedYear);
-                          return acc + mRows.filter(r => r.date || r.type || r.sectors).length;
-                        }, 0) || "—"}
+                        {summaryByMonth.reduce((acc, m) => acc + m.filled, 0) || "—"}
                       </td>
-                      {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"].map(k => {
-                        const total = toHHMM(
-                          MONTHS.reduce((acc, _, i) => {
-                            const mRows = data[`${i}-${selectedYear}`] || makeMonthRows(i, selectedYear);
-                            return acc + mRows.reduce((a2, r) => a2 + parseHHMM(calcFlightTimes(r)[k]), 0);
-                          }, 0)
-                        );
+                      {[
+                        { k: "dayP1",   key: "dp1"  },
+                        { k: "dayP1US", key: "dp1u" },
+                        { k: "dayP2",   key: "dp2"  },
+                        { k: "nightP1", key: "np1"  },
+                        { k: "nightP1US", key: "np1u" },
+                        { k: "nightP2", key: "np2"  },
+                      ].map(({ k, key }) => {
+                        const total = toHHMM(summaryByMonth.reduce((acc, m) => acc + parseHHMM(m[key]), 0));
                         const col = (k === "dayP1" || k === "nightP1") ? "#22c55e"
                           : (k === "dayP2" || k === "nightP2") ? "#eab308"
                           : "#ef4444";
@@ -1808,12 +1822,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                         );
                       })}
                       <td style={{ ...tdStyle, textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
-                        {toHHMM(
-                          MONTHS.reduce((acc, _, i) => {
-                            const mRows = data[`${i}-${selectedYear}`] || makeMonthRows(i, selectedYear);
-                            return acc + mRows.reduce((a2, r) => a2 + parseHHMM(calcTotal(r)), 0);
-                          }, 0)
-                        ) || "—"}
+                        {toHHMM(summaryByMonth.reduce((acc, m) => acc + parseHHMM(m.tot), 0)) || "—"}
                       </td>
                     </tr>
                   </tfoot>

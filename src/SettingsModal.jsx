@@ -700,6 +700,16 @@ function MiscTab({ onDeleteAccount }) {
               <div className="elb-changelog-subsection">Export</div>
               <ul className="elb-changelog-items">
                 <li><span className="elb-tag elb-tag-imp">IMP</span> Date range selection preserved when closing and reopening the export modal</li>
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Export button shows "GENERATING..." and disables during file build — prevents UI freeze confusion</li>
+              </ul>
+            </div>
+            <div className="elb-changelog-section">
+              <div className="elb-changelog-subsection">Performance</div>
+              <ul className="elb-changelog-items">
+                <li><span className="elb-tag elb-tag-imp">IMP</span> FTL/recency sector list memoized — no longer recalculates on every keystroke</li>
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Flight Summary monthly totals memoized — only recalculate when data changes</li>
+                <li><span className="elb-tag elb-tag-imp">IMP</span> Grand Total computation memoized — only recalculate when data or cutoff date changes</li>
+                <li><span className="elb-tag elb-tag-fix">FIX</span> Flight Summary monthly totals now use correct day/night calculation method</li>
               </ul>
             </div>
           </div>
