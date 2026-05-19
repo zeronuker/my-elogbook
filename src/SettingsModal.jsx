@@ -996,6 +996,7 @@ const settingsCss = `
     gap: 18px;
     padding: 10px 0;
     border-bottom: 1px dashed var(--cb-line);
+    text-align: left;
   }
   .sm-field:last-child { border-bottom: 0; }
   .sm-field-meta { flex: 1; min-width: 0; }
@@ -1004,6 +1005,7 @@ const settingsCss = `
     font-weight: 400;
     color: var(--cb-ink);
     display: block;
+    text-align: left;
   }
   .sm-field-hint {
     font-size: calc(11.5px * var(--fs));
