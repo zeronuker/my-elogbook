@@ -344,6 +344,12 @@ const DENSITY_PAD = {
   relaxed:  "10px 8px",
 };
 
+const COLUMN_SCALE = {
+  narrow:  0.75,
+  default: 1.0,
+  wide:    1.35,
+};
+
 // Resolve accent preset → single color value
 function resolveAccent(settings) {
   const presetId = settings.accentPreset
@@ -902,24 +908,27 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     setEditingCell(null);
   };
 
+  const colScale = COLUMN_SCALE[settings.columnDensity] ?? COLUMN_SCALE.default;
+  const cw = (base) => Math.round(base * colScale);
+
   const columns = [
-    { key: "date",      label: "DATE",                        minWidth: 36,  group: null },
-    { key: "type",      label: "TYPE",                        minWidth: 36,  group: "AIRCRAFT" },
-    { key: "markings",  label: "MARKINGS",                    minWidth: 58,  group: "AIRCRAFT" },
-    { key: "captain",   label: "CAPTAIN",                     minWidth: 60, fixedWidth: 60, wrap: true, group: null },
-    { key: "cap",         label: "HOLDER\nOPERATING\nCAPACITY", minWidth: 58, group: null, type: "select", options: ["","P1","P2","P1 U/S"] },
-    { key: "pilotFlying", label: "PILOT\nFLYING",              minWidth: 46, group: null, type: "checkbox" },
-    { key: "departure",   label: "DEP",                         minWidth: 30, group: "SECTORS" },
-    { key: "arrival",   label: "ARR",                         minWidth: 30,  group: "SECTORS" },
-    { key: "std",       label: "STD\n(UTC)",                  minWidth: 38,  group: null },
-    { key: "sta",       label: "STA\n(UTC)",                  minWidth: 38,  group: null },
-    { key: "dayP1",     label: "P1",                          minWidth: 30,  group: "DAY" },
-    { key: "dayP1US",   label: "P1 U/S",                      minWidth: 42,  group: "DAY" },
-    { key: "dayP2",     label: "P2",                          minWidth: 30,  group: "DAY" },
-    { key: "nightP1",   label: "P1",                          minWidth: 30,  group: "NIGHT" },
-    { key: "nightP1US", label: "P1 U/S",                      minWidth: 42,  group: "NIGHT" },
-    { key: "nightP2",   label: "P2",                          minWidth: 30,  group: "NIGHT" },
-    { key: "total",     label: "TOTAL",                       minWidth: 42,  group: null },
+    { key: "date",      label: "DATE",                        minWidth: cw(36),  group: null },
+    { key: "type",      label: "TYPE",                        minWidth: cw(36),  group: "AIRCRAFT" },
+    { key: "markings",  label: "MARKINGS",                    minWidth: cw(58),  group: "AIRCRAFT" },
+    { key: "captain",   label: "CAPTAIN",                     minWidth: cw(60), fixedWidth: cw(60), wrap: true, group: null },
+    { key: "cap",         label: "HOLDER\nOPERATING\nCAPACITY", minWidth: cw(58), group: null, type: "select", options: ["","P1","P2","P1 U/S"] },
+    { key: "pilotFlying", label: "PILOT\nFLYING",              minWidth: cw(46), group: null, type: "checkbox" },
+    { key: "departure",   label: "DEP",                         minWidth: cw(30), group: "SECTORS" },
+    { key: "arrival",   label: "ARR",                         minWidth: cw(30),  group: "SECTORS" },
+    { key: "std",       label: "STD\n(UTC)",                  minWidth: cw(38),  group: null },
+    { key: "sta",       label: "STA\n(UTC)",                  minWidth: cw(38),  group: null },
+    { key: "dayP1",     label: "P1",                          minWidth: cw(30),  group: "DAY" },
+    { key: "dayP1US",   label: "P1 U/S",                      minWidth: cw(42),  group: "DAY" },
+    { key: "dayP2",     label: "P2",                          minWidth: cw(30),  group: "DAY" },
+    { key: "nightP1",   label: "P1",                          minWidth: cw(30),  group: "NIGHT" },
+    { key: "nightP1US", label: "P1 U/S",                      minWidth: cw(42),  group: "NIGHT" },
+    { key: "nightP2",   label: "P2",                          minWidth: cw(30),  group: "NIGHT" },
+    { key: "total",     label: "TOTAL",                       minWidth: cw(42),  group: null },
   ];
 
   const timeCols = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total","std","sta"];

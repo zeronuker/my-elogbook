@@ -12,6 +12,11 @@ export const ACCENT_PRESETS = [
   { id: "blue",     name: "Blue",        colors: ["#3B8DFF"],                        single: "#3B8DFF" },
   { id: "violet",   name: "Violet",      colors: ["#5B6BFF"],                        single: "#5B6BFF" },
   { id: "amber",    name: "Amber",       colors: ["#FFB37C"],                        single: "#FFB37C" },
+  { id: "emerald",  name: "Emerald",     colors: ["#10d983"],                        single: "#10d983" },
+  { id: "rose",     name: "Rose",        colors: ["#f43f5e"],                        single: "#f43f5e" },
+  { id: "cyan",     name: "Cyan",        colors: ["#06b6d4"],                        single: "#06b6d4" },
+  { id: "gold",     name: "Gold",        colors: ["#eab308"],                        single: "#eab308" },
+  { id: "coral",    name: "Coral",       colors: ["#f97316"],                        single: "#f97316" },
 ];
 
 export const ACCENT_MIGRATION = {
@@ -57,6 +62,7 @@ export const DEFAULT_SETTINGS = {
   fontType: "courier",
   brightness: 100,
   accentPreset: "gradient",
+  columnDensity: "default",
   // Preferences
   dateFormat: "D",
   rowsPerPage: 15,
@@ -548,17 +554,34 @@ function AppearanceTab({ d, upd }) {
         WMKK → OMDB &nbsp;·&nbsp; STD 23:45 &nbsp;·&nbsp; B737 &nbsp;·&nbsp; 9M-XXX
       </div>
 
-      <SmSectionHead title="Table density" hint="// row padding in the logbook table" />
+      <SmSectionHead title="Table density" hint="// row height · column width" />
       <SmRow>
-        <SmSegmented
-          value={density}
-          onChange={(v) => upd({ tableDensity: v })}
-          options={[
-            { value: "compact", label: "Compact" },
-            { value: "default", label: "Default" },
-            { value: "relaxed", label: "Relaxed", note: "tap-friendly" },
-          ]}
-        />
+        <div className="sm-density-grid">
+          <div className="sm-density-col">
+            <div className="sm-density-label">ROWS</div>
+            <SmSegmented
+              value={density}
+              onChange={(v) => upd({ tableDensity: v })}
+              options={[
+                { value: "compact", label: "Compact" },
+                { value: "default", label: "Default" },
+                { value: "relaxed", label: "Relaxed" },
+              ]}
+            />
+          </div>
+          <div className="sm-density-col">
+            <div className="sm-density-label">COLUMNS</div>
+            <SmSegmented
+              value={d.columnDensity || "default"}
+              onChange={(v) => upd({ columnDensity: v })}
+              options={[
+                { value: "narrow",  label: "Narrow"  },
+                { value: "default", label: "Default" },
+                { value: "wide",    label: "Wide"    },
+              ]}
+            />
+          </div>
+        </div>
       </SmRow>
 
     </div>
@@ -1073,7 +1096,10 @@ const settingsCss = `
   }
 
   /* ── Accent grid ────────────────────────────────────────────────── */
-  .sm-accent-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .sm-accent-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 480px; }
+  .sm-density-grid { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start; }
+  .sm-density-col { display: flex; flex-direction: column; gap: 8px; }
+  .sm-density-label { font-family: var(--cb-font-mono); font-size: calc(10px * var(--fs)); letter-spacing: 0.2em; color: var(--cb-ink-dim); text-transform: uppercase; }
   .sm-accent {
     background: var(--cb-surface-0);
     border: 1px solid var(--cb-line-2);
