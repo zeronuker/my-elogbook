@@ -1275,8 +1275,7 @@ const settingsCss = `
     display:flex;align-items:center;justify-content:space-between;
     flex-shrink:0;background:var(--elb-bginput,#0b1828);gap:12px;flex-wrap:wrap;
   }
-  .elb-footer-hint{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);letter-spacing:0.05em;transition:color 0.2s;}
-  .elb-footer-hint.saved{color:#22c55e;}
+  .elb-footer-hint{font-size:0.85em;color:var(--elb-txt-muted,#4a6a8a);letter-spacing:0.05em;}
   .elb-footer-actions{display:flex;gap:8px;}
   .elb-btn{
     font-family:inherit;font-size:0.82em;letter-spacing:0.1em;
