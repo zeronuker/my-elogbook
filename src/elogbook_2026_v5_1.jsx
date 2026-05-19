@@ -1956,16 +1956,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
                   </div>
                 </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em" }}>WORST LIMIT</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: FTL_COLOR[bannerCls] }}>
-                    {worstLimit ? worstLimit.label : "NONE"}
-                  </div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em" }}>REGULATION</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "var(--elb-txt-muted, #4a6a8a)" }}>CAD 1901</div>
-                </div>
               </div>
             </div>
 
