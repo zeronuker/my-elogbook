@@ -949,8 +949,9 @@ const settingsCss = `
 
   /* ── Body ───────────────────────────────────────────────────────── */
   .sm-body {
-    flex: 0 1 auto; min-height: 0; overflow-y: auto;
+    flex: 0 0 auto; overflow-y: auto;
     padding: 24px 28px;
+    max-height: calc(88vh - 220px);
   }
   .sm-body::-webkit-scrollbar { width: 4px; }
   .sm-body::-webkit-scrollbar-track { background: transparent; }
@@ -1395,7 +1396,7 @@ const settingsCss = `
   @media (max-width: 600px) {
     .sm-modal { max-height: 96vh; }
     .sm-head { padding: 16px 18px 14px; }
-    .sm-body { padding: 16px 18px; }
+    .sm-body { padding: 16px 18px; max-height: calc(96vh - 200px); }
     .sm-foot { padding: 12px 18px; flex-direction: column; align-items: stretch; gap: 10px; }
     .sm-foot-btns { justify-content: flex-end; }
     .sm-accent-grid { grid-template-columns: repeat(3, 1fr); }
