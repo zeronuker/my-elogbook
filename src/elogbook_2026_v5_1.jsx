@@ -4,7 +4,7 @@ import { getCoords } from "./airportCoords";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import SettingsModal, { DEFAULT_SETTINGS } from "./SettingsModal";
+import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
 
 const MONTHS = [
@@ -328,17 +328,7 @@ const FTL_POPUPS = {
   },
 };
 
-// ─── Theme CSS variable injection ─────────────────────────────────────────────
-const ACCENT_PALETTE = {
-  "#4fc3f7": { accent: "#4fc3f7", accent2: "#7ab8d4", accentDim: "#2a5a7a" },
-  "#f5c542": { accent: "#f5c542", accent2: "#c4a030", accentDim: "#5a4a10" },
-  "#22c55e": { accent: "#22c55e", accent2: "#16a34a", accentDim: "#166534" },
-  "#a78bfa": { accent: "#a78bfa", accent2: "#8b5cf6", accentDim: "#4c1d95" },
-  "#fb923c": { accent: "#fb923c", accent2: "#f97316", accentDim: "#7c2d12" },
-  "#f472b6": { accent: "#f472b6", accent2: "#ec4899", accentDim: "#831843" },
-  "#ef4444": { accent: "#ef4444", accent2: "#dc2626", accentDim: "#7f1d1d" },
-  "#2dd4bf": { accent: "#2dd4bf", accent2: "#14b8a6", accentDim: "#134e4a" },
-};
+// ─── Theme CSS variable injection (v6 — aliases --elb-* to --cb-* tokens) ─────
 
 const FONT_FAMILIES = {
   courier:   "'Courier New', Courier, monospace",
@@ -348,59 +338,91 @@ const FONT_FAMILIES = {
   space:     "'Space Mono', monospace",
 };
 
-const THEMES = {
-  dark: {
-    bg:        "#0a0d12", bg2:       "#0d1520", bg3:       "#0a1018",
-    bgHeader:  "#0d1117", bgAlt:     "#161d2a", bgThead:   "#0b1320",
-    bgInput:   "#0b1828",
-    accent:    "#4fc3f7", accent2:   "#7ab8d4", accentDim: "#2a5a7a",
-    border:    "#1e3a5f", border2:   "#1a3050", border3:   "#0f1820", border4: "#111820",
-    text:      "#ffffff", textMuted: "#b8d6e5", textDim:   "#7a9aaa", textBright: "#ffffff",
-    rowHover:  "#122030",
-  },
-  light: {
-    bg:        "#f0f4f8", bg2:       "#e8edf4", bg3:       "#ecf1f7",
-    bgHeader:  "#dde5ef", bgAlt:     "#e4eaf2", bgThead:   "#dce4ee",
-    bgInput:   "#ffffff",
-    accent:    "#004a78", accent2:   "#1a4a68", accentDim: "#5a9abb",
-    border:    "#9ab8cc", border2:   "#a8c4d8", border3:   "#bdd0de", border4: "#c8d8e4",
-    text:      "#1a2530", textMuted: "#2a4050", textDim:   "#2a4858", textBright: "#0a1520",
-    rowHover:  "#dce8f4",
-  },
-};
-
 const DENSITY_PAD = {
   compact:  "3px 6px",
   default:  "6px 8px",
   relaxed:  "10px 8px",
 };
 
+// Resolve accent preset → single color value
+function resolveAccent(settings) {
+  const presetId = settings.accentPreset
+    || ACCENT_MIGRATION[settings.accentColor]
+    || "gradient";
+  const preset = ACCENT_PRESETS.find(p => p.id === presetId) || ACCENT_PRESETS[0];
+  const single = preset.single;
+  const isGrad = preset.colors.length > 1;
+  const grad = isGrad
+    ? `linear-gradient(135deg, ${preset.colors.join(", ")})`
+    : single;
+  const dim = single + "4d"; // ~30% opacity
+  return { accent: single, grad, dim };
+}
+
 function makeThemeCss(settings = {}) {
-  const t = THEMES[settings.theme] || THEMES.dark;
+  const isDark   = (settings.theme || "dark") === "dark";
   const fontSize = Math.min(18, Math.max(12, Number(settings.fontSize) || 14));
-  const rowPad = DENSITY_PAD[settings.tableDensity] || DENSITY_PAD.default;
-  const ac = ACCENT_PALETTE[settings.accentColor] || ACCENT_PALETTE["#4fc3f7"];
+  const rowPad   = DENSITY_PAD[settings.tableDensity] || DENSITY_PAD.default;
   const fontFamily = FONT_FAMILIES[settings.fontType] || FONT_FAMILIES.courier;
+  const { accent, grad, dim } = resolveAccent(settings);
+
+  // CB surface / ink / line tokens — mirrors brand.css values
+  const surf = isDark
+    ? { s0:"#0a1020", s1:"#141a2e", s2:"#1b2340", s3:"#232c4d",
+        ink:"#e8ecf5", ink2:"#b8c0d4", inkD:"#7c87a3",
+        line:"rgba(255,255,255,0.07)", line2:"rgba(255,255,255,0.12)" }
+    : { s0:"#f4f6fb", s1:"#ffffff", s2:"#ebeef7", s3:"#dfe3f0",
+        ink:"#0a1020", ink2:"#3a4258", inkD:"#6b7488",
+        line:"rgba(10,16,32,0.08)", line2:"rgba(10,16,32,0.16)" };
 
   return `
     :root {
-      --elb-bg:${t.bg};--elb-bg2:${t.bg2};--elb-bg3:${t.bg3};
-      --elb-bghd:${t.bgHeader};--elb-bgalt:${t.bgAlt};--elb-thead:${t.bgThead};
-      --elb-bginput:${t.bgInput};--elb-rowhover:${t.rowHover};
-      --elb-acc:${ac.accent};--elb-acc2:${ac.accent2};--elb-accdim:${ac.accentDim};
-      --elb-border:${t.border};--elb-bdr:${t.border};
-      --elb-border2:${t.border2};--elb-bdr2:${t.border2};
-      --elb-border3:${t.border3};--elb-bdr3:${t.border3};
-      --elb-border4:${t.border4};--elb-bdr4:${t.border4};
-      --elb-txt:${t.text};--elb-txt-muted:${t.textMuted};--elb-txt-dim:${t.textDim};--elb-txt-bright:${t.textBright};
-      --elb-muted:${t.textMuted};--elb-dim:${t.textDim};--elb-bright:${t.textBright};
-      --elb-accent:${ac.accent};
-      --elb-font:${fontFamily};
-      --elb-td-sz:${fontSize}px;
-      --elb-th-sz:${Math.max(10, fontSize - 1)}px;
-      --elb-ths-sz:${Math.max(9, fontSize - 2)}px;
-      --elb-desc-sz:${Math.max(11, fontSize)}px;
-      --elb-hint-sz:${Math.max(10, fontSize - 1)}px;
+      /* ── ClaudeBorne brand tokens ── */
+      --cb-surface-0:${surf.s0};--cb-surface-1:${surf.s1};
+      --cb-surface-2:${surf.s2};--cb-surface-3:${surf.s3};
+      --cb-ink:${surf.ink};--cb-ink-2:${surf.ink2};--cb-ink-dim:${surf.inkD};
+      --cb-line:${surf.line};--cb-line-2:${surf.line2};
+      --cb-accent:${accent};
+      --cb-grad:${grad};
+      --cb-font-body:${fontFamily};
+      --cb-font-mono:${fontFamily};
+      --fs:${(fontSize / 14).toFixed(4)};
+      --cell-pad:${rowPad};
+
+      /* ── Legacy --elb-* aliases → CB tokens ── */
+      --elb-bg:var(--cb-surface-0);
+      --elb-bg2:var(--cb-surface-1);
+      --elb-bg3:var(--cb-surface-2);
+      --elb-bghd:var(--cb-surface-1);
+      --elb-bgalt:var(--cb-surface-2);
+      --elb-thead:var(--cb-surface-2);
+      --elb-bginput:var(--cb-surface-2);
+      --elb-rowhover:var(--cb-surface-3);
+      --elb-acc:var(--cb-accent);
+      --elb-acc2:#3B8DFF;
+      --elb-accdim:${dim};
+      --elb-accent:var(--cb-accent);
+      --elb-border:var(--cb-line-2);
+      --elb-bdr:var(--cb-line-2);
+      --elb-border2:var(--cb-line);
+      --elb-bdr2:var(--cb-line);
+      --elb-border3:var(--cb-line);
+      --elb-bdr3:var(--cb-line);
+      --elb-border4:var(--cb-line);
+      --elb-bdr4:var(--cb-line);
+      --elb-txt:var(--cb-ink);
+      --elb-txt-muted:var(--cb-ink-2);
+      --elb-txt-dim:var(--cb-ink-dim);
+      --elb-txt-bright:var(--cb-ink);
+      --elb-muted:var(--cb-ink-2);
+      --elb-dim:var(--cb-ink-dim);
+      --elb-bright:var(--cb-ink);
+      --elb-font:var(--cb-font-mono);
+      --elb-td-sz:calc(${fontSize}px * var(--fs,1));
+      --elb-th-sz:calc(${Math.max(10, fontSize - 1)}px * var(--fs,1));
+      --elb-ths-sz:calc(${Math.max(9, fontSize - 2)}px * var(--fs,1));
+      --elb-desc-sz:calc(${Math.max(11, fontSize)}px * var(--fs,1));
+      --elb-hint-sz:calc(${Math.max(10, fontSize - 1)}px * var(--fs,1));
       --elb-row-pad:${rowPad};
     }
   `;
@@ -512,6 +534,22 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
   // ── Keep settingsRef in sync so saveData never reads a stale closure ──
   useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+  // ── Sync data-theme attribute on <html> for brand.css dark/light tokens ──
+  useEffect(() => {
+    document.documentElement.dataset.theme = settings.theme || "dark";
+  }, [settings.theme]);
+
+  // ── One-time accent migration: legacy hex → preset id ──
+  useEffect(() => {
+    if (!settings.accentPreset && settings.accentColor) {
+      const migrated = ACCENT_MIGRATION[settings.accentColor] || "gradient";
+      const next = { ...settings, accentPreset: migrated };
+      settingsRef.current = next;
+      setSettings(next);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Save settings only (separate from logbook auto-save) ──
   const saveSettings = async (next) => {
@@ -692,7 +730,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-txt, #c8d6e5)" }}>
         <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-border, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
           <div style={{ fontSize: 38, marginBottom: 8 }}>✈</div>
-          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V5.6</div>
+          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V6.0</div>
           <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
           <div style={{ fontSize: 11, color: "var(--elb-txt-muted, #3a5a7a)", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
           <button
@@ -1145,7 +1183,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <span style={{ fontSize: 22, color: "var(--elb-acc, #4fc3f7)" }}>✈</span>
               <span style={{ fontSize: 13, letterSpacing: "0.25em", color: "var(--elb-acc, #4fc3f7)", textTransform: "uppercase" }}>
-                eLOGBOOK V5.6
+                eLOGBOOK V6.0
               </span>
             </div>
             <div style={{ fontSize: 13, color: "var(--elb-txt-muted, #7ab8d4)", marginBottom: 2 }}>
@@ -1410,8 +1448,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     <span style={{ display: "block" }}>STA</span>
                     <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
                   </th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
+                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
+                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                   <th rowSpan={2} style={thStyle}>TOTAL</th>
                   <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none" }}></th>
                   <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
@@ -1870,8 +1908,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     <thead>
                       <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                         <th rowSpan={2} style={{ ...thStyle, textAlign: "left", paddingLeft: 10, minWidth: 90 }}>AIRCRAFT<br />TYPE</th>
-                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>DAY</th>
-                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>NIGHT</th>
+                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
+                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                         <th rowSpan={2} style={thStyle}>TOTAL</th>
                       </tr>
                       <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
@@ -2008,10 +2046,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   const dotCol = anyRed ? "#ef4444" : "#22c55e";
 
                   const recencyCards = [
-                    { label: "DAY TAKEOFFS",   count: data.dayTakeoffs90,   expiry: data.dayTOExpiry   },
-                    { label: "DAY LANDINGS",   count: data.dayLandings90,   expiry: data.dayLdgExpiry  },
-                    { label: "NIGHT TAKEOFFS", count: data.nightTakeoffs90, expiry: data.nightTOExpiry },
-                    { label: "NIGHT LANDINGS", count: data.nightLandings90, expiry: data.nightLdgExpiry},
+                    { label: "☀ DAY TAKEOFFS",   count: data.dayTakeoffs90,   expiry: data.dayTOExpiry   },
+                    { label: "☀ DAY LANDINGS",   count: data.dayLandings90,   expiry: data.dayLdgExpiry  },
+                    { label: "☾ NIGHT TAKEOFFS", count: data.nightTakeoffs90, expiry: data.nightTOExpiry },
+                    { label: "☾ NIGHT LANDINGS", count: data.nightLandings90, expiry: data.nightLdgExpiry},
                   ];
 
                   return (
