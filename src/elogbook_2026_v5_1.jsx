@@ -672,6 +672,30 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       }))];
 
   const updateCell = (rowIdx, field, value) => {
+    // Aircraft type: normalise to uppercase and warn if genuinely new type
+    if (field === "type" && value && value.trim()) {
+      const normalized = value.trim().toUpperCase();
+      // Build set of known types from all logbook data (already stored uppercase)
+      const existingTypes = new Set(
+        Object.values(data).flatMap(rows =>
+          Array.isArray(rows)
+            ? rows.map(r => (r.type || "").trim().toUpperCase()).filter(Boolean)
+            : []
+        )
+      );
+      if (existingTypes.size > 0 && !existingTypes.has(normalized)) {
+        const confirmed = window.confirm(
+          `"${normalized}" is a new aircraft type not seen in your logbook.\n\n` +
+          `Adding a new aircraft type creates a separate recency tracker for takeoff & landing recency and autoland recency. ` +
+          `Flights logged on other types will not count toward this type's currency.\n\n` +
+          `Add "${normalized}" to your logbook?`
+        );
+        if (!confirmed) return;
+      }
+      // Proceed with normalised uppercase value
+      value = normalized;
+    }
+
     setData(prev => {
       let current = [...(prev[monthKey] || makeMonthRows(selectedMonth, selectedYear))];
       // Extend stored rows if the edited row is beyond what's been saved (virtual display rows)
