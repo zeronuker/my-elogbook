@@ -1193,33 +1193,52 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         }
       `}</style>
 
-      {/* ── HEADER ── */}
+      {/* ── TOPBAR ── */}
       <div style={{
-        background: "linear-gradient(135deg, var(--elb-bghd, #0d1117) 0%, var(--elb-bgalt, #161d2a) 100%)",
-        borderBottom: "1px solid var(--elb-bdr, #1e3a5f)",
-        padding: "18px 24px 0",
+        background: "var(--cb-surface-0, #0a1020)",
+        borderBottom: "1px solid rgba(255,255,255,0.07)",
+        padding: "0 24px",
+        height: 52,
+        display: "flex",
+        alignItems: "center",
+        gap: 0,
+        flexShrink: 0,
       }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
-          <div style={{ flex: 1, textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-              <span style={{ fontSize: 22, color: "var(--elb-acc, #4fc3f7)" }}>✈</span>
-              <span style={{ fontSize: 13, letterSpacing: "0.25em", color: "var(--elb-acc, #4fc3f7)", textTransform: "uppercase" }}>
-                eLOGBOOK V6.0
-              </span>
-            </div>
-            <div style={{ fontSize: 13, color: "var(--elb-txt-muted, #7ab8d4)", marginBottom: 2 }}>
-              CAAM • MCAR 2016
-            </div>
-            <div style={{ fontSize: 19, fontWeight: 700, color: "var(--elb-txt, #e8f4fd)", letterSpacing: "0.05em" }}>
-              {MONTHS[selectedMonth].toUpperCase()} {selectedYear} — FLIGHT RECORDS
-            </div>
-            <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", marginTop: 3 }}>
-              Compliant with CAD 1901 • MCAR 2016 Part 69 & Part 74
-            </div>
+        {/* LEFT: Brand */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: "0 0 auto" }}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="28" height="28" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <defs>
+              <linearGradient id="cb-tb-g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#3FE0C5"/>
+                <stop offset="55%" stopColor="#3B8DFF"/>
+                <stop offset="100%" stopColor="#5B6BFF"/>
+              </linearGradient>
+            </defs>
+            <polyline points="6,18 6,4 96,4 96,96 50,96" fill="none" stroke="url(#cb-tb-g)" strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter"/>
+            <text x="50" y="74" textAnchor="middle" fill="url(#cb-tb-g)" fontFamily="'Tourney',system-ui,sans-serif" fontWeight="700" fontSize="54">C</text>
+          </svg>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{
+              fontFamily: "'Tourney', system-ui, sans-serif",
+              fontWeight: 700, fontSize: 13, letterSpacing: "0.22em", lineHeight: 1,
+              background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            }}>CLAUDEBORNE</span>
+            <span style={{
+              fontFamily: "'JetBrains Mono','Courier New',monospace",
+              fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.30)", lineHeight: 1,
+            }}>ELOGBOOK · V6.0</span>
           </div>
+          <span style={{
+            marginLeft: 6,
+            fontFamily: "'JetBrains Mono','Courier New',monospace",
+            fontSize: 9, letterSpacing: "0.14em", color: "rgba(255,255,255,0.28)",
+            border: "1px solid rgba(255,255,255,0.10)", padding: "3px 8px", whiteSpace: "nowrap",
+          }}>CAAM · MCAR 2016</span>
+        </div>
 
-          {/* ── SAVE STATUS CHIP (centered) ── */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: "0 0 auto", alignSelf: "center" }}>
+        {/* CENTER: Save chip */}
+        <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
             {(() => {
               const autoOff = Number(settings.autoSaveInterval) === 0;
               // idle + auto-save off
@@ -1319,52 +1338,108 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             })()}
           </div>
 
-          {/* Right side: user info + period selector */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
-                <span style={{ fontSize: 11, color: "var(--elb-txt, #c8d6e5)", letterSpacing: "0.1em", fontWeight: 700 }}>
-                  {settings.fullName || user.displayName || user.email}
-                </span>
-                {(settings.airline || settings.licenceNumber) && (
-                  <span style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.08em" }}>
-                    {[settings.airline, settings.licenceNumber].filter(Boolean).join(" · ")}
-                  </span>
-                )}
-              </div>
-              {user.photoURL && <img src={user.photoURL} alt="avatar" style={{ width: 28, height: 28, borderRadius: "50%", border: "1px solid var(--elb-border, #1e3a5f)" }} />}
+        {/* RIGHT: User info + avatar */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "0 0 auto" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+            <span style={{
+              fontFamily: "'Tourney',system-ui,sans-serif",
+              fontWeight: 700, fontSize: 12, letterSpacing: "0.14em",
+              color: "var(--elb-txt,#e8f4fd)", lineHeight: 1,
+            }}>
+              {(settings.fullName || user.displayName || user.email || "").toUpperCase()}
+            </span>
+            {(settings.airline || settings.licenceType || settings.licenceNumber) && (
+              <span style={{
+                fontFamily: "'JetBrains Mono','Courier New',monospace",
+                fontSize: 9, letterSpacing: "0.16em",
+                color: "rgba(255,255,255,0.30)", lineHeight: 1,
+              }}>
+                {[settings.airline, [settings.licenceType, settings.licenceNumber].filter(Boolean).join("/")].filter(Boolean).join(" · ").toUpperCase()}
+              </span>
+            )}
+          </div>
+          {user.photoURL ? (
+            <img src={user.photoURL} alt="avatar" style={{ width: 30, height: 30, borderRadius: "50%", border: "1.5px solid #3FE0C5", flexShrink: 0 }} />
+          ) : (
+            <div style={{
+              width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
+              background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 14, color: "#0a1020",
+            }}>
+              {(settings.fullName || user.displayName || user.email || "?")[0].toUpperCase()}
             </div>
-            <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.15em" }}>SELECT PERIOD</div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <select
-                value={selectedMonth}
-                onChange={e => handleMonthChange(Number(e.target.value))}
-                style={selectStyle}
-              >
-                {MONTHS.map((m, i) => (
-                  <option key={i} value={i}>{m.toUpperCase()}</option>
-                ))}
-              </select>
-              <select
-                value={selectedYear}
-                onChange={e => handleYearChange(Number(e.target.value))}
-                style={{ ...selectStyle, minWidth: 90 }}
-              >
-                {YEARS.map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
-              {refreshStatus === "refreshing" && (
-                <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
-              )}
-              {refreshStatus === "refreshed" && (
-                <span style={{ fontSize: 11, color: "#22c55e", letterSpacing: "0.1em", fontWeight: 700 }}>✓ REFRESHED</span>
-              )}
-              {refreshStatus === "error" && (
-                <span style={{ fontSize: 11, color: "#ef4444", letterSpacing: "0.1em", fontWeight: 700 }}>✗ REFRESH FAILED</span>
-              )}
+          )}
+        </div>
+      </div>
+
+      {/* ── PAGE HEADER ── */}
+      <div style={{
+        background: "linear-gradient(135deg, var(--elb-bghd,#0d1117) 0%, var(--elb-bgalt,#161d2a) 100%)",
+        borderBottom: "1px solid var(--elb-bdr,#1e3a5f)",
+        padding: "18px 24px",
+        display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16,
+        flexShrink: 0,
+      }}>
+        {/* LEFT: Title */}
+        <div>
+          <div style={{ fontFamily: "'JetBrains Mono','Courier New',monospace", fontSize: 11, letterSpacing: "0.2em", color: "var(--elb-acc,#4fc3f7)", textTransform: "uppercase", marginBottom: 6 }}>
+            {MONTHS[selectedMonth].toUpperCase()} {selectedYear} · FLIGHT RECORDS
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "0.22em", marginBottom: 8, lineHeight: 1 }}>
+            <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", color: "var(--elb-txt,#e8f4fd)" }}>{MONTHS[selectedMonth]}</span>
+            <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{selectedYear}</span>
+          </div>
+          <div style={{ fontSize: 12, color: "var(--elb-txt-muted,#5a7a9a)", letterSpacing: "0.04em" }}>
+            Compliant with CAD 1901 · MCAR 2016 Part 69 &amp; Part 74
+          </div>
+        </div>
+
+        {/* RIGHT: Controls */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+          {/* Period + Save row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontFamily: "'JetBrains Mono','Courier New',monospace", fontSize: 9, letterSpacing: "0.18em", color: "var(--elb-txt-muted,#4a6a8a)" }}>SELECT PERIOD</span>
+            <select value={selectedMonth} onChange={e => handleMonthChange(Number(e.target.value))} style={selectStyle}>
+              {MONTHS.map((m, i) => <option key={i} value={i}>{m.toUpperCase()}</option>)}
+            </select>
+            <select value={selectedYear} onChange={e => handleYearChange(Number(e.target.value))} style={{ ...selectStyle, minWidth: 90 }}>
+              {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <button
+              onClick={saveData}
+              disabled={saveStatus === "saving"}
+              title="Save data to cloud"
+              className="save-button"
+              style={{
+                flexShrink: 0,
+                background: saveStatus === "error" ? "linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.08))"
+                          : saveStatus === "dirty" ? "linear-gradient(135deg,rgba(245,197,66,0.12),rgba(245,197,66,0.06))"
+                          : "linear-gradient(135deg,var(--cb-surface-2,#1b2340),var(--cb-surface-1,#141a2e))",
+                border: `1px solid ${saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc,#4fc3f7)"}`,
+                borderRadius: 4,
+                color: saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc,#4fc3f7)",
+                fontFamily: "'Courier New',monospace", fontSize: 11, letterSpacing: "0.15em",
+                padding: "4px 12px", cursor: saveStatus === "saving" ? "wait" : "pointer",
+                boxShadow: saveStatus === "dirty" ? "0 0 8px rgba(245,197,66,0.25)" : "0 0 8px rgba(79,195,247,0.2)",
+                opacity: saveStatus === "saving" ? 0.7 : 1, fontWeight: 700,
+              }}
+            >
+              <span className="save-button-text">{saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}</span>
+              <span className="save-button-icon">{saveStatus === "saving" ? "⏳" : saveStatus === "error" ? "❌" : "💾"}</span>
+            </button>
+          </div>
+          {/* Icon buttons row */}
+          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
+            {refreshStatus === "refreshing" && (
+              <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
+            )}
+            {refreshStatus === "refreshed" && (
+              <span style={{ fontSize: 11, color: "#22c55e", letterSpacing: "0.1em", fontWeight: 700 }}>✓ REFRESHED</span>
+            )}
+            {refreshStatus === "error" && (
+              <span style={{ fontSize: 11, color: "#ef4444", letterSpacing: "0.1em", fontWeight: 700 }}>✗ REFRESH FAILED</span>
+            )}
               {/* Refresh */}
               <button
                 onClick={refreshData}
@@ -1435,61 +1510,29 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         </div>
 
         {/* ── TABS ── */}
-        <div style={{ display: "flex", gap: 0, alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 0 }}>
-            {[
-              { id: "logbook",  label: "📋 LOGBOOK" },
-              { id: "summary",  label: "📊 FLIGHT SUMMARY" },
-              { id: "ftl",      label: "⏱ LIMITS & RECENCY" },
-            ].map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-                background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
-                border: "none",
-                borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
-                borderLeft: "1px solid " + (activeTab === tab.id ? "var(--elb-border, #1e3a5f)" : "transparent"),
-                borderRight: "1px solid " + (activeTab === tab.id ? "var(--elb-border, #1e3a5f)" : "transparent"),
-                color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #5a7a9a)",
-                padding: "7px 18px",
-                fontSize: 13,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-                fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                marginBottom: activeTab === tab.id ? "-1px" : 0,
-              }}>{tab.label}</button>
-            ))}
-          </div>
-          {/* ── SAVE NOW BUTTON ── */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", flex: 1 }}>
-            <button
-              onClick={saveData}
-              disabled={saveStatus === "saving"}
-              title="Save data to cloud"
-              className="save-button"
-              style={{
-                flexShrink: 0,
-                background: saveStatus === "error" ? "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08))"
-                          : saveStatus === "dirty" ? "linear-gradient(135deg, rgba(245,197,66,0.12), rgba(245,197,66,0.06))"
-                          : "linear-gradient(135deg, var(--cb-surface-2, #1b2340), var(--cb-surface-1, #141a2e))",
-                border: `1px solid ${saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc, #4fc3f7)"}`,
-                borderRadius: 4,
-                color: saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc, #4fc3f7)",
-                fontFamily: "'Courier New', monospace",
-                fontSize: 11,
-                letterSpacing: "0.15em",
-                padding: "4px 12px",
-                cursor: saveStatus === "saving" ? "wait" : "pointer",
-                boxShadow: saveStatus === "dirty" ? "0 0 8px rgba(245,197,66,0.25)" : "0 0 8px rgba(79,195,247,0.2)",
-                opacity: saveStatus === "saving" ? 0.7 : 1,
-                fontWeight: 700,
-              }}
-            >
-              <span className="save-button-text">{saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "error" ? "❌ ERROR" : saveStatus === "dirty" ? "💾 SAVE NOW" : "💾 SAVE NOW"}</span>
-              <span className="save-button-icon">{saveStatus === "saving" ? "⏳" : saveStatus === "error" ? "❌" : "💾"}</span>
-            </button>
-          </div>
+        <div style={{ display: "flex", gap: 0, alignItems: "center" }}>
+          {[
+            { id: "logbook",  label: "📋 LOGBOOK" },
+            { id: "summary",  label: "📊 FLIGHT SUMMARY" },
+            { id: "ftl",      label: "⏱ LIMITS & RECENCY" },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+              background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
+              border: "none",
+              borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
+              borderLeft: "1px solid " + (activeTab === tab.id ? "var(--elb-border, #1e3a5f)" : "transparent"),
+              borderRight: "1px solid " + (activeTab === tab.id ? "var(--elb-border, #1e3a5f)" : "transparent"),
+              color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #5a7a9a)",
+              padding: "7px 18px",
+              fontSize: 13,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              fontFamily: "var(--elb-font, 'Courier New', monospace)",
+              marginBottom: activeTab === tab.id ? "-1px" : 0,
+            }}>{tab.label}</button>
+          ))}
         </div>
-      </div>
 
       {/* ── CONTENT ── */}
       <div style={{ padding: "18px 24px" }}>
