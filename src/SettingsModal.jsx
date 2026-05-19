@@ -108,7 +108,6 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
   const handleSave = async () => {
     await onSave(draft);
     setSavedFlash(true);
-    setTimeout(() => setSavedFlash(false), 2000);
   };
 
   const handleBackdrop = (e) => {
