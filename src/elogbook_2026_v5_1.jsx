@@ -1302,6 +1302,11 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
           {/* ── AUTOSAVE STATUS & SAVE NOW BUTTON ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, letterSpacing: "0.1em", flex: 1, justifyContent: "flex-end" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {Number(settings.autoSaveInterval) === 0 && saveStatus !== "saving" && (
+                <span className="save-status-text" style={{ color: "#f5c542", fontWeight: 700, letterSpacing: "0.1em", opacity: 0.75 }}>
+                  ⚠ AUTO-SAVE OFF
+                </span>
+              )}
               {saveStatus === "saving" && (
                 <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#f5c542", fontWeight: 700 }}>
                   <svg style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
