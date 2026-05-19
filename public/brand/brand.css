@@ -1,0 +1,200 @@
+/* =================================================================
+   ClaudeBorne · Brand stylesheet v0.1
+   Drop into your app and `@import` or <link> from your global CSS.
+   ================================================================= */
+
+/* ---- Fonts ------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Tourney:wght@500;700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* ---- Design tokens ---------------------------------------------- */
+:root {
+  /* Surfaces (dark — default) */
+  --cb-surface-0: #0a1020;   /* page bg */
+  --cb-surface-1: #141a2e;   /* card bg */
+  --cb-surface-2: #1b2340;   /* elevated */
+  --cb-surface-3: #232c4d;   /* hover */
+
+  /* Brand accents — gradient stops */
+  --cb-mint:   #3FE0C5;
+  --cb-blue:   #3B8DFF;
+  --cb-violet: #5B6BFF;
+
+  /* Brand gradient (diagonal) — references the vars above
+     so it auto-shifts when the light-mode block redefines them. */
+  --cb-grad:   linear-gradient(135deg, var(--cb-mint) 0%, var(--cb-blue) 55%, var(--cb-violet) 100%);
+  --cb-grad-v: linear-gradient(180deg, var(--cb-mint) 0%, var(--cb-blue) 55%, var(--cb-violet) 100%);
+
+  /* Text */
+  --cb-ink:     #e8ecf5;
+  --cb-ink-2:   #b8c0d4;
+  --cb-ink-dim: #7c87a3;
+
+  /* Lines */
+  --cb-line:   rgba(255,255,255,0.07);
+  --cb-line-2: rgba(255,255,255,0.12);
+
+  /* Grid background line color (for .cb-grid-bg) */
+  --cb-grid-line: rgba(255,255,255,0.04);
+
+  /* Logo asset switcher — overridden in light mode */
+  --cb-logo-mark-url: url('/brand/logo-mark.svg');
+
+  /* Type stacks */
+  --cb-font-display: 'Tourney', system-ui, sans-serif;
+  --cb-font-body:    'Inter', system-ui, sans-serif;
+  --cb-font-mono:    'JetBrains Mono', ui-monospace, monospace;
+
+  /* Radii (sparingly used — the brand is mostly square) */
+  --cb-radius-sm: 4px;
+  --cb-radius-md: 8px;
+  --cb-radius-lg: 12px;
+
+  color-scheme: dark;
+}
+
+/* ---- Light mode -------------------------------------------------
+   Two ways to activate:
+     1. Explicit:   <html data-theme="light">  (recommended for an in-app toggle)
+     2. System:     Honors prefers-color-scheme when no data-theme is set.
+   ----------------------------------------------------------------- */
+:root[data-theme="light"] {
+  /* Surfaces — cool-tinted, blueprint-paper feel */
+  --cb-surface-0: #f4f6fb;
+  --cb-surface-1: #ffffff;
+  --cb-surface-2: #ebeef7;
+  --cb-surface-3: #dfe3f0;
+
+  /* Accents shift deeper so they hold contrast on white.
+     --cb-grad regenerates automatically because it references these. */
+  --cb-mint:   #1CC2A3;
+  --cb-blue:   #1F76E8;
+  --cb-violet: #4554DA;
+
+  /* Ink — mirror of dark surfaces */
+  --cb-ink:     #0a1020;
+  --cb-ink-2:   #3a4258;
+  --cb-ink-dim: #6b7488;
+
+  /* Lines flip to dark hairlines */
+  --cb-line:   rgba(10,16,32,0.08);
+  --cb-line-2: rgba(10,16,32,0.16);
+  --cb-grid-line: rgba(10,16,32,0.06);
+
+  /* Use the deeper-gradient logo on light surfaces */
+  --cb-logo-mark-url: url('/brand/logo-mark-light.svg');
+
+  color-scheme: light;
+}
+
+/* Honor system preference when the page hasn't pinned a theme. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --cb-surface-0: #f4f6fb;
+    --cb-surface-1: #ffffff;
+    --cb-surface-2: #ebeef7;
+    --cb-surface-3: #dfe3f0;
+    --cb-mint:   #1CC2A3;
+    --cb-blue:   #1F76E8;
+    --cb-violet: #4554DA;
+    --cb-ink:     #0a1020;
+    --cb-ink-2:   #3a4258;
+    --cb-ink-dim: #6b7488;
+    --cb-line:   rgba(10,16,32,0.08);
+    --cb-line-2: rgba(10,16,32,0.16);
+    --cb-grid-line: rgba(10,16,32,0.06);
+    --cb-logo-mark-url: url('/brand/logo-mark-light.svg');
+    color-scheme: light;
+  }
+}
+
+/* ---- Reusable utilities ----------------------------------------- */
+.cb-grad-text {
+  background: var(--cb-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.cb-eyebrow {
+  font-family: var(--cb-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--cb-mint);
+}
+
+.cb-display {
+  font-family: var(--cb-font-display);
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0.02em;
+}
+
+.cb-mono {
+  font-family: var(--cb-font-mono);
+  letter-spacing: 0.04em;
+}
+
+/* ---- Logo component --------------------------------------------- */
+/* Usage:
+   <span class="cb-logo">
+     <span class="cb-logo__mark" aria-hidden="true"></span>
+     <span class="cb-logo__wordmark">CLAUDEBORNE</span>
+   </span>
+*/
+.cb-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-family: var(--cb-font-display);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+}
+.cb-logo__mark {
+  display: inline-block;
+  width: 1.6em;
+  height: 1.6em;
+  background-image: var(--cb-logo-mark-url);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.cb-logo__wordmark {
+  background: var(--cb-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---- Buttons (optional starter) --------------------------------- */
+.cb-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--cb-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 12px 20px;
+  border: 1px solid var(--cb-line-2);
+  background: transparent;
+  color: var(--cb-ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 120ms, background-color 120ms;
+}
+.cb-btn:hover { border-color: var(--cb-mint); }
+.cb-btn--primary {
+  background: var(--cb-grad);
+  border-color: transparent;
+  color: #0a1020;
+  font-weight: 600;
+}
+.cb-btn--primary:hover { filter: brightness(1.08); }
+
+/* ---- Grid background (optional) -------------------------------- */
+.cb-grid-bg {
+  background-color: var(--cb-surface-0);
+  background-image:
+    linear-gradient(var(--cb-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cb-grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
