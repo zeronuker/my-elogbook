@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="ClaudeBorne">
+  <defs>
+    <linearGradient id="cb-grad-light" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1CC2A3"></stop>
+      <stop offset="55%" stop-color="#1F76E8"></stop>
+      <stop offset="100%" stop-color="#4554DA"></stop>
+    </linearGradient>
+    <linearGradient id="cb-bg-light" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff"></stop>
+      <stop offset="75%" stop-color="#f4f6fb"></stop>
+    </linearGradient>
+    
+  </defs>
+  <rect width="100" height="100" fill="url(#cb-bg-light)"></rect>
+  <polyline points="6,18 6,4 96,4 96,96 50,96" fill="none" stroke="url(#cb-grad-light)" stroke-width="3.5" stroke-linecap="square" stroke-linejoin="miter"></polyline>
+  <text class="c-letter" x="50" y="74" text-anchor="middle">C</text>
+</svg>
