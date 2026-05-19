@@ -496,10 +496,11 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         const profileData = profileSnap.data();
         const updated = {
           ...settingsRef.current,
-          fullName: profileData.fullName || settingsRef.current.fullName || "",
-          airline: profileData.airline || profileData.organization || settingsRef.current.airline || "",
-          licenceNumber: profileData.licenceNumber || settingsRef.current.licenceNumber || "",
-          licenceType: profileData.licenceType || settingsRef.current.licenceType || "ATPL(A)"
+          // logbook/data settings take priority; profile/data is migration fallback only
+          fullName: settingsRef.current.fullName || profileData.fullName || "",
+          airline: settingsRef.current.airline || profileData.airline || profileData.organization || "",
+          licenceNumber: settingsRef.current.licenceNumber || profileData.licenceNumber || "",
+          licenceType: settingsRef.current.licenceType || profileData.licenceType || "ATPL(A)",
         };
         settingsRef.current = updated;
         setSettings(updated);
