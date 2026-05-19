@@ -992,7 +992,7 @@ const settingsCss = `
   /* ── Field row ──────────────────────────────────────────────────── */
   .sm-field {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: auto 1fr;
     gap: 18px;
     padding: 10px 0;
     align-items: center;
@@ -1002,7 +1002,7 @@ const settingsCss = `
   .sm-field-meta { min-width: 0; }
   .sm-field-label {
     font-size: calc(13px * var(--fs));
-    font-weight: 600;
+    font-weight: 400;
     color: var(--cb-ink);
     display: block;
   }
