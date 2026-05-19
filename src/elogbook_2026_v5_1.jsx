@@ -1162,7 +1162,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
           {/* Right side: user info + period selector */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {user.photoURL && <img src={user.photoURL} alt="avatar" style={{ width: 22, height: 22, borderRadius: "50%", border: "1px solid var(--elb-border, #1e3a5f)" }} />}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
                 <span style={{ fontSize: 11, color: "var(--elb-txt, #c8d6e5)", letterSpacing: "0.1em", fontWeight: 700 }}>
                   {settings.fullName || user.displayName || user.email}
@@ -1173,6 +1172,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   </span>
                 )}
               </div>
+              {user.photoURL && <img src={user.photoURL} alt="avatar" style={{ width: 28, height: 28, borderRadius: "50%", border: "1px solid var(--elb-border, #1e3a5f)" }} />}
             </div>
             <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.15em" }}>SELECT PERIOD</div>
             <div style={{ display: "flex", gap: 8 }}>
