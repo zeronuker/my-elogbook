@@ -1274,11 +1274,11 @@ const settingsCss = `
   .elb-modal-footer{
     padding:12px 24px;border-top:1px solid #1a3050;
     display:flex;align-items:center;justify-content:space-between;
-    flex-shrink:0;background:var(--elb-bginput,#0b1828);gap:12px;flex-wrap:wrap;
+    flex-shrink:0;background:var(--elb-bginput,#0b1828);gap:12px;
   }
-  .elb-footer-hint{font-size:0.85em;color:var(--elb-accent,#4fc3f7);letter-spacing:0.05em;}
+  .elb-footer-hint{font-size:0.85em;color:var(--elb-accent,#4fc3f7);letter-spacing:0.05em;flex:1;}
   .elb-footer-hint.saved{color:#22c55e;}
-  .elb-footer-actions{display:flex;gap:8px;}
+  .elb-footer-actions{display:flex;gap:8px;flex-shrink:0;}
   .elb-btn{
     font-family:inherit;font-size:0.82em;letter-spacing:0.1em;
     padding:7px 18px;border-radius:3px;cursor:pointer;
