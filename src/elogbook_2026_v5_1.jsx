@@ -1238,7 +1238,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         </div>
 
         {/* RIGHT: User info + avatar */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "0 0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "0 0 auto", marginLeft: "auto" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
             <span style={{
               fontFamily: "'Tourney',system-ui,sans-serif",
