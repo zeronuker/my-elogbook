@@ -31,8 +31,9 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   useEffect(() => {
     if (open) {
       const today = new Date();
-      setDateFrom(`${today.getFullYear()}-01-01`);
-      setDateTo(today.toISOString().split("T")[0]);
+      // Only reset date range if blank — preserve last-used values on reopen
+      if (!dateFrom) setDateFrom(`${today.getFullYear()}-01-01`);
+      if (!dateTo) setDateTo(today.toISOString().split("T")[0]);
       setTab("export");
       setFile(null);
       setImportPreview(null);
