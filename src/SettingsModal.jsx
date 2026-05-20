@@ -146,6 +146,28 @@ const CHANGELOG = [
   },
 ];
 
+// ── Per-tab reset defaults ────────────────────────────────────────────
+const TAB_DEFAULTS = {
+  appearance: {
+    theme: "dark",
+    fontSize: 14,
+    tableDensity: "default",
+    columnDensity: "default",
+    fontType: "courier",
+    brightness: 100,
+    accentPreset: "gradient",
+  },
+  preferences: {
+    dateFormat: "D",
+    rowsPerPage: 15,
+    autoSaveInterval: "5",
+    dayNightMethod: "sunrise",
+    useStandardFormula: true,
+    preFlightBuffer: 75,
+    postFlightBuffer: 15,
+  },
+};
+
 // ── Auto-save options ─────────────────────────────────────────────────
 const AUTO_SAVE_OPTIONS = [
   { value: "0",  label: "Off"  },
@@ -162,6 +184,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
   const [tab, setTab]               = useState("profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [resetFlash, setResetFlash] = useState(false);
 
   // Reset tab/flash when modal opens
   useEffect(() => {
@@ -194,6 +217,14 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
     await onSave(draft);
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 3000);
+  };
+
+  const handleResetTab = () => {
+    const defaults = TAB_DEFAULTS[tab];
+    if (!defaults) return;
+    setDraft(prev => ({ ...prev, ...defaults }));
+    setResetFlash(true);
+    setTimeout(() => setResetFlash(false), 2000);
   };
 
   return (
@@ -237,10 +268,13 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
 
         {/* ── FOOT ── */}
         <footer className="sm-foot">
-          <div className={`sm-foot-note${savedFlash ? " saved" : ""}`}>
-            {savedFlash ? "// ✓ saved" : "// changes save to your account · synced across devices"}
+          <div className={`sm-foot-note${savedFlash ? " saved" : resetFlash ? " reset" : ""}`}>
+            {savedFlash ? "// ✓ saved" : resetFlash ? "// tab reset to defaults" : "// changes save to your account · synced across devices"}
           </div>
           <div className="sm-foot-btns">
+            {TAB_DEFAULTS[tab] && (
+              <button className="cb-btn-reset" onClick={handleResetTab}>Reset tab</button>
+            )}
             <button className="cb-btn-ghost" onClick={onClose}>Cancel</button>
             <button className="cb-btn-primary" onClick={() => { handleSave(); onClose(); }}>Done</button>
           </div>
@@ -1323,9 +1357,22 @@ const settingsCss = `
     transition: color 200ms;
   }
   .sm-foot-note.saved { color: var(--cb-mint); }
+  .sm-foot-note.reset { color: var(--cb-ink-2); }
   .sm-foot-btns { display: flex; gap: 8px; }
 
   /* ── Buttons ────────────────────────────────────────────────────── */
+  .cb-btn-reset {
+    background: transparent;
+    border: 1px solid var(--cb-line-2);
+    color: var(--cb-ink-dim);
+    font-family: var(--cb-font-mono);
+    font-size: calc(10px * var(--fs));
+    letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 8px 14px; cursor: pointer;
+    transition: color 120ms, border-color 120ms;
+    margin-right: 8px;
+  }
+  .cb-btn-reset:hover { color: var(--cb-ink-2); border-color: var(--cb-ink-2); }
   .cb-btn-ghost {
     background: transparent;
     border: 1px solid var(--cb-line-2);
