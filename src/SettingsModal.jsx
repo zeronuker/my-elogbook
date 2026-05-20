@@ -103,7 +103,25 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.0", date: "May 2026", current: true,
+    v: "v6.1", date: "May 2026", current: true,
+    title: "Settings overhaul · save chip fix",
+    notes: [
+      "Profile tab: all data fields standardised to identical width.",
+      "Accent palette expanded from 5 to 10 presets: added Emerald, Rose, Cyan, Gold, Coral.",
+      "Accent swatches now span full modal width.",
+      "Table density split into two independent controls — Row (Compact / Default / Relaxed) and Column (Narrow / Default / Wide).",
+      "Save chip: auto-save off + no prior save shows AUTO-SAVE OFF · NOT YET SAVED.",
+      "Save chip: after manual save with auto-save off, shows SAVED · timestamp persistently.",
+      "SAVE NOW button turns amber when auto-save is disabled.",
+      "Per-tab reset to default added to settings footer — Appearance and Preferences tabs only.",
+      "Miscellaneous tab reinstated with support action cards (How-to Guide, Report a Bug, Suggest a Feature) and changelog.",
+      "Tab bar: full-width border line added beneath tabs.",
+      "FTL fix: day/night method setting now correctly applied to cumulative FTL calculations.",
+      "Export/Import: native alert() dialogs replaced with inline branded status messages.",
+    ],
+  },
+  {
+    v: "v6.0", date: "May 2026", current: false,
     title: "ClaudeBorne brand rollout",
     notes: [
       "Full visual rebuild — new logo, typography, surfaces, and gradient accents.",
