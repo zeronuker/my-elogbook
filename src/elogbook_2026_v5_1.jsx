@@ -762,7 +762,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-txt, #c8d6e5)" }}>
         <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-border, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
           <div style={{ fontSize: 38, marginBottom: 8 }}>✈</div>
-          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V6.0</div>
+          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V6.1</div>
           <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
           <div style={{ fontSize: 11, color: "var(--elb-txt-muted, #3a5a7a)", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
           <button
@@ -1234,7 +1234,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             <span style={{
               fontFamily: "'JetBrains Mono','Courier New',monospace",
               fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.30)", lineHeight: 1, textAlign: "left",
-            }}>ELOGBOOK · V6.0</span>
+            }}>ELOGBOOK · V6.1</span>
           </div>
           <span style={{
             marginLeft: 6,
@@ -2699,7 +2699,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.0 · CAA MALAYSIA</span>
+        <span>eLOGBOOK v6.1 · CAA MALAYSIA</span>
         <span>MCAR 2016 PART 7 &amp; 8 · ICAO ANNEX 1 FORMAT</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
