@@ -729,7 +729,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         np1:  toHHMM(sum("nightP1"))   || "00:00",
         np1u: toHHMM(sum("nightP1US")) || "00:00",
         np2:  toHHMM(sum("nightP2"))   || "00:00",
-        tot:  toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcTotal(r)), 0)) || "00:00",
+        tot:  toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcTotal(r, settings.dayNightMethod, year, monthIdx)), 0)) || "00:00",
       };
     }),
   [data, selectedYear, settings.dayNightMethod]);
@@ -1455,7 +1455,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   </div>
                 );
               }
-              if (saveStatus === "saved" && lastSaveTime) {
+              if (saveStatus === "saved" && lastSaveTime && !autoOff) {
                 return (
                   <div style={{
                     display: "flex", alignItems: "center", gap: 6,
@@ -2191,17 +2191,17 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
                 {aircraftTypes.map(type => {
-                  const data = allRecencyByType[type];
-                  const overallOk = data.dayTakeoffs90 >= 3 && data.dayLandings90 >= 3 && data.nightTakeoffs90 >= 3 && data.nightLandings90 >= 3;
-                  const anyRed = data.dayTakeoffs90 < 3 || data.dayLandings90 < 3 || data.nightTakeoffs90 < 3 || data.nightLandings90 < 3;
+                  const recency = allRecencyByType[type];
+                  const overallOk = recency.dayTakeoffs90 >= 3 && recency.dayLandings90 >= 3 && recency.nightTakeoffs90 >= 3 && recency.nightLandings90 >= 3;
+                  const anyRed = recency.dayTakeoffs90 < 3 || recency.dayLandings90 < 3 || recency.nightTakeoffs90 < 3 || recency.nightLandings90 < 3;
                   const borderCol = anyRed ? "#ef4444" : "#22c55e";
                   const dotCol = anyRed ? "#ef4444" : "#22c55e";
 
                   const recencyCards = [
-                    { label: "☀ DAY TAKEOFFS",   count: data.dayTakeoffs90,   expiry: data.dayTOExpiry   },
-                    { label: "☀ DAY LANDINGS",   count: data.dayLandings90,   expiry: data.dayLdgExpiry  },
-                    { label: "☾ NIGHT TAKEOFFS", count: data.nightTakeoffs90, expiry: data.nightTOExpiry },
-                    { label: "☾ NIGHT LANDINGS", count: data.nightLandings90, expiry: data.nightLdgExpiry},
+                    { label: "☀ DAY TAKEOFFS",   count: recency.dayTakeoffs90,   expiry: recency.dayTOExpiry   },
+                    { label: "☀ DAY LANDINGS",   count: recency.dayLandings90,   expiry: recency.dayLdgExpiry  },
+                    { label: "☾ NIGHT TAKEOFFS", count: recency.nightTakeoffs90, expiry: recency.nightTOExpiry },
+                    { label: "☾ NIGHT LANDINGS", count: recency.nightLandings90, expiry: recency.nightLdgExpiry},
                   ];
 
                   return (

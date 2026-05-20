@@ -307,6 +307,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
 // ════════════════════════════════════════════════════════════════════
 function ProfileTab({ d, upd, userEmail, onDeleteAccount }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
   const rows = d.carryForward || [CF_EMPTY()];
 
   return (
@@ -492,11 +493,29 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount }) {
             <button
               type="button"
               className="cb-btn-danger"
-              onClick={() => { setConfirmDelete(false); onDeleteAccount && onDeleteAccount(); }}
+              onClick={async () => {
+                setConfirmDelete(false);
+                setDeleteError(null);
+                try {
+                  if (onDeleteAccount) await onDeleteAccount();
+                } catch (err) {
+                  setDeleteError(err.message || "Account deletion failed. Please try again.");
+                }
+              }}
             >
               Confirm Delete
             </button>
           </div>
+        </div>
+      )}
+      {deleteError && (
+        <div style={{
+          marginTop: 10, padding: "8px 12px",
+          background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.35)",
+          borderRadius: 4, fontSize: "calc(11px * var(--fs))",
+          color: "#ef4444", letterSpacing: "0.04em", lineHeight: 1.5,
+        }}>
+          ⚠ {deleteError}
         </div>
       )}
     </div>
@@ -1183,17 +1202,6 @@ const settingsCss = `
     letter-spacing: 0.12em;
     opacity: 0.7;
     text-transform: none;
-  }
-
-  /* ── Curated note ───────────────────────────────────────────────── */
-  .sm-curated-note {
-    background: rgba(63,224,197,0.06);
-    border-left: 2px solid var(--cb-mint);
-    padding: 10px 14px;
-    margin: 8px 0;
-    font-size: calc(12px * var(--fs));
-    color: var(--cb-ink-2);
-    line-height: 1.5;
   }
 
   /* ── Accent grid ────────────────────────────────────────────────── */
