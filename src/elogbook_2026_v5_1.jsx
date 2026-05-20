@@ -1395,7 +1395,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             {/* Save chip */}
             {(() => {
               const autoOff = Number(settings.autoSaveInterval) === 0;
-              if ((saveStatus === "idle" || saveStatus === "saved") && autoOff) {
+              // auto-save off + never saved yet
+              if (autoOff && !lastSaveTime && saveStatus !== "saving" && saveStatus !== "error") {
                 return (
                   <div style={{
                     display: "flex", alignItems: "center", gap: 6,
@@ -1406,7 +1407,23 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                     </svg>
-                    AUTO-SAVE OFF
+                    AUTO-SAVE OFF · NOT YET SAVED
+                  </div>
+                );
+              }
+              // auto-save off + has saved before — show last save time persistently
+              if (autoOff && lastSaveTime && (saveStatus === "idle" || saveStatus === "saved")) {
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "rgba(34,197,94,0.10)", border: "1px solid rgba(34,197,94,0.30)",
+                    borderRadius: 20, padding: "4px 12px",
+                    fontSize: 10, letterSpacing: "0.14em", fontWeight: 700, color: "#22c55e",
+                  }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    SAVED · {lastSaveTime}
                   </div>
                 );
               }
@@ -1474,28 +1491,34 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               return null;
             })()}
             {/* SAVE NOW button */}
-            <button
-              onClick={saveData}
-              disabled={saveStatus === "saving"}
-              title="Save data to cloud"
-              className="save-button"
-              style={{
-                flexShrink: 0,
-                background: saveStatus === "error" ? "linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.08))"
-                          : saveStatus === "dirty" ? "linear-gradient(135deg,rgba(245,197,66,0.12),rgba(245,197,66,0.06))"
-                          : "linear-gradient(135deg,var(--cb-surface-2,#1b2340),var(--cb-surface-1,#141a2e))",
-                border: `1px solid ${saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc,#4fc3f7)"}`,
-                borderRadius: 4,
-                color: saveStatus === "error" ? "#ef4444" : saveStatus === "dirty" ? "#f5c542" : "var(--elb-acc,#4fc3f7)",
-                fontFamily: "'Courier New',monospace", fontSize: 11, letterSpacing: "0.15em",
-                padding: "4px 12px", cursor: saveStatus === "saving" ? "wait" : "pointer",
-                boxShadow: saveStatus === "dirty" ? "0 0 8px rgba(245,197,66,0.25)" : "0 0 8px rgba(79,195,247,0.2)",
-                opacity: saveStatus === "saving" ? 0.7 : 1, fontWeight: 700,
-              }}
-            >
-              <span className="save-button-text">{saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}</span>
-              <span className="save-button-icon">{saveStatus === "saving" ? "⏳" : saveStatus === "error" ? "❌" : "💾"}</span>
-            </button>
+            {(() => {
+              const autoOff = Number(settings.autoSaveInterval) === 0;
+              const isAmber = saveStatus === "dirty" || (autoOff && saveStatus !== "error" && saveStatus !== "saving");
+              const isRed   = saveStatus === "error";
+              const color   = isRed ? "#ef4444" : isAmber ? "#f5c542" : "var(--elb-acc,#4fc3f7)";
+              const bg      = isRed   ? "linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.08))"
+                            : isAmber ? "linear-gradient(135deg,rgba(245,197,66,0.12),rgba(245,197,66,0.06))"
+                            : "linear-gradient(135deg,var(--cb-surface-2,#1b2340),var(--cb-surface-1,#141a2e))";
+              const shadow  = isAmber ? "0 0 8px rgba(245,197,66,0.25)" : "0 0 8px rgba(79,195,247,0.2)";
+              return (
+                <button
+                  onClick={saveData}
+                  disabled={saveStatus === "saving"}
+                  title={autoOff ? "Auto-save is off — click to save manually" : "Save data to cloud"}
+                  className="save-button"
+                  style={{
+                    flexShrink: 0, background: bg,
+                    border: `1px solid ${color}`, borderRadius: 4, color,
+                    fontFamily: "'Courier New',monospace", fontSize: 11, letterSpacing: "0.15em",
+                    padding: "4px 12px", cursor: saveStatus === "saving" ? "wait" : "pointer",
+                    boxShadow: shadow, opacity: saveStatus === "saving" ? 0.7 : 1, fontWeight: 700,
+                  }}
+                >
+                  <span className="save-button-text">{saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}</span>
+                  <span className="save-button-icon">{saveStatus === "saving" ? "⏳" : saveStatus === "error" ? "❌" : "💾"}</span>
+                </button>
+              );
+            })()}
           </div>
           </div>
         </div>
