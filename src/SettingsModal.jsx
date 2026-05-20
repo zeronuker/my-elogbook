@@ -97,7 +97,7 @@ const SETTINGS_TABS = [
   { id: "profile",     label: "Profile",     hint: "name · airline · licence" },
   { id: "appearance",  label: "Appearance",  hint: "theme · font · density" },
   { id: "preferences", label: "Preferences", hint: "date · auto-save · day/night" },
-  { id: "changelog",   label: "Changelog",   hint: "version history" },
+  { id: "misc",        label: "Misc",        hint: "help · changelog" },
 ];
 
 // ── Changelog data ────────────────────────────────────────────────────
@@ -263,7 +263,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
-          {tab === "changelog"   && <ChangelogTab />}
+          {tab === "misc"        && <MiscTab />}
         </div>
 
         {/* ── FOOT ── */}
@@ -714,24 +714,73 @@ function PreferencesTab({ d, upd }) {
 }
 
 // ════════════════════════════════════════════════════════════════════
-//  CHANGELOG TAB
+//  MISC TAB
 // ════════════════════════════════════════════════════════════════════
-function ChangelogTab() {
+const MISC_CARDS = [
+  {
+    id: "guide",
+    icon: "📖",
+    title: "HOW-TO GUIDE",
+    desc: "Setup, features, and workflows",
+    href: "https://docs.claudeborne.my",
+  },
+  {
+    id: "bug",
+    icon: "🐛",
+    title: "REPORT A BUG",
+    desc: "Something broken? Let us know",
+    href: "https://claudeborne.my/bug-report",
+  },
+  {
+    id: "feature",
+    icon: "💡",
+    title: "SUGGEST A FEATURE",
+    desc: "Request something new",
+    href: "https://claudeborne.my/feature-request",
+  },
+];
+
+function MiscTab() {
   return (
-    <div className="sm-tab-content sm-changelog">
-      {CHANGELOG.map((e, i) => (
-        <article key={e.v} className={`sm-cl-entry${e.current ? " current" : ""}`}>
-          <div className="sm-cl-head">
-            <span className="sm-cl-v">{e.v}</span>
-            <span className="sm-cl-date">{e.date}</span>
-            {e.current && <span className="sm-cl-now">// you are here</span>}
-          </div>
-          <h4 className="sm-cl-title">{e.title}</h4>
-          <ul className="sm-cl-notes">
-            {e.notes.map((n, j) => <li key={j}>{n}</li>)}
-          </ul>
-        </article>
-      ))}
+    <div className="sm-tab-content">
+
+      <SmSectionHead title="Support" hint="// guides · feedback · bugs" />
+      <div className="sm-misc-cards">
+        {MISC_CARDS.map(card => (
+          <a
+            key={card.id}
+            href={card.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sm-misc-card"
+          >
+            <span className="sm-misc-card-icon">{card.icon}</span>
+            <div className="sm-misc-card-body">
+              <div className="sm-misc-card-title">{card.title}</div>
+              <div className="sm-misc-card-desc">{card.desc}</div>
+            </div>
+            <span className="sm-misc-card-arrow">↗</span>
+          </a>
+        ))}
+      </div>
+
+      <SmSectionHead title="Changelog" hint="// version history" />
+      <div className="sm-changelog">
+        {CHANGELOG.map((e) => (
+          <article key={e.v} className={`sm-cl-entry${e.current ? " current" : ""}`}>
+            <div className="sm-cl-head">
+              <span className="sm-cl-v">{e.v}</span>
+              <span className="sm-cl-date">{e.date}</span>
+              {e.current && <span className="sm-cl-now">// you are here</span>}
+            </div>
+            <h4 className="sm-cl-title">{e.title}</h4>
+            <ul className="sm-cl-notes">
+              {e.notes.map((n, j) => <li key={j}>{n}</li>)}
+            </ul>
+          </article>
+        ))}
+      </div>
+
     </div>
   );
 }
@@ -1407,7 +1456,40 @@ const settingsCss = `
   }
   .cb-btn-danger:hover { background: rgba(239,68,68,0.22); }
 
-  /* ── Changelog tab ──────────────────────────────────────────────── */
+  /* ── Misc tab ───────────────────────────────────────────────────── */
+  .sm-misc-cards { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .sm-misc-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    background: var(--cb-surface-0);
+    border: 1px solid var(--cb-line-2);
+    border-left: 3px solid var(--cb-mint);
+    text-decoration: none;
+    transition: background 120ms, border-left-color 120ms;
+  }
+  .sm-misc-card:hover { background: var(--cb-surface-2); border-left-color: var(--cb-blue); }
+  .sm-misc-card-icon { font-size: 20px; flex-shrink: 0; line-height: 1; }
+  .sm-misc-card-body { flex: 1; min-width: 0; }
+  .sm-misc-card-title {
+    font-family: var(--cb-font-mono);
+    font-size: calc(11px * var(--fs));
+    letter-spacing: 0.16em;
+    color: var(--cb-ink);
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+  .sm-misc-card-desc {
+    font-size: calc(11.5px * var(--fs));
+    color: var(--cb-ink-2);
+    letter-spacing: 0.02em;
+  }
+  .sm-misc-card-arrow {
+    font-size: 16px;
+    color: var(--cb-ink-dim);
+    flex-shrink: 0;
+  }
+
+  /* ── Changelog (inside Misc tab) ────────────────────────────────── */
   .sm-changelog { gap: 0; text-align: left; }
   .sm-cl-entry { padding: 18px 0; border-bottom: 1px solid var(--cb-line); }
   .sm-cl-entry:last-child { border-bottom: 0; }
