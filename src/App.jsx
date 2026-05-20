@@ -316,6 +316,7 @@ function App() {
             await deleteUser(user)
           } catch (reAuthError) {
             console.error('Re-authentication failed:', reAuthError)
+            throw new Error(reAuthError.message || 'Re-authentication failed. Please try again.')
           }
         } else {
           // Email/password users: require recent login — surface as an error to the caller

@@ -179,7 +179,7 @@ const TAB_DEFAULTS = {
     dateFormat: "D",
     rowsPerPage: 15,
     autoSaveInterval: "5",
-    dayNightMethod: "sunrise",
+    dayNightMethod: "fixed",
     useStandardFormula: true,
     preFlightBuffer: 75,
     postFlightBuffer: 15,

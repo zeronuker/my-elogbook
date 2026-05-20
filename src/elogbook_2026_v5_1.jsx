@@ -35,7 +35,7 @@ const EMPTY_ROW = () => ({
   autoland: false,
 });
 
-const YEARS = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
+const YEARS = Array.from({ length: new Date().getFullYear() - 2024 + 6 }, (_, i) => 2024 + i);
 
 function getDaysInMonth(monthIdx, year) {
   return new Date(year, monthIdx + 1, 0).getDate();
@@ -246,6 +246,7 @@ function getAllSectors(data, dutyBufferMins = 90, dayNightMethod = "fixed") {
         std: row.std,
         sta: row.sta,
         departure: row.departure,
+        arrival: row.arrival,
       });
     });
   });
@@ -460,6 +461,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
+  const dataRef = useRef({}); // always mirrors latest data so auto-save interval reads current state
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
@@ -499,6 +501,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   }, []);
 
   // ── Auto-save on user-configured interval ──
+  // dataRef.current always holds the latest data so the interval closure never goes stale.
+  // Removing `data` from deps prevents the interval from resetting on every keystroke.
   useEffect(() => {
     if (!user) return;
     const intervalMins = Number(settings.autoSaveInterval ?? 5);
@@ -508,7 +512,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     }, intervalMins * 60 * 1000);
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, data, settings.autoSaveInterval]);
+  }, [user, settings.autoSaveInterval]);
 
   // ── Handle import — called directly by ExportImportModal ──
   const handleImport = async (importedData) => {
@@ -567,6 +571,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   // ── Keep settingsRef in sync so saveData never reads a stale closure ──
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
+  // ── Keep dataRef in sync so the auto-save interval always reads current data ──
+  useEffect(() => { dataRef.current = data; }, [data]);
+
   // ── Sync data-theme attribute on <html> for brand.css dark/light tokens ──
   useEffect(() => {
     document.documentElement.dataset.theme = settings.theme || "dark";
@@ -624,7 +631,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     try {
       // Regenerate IDs sequentially for each month to prevent duplicates
       const cleanData = {};
-      const dataToSave = dataOverride || data;
+      const dataToSave = dataOverride || dataRef.current;
       Object.keys(dataToSave).forEach(monthKey => {
         cleanData[monthKey] = dataToSave[monthKey].map((row, idx) => ({
           ...row,
@@ -656,15 +663,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       console.error("Save error:", e);
       setSaveStatus("error");
       // Keep "error" status visible until successful save
-    }
-  };
-
-  // ── Google Sign In ──
-  const handleSignIn = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (e) {
-      console.error("Sign in error:", e);
     }
   };
 
@@ -766,7 +764,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
           <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
           <div style={{ fontSize: 11, color: "var(--elb-txt-muted, #3a5a7a)", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
           <button
-            onClick={handleSignIn}
+            onClick={() => signInWithPopup(auth, googleProvider).catch(e => console.error("Sign in error:", e))}
             style={{
               background: "var(--elb-bg2, #0d1520)",
               border: "1px solid var(--elb-acc, #4fc3f7)",
@@ -1004,8 +1002,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
   const isDayLandingDynamic = (sector) => {
     if (settings.dayNightMethod === "sunrise") {
-      const { day, night } = calcDayNightDynamic(sector.std, sector.sta, String(sector.date.getDate()), sector.departure, sector.date.getFullYear(), sector.date.getMonth());
-      return day > night; // More day time = day landing
+      // Use arrival airport coords for landing classification; fall back to departure if arrival unknown
+      const landingIcao = (sector.arrival && getCoords(sector.arrival)) ? sector.arrival : sector.departure;
+      const { day, night } = calcDayNightDynamic(sector.std, sector.sta, String(sector.date.getDate()), landingIcao, sector.date.getFullYear(), sector.date.getMonth());
+      return day > night;
     }
     return sector.isDayLanding;
   };
@@ -1602,7 +1602,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   const capStyle = capColors[row.cap] || null;
                   const dynMode = settings.dayNightMethod === "sunrise";
                   const isDepUnknown = dynMode && row.departure && !getCoords(row.departure);
-                  const isArrUnknown = dynMode && row.arrival   && !getCoords(row.arrival);
+                  // isArrUnknown intentionally omitted — arrival coords are not used in day/night calculation
 
                   return (
                     <tr
@@ -1772,7 +1772,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                                   placeholder={isTime ? "00:00" : ""}
                                 />
                               ) : (
-                                (col.key === "departure" && isDepUnknown) || (col.key === "arrival" && isArrUnknown)
+                                (col.key === "departure" && isDepUnknown)
                                   ? <span style={{ color: "rgba(155,188,212,0.6)", background: "rgba(155,188,212,0.1)", border: "1px solid rgba(155,188,212,0.35)", borderRadius: 3, padding: "2px 6px" }}>{displayVal}</span>
                                   : <span style={{ opacity: displayVal ? 1 : 0.2 }}>{displayVal || "—"}</span>
                               )}
