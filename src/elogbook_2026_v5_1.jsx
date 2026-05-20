@@ -729,7 +729,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         np1:  toHHMM(sum("nightP1"))   || "00:00",
         np1u: toHHMM(sum("nightP1US")) || "00:00",
         np2:  toHHMM(sum("nightP2"))   || "00:00",
-        tot:  toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcTotal(r, settings.dayNightMethod, year, monthIdx)), 0)) || "00:00",
+        tot:  toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcTotal(r, settings.dayNightMethod, selectedYear, i)), 0)) || "00:00",
       };
     }),
   [data, selectedYear, settings.dayNightMethod]);
