@@ -748,7 +748,7 @@ function OnboardingFlow({
     <div className="onb-land">
       <div className="onb-land-logo">✈</div>
       <div className="onb-land-title">CLAUDEBORNE</div>
-      <div className="onb-land-ver">eLOGBOOK V5.6 · CAAM / MCAR 2016</div>
+      <div className="onb-land-ver">eLOGBOOK V6.1 · CAAM / MCAR 2016</div>
       <div className="onb-land-tag">Your CAAM-compliant digital pilot logbook.<br/>Accessible anywhere. Secure. Always in sync.</div>
       <div className="onb-badges">
         <span className="onb-badge onb-badge-blue">✓ CAD 1901</span>

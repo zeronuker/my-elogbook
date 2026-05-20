@@ -869,15 +869,6 @@ const exportImportCss = `
   }
   .elb-form-input:focus{outline:none;border-color:var(--elb-acc,#4fc3f7);box-shadow:0 0 0 2px rgba(79,195,247,0.1);}
 
-  .elb-format-options{display:flex;gap:8px;}
-  .elb-radio-option{
-    flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;
-    background:var(--elb-bg2,#0b1320);border:1px solid var(--elb-border2,#1a3050);border-radius:2px;cursor:pointer;
-    color:var(--elb-txt-muted,#9bbcd4);font-size:0.85em;transition:all 0.15s;
-  }
-  .elb-radio-option:hover{border-color:var(--elb-acc,#4fc3f7);color:var(--elb-acc,#4fc3f7);}
-  .elb-radio-option input[type="radio"]{cursor:pointer;}
-
   .elb-help-text{
     font-size:0.75em;color:var(--elb-txt-muted,#7ab8d4);margin:4px 0 0;opacity:0.8;
   }

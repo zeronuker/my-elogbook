@@ -318,8 +318,8 @@ function App() {
             console.error('Re-authentication failed:', reAuthError)
           }
         } else {
-          // Email/password users: prompt to re-login before deleting
-          alert('For security, please sign out and sign back in before deleting your account.')
+          // Email/password users: require recent login — surface as an error to the caller
+          throw new Error('For security, please sign out and sign back in before deleting your account.')
         }
       } else {
         console.error('Account deletion failed:', error)
