@@ -2250,7 +2250,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             <SectionHeader icon="🎯" title="AUTOLAND RECENCY — 3 WITHIN 6 MONTHS · ALL TYPES" popupId="rec-autoland" />
             <div style={{
               background: "var(--elb-bg2, #0d1520)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))",
-              borderLeft: "3px solid #eab308", borderRadius: 4, padding: 16,
+              borderLeft: `3px solid ${autolandCurrent ? "#22c55e" : "#ef4444"}`, borderRadius: 4, padding: 16,
             }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
                 <div>
@@ -2264,7 +2264,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   </div>
                 </div>
                 <div style={{ width: 7, height: 7, borderRadius: "50%", marginTop: 4,
-                  background: "#eab308", boxShadow: "0 0 6px #eab308",
+                  background: autolandCurrent ? "#22c55e" : "#ef4444",
+                  boxShadow: `0 0 6px ${autolandCurrent ? "#22c55e" : "#ef4444"}`,
                   animation: "blink 1.5s ease infinite" }} />
               </div>
               {lastAutolandDate ? (
