@@ -1208,10 +1208,39 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         @media (min-width: 769px) {
           .save-button-icon { display: none; }
         }
+        /* ── Topbar responsive ── */
+        .elb-topbar {
+          overflow: hidden;
+        }
+        .elb-topbar-brand {
+          flex: 0 1 auto;
+          min-width: 0;
+          overflow: hidden;
+        }
+        .elb-topbar-right {
+          flex: 0 0 auto;
+          min-width: 0;
+        }
+        .elb-topbar-usertext {
+          min-width: 0;
+          overflow: hidden;
+        }
+        .elb-topbar-username {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          max-width: 100%;
+          display: block;
+        }
+        @media (max-width: 640px) {
+          .elb-topbar { padding: 0 12px !important; }
+          .elb-topbar-caam { display: none; }
+          .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
+        }
       `}</style>
 
       {/* ── TOPBAR ── */}
-      <div style={{
+      <div className="elb-topbar" style={{
         background: "var(--cb-surface-0, #0a1020)",
         borderBottom: "1px solid rgba(255,255,255,0.07)",
         padding: "0 24px",
@@ -1222,7 +1251,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         flexShrink: 0,
       }}>
         {/* LEFT: Brand */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: "0 0 auto" }}>
+        <div className="elb-topbar-brand" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <img src="/brand/icons/favicon-48.png" alt="ClaudeBorne" width="32" height="32" style={{ flexShrink: 0, display: "block" }} />
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <span style={{
@@ -1236,7 +1265,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.30)", lineHeight: 1, textAlign: "left",
             }}>ELOGBOOK · V6.1</span>
           </div>
-          <span style={{
+          <span className="elb-topbar-caam" style={{
             marginLeft: 6,
             fontFamily: "'JetBrains Mono','Courier New',monospace",
             fontSize: 9, letterSpacing: "0.14em", color: "rgba(255,255,255,0.28)",
@@ -1245,9 +1274,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         </div>
 
         {/* RIGHT: User info + avatar */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "0 0 auto", marginLeft: "auto" }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
-            <span style={{
+        <div className="elb-topbar-right" style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
+          <div className="elb-topbar-usertext" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+            <span className="elb-topbar-username" style={{
               fontFamily: "'Tourney',system-ui,sans-serif",
               fontWeight: 700, fontSize: 12, letterSpacing: "0.14em",
               color: "var(--elb-txt,#e8f4fd)", lineHeight: 1,
