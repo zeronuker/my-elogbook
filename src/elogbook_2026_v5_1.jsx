@@ -2192,7 +2192,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     }}>
                       {/* Type badge + status dot */}
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-                        <div>
+                        <div style={{ textAlign: "left" }}>
                           <div style={{
                             display: "inline-block", fontSize: "var(--elb-hint-sz)", letterSpacing: "0.12em",
                             padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
@@ -2268,7 +2268,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               borderLeft: `3px solid ${autolandCurrent ? "#22c55e" : "#ef4444"}`, borderRadius: 4, padding: 16,
             }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
-                <div>
+                <div style={{ textAlign: "left" }}>
                   <div style={{
                     display: "inline-block", fontSize: "var(--elb-hint-sz)", letterSpacing: "0.12em",
                     padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
