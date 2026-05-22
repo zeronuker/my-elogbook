@@ -455,6 +455,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [editingCell, setEditingCell] = useState(null);
   const [activeTab, setActiveTab] = useState("logbook");
   const [saveStatus, setSaveStatus] = useState("idle");
+  const [saveError, setSaveError] = useState(""); // stores last error message for display
   const [lastSaveTime, setLastSaveTime] = useState(""); // Format: "DD MMM YYYY • HH:MM:SS"
   const [refreshStatus, setRefreshStatus] = useState("idle");
   // ── NEW ──
@@ -463,6 +464,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef({}); // always mirrors latest data so auto-save interval reads current state
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -625,6 +627,21 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   // ── Save data to Firestore ──
+  // Strip NaN, Infinity, and undefined — Firestore rejects all three
+  const sanitizeForFirestore = (val) => {
+    if (Array.isArray(val)) return val.map(sanitizeForFirestore);
+    if (val !== null && typeof val === "object") {
+      const out = {};
+      for (const [k, v] of Object.entries(val)) {
+        if (v === undefined) continue;
+        out[k] = sanitizeForFirestore(v);
+      }
+      return out;
+    }
+    if (typeof val === "number" && !isFinite(val)) return 0; // NaN / Infinity → 0
+    return val;
+  };
+
   const saveData = async (dataOverride) => {
     if (!user) return;
     setSaveStatus("saving");
@@ -633,7 +650,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       const cleanData = {};
       const dataToSave = dataOverride || dataRef.current;
       Object.keys(dataToSave).forEach(monthKey => {
-        cleanData[monthKey] = dataToSave[monthKey].map((row, idx) => ({
+        const rows = dataToSave[monthKey];
+        if (!Array.isArray(rows)) return; // skip corrupted month entries
+        cleanData[monthKey] = rows.map((row, idx) => ({
           ...row,
           id: idx + 1, // Ensure IDs are 1, 2, 3, ... in order
         }));
@@ -641,14 +660,17 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
       const ref = doc(db, "users", user.uid, "logbook", "data");
 
+      // Sanitize settings to remove NaN/undefined before writing to Firestore
+      const settingsToSave = sanitizeForFirestore(settingsRef.current);
+
       // Create a 15-second timeout promise
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Save operation timed out after 15 seconds")), 15000)
+        setTimeout(() => reject(new Error("Save timed out — check your connection")), 15000)
       );
 
       // Race the save operation against the timeout
       await Promise.race([
-        setDoc(ref, { logbookData: cleanData, settings: settingsRef.current, updatedAt: new Date().toISOString() }, { merge: true }),
+        setDoc(ref, { logbookData: cleanData, settings: settingsToSave, updatedAt: new Date().toISOString() }, { merge: true }),
         timeoutPromise
       ]);
 
@@ -658,11 +680,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       const fullStr = `${dateStr} • ${timeStr}`;
       setLastSaveTime(fullStr);
       setSaveStatus("saved");
-      // Keep "saved" status visible until next save attempt
     } catch (e) {
       console.error("Save error:", e);
+      setSaveError(e?.message || "Unknown error");
       setSaveStatus("error");
-      // Keep "error" status visible until successful save
     }
   };
 
@@ -734,7 +755,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
   // ── Loading screen ──
   // Inject theme CSS vars early so loading/login screens are also themed
-  const themeCss = makeThemeCss(settings);
+  const themeCss = makeThemeCss(previewSettings || settings);
 
   if (authLoading) {
     return (
@@ -760,7 +781,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-txt, #c8d6e5)" }}>
         <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-border, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
           <div style={{ fontSize: 38, marginBottom: 8 }}>✈</div>
-          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V6.1</div>
+          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V6.2</div>
           <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
           <div style={{ fontSize: 11, color: "var(--elb-txt-muted, #3a5a7a)", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
           <button
@@ -931,6 +952,19 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
   const timeCols = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total","std","sta"];
   const autoCalcCols = ["total","dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"];
+
+  // ── Column visibility helpers ────────────────────────────────────────
+  const hiddenCols    = new Set(settings.hiddenColumns || []);
+  const isColVisible  = (key) => !hiddenCols.has(key);
+  const unhideColumn  = (key) => {
+    const next = { ...settings, hiddenColumns: (settings.hiddenColumns || []).filter(k => k !== key) };
+    setSettings(next);
+    saveSettings(next);
+  };
+  // Number of visible auto-calc columns (for HOC warning colSpan)
+  const autoCalcVisibleCount = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].filter(isColVisible).length;
+  // Totals-row label colSpan: # + DATE + visible solo/group cols before time cols
+  const totalsLabelColSpan = 2 + ["type","markings","captain","cap","pilotFlying","departure","arrival","std","sta"].filter(isColVisible).length;
 
   const totalsRow = {
     dayP1:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).dayP1), 0)) || "00:00",
@@ -1263,7 +1297,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             <span style={{
               fontFamily: "'JetBrains Mono','Courier New',monospace",
               fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.30)", lineHeight: 1, textAlign: "left",
-            }}>ELOGBOOK · V6.1</span>
+            }}>ELOGBOOK · V6.2</span>
           </div>
           <span className="elb-topbar-caam" style={{
             marginLeft: 6,
@@ -1542,49 +1576,114 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             </div>
 
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
-              <thead>
-                <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
-                  <th rowSpan={2} style={thStyle}>#</th>
-                  <th rowSpan={2} style={thStyle}>DATE</th>
-                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>AIRCRAFT</th>
-                  <th rowSpan={2} style={thStyle}>CAPTAIN</th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                    <span style={{ display: "block" }}>HOLDER</span>
-                    <span style={{ display: "block" }}>OPERATING</span>
-                    <span style={{ display: "block" }}>CAPACITY</span>
+              {(() => {
+                // Stub styles for hidden columns
+                const stubBase = {
+                  ...thStyle,
+                  width: 13, minWidth: 13, maxWidth: 13,
+                  padding: "2px 0",
+                  cursor: "pointer",
+                  background: "rgba(63,224,197,0.04)",
+                  borderLeft: "1px solid rgba(63,224,197,0.18)",
+                  overflow: "hidden",
+                  verticalAlign: "middle",
+                };
+                const stubText = {
+                  display: "block",
+                  writingMode: "vertical-rl",
+                  transform: "rotate(180deg)",
+                  fontSize: 7,
+                  letterSpacing: "0.08em",
+                  color: "rgba(63,224,197,0.45)",
+                  userSelect: "none",
+                  padding: "2px 0",
+                  lineHeight: 1.2,
+                };
+                const stub = (key, label) => (
+                  <th
+                    key={`stub-${key}`}
+                    style={stubBase}
+                    onClick={() => unhideColumn(key)}
+                    title={`Show ${label}`}
+                  >
+                    <span style={stubText}>{label}</span>
                   </th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                    <span style={{ display: "block" }}>PILOT</span>
-                    <span style={{ display: "block" }}>FLYING</span>
-                  </th>
-                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>SECTORS</th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                    <span style={{ display: "block" }}>STD</span>
-                    <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
-                  </th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                    <span style={{ display: "block" }}>STA</span>
-                    <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
-                  </th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
-                  <th rowSpan={2} style={thStyle}>TOTAL</th>
-                  <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none" }}></th>
-                  <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
-                </tr>
-                <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
-                  <th style={thSubStyle}>TYPE</th>
-                  <th style={thSubStyle}>MARKINGS</th>
-                  <th style={thSubStyle}>DEP</th>
-                  <th style={thSubStyle}>ARR</th>
-                  <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
-                  <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
-                  <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>
-                  <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P1</th>
-                  <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
-                  <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P2</th>
-                </tr>
-              </thead>
+                );
+                // Solo th helper (rowSpan=2)
+                const soloTh = (key, content, extraStyle = {}) => isColVisible(key)
+                  ? <th key={key} rowSpan={2} style={{ ...thStyle, ...extraStyle }}>{content}</th>
+                  : stub(key, typeof content === "string" ? content : key.toUpperCase());
+
+                return (
+                  <thead>
+                    <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
+                      <th rowSpan={2} style={thStyle}>#</th>
+                      <th rowSpan={2} style={thStyle}>DATE</th>
+                      {/* AIRCRAFT group — colSpan always 2 (visible cols + stubs) */}
+                      <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>AIRCRAFT</th>
+                      {/* Solo columns */}
+                      {soloTh("captain", "CAPTAIN")}
+                      {isColVisible("cap")
+                        ? <th key="cap" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                            <span style={{ display: "block" }}>HOLDER</span>
+                            <span style={{ display: "block" }}>OPERATING</span>
+                            <span style={{ display: "block" }}>CAPACITY</span>
+                          </th>
+                        : stub("cap", "HOC")
+                      }
+                      {isColVisible("pilotFlying")
+                        ? <th key="pilotFlying" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                            <span style={{ display: "block" }}>PILOT</span>
+                            <span style={{ display: "block" }}>FLYING</span>
+                          </th>
+                        : stub("pilotFlying", "PF")
+                      }
+                      {/* SECTORS group — colSpan always 2 */}
+                      <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>SECTORS</th>
+                      {/* STD / STA */}
+                      {isColVisible("std")
+                        ? <th key="std" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                            <span style={{ display: "block" }}>STD</span>
+                            <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
+                          </th>
+                        : stub("std", "STD")
+                      }
+                      {isColVisible("sta")
+                        ? <th key="sta" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                            <span style={{ display: "block" }}>STA</span>
+                            <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
+                          </th>
+                        : stub("sta", "STA")
+                      }
+                      {/* DAY group — colSpan always 3 */}
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
+                      {/* NIGHT group — colSpan always 3 */}
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
+                      {/* TOTAL */}
+                      {soloTh("total", "TOTAL")}
+                      {/* Action cols */}
+                      <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none" }}></th>
+                      <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
+                    </tr>
+                    <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
+                      {/* AIRCRAFT sub-headers */}
+                      {isColVisible("type")     ? <th style={thSubStyle}>TYPE</th>    : stub("type", "TYPE")}
+                      {isColVisible("markings") ? <th style={thSubStyle}>MARKINGS</th>: stub("markings", "MRKG")}
+                      {/* SECTORS sub-headers */}
+                      {isColVisible("departure")? <th style={thSubStyle}>DEP</th>     : stub("departure", "DEP")}
+                      {isColVisible("arrival")  ? <th style={thSubStyle}>ARR</th>     : stub("arrival", "ARR")}
+                      {/* DAY sub-headers */}
+                      {isColVisible("dayP1")    ? <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>    : stub("dayP1", "P1")}
+                      {isColVisible("dayP1US")  ? <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>: stub("dayP1US", "P1U/S")}
+                      {isColVisible("dayP2")    ? <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>    : stub("dayP2", "P2")}
+                      {/* NIGHT sub-headers */}
+                      {isColVisible("nightP1")  ? <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P1</th>    : stub("nightP1", "P1")}
+                      {isColVisible("nightP1US")? <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>: stub("nightP1US", "P1U/S")}
+                      {isColVisible("nightP2")  ? <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P2</th>    : stub("nightP2", "P2")}
+                    </tr>
+                  </thead>
+                );
+              })()}
 
               <tbody>
                 {rows.map((row, rowIdx) => {
@@ -1617,6 +1716,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                         let skipAutoCalc = false;
                         for (let ci = 0; ci < columns.length; ci++) {
                           const col = columns[ci];
+
+                          // Skip hidden columns in data rows
+                          if (hiddenCols.has(col.key)) continue;
+
                           const isEditing = editingCell?.rowIdx === rowIdx && editingCell?.field === col.key;
                           const isTime = timeCols.includes(col.key);
                           const isAutoCalc = autoCalcCols.includes(col.key);
@@ -1624,7 +1727,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                           if (needsCapWarning && col.key === "dayP1") {
                             skipAutoCalc = true;
                             cells.push(
-                              <td key="hoc-warning" colSpan={7} style={{ ...tdStyle, background: "rgba(249,115,22,0.06)", borderLeft: "2px solid rgba(249,115,22,0.4)", textAlign: "center", color: "#f97316", fontSize: 11, fontStyle: "italic", letterSpacing: "0.05em", padding: "6px 10px", whiteSpace: "nowrap" }}>
+                              <td key="hoc-warning" colSpan={autoCalcVisibleCount} style={{ ...tdStyle, background: "rgba(249,115,22,0.06)", borderLeft: "2px solid rgba(249,115,22,0.4)", textAlign: "center", color: "#f97316", fontSize: 11, fontStyle: "italic", letterSpacing: "0.05em", padding: "6px 10px", whiteSpace: "nowrap" }}>
                                 ⚠ HOLDER OPERATING CAPACITY required to auto calculate
                               </td>
                             );
@@ -1845,10 +1948,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
                 {/* ── TOTALS ROW ── */}
                 <tr style={{ background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
-                  <td colSpan={11} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
+                  <td colSpan={totalsLabelColSpan} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
                     MONTHLY TOTALS →
                   </td>
-                  {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].map(k => (
+                  {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].filter(isColVisible).map(k => (
                     <td key={k} style={{
                       ...tdStyle,
                       textAlign: "center",
@@ -2093,29 +2196,24 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               padding: "12px 16px",
               marginBottom: 14,
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              alignItems: "flex-start",
+              justifyContent: "flex-start",
               gap: 12,
               flexWrap: "wrap",
               background: FTL_BG[bannerCls],
               border: `1px solid ${FTL_BORDER[bannerCls]}`,
               borderLeft: `3px solid ${FTL_COLOR[bannerCls]}`,
             }}>
-              <div style={{ fontSize: 18, flexShrink: 0 }}>{bannerInfo.icon}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: FTL_COLOR[bannerCls] }}>
+              <div style={{ fontSize: 18, flexShrink: 0, paddingTop: 1 }}>{bannerInfo.icon}</div>
+              <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: FTL_COLOR[bannerCls], textAlign: "left" }}>
                   {bannerInfo.label}
                 </div>
-                <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", marginTop: 3, letterSpacing: "0.04em", lineHeight: 1.5 }}>
+                <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", marginTop: 3, letterSpacing: "0.04em", lineHeight: 1.5, textAlign: "left" }}>
                   {bannerInfo.text}
                 </div>
-              </div>
-              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", flexShrink: 0 }}>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em" }}>AS OF DATE</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "#4fc3f7" }}>
-                    {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
-                  </div>
+                <div style={{ marginTop: 6, fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em", textAlign: "left" }}>
+                  AS OF {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
                 </div>
               </div>
             </div>
@@ -2138,7 +2236,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             {/* Explanation note */}
             <div style={{
               fontSize: "var(--elb-hint-sz)", color: "#3a5a7a", lineHeight: 1.7, letterSpacing: "0.03em",
-              marginBottom: 16, borderLeft: "2px solid #1a3050", paddingLeft: 8,
+              marginBottom: 16, borderLeft: "2px solid #1a3050", paddingLeft: 8, textAlign: "left",
             }}>
               Each sector with <span style={{ color: "#4fc3f7" }}>PILOT FLYING ✓</span> counts as 1 takeoff and 1 landing.
               Day / night is determined by <span style={{ color: "#4fc3f7" }}>STD</span> (takeoff) and{" "}
@@ -2177,7 +2275,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     }}>
                       {/* Type badge + status dot */}
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-                        <div>
+                        <div style={{ textAlign: "left" }}>
                           <div style={{
                             display: "inline-block", fontSize: "var(--elb-hint-sz)", letterSpacing: "0.12em",
                             padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
@@ -2253,7 +2351,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               borderLeft: `3px solid ${autolandCurrent ? "#22c55e" : "#ef4444"}`, borderRadius: 4, padding: 16,
             }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
-                <div>
+                <div style={{ textAlign: "left" }}>
                   <div style={{
                     display: "inline-block", fontSize: "var(--elb-hint-sz)", letterSpacing: "0.12em",
                     padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
@@ -2362,6 +2460,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
               animation: "popIn 0.15s ease",
               fontFamily: "var(--elb-font, 'Courier New', monospace)",
+              textAlign: "left",
             }}>
               {/* Header */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
@@ -2523,7 +2622,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       {/* ── AUTOSAVE ERROR MODAL ── */}
       {saveStatus === "error" && (
         <div
-          onClick={e => { if (e.target === e.currentTarget) setSaveStatus("dirty"); }}
+          onClick={e => { if (e.target === e.currentTarget) { setSaveStatus("dirty"); setSaveError(""); } }}
           style={{
             position: "fixed", inset: 0,
             background: "rgba(0,0,0,0.72)",
@@ -2547,10 +2646,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
               <div>
                 <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#ef4444", marginBottom: 5 }}>SAVE ERROR</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>AUTOSAVE FAILED</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>SAVE FAILED</div>
               </div>
               <button
-                onClick={() => setSaveStatus("dirty")}
+                onClick={() => { setSaveStatus("dirty"); setSaveError(""); }}
                 style={{
                   background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
                   color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
@@ -2564,12 +2663,17 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             <div style={{ height: 1, background: "rgba(239,68,68,0.2)", marginBottom: 14 }} />
             {/* Message */}
             <div style={{ fontSize: 13, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.7, marginBottom: 14 }}>
-              Could not save to the cloud. Check your connection. Your local changes are preserved — use Retry to try again.
+              Could not save to the cloud. Your local changes are preserved — use Retry to try again.
+              {saveError && (
+                <div style={{ marginTop: 8, fontSize: 11, color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", letterSpacing: "0.05em" }}>
+                  {saveError}
+                </div>
+              )}
             </div>
             {/* Action Buttons */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
               <button
-                onClick={() => setSaveStatus("dirty")}
+                onClick={() => { setSaveStatus("dirty"); setSaveError(""); }}
                 style={{
                   background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
                   color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
@@ -2597,9 +2701,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       {/* ── SETTINGS MODAL ── */}
       <SettingsModal
         open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        onClose={() => { setSettingsOpen(false); setPreviewSettings(null); }}
         settings={settings}
         onSave={saveSettings}
+        onPreview={setPreviewSettings}
         userEmail={user?.email}
         onDeleteAccount={onDeleteAccount}
       />
@@ -2666,8 +2771,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.1 · CAA MALAYSIA</span>
-        <span>MCAR 2016 PART 7 &amp; 8 · ICAO ANNEX 1 FORMAT</span>
+        <span>eLOGBOOK v6.2 · CAAM</span>
+        <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
     </div>

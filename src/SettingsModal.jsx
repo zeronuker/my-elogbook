@@ -63,6 +63,7 @@ export const DEFAULT_SETTINGS = {
   brightness: 100,
   accentPreset: "gradient",
   columnDensity: "default",
+  hiddenColumns: [],
   // Preferences
   dateFormat: "D",
   rowsPerPage: 15,
@@ -103,7 +104,26 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.1", date: "May 2026", current: true,
+    v: "v6.2", date: "May 2026", current: true,
+    title: "Column visibility · UX polish · live preview",
+    notes: [
+      "Column visibility: toggle any logbook column on/off from Settings → Appearance.",
+      "DAY and NIGHT groups each enforce a minimum of 1 visible column.",
+      "Hidden columns show a narrow rotated stub in the table header — click stub to restore.",
+      "Appearance tab: all changes now apply as a live preview before saving.",
+      "Changelog: current version always visible; older versions collapsed behind a toggle.",
+      "Support: Report a Bug and Suggest a Feature merged into a single banner.",
+      "Settings modal stays open after Save — manual close only.",
+      "Light mode now applies correctly inside the Settings modal.",
+      "Font family and size changes now apply inside Settings modal.",
+      "Manual save no longer incorrectly triggers 'AUTOSAVE FAILED' error.",
+      "Limits & Recency — all status banners and info text left-aligned.",
+      "Remarks modal — REMARKS title left-aligned.",
+      "Footer updated to CAD 1901 · MCAR 2016 Part 69 & Part 74.",
+    ],
+  },
+  {
+    v: "v6.1", date: "May 2026", current: false,
     title: "Settings overhaul · save chip fix",
     notes: [
       "Profile tab: all data fields standardised to identical width.",
@@ -174,6 +194,7 @@ const TAB_DEFAULTS = {
     fontType: "courier",
     brightness: 100,
     accentPreset: "gradient",
+    hiddenColumns: [],
   },
   preferences: {
     dateFormat: "D",
@@ -198,7 +219,7 @@ const AUTO_SAVE_OPTIONS = [
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, userEmail, onDeleteAccount }) {
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount }) {
   const [tab, setTab]               = useState("profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -226,6 +247,12 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  // Live preview — push draft to parent on every change so the app
+  // re-renders with the new theme/font/density behind the modal
+  useEffect(() => {
+    if (open && onPreview) onPreview(draft);
+  }, [draft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!open) return null;
 
@@ -294,7 +321,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
               <button className="cb-btn-reset" onClick={handleResetTab}>Reset tab</button>
             )}
             <button className="cb-btn-ghost" onClick={onClose}>Cancel</button>
-            <button className="cb-btn-primary" onClick={() => { handleSave(); onClose(); }}>Done</button>
+            <button className="cb-btn-primary" onClick={handleSave}>Save</button>
           </div>
         </footer>
       </div>
@@ -522,6 +549,29 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount }) {
   );
 }
 
+// ── Column visibility definitions (all togglable; DATE and # are always shown) ─
+const COL_TOGGLE_DEFS = [
+  { key: "type",        label: "TYPE",         group: "AIRCRAFT", badge: null },
+  { key: "markings",    label: "MARKINGS",     group: "AIRCRAFT", badge: null },
+  { key: "captain",     label: "CAPTAIN",      group: null,       badge: null },
+  { key: "cap",         label: "HOC",          group: null,       badge: null, hint: "Holder Operating Capacity" },
+  { key: "pilotFlying", label: "PILOT FLYING", group: null,       badge: null },
+  { key: "departure",   label: "DEP",          group: "SECTORS",  badge: null },
+  { key: "arrival",     label: "ARR",          group: "SECTORS",  badge: null },
+  { key: "std",         label: "STD",          group: null,       badge: null },
+  { key: "sta",         label: "STA",          group: null,       badge: null },
+  { key: "dayP1",       label: "DAY P1",       group: "DAY",      badge: "#22c55e" },
+  { key: "dayP1US",     label: "DAY P1U/S",    group: "DAY",      badge: "#ef4444" },
+  { key: "dayP2",       label: "DAY P2",       group: "DAY",      badge: "#eab308" },
+  { key: "nightP1",     label: "NIGHT P1",     group: "NIGHT",    badge: "#22c55e" },
+  { key: "nightP1US",   label: "NIGHT P1U/S",  group: "NIGHT",    badge: "#ef4444" },
+  { key: "nightP2",     label: "NIGHT P2",     group: "NIGHT",    badge: "#eab308" },
+  { key: "total",       label: "TOTAL",        group: null,       badge: "#4fc3f7" },
+];
+
+const DAY_KEYS   = ["dayP1", "dayP1US", "dayP2"];
+const NIGHT_KEYS = ["nightP1", "nightP1US", "nightP2"];
+
 // ════════════════════════════════════════════════════════════════════
 //  APPEARANCE TAB
 // ════════════════════════════════════════════════════════════════════
@@ -655,6 +705,62 @@ function AppearanceTab({ d, upd }) {
         </div>
       </SmRow>
 
+      {(() => {
+        const hidden   = new Set(d.hiddenColumns || []);
+        const dayVis   = DAY_KEYS.filter(k => !hidden.has(k)).length;
+        const nightVis = NIGHT_KEYS.filter(k => !hidden.has(k)).length;
+
+        const isDisabled = (key) => {
+          if (DAY_KEYS.includes(key)   && dayVis   === 1 && !hidden.has(key)) return true;
+          if (NIGHT_KEYS.includes(key) && nightVis === 1 && !hidden.has(key)) return true;
+          return false;
+        };
+
+        const toggle = (key) => {
+          if (isDisabled(key)) return;
+          if (hidden.has(key)) {
+            upd({ hiddenColumns: (d.hiddenColumns || []).filter(k => k !== key) });
+          } else {
+            upd({ hiddenColumns: [...(d.hiddenColumns || []), key] });
+          }
+        };
+
+        return (
+          <>
+            <SmSectionHead title="Column visibility" hint="// click to hide · click stub in table header to restore" />
+            <SmRow>
+              <div className="sm-col-vis-grid">
+                {COL_TOGGLE_DEFS.map(def => {
+                  const isHidden  = hidden.has(def.key);
+                  const disabled  = isDisabled(def.key);
+                  return (
+                    <button
+                      key={def.key}
+                      className={`sm-col-chip${isHidden ? "" : " on"}${disabled ? " locked" : ""}`}
+                      onClick={() => toggle(def.key)}
+                      title={
+                        disabled  ? "At least one column in this group must remain visible" :
+                        isHidden  ? `Show ${def.label}` :
+                                    `Hide ${def.label}`
+                      }
+                    >
+                      {def.badge && <span className="sm-col-chip-dot" style={{ background: def.badge }} />}
+                      {def.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </SmRow>
+            {(d.hiddenColumns || []).length > 0 && (
+              <div className="sm-col-vis-hint">
+                {(d.hiddenColumns || []).length} column{(d.hiddenColumns || []).length > 1 ? "s" : ""} hidden · click a stub in the table header to restore individually, or{" "}
+                <button className="sm-col-vis-reset" onClick={() => upd({ hiddenColumns: [] })}>show all</button>
+              </div>
+            )}
+          </>
+        );
+      })()}
+
     </div>
   );
 }
@@ -761,23 +867,13 @@ const MISC_CARDS = [
     desc: "Setup, features, and workflows",
     href: "https://docs.claudeborne.my",
   },
-  {
-    id: "bug",
-    icon: "🐛",
-    title: "REPORT A BUG",
-    desc: "Something broken? Let us know",
-    href: "https://claudeborne.my/bug-report",
-  },
-  {
-    id: "feature",
-    icon: "💡",
-    title: "SUGGEST A FEATURE",
-    desc: "Request something new",
-    href: "https://claudeborne.my/feature-request",
-  },
 ];
 
 function MiscTab() {
+  const [showHistory, setShowHistory] = useState(false);
+  const currentEntry = CHANGELOG.find(e => e.current);
+  const pastEntries  = CHANGELOG.filter(e => !e.current);
+
   return (
     <div className="sm-tab-content">
 
@@ -799,16 +895,62 @@ function MiscTab() {
             <span className="sm-misc-card-arrow">↗</span>
           </a>
         ))}
+        {/* Combined bug + feature banner */}
+        <div className="sm-misc-card sm-misc-card-split">
+          <a href="https://claudeborne.my/bug-report" target="_blank" rel="noopener noreferrer" className="sm-misc-split-item">
+            <span className="sm-misc-card-icon">🐛</span>
+            <div className="sm-misc-card-body">
+              <div className="sm-misc-card-title">REPORT A BUG</div>
+              <div className="sm-misc-card-desc">Something broken? Let us know</div>
+            </div>
+            <span className="sm-misc-card-arrow">↗</span>
+          </a>
+          <div className="sm-misc-split-divider" />
+          <a href="https://claudeborne.my/feature-request" target="_blank" rel="noopener noreferrer" className="sm-misc-split-item">
+            <span className="sm-misc-card-icon">💡</span>
+            <div className="sm-misc-card-body">
+              <div className="sm-misc-card-title">SUGGEST A FEATURE</div>
+              <div className="sm-misc-card-desc">Request something new</div>
+            </div>
+            <span className="sm-misc-card-arrow">↗</span>
+          </a>
+        </div>
       </div>
 
       <SmSectionHead title="Changelog" hint="// version history" />
       <div className="sm-changelog">
-        {CHANGELOG.map((e) => (
-          <article key={e.v} className={`sm-cl-entry${e.current ? " current" : ""}`}>
+        {/* Current version — always visible */}
+        {currentEntry && (
+          <article key={currentEntry.v} className="sm-cl-entry current">
+            <div className="sm-cl-head">
+              <span className="sm-cl-v">{currentEntry.v}</span>
+              <span className="sm-cl-date">{currentEntry.date}</span>
+              <span className="sm-cl-now">// you are here</span>
+            </div>
+            <h4 className="sm-cl-title">{currentEntry.title}</h4>
+            <ul className="sm-cl-notes">
+              {currentEntry.notes.map((n, j) => <li key={j}>{n}</li>)}
+            </ul>
+          </article>
+        )}
+
+        {/* Toggle for past versions */}
+        {pastEntries.length > 0 && (
+          <button
+            onClick={() => setShowHistory(v => !v)}
+            className="sm-cl-history-toggle"
+          >
+            <span>{showHistory ? "▲" : "▼"}</span>
+            <span>{showHistory ? "Hide" : "Show"} previous versions ({pastEntries.length})</span>
+          </button>
+        )}
+
+        {/* Past versions — collapsed by default */}
+        {showHistory && pastEntries.map((e) => (
+          <article key={e.v} className="sm-cl-entry">
             <div className="sm-cl-head">
               <span className="sm-cl-v">{e.v}</span>
               <span className="sm-cl-date">{e.date}</span>
-              {e.current && <span className="sm-cl-now">// you are here</span>}
             </div>
             <h4 className="sm-cl-title">{e.title}</h4>
             <ul className="sm-cl-notes">
@@ -957,25 +1099,18 @@ function SmCloseIcon() {
 //  Embedded CSS
 // ════════════════════════════════════════════════════════════════════
 const settingsCss = `
-  /* ── CB token layer (dark default) ─────────────────────────────── */
+  /* ── CB token layer ─────────────────────────────────────────────
+     Surface, ink, line, font, and fs tokens are intentionally NOT
+     set here — they inherit from :root which is managed by
+     makeThemeCss() in elogbook_2026_v5_1.jsx. This allows the
+     settings modal to respond to the user's theme, font, and
+     font-size settings.
+  ── */
   .sm-backdrop, .sm-modal {
-    --cb-surface-0: #0a1020;
-    --cb-surface-1: #141a2e;
-    --cb-surface-2: #1b2340;
-    --cb-surface-3: #232c4d;
-    --cb-mint:   #3FE0C5;
-    --cb-blue:   #3B8DFF;
-    --cb-violet: #5B6BFF;
-    --cb-grad: linear-gradient(135deg, var(--cb-mint) 0%, var(--cb-blue) 55%, var(--cb-violet) 100%);
-    --cb-ink:     #e8ecf5;
-    --cb-ink-2:   #b8c0d4;
-    --cb-ink-dim: #7c87a3;
-    --cb-line:   rgba(255,255,255,0.07);
-    --cb-line-2: rgba(255,255,255,0.12);
+    --cb-mint:         #3FE0C5;
+    --cb-blue:         #3B8DFF;
+    --cb-violet:       #5B6BFF;
     --cb-font-display: 'Tourney', system-ui, sans-serif;
-    --cb-font-body:    'Inter', system-ui, sans-serif;
-    --cb-font-mono:    'JetBrains Mono', ui-monospace, monospace;
-    --fs: 1;
   }
 
   /* Google Fonts — load Tourney & JetBrains Mono */
@@ -984,7 +1119,7 @@ const settingsCss = `
   /* ── Backdrop ───────────────────────────────────────────────────── */
   .sm-backdrop {
     position: fixed; inset: 0;
-    background: rgba(10, 16, 32, 0.6);
+    background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(3px);
     z-index: 2090;
   }
@@ -1331,6 +1466,7 @@ const settingsCss = `
     color: var(--cb-ink-2);
     line-height: 1.7;
     letter-spacing: 0.04em;
+    text-align: left;
   }
   .sm-hint b { color: var(--cb-mint); font-weight: 500; }
 
@@ -1503,11 +1639,34 @@ const settingsCss = `
     color: var(--cb-ink);
     font-weight: 600;
     margin-bottom: 3px;
+    text-align: left;
   }
   .sm-misc-card-desc {
     font-size: calc(11.5px * var(--fs));
     color: var(--cb-ink-2);
     letter-spacing: 0.02em;
+    text-align: left;
+  }
+  .sm-misc-card-split {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    gap: 0;
+  }
+  .sm-misc-split-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    text-decoration: none;
+    transition: background 120ms;
+    flex: 1;
+    text-align: left;
+    justify-content: flex-start;
+  }
+  .sm-misc-split-item:hover { background: var(--cb-surface-2); }
+  .sm-misc-split-divider {
+    height: 1px;
+    background: var(--cb-line);
+    margin: 0 16px;
   }
   .sm-misc-card-arrow {
     font-size: 16px;
@@ -1566,6 +1725,80 @@ const settingsCss = `
     padding: 3px 0;
   }
   .sm-cl-notes li::marker { color: var(--cb-mint); }
+  .sm-cl-history-toggle {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; padding: 10px 0;
+    background: transparent; border: none; border-bottom: 1px dashed var(--cb-line-2);
+    color: var(--cb-ink-dim); font-family: var(--cb-font-mono);
+    font-size: calc(11px * var(--fs)); letter-spacing: 0.1em;
+    cursor: pointer; text-align: left;
+    transition: color 120ms;
+  }
+  .sm-cl-history-toggle:hover { color: var(--cb-mint); }
+
+  /* ── Column visibility chips ─────────────────────────────────────── */
+  .sm-col-vis-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 2px 0;
+  }
+  .sm-col-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: 1px solid var(--cb-line-2);
+    background: transparent;
+    color: var(--cb-ink-dim);
+    font-family: var(--cb-font-mono, 'JetBrains Mono', monospace);
+    font-size: calc(10px * var(--fs));
+    letter-spacing: 0.07em;
+    cursor: pointer;
+    opacity: 0.45;
+    transition: all 0.15s;
+    border-radius: 2px;
+  }
+  .sm-col-chip.on {
+    border-color: var(--cb-accent, #3FE0C5);
+    color: var(--cb-ink);
+    opacity: 1;
+  }
+  .sm-col-chip.locked {
+    cursor: not-allowed;
+    opacity: 0.25;
+  }
+  .sm-col-chip:hover:not(.locked) {
+    border-color: var(--cb-accent, #3FE0C5);
+    opacity: 0.75;
+  }
+  .sm-col-chip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .sm-col-vis-hint {
+    margin-top: 8px;
+    font-family: var(--cb-font-mono);
+    font-size: calc(10px * var(--fs));
+    color: var(--cb-ink-dim);
+    letter-spacing: 0.05em;
+  }
+  .sm-col-vis-reset {
+    background: transparent;
+    border: none;
+    color: var(--cb-mint);
+    font-family: var(--cb-font-mono);
+    font-size: calc(10px * var(--fs));
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .sm-col-vis-reset:hover { opacity: 0.7; }
 
   /* ── Responsive ─────────────────────────────────────────────────── */
   @media (max-width: 600px) {
