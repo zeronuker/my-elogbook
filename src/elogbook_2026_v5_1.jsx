@@ -488,16 +488,24 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   // ── Auth listener ──
+  // IMPORTANT: onAuthStateChanged fires on EVERY token refresh (~hourly), not just sign-in.
+  // Guard with dataLoadedRef so token refreshes never re-read Firestore and overwrite local data.
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setAuthLoading(false);
       if (u) {
-        try {
-          await loadData(u.uid);
-        } catch (e) {
-          console.error("Initial load error:", e);
+        // Only load on first sign-in — skip token-refresh re-fires that would wipe local state
+        if (!dataLoadedRef.current) {
+          try {
+            await loadData(u.uid);
+          } catch (e) {
+            console.error("Initial load error:", e);
+          }
         }
+      } else {
+        // User signed out — reset so next sign-in loads fresh data from Firestore
+        dataLoadedRef.current = false;
       }
     });
     return unsub;

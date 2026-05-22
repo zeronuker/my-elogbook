@@ -120,6 +120,8 @@ const CHANGELOG = [
       "Limits & Recency — all status banners and info text left-aligned.",
       "Remarks modal — REMARKS title left-aligned.",
       "Footer updated to CAD 1901 · MCAR 2016 Part 69 & Part 74.",
+      "FIX: Firebase token refresh (every ~1 hr) no longer reloads Firestore and wipes unsaved local data.",
+      "FIX: Export now includes manually-entered flights (day-number date format was silently excluded).",
     ],
   },
   {
