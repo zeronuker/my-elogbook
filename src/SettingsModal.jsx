@@ -764,6 +764,10 @@ const MISC_CARDS = [
 ];
 
 function MiscTab() {
+  const [showHistory, setShowHistory] = useState(false);
+  const currentEntry = CHANGELOG.find(e => e.current);
+  const pastEntries  = CHANGELOG.filter(e => !e.current);
+
   return (
     <div className="sm-tab-content">
 
@@ -809,12 +813,38 @@ function MiscTab() {
 
       <SmSectionHead title="Changelog" hint="// version history" />
       <div className="sm-changelog">
-        {CHANGELOG.map((e) => (
-          <article key={e.v} className={`sm-cl-entry${e.current ? " current" : ""}`}>
+        {/* Current version — always visible */}
+        {currentEntry && (
+          <article key={currentEntry.v} className="sm-cl-entry current">
+            <div className="sm-cl-head">
+              <span className="sm-cl-v">{currentEntry.v}</span>
+              <span className="sm-cl-date">{currentEntry.date}</span>
+              <span className="sm-cl-now">// you are here</span>
+            </div>
+            <h4 className="sm-cl-title">{currentEntry.title}</h4>
+            <ul className="sm-cl-notes">
+              {currentEntry.notes.map((n, j) => <li key={j}>{n}</li>)}
+            </ul>
+          </article>
+        )}
+
+        {/* Toggle for past versions */}
+        {pastEntries.length > 0 && (
+          <button
+            onClick={() => setShowHistory(v => !v)}
+            className="sm-cl-history-toggle"
+          >
+            <span>{showHistory ? "▲" : "▼"}</span>
+            <span>{showHistory ? "Hide" : "Show"} previous versions ({pastEntries.length})</span>
+          </button>
+        )}
+
+        {/* Past versions — collapsed by default */}
+        {showHistory && pastEntries.map((e) => (
+          <article key={e.v} className="sm-cl-entry">
             <div className="sm-cl-head">
               <span className="sm-cl-v">{e.v}</span>
               <span className="sm-cl-date">{e.date}</span>
-              {e.current && <span className="sm-cl-now">// you are here</span>}
             </div>
             <h4 className="sm-cl-title">{e.title}</h4>
             <ul className="sm-cl-notes">
@@ -963,25 +993,18 @@ function SmCloseIcon() {
 //  Embedded CSS
 // ════════════════════════════════════════════════════════════════════
 const settingsCss = `
-  /* ── CB token layer (dark default) ─────────────────────────────── */
+  /* ── CB token layer ─────────────────────────────────────────────
+     Surface, ink, line, font, and fs tokens are intentionally NOT
+     set here — they inherit from :root which is managed by
+     makeThemeCss() in elogbook_2026_v5_1.jsx. This allows the
+     settings modal to respond to the user's theme, font, and
+     font-size settings.
+  ── */
   .sm-backdrop, .sm-modal {
-    --cb-surface-0: #0a1020;
-    --cb-surface-1: #141a2e;
-    --cb-surface-2: #1b2340;
-    --cb-surface-3: #232c4d;
-    --cb-mint:   #3FE0C5;
-    --cb-blue:   #3B8DFF;
-    --cb-violet: #5B6BFF;
-    --cb-grad: linear-gradient(135deg, var(--cb-mint) 0%, var(--cb-blue) 55%, var(--cb-violet) 100%);
-    --cb-ink:     #e8ecf5;
-    --cb-ink-2:   #b8c0d4;
-    --cb-ink-dim: #7c87a3;
-    --cb-line:   rgba(255,255,255,0.07);
-    --cb-line-2: rgba(255,255,255,0.12);
+    --cb-mint:         #3FE0C5;
+    --cb-blue:         #3B8DFF;
+    --cb-violet:       #5B6BFF;
     --cb-font-display: 'Tourney', system-ui, sans-serif;
-    --cb-font-body:    'Inter', system-ui, sans-serif;
-    --cb-font-mono:    'JetBrains Mono', ui-monospace, monospace;
-    --fs: 1;
   }
 
   /* Google Fonts — load Tourney & JetBrains Mono */
@@ -990,7 +1013,7 @@ const settingsCss = `
   /* ── Backdrop ───────────────────────────────────────────────────── */
   .sm-backdrop {
     position: fixed; inset: 0;
-    background: rgba(10, 16, 32, 0.6);
+    background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(3px);
     z-index: 2090;
   }
@@ -1596,6 +1619,16 @@ const settingsCss = `
     padding: 3px 0;
   }
   .sm-cl-notes li::marker { color: var(--cb-mint); }
+  .sm-cl-history-toggle {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; padding: 10px 0;
+    background: transparent; border: none; border-bottom: 1px dashed var(--cb-line-2);
+    color: var(--cb-ink-dim); font-family: var(--cb-font-mono);
+    font-size: calc(11px * var(--fs)); letter-spacing: 0.1em;
+    cursor: pointer; text-align: left;
+    transition: color 120ms;
+  }
+  .sm-cl-history-toggle:hover { color: var(--cb-mint); }
 
   /* ── Responsive ─────────────────────────────────────────────────── */
   @media (max-width: 600px) {
