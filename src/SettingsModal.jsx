@@ -294,7 +294,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
               <button className="cb-btn-reset" onClick={handleResetTab}>Reset tab</button>
             )}
             <button className="cb-btn-ghost" onClick={onClose}>Cancel</button>
-            <button className="cb-btn-primary" onClick={() => { handleSave(); onClose(); }}>Done</button>
+            <button className="cb-btn-primary" onClick={handleSave}>Save</button>
           </div>
         </footer>
       </div>
