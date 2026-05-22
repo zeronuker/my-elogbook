@@ -2113,29 +2113,24 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               padding: "12px 16px",
               marginBottom: 14,
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              alignItems: "flex-start",
+              justifyContent: "flex-start",
               gap: 12,
               flexWrap: "wrap",
               background: FTL_BG[bannerCls],
               border: `1px solid ${FTL_BORDER[bannerCls]}`,
               borderLeft: `3px solid ${FTL_COLOR[bannerCls]}`,
             }}>
-              <div style={{ fontSize: 18, flexShrink: 0 }}>{bannerInfo.icon}</div>
-              <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 18, flexShrink: 0, paddingTop: 1 }}>{bannerInfo.icon}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: FTL_COLOR[bannerCls] }}>
                   {bannerInfo.label}
                 </div>
                 <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", marginTop: 3, letterSpacing: "0.04em", lineHeight: 1.5 }}>
                   {bannerInfo.text}
                 </div>
-              </div>
-              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", flexShrink: 0 }}>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em" }}>AS OF DATE</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "#4fc3f7" }}>
-                    {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
-                  </div>
+                <div style={{ marginTop: 6, fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em" }}>
+                  AS OF {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
                 </div>
               </div>
             </div>
@@ -2382,6 +2377,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
               animation: "popIn 0.15s ease",
               fontFamily: "var(--elb-font, 'Courier New', monospace)",
+              textAlign: "left",
             }}>
               {/* Header */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
@@ -2691,8 +2687,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.1 · CAA MALAYSIA</span>
-        <span>MCAR 2016 PART 7 &amp; 8 · ICAO ANNEX 1 FORMAT</span>
+        <span>eLOGBOOK v6.1 · CAAM</span>
+        <span>CAD 1901 MCAR · 2016 PART 69 &amp; 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
     </div>

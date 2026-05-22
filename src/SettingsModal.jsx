@@ -761,20 +761,6 @@ const MISC_CARDS = [
     desc: "Setup, features, and workflows",
     href: "https://docs.claudeborne.my",
   },
-  {
-    id: "bug",
-    icon: "🐛",
-    title: "REPORT A BUG",
-    desc: "Something broken? Let us know",
-    href: "https://claudeborne.my/bug-report",
-  },
-  {
-    id: "feature",
-    icon: "💡",
-    title: "SUGGEST A FEATURE",
-    desc: "Request something new",
-    href: "https://claudeborne.my/feature-request",
-  },
 ];
 
 function MiscTab() {
@@ -799,6 +785,26 @@ function MiscTab() {
             <span className="sm-misc-card-arrow">↗</span>
           </a>
         ))}
+        {/* Combined bug + feature banner */}
+        <div className="sm-misc-card sm-misc-card-split">
+          <a href="https://claudeborne.my/bug-report" target="_blank" rel="noopener noreferrer" className="sm-misc-split-item">
+            <span className="sm-misc-card-icon">🐛</span>
+            <div className="sm-misc-card-body">
+              <div className="sm-misc-card-title">REPORT A BUG</div>
+              <div className="sm-misc-card-desc">Something broken? Let us know</div>
+            </div>
+            <span className="sm-misc-card-arrow">↗</span>
+          </a>
+          <div className="sm-misc-split-divider" />
+          <a href="https://claudeborne.my/feature-request" target="_blank" rel="noopener noreferrer" className="sm-misc-split-item">
+            <span className="sm-misc-card-icon">💡</span>
+            <div className="sm-misc-card-body">
+              <div className="sm-misc-card-title">SUGGEST A FEATURE</div>
+              <div className="sm-misc-card-desc">Request something new</div>
+            </div>
+            <span className="sm-misc-card-arrow">↗</span>
+          </a>
+        </div>
       </div>
 
       <SmSectionHead title="Changelog" hint="// version history" />
@@ -1331,6 +1337,7 @@ const settingsCss = `
     color: var(--cb-ink-2);
     line-height: 1.7;
     letter-spacing: 0.04em;
+    text-align: left;
   }
   .sm-hint b { color: var(--cb-mint); font-weight: 500; }
 
@@ -1508,6 +1515,24 @@ const settingsCss = `
     font-size: calc(11.5px * var(--fs));
     color: var(--cb-ink-2);
     letter-spacing: 0.02em;
+  }
+  .sm-misc-card-split {
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+  }
+  .sm-misc-split-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    text-decoration: none;
+    transition: background 120ms;
+    flex: 1;
+  }
+  .sm-misc-split-item:hover { background: var(--cb-surface-2); }
+  .sm-misc-split-divider {
+    height: 1px;
+    background: var(--cb-line);
+    margin: 0 16px;
   }
   .sm-misc-card-arrow {
     font-size: 16px;
