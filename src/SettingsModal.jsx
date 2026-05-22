@@ -198,7 +198,7 @@ const AUTO_SAVE_OPTIONS = [
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, userEmail, onDeleteAccount }) {
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount }) {
   const [tab, setTab]               = useState("profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -226,6 +226,12 @@ export default function SettingsModal({ open, onClose, settings, onSave, userEma
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  // Live preview — push draft to parent on every change so the app
+  // re-renders with the new theme/font/density behind the modal
+  useEffect(() => {
+    if (open && onPreview) onPreview(draft);
+  }, [draft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!open) return null;
 

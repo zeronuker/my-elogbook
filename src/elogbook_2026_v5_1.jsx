@@ -464,6 +464,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef({}); // always mirrors latest data so auto-save interval reads current state
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -754,7 +755,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
   // ── Loading screen ──
   // Inject theme CSS vars early so loading/login screens are also themed
-  const themeCss = makeThemeCss(settings);
+  const themeCss = makeThemeCss(previewSettings || settings);
 
   if (authLoading) {
     return (
@@ -2618,9 +2619,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       {/* ── SETTINGS MODAL ── */}
       <SettingsModal
         open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        onClose={() => { setSettingsOpen(false); setPreviewSettings(null); }}
         settings={settings}
         onSave={saveSettings}
+        onPreview={setPreviewSettings}
         userEmail={user?.email}
         onDeleteAccount={onDeleteAccount}
       />
