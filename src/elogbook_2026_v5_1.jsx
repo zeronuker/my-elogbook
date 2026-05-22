@@ -462,7 +462,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
-  const dataRef = useRef({}); // always mirrors latest data so auto-save interval reads current state
+  const dataRef = useRef(initialData()); // initialised to match data state — prevents {} being written if a save fires before first effect run
   const dataLoadedRef = useRef(false); // true only after a successful loadData — prevents saving initialData() over real data
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
