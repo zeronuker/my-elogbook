@@ -463,6 +463,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef({}); // always mirrors latest data so auto-save interval reads current state
+  const dataLoadedRef = useRef(false); // true only after a successful loadData — prevents saving initialData() over real data
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
@@ -518,6 +519,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
   // ── Handle import — called directly by ExportImportModal ──
   const handleImport = async (importedData) => {
+    dataLoadedRef.current = true; // import replaces data — treat as loaded
     setData(importedData);
     await saveData(importedData);
   };
@@ -526,6 +528,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const loadData = async (uid) => {
     const ref = doc(db, "users", uid, "logbook", "data");
     const snap = await getDoc(ref);
+    // In all cases (existing user or new user), mark data as loaded so saveData is unblocked.
+    // For existing users this fires after the data is set; for new users it fires immediately.
+    dataLoadedRef.current = true;
+
     if (snap.exists()) {
       const docData = snap.data();
       const raw = docData.logbookData;
@@ -644,6 +650,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
   const saveData = async (dataOverride) => {
     if (!user) return;
+    // Never save before loadData has completed — prevents overwriting real data with initialData() empty rows
+    if (!dataLoadedRef.current) return;
     setSaveStatus("saving");
     try {
       // Regenerate IDs sequentially for each month to prevent duplicates
