@@ -104,7 +104,26 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.1", date: "May 2026", current: true,
+    v: "v6.2", date: "May 2026", current: true,
+    title: "Column visibility · UX polish · live preview",
+    notes: [
+      "Column visibility: toggle any logbook column on/off from Settings → Appearance.",
+      "DAY and NIGHT groups each enforce a minimum of 1 visible column.",
+      "Hidden columns show a narrow rotated stub in the table header — click stub to restore.",
+      "Appearance tab: all changes now apply as a live preview before saving.",
+      "Changelog: current version always visible; older versions collapsed behind a toggle.",
+      "Support: Report a Bug and Suggest a Feature merged into a single banner.",
+      "Settings modal stays open after Save — manual close only.",
+      "Light mode now applies correctly inside the Settings modal.",
+      "Font family and size changes now apply inside Settings modal.",
+      "Manual save no longer incorrectly triggers 'AUTOSAVE FAILED' error.",
+      "Limits & Recency — all status banners and info text left-aligned.",
+      "Remarks modal — REMARKS title left-aligned.",
+      "Footer updated to CAD 1901 · MCAR 2016 Part 69 & Part 74.",
+    ],
+  },
+  {
+    v: "v6.1", date: "May 2026", current: false,
     title: "Settings overhaul · save chip fix",
     notes: [
       "Profile tab: all data fields standardised to identical width.",
