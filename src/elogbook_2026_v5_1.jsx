@@ -455,6 +455,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [editingCell, setEditingCell] = useState(null);
   const [activeTab, setActiveTab] = useState("logbook");
   const [saveStatus, setSaveStatus] = useState("idle");
+  const [saveError, setSaveError] = useState(""); // stores last error message for display
   const [lastSaveTime, setLastSaveTime] = useState(""); // Format: "DD MMM YYYY • HH:MM:SS"
   const [refreshStatus, setRefreshStatus] = useState("idle");
   // ── NEW ──
@@ -625,6 +626,21 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   // ── Save data to Firestore ──
+  // Strip NaN, Infinity, and undefined — Firestore rejects all three
+  const sanitizeForFirestore = (val) => {
+    if (Array.isArray(val)) return val.map(sanitizeForFirestore);
+    if (val !== null && typeof val === "object") {
+      const out = {};
+      for (const [k, v] of Object.entries(val)) {
+        if (v === undefined) continue;
+        out[k] = sanitizeForFirestore(v);
+      }
+      return out;
+    }
+    if (typeof val === "number" && !isFinite(val)) return 0; // NaN / Infinity → 0
+    return val;
+  };
+
   const saveData = async (dataOverride) => {
     if (!user) return;
     setSaveStatus("saving");
@@ -633,7 +649,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       const cleanData = {};
       const dataToSave = dataOverride || dataRef.current;
       Object.keys(dataToSave).forEach(monthKey => {
-        cleanData[monthKey] = dataToSave[monthKey].map((row, idx) => ({
+        const rows = dataToSave[monthKey];
+        if (!Array.isArray(rows)) return; // skip corrupted month entries
+        cleanData[monthKey] = rows.map((row, idx) => ({
           ...row,
           id: idx + 1, // Ensure IDs are 1, 2, 3, ... in order
         }));
@@ -641,14 +659,17 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
       const ref = doc(db, "users", user.uid, "logbook", "data");
 
+      // Sanitize settings to remove NaN/undefined before writing to Firestore
+      const settingsToSave = sanitizeForFirestore(settingsRef.current);
+
       // Create a 15-second timeout promise
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Save operation timed out after 15 seconds")), 15000)
+        setTimeout(() => reject(new Error("Save timed out — check your connection")), 15000)
       );
 
       // Race the save operation against the timeout
       await Promise.race([
-        setDoc(ref, { logbookData: cleanData, settings: settingsRef.current, updatedAt: new Date().toISOString() }, { merge: true }),
+        setDoc(ref, { logbookData: cleanData, settings: settingsToSave, updatedAt: new Date().toISOString() }, { merge: true }),
         timeoutPromise
       ]);
 
@@ -658,11 +679,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       const fullStr = `${dateStr} • ${timeStr}`;
       setLastSaveTime(fullStr);
       setSaveStatus("saved");
-      // Keep "saved" status visible until next save attempt
     } catch (e) {
       console.error("Save error:", e);
+      setSaveError(e?.message || "Unknown error");
       setSaveStatus("error");
-      // Keep "error" status visible until successful save
     }
   };
 
@@ -2523,7 +2543,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       {/* ── AUTOSAVE ERROR MODAL ── */}
       {saveStatus === "error" && (
         <div
-          onClick={e => { if (e.target === e.currentTarget) setSaveStatus("dirty"); }}
+          onClick={e => { if (e.target === e.currentTarget) { setSaveStatus("dirty"); setSaveError(""); } }}
           style={{
             position: "fixed", inset: 0,
             background: "rgba(0,0,0,0.72)",
@@ -2547,10 +2567,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
               <div>
                 <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#ef4444", marginBottom: 5 }}>SAVE ERROR</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>AUTOSAVE FAILED</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>SAVE FAILED</div>
               </div>
               <button
-                onClick={() => setSaveStatus("dirty")}
+                onClick={() => { setSaveStatus("dirty"); setSaveError(""); }}
                 style={{
                   background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
                   color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
@@ -2564,12 +2584,17 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             <div style={{ height: 1, background: "rgba(239,68,68,0.2)", marginBottom: 14 }} />
             {/* Message */}
             <div style={{ fontSize: 13, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.7, marginBottom: 14 }}>
-              Could not save to the cloud. Check your connection. Your local changes are preserved — use Retry to try again.
+              Could not save to the cloud. Your local changes are preserved — use Retry to try again.
+              {saveError && (
+                <div style={{ marginTop: 8, fontSize: 11, color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", letterSpacing: "0.05em" }}>
+                  {saveError}
+                </div>
+              )}
             </div>
             {/* Action Buttons */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
               <button
-                onClick={() => setSaveStatus("dirty")}
+                onClick={() => { setSaveStatus("dirty"); setSaveError(""); }}
                 style={{
                   background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
                   color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
