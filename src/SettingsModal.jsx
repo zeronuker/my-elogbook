@@ -1520,6 +1520,7 @@ const settingsCss = `
   }
   .sm-misc-card-split {
     flex-direction: column;
+    align-items: stretch;
     padding: 0;
     gap: 0;
   }
@@ -1529,6 +1530,8 @@ const settingsCss = `
     text-decoration: none;
     transition: background 120ms;
     flex: 1;
+    text-align: left;
+    justify-content: flex-start;
   }
   .sm-misc-split-item:hover { background: var(--cb-surface-2); }
   .sm-misc-split-divider {
