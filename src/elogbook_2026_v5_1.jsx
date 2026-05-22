@@ -576,6 +576,19 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     }
   };
 
+  // ── Warn before tab close / navigation when auto-save is OFF and changes are unsaved ──
+  useEffect(() => {
+    const handler = (e) => {
+      const autoOff = Number(settings.autoSaveInterval) === 0;
+      if (autoOff && saveStatus === "dirty") {
+        e.preventDefault();
+        e.returnValue = ""; // required for Chrome to show the native dialog
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [settings.autoSaveInterval, saveStatus]);
+
   // ── Keep settingsRef in sync so saveData never reads a stale closure ──
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
