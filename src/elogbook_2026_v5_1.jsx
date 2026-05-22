@@ -953,6 +953,19 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const timeCols = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total","std","sta"];
   const autoCalcCols = ["total","dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"];
 
+  // ── Column visibility helpers ────────────────────────────────────────
+  const hiddenCols    = new Set(settings.hiddenColumns || []);
+  const isColVisible  = (key) => !hiddenCols.has(key);
+  const unhideColumn  = (key) => {
+    const next = { ...settings, hiddenColumns: (settings.hiddenColumns || []).filter(k => k !== key) };
+    setSettings(next);
+    saveSettings(next);
+  };
+  // Number of visible auto-calc columns (for HOC warning colSpan)
+  const autoCalcVisibleCount = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].filter(isColVisible).length;
+  // Totals-row label colSpan: # + DATE + visible solo/group cols before time cols
+  const totalsLabelColSpan = 2 + ["type","markings","captain","cap","pilotFlying","departure","arrival","std","sta"].filter(isColVisible).length;
+
   const totalsRow = {
     dayP1:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).dayP1), 0)) || "00:00",
     dayP1US:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).dayP1US), 0)) || "00:00",
@@ -1563,49 +1576,114 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             </div>
 
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
-              <thead>
-                <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
-                  <th rowSpan={2} style={thStyle}>#</th>
-                  <th rowSpan={2} style={thStyle}>DATE</th>
-                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>AIRCRAFT</th>
-                  <th rowSpan={2} style={thStyle}>CAPTAIN</th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                    <span style={{ display: "block" }}>HOLDER</span>
-                    <span style={{ display: "block" }}>OPERATING</span>
-                    <span style={{ display: "block" }}>CAPACITY</span>
+              {(() => {
+                // Stub styles for hidden columns
+                const stubBase = {
+                  ...thStyle,
+                  width: 13, minWidth: 13, maxWidth: 13,
+                  padding: "2px 0",
+                  cursor: "pointer",
+                  background: "rgba(63,224,197,0.04)",
+                  borderLeft: "1px solid rgba(63,224,197,0.18)",
+                  overflow: "hidden",
+                  verticalAlign: "middle",
+                };
+                const stubText = {
+                  display: "block",
+                  writingMode: "vertical-rl",
+                  transform: "rotate(180deg)",
+                  fontSize: 7,
+                  letterSpacing: "0.08em",
+                  color: "rgba(63,224,197,0.45)",
+                  userSelect: "none",
+                  padding: "2px 0",
+                  lineHeight: 1.2,
+                };
+                const stub = (key, label) => (
+                  <th
+                    key={`stub-${key}`}
+                    style={stubBase}
+                    onClick={() => unhideColumn(key)}
+                    title={`Show ${label}`}
+                  >
+                    <span style={stubText}>{label}</span>
                   </th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                    <span style={{ display: "block" }}>PILOT</span>
-                    <span style={{ display: "block" }}>FLYING</span>
-                  </th>
-                  <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>SECTORS</th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                    <span style={{ display: "block" }}>STD</span>
-                    <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
-                  </th>
-                  <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                    <span style={{ display: "block" }}>STA</span>
-                    <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
-                  </th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
-                  <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
-                  <th rowSpan={2} style={thStyle}>TOTAL</th>
-                  <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none" }}></th>
-                  <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
-                </tr>
-                <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
-                  <th style={thSubStyle}>TYPE</th>
-                  <th style={thSubStyle}>MARKINGS</th>
-                  <th style={thSubStyle}>DEP</th>
-                  <th style={thSubStyle}>ARR</th>
-                  <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
-                  <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
-                  <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>
-                  <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P1</th>
-                  <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
-                  <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P2</th>
-                </tr>
-              </thead>
+                );
+                // Solo th helper (rowSpan=2)
+                const soloTh = (key, content, extraStyle = {}) => isColVisible(key)
+                  ? <th key={key} rowSpan={2} style={{ ...thStyle, ...extraStyle }}>{content}</th>
+                  : stub(key, typeof content === "string" ? content : key.toUpperCase());
+
+                return (
+                  <thead>
+                    <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
+                      <th rowSpan={2} style={thStyle}>#</th>
+                      <th rowSpan={2} style={thStyle}>DATE</th>
+                      {/* AIRCRAFT group — colSpan always 2 (visible cols + stubs) */}
+                      <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>AIRCRAFT</th>
+                      {/* Solo columns */}
+                      {soloTh("captain", "CAPTAIN")}
+                      {isColVisible("cap")
+                        ? <th key="cap" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                            <span style={{ display: "block" }}>HOLDER</span>
+                            <span style={{ display: "block" }}>OPERATING</span>
+                            <span style={{ display: "block" }}>CAPACITY</span>
+                          </th>
+                        : stub("cap", "HOC")
+                      }
+                      {isColVisible("pilotFlying")
+                        ? <th key="pilotFlying" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                            <span style={{ display: "block" }}>PILOT</span>
+                            <span style={{ display: "block" }}>FLYING</span>
+                          </th>
+                        : stub("pilotFlying", "PF")
+                      }
+                      {/* SECTORS group — colSpan always 2 */}
+                      <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>SECTORS</th>
+                      {/* STD / STA */}
+                      {isColVisible("std")
+                        ? <th key="std" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                            <span style={{ display: "block" }}>STD</span>
+                            <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
+                          </th>
+                        : stub("std", "STD")
+                      }
+                      {isColVisible("sta")
+                        ? <th key="sta" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                            <span style={{ display: "block" }}>STA</span>
+                            <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
+                          </th>
+                        : stub("sta", "STA")
+                      }
+                      {/* DAY group — colSpan always 3 */}
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
+                      {/* NIGHT group — colSpan always 3 */}
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
+                      {/* TOTAL */}
+                      {soloTh("total", "TOTAL")}
+                      {/* Action cols */}
+                      <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none" }}></th>
+                      <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
+                    </tr>
+                    <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
+                      {/* AIRCRAFT sub-headers */}
+                      {isColVisible("type")     ? <th style={thSubStyle}>TYPE</th>    : stub("type", "TYPE")}
+                      {isColVisible("markings") ? <th style={thSubStyle}>MARKINGS</th>: stub("markings", "MRKG")}
+                      {/* SECTORS sub-headers */}
+                      {isColVisible("departure")? <th style={thSubStyle}>DEP</th>     : stub("departure", "DEP")}
+                      {isColVisible("arrival")  ? <th style={thSubStyle}>ARR</th>     : stub("arrival", "ARR")}
+                      {/* DAY sub-headers */}
+                      {isColVisible("dayP1")    ? <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>    : stub("dayP1", "P1")}
+                      {isColVisible("dayP1US")  ? <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>: stub("dayP1US", "P1U/S")}
+                      {isColVisible("dayP2")    ? <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>    : stub("dayP2", "P2")}
+                      {/* NIGHT sub-headers */}
+                      {isColVisible("nightP1")  ? <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P1</th>    : stub("nightP1", "P1")}
+                      {isColVisible("nightP1US")? <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>: stub("nightP1US", "P1U/S")}
+                      {isColVisible("nightP2")  ? <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P2</th>    : stub("nightP2", "P2")}
+                    </tr>
+                  </thead>
+                );
+              })()}
 
               <tbody>
                 {rows.map((row, rowIdx) => {
@@ -1638,6 +1716,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                         let skipAutoCalc = false;
                         for (let ci = 0; ci < columns.length; ci++) {
                           const col = columns[ci];
+
+                          // Skip hidden columns in data rows
+                          if (hiddenCols.has(col.key)) continue;
+
                           const isEditing = editingCell?.rowIdx === rowIdx && editingCell?.field === col.key;
                           const isTime = timeCols.includes(col.key);
                           const isAutoCalc = autoCalcCols.includes(col.key);
@@ -1645,7 +1727,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                           if (needsCapWarning && col.key === "dayP1") {
                             skipAutoCalc = true;
                             cells.push(
-                              <td key="hoc-warning" colSpan={7} style={{ ...tdStyle, background: "rgba(249,115,22,0.06)", borderLeft: "2px solid rgba(249,115,22,0.4)", textAlign: "center", color: "#f97316", fontSize: 11, fontStyle: "italic", letterSpacing: "0.05em", padding: "6px 10px", whiteSpace: "nowrap" }}>
+                              <td key="hoc-warning" colSpan={autoCalcVisibleCount} style={{ ...tdStyle, background: "rgba(249,115,22,0.06)", borderLeft: "2px solid rgba(249,115,22,0.4)", textAlign: "center", color: "#f97316", fontSize: 11, fontStyle: "italic", letterSpacing: "0.05em", padding: "6px 10px", whiteSpace: "nowrap" }}>
                                 ⚠ HOLDER OPERATING CAPACITY required to auto calculate
                               </td>
                             );
@@ -1866,10 +1948,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
                 {/* ── TOTALS ROW ── */}
                 <tr style={{ background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
-                  <td colSpan={11} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
+                  <td colSpan={totalsLabelColSpan} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
                     MONTHLY TOTALS →
                   </td>
-                  {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].map(k => (
+                  {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].filter(isColVisible).map(k => (
                     <td key={k} style={{
                       ...tdStyle,
                       textAlign: "center",
