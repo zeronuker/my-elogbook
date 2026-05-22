@@ -71,28 +71,39 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     Object.entries(monthData).forEach(([key, monthRows]) => {
       if (!Array.isArray(monthRows)) return;
 
+      // key is "{monthIdx}-{year}" e.g. "4-2026" = May 2026
+      const [monthIdxStr, yearStr] = key.split('-');
+      const keyMonthIdx = parseInt(monthIdxStr); // 0-based
+      const keyYear     = parseInt(yearStr);
+
       monthRows.forEach(row => {
         if (!row || !row.date) return;
 
-        // row.date is DD/MM/YYYY format (e.g., "05/03/2025")
         let rowDate;
         if (typeof row.date === 'string' && row.date.includes('/')) {
+          // Already a full DD/MM/YYYY string (e.g. from a previous import)
           const parts = row.date.split('/');
           if (parts.length === 3) {
-            const day = parts[0].padStart(2, '0');
+            const day   = parts[0].padStart(2, '0');
             const month = parts[1].padStart(2, '0');
-            const year = parts[2];
-            const isoDateStr = `${year}-${month}-${day}`;
-            rowDate = new Date(isoDateStr + 'T00:00:00Z');
+            const year  = parts[2];
+            rowDate = new Date(`${year}-${month}-${day}T00:00:00Z`);
           } else {
             return;
           }
         } else {
-          return;
+          // Day number only (e.g. "12") — reconstruct using the month key
+          const day = parseInt(row.date);
+          if (!day || isNaN(day) || day < 1 || day > 31) return;
+          const month = String(keyMonthIdx + 1).padStart(2, '0');
+          const year  = String(keyYear);
+          const dayStr = String(day).padStart(2, '0');
+          rowDate = new Date(`${year}-${month}-${dayStr}T00:00:00Z`);
         }
 
         if (rowDate >= fromDate && rowDate <= toDate) {
-          rows.push(row);
+          // Attach a normalised full-date string so export sorting works correctly
+          rows.push({ ...row, _fullDate: rowDate, _monthIdx: keyMonthIdx, _year: keyYear });
         }
       });
     });
@@ -131,8 +142,9 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
   const exportToExcel = () => {
     const rows = getRowsInDateRange().sort((a, b) => {
-      const aDate = a.date ? new Date(a.date.split('/').reverse().join('-')) : 0;
-      const bDate = b.date ? new Date(b.date.split('/').reverse().join('-')) : 0;
+      // _fullDate is set by getRowsInDateRange for all rows regardless of date format
+      const aDate = a._fullDate || 0;
+      const bDate = b._fullDate || 0;
       return aDate - bDate;
     });
     if (rows.length === 0) {
@@ -205,8 +217,12 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
     const flightData = rows.map(row => COLUMN_ORDER.map(col => {
       if (col === 'date') {
-        const serial = dateToExcelSerial(row.date);
-        return serial;
+        // Use _fullDate (Date object set by getRowsInDateRange) for accurate serial
+        if (row._fullDate) {
+          const epoch = new Date(Date.UTC(1900, 0, 1));
+          return Math.floor((row._fullDate - epoch) / 86400000) + 2;
+        }
+        return dateToExcelSerial(row.date);
       }
       if (['std', 'sta', 'dayP1', 'dayP1US', 'dayP2', 'nightP1', 'nightP1US', 'nightP2', 'total'].includes(col)) {
         const decimal = timeToDecimal(row[col]);
@@ -231,8 +247,10 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     // SHEET 4: MONTHLY SUMMARY
     const monthlySummary = {};
     rows.forEach(row => {
-      if (!row.date || !row.date.includes('/')) return;
-      const [d, m, y] = row.date.split('/');
+      // Use _fullDate set by getRowsInDateRange — works for both DD/MM/YYYY and day-number dates
+      if (!row._fullDate) return;
+      const m = String(row._fullDate.getUTCMonth() + 1).padStart(2, '0');
+      const y = String(row._fullDate.getUTCFullYear());
       const monthKey = `${y}-${m}`;
       if (!monthlySummary[monthKey]) {
         monthlySummary[monthKey] = { dayP1: 0, dayP1US: 0, dayP2: 0, nightP1: 0, nightP1US: 0, nightP2: 0, flights: 0, total: 0 };
