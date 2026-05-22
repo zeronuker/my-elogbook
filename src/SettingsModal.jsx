@@ -122,6 +122,9 @@ const CHANGELOG = [
       "Footer updated to CAD 1901 · MCAR 2016 Part 69 & Part 74.",
       "FIX: Firebase token refresh (every ~1 hr) no longer reloads Firestore and wipes unsaved local data.",
       "FIX: Export now includes manually-entered flights (day-number date format was silently excluded).",
+      "FIX: Import modal now shows an explicit error if the cloud save fails instead of silently showing success.",
+      "FIX: Re-importing Excel no longer creates duplicate rows for manually-entered flights.",
+      "FIX: Browser close warning now fires when last save errored (not just when dirty).",
     ],
   },
   {

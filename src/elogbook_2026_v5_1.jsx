@@ -526,10 +526,12 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   }, [user, settings.autoSaveInterval]);
 
   // ── Handle import — called directly by ExportImportModal ──
+  // Returns true on success. Throws on save failure so the modal can show a specific error.
   const handleImport = async (importedData) => {
     dataLoadedRef.current = true; // import replaces data — treat as loaded
     setData(importedData);
-    await saveData(importedData);
+    const ok = await saveData(importedData);
+    if (!ok) throw new Error("Cloud save failed — data is loaded in app. Use SAVE NOW to retry.");
   };
 
   // ── Load data from Firestore ──
@@ -585,10 +587,11 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   // ── Warn before tab close / navigation when auto-save is OFF and changes are unsaved ──
+  // Fires on "dirty" (edited but not saved) AND "error" (save attempted but failed)
   useEffect(() => {
     const handler = (e) => {
       const autoOff = Number(settings.autoSaveInterval) === 0;
-      if (autoOff && saveStatus === "dirty") {
+      if (autoOff && (saveStatus === "dirty" || saveStatus === "error")) {
         e.preventDefault();
         e.returnValue = ""; // required for Chrome to show the native dialog
       }
@@ -709,10 +712,12 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       const fullStr = `${dateStr} • ${timeStr}`;
       setLastSaveTime(fullStr);
       setSaveStatus("saved");
+      return true;
     } catch (e) {
       console.error("Save error:", e);
       setSaveError(e?.message || "Unknown error");
       setSaveStatus("error");
+      return false;
     }
   };
 

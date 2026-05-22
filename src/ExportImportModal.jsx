@@ -537,18 +537,29 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
         // Keep original date if parsing fails
       }
 
-      // Check if flight already exists in logbook
-      // Convert logbook date (DD/MM/YYYY) to YYYY-MM-DD for comparison
-      const existsInLogbook = Object.values(monthData).some(monthRows =>
-        monthRows.some(r => {
-          let rDateNorm = r.date;
-          if (r.date && /^\d{2}\/\d{2}\/\d{4}$/.test(r.date)) {
+      // Check if flight already exists in logbook.
+      // Handles both DD/MM/YYYY (imported rows) and day-number (manually entered rows).
+      const existsInLogbook = Object.entries(monthData).some(([key, monthRows]) => {
+        if (!Array.isArray(monthRows)) return false;
+        const [monthIdxStr, yearStr] = key.split('-');
+        const keyMonthIdx = parseInt(monthIdxStr); // 0-based
+        const keyYear = parseInt(yearStr);
+        return monthRows.some(r => {
+          if (!r.date) return false;
+          let rDateNorm;
+          if (/^\d{2}\/\d{2}\/\d{4}$/.test(r.date)) {
+            // DD/MM/YYYY — imported rows
             const [day, month, year] = r.date.split('/');
             rDateNorm = `${year}-${month}-${day}`;
+          } else {
+            // Day number only — manually entered rows; reconstruct from month key
+            const dayNum = parseInt(r.date);
+            if (!dayNum || isNaN(dayNum) || dayNum < 1 || dayNum > 31) return false;
+            rDateNorm = `${keyYear}-${String(keyMonthIdx + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
           }
           return rDateNorm === normalizedDate && r.departure === departure && r.arrival === arrival;
-        })
-      );
+        });
+      });
 
       if (existsInLogbook) {
         duplicateCount++;
@@ -634,18 +645,24 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     });
 
     setImportStatus({ saving: true });
-    await onImport(newMonthData);
-
-    setImportStatus({
-      success: true,
-      added: addedCount,
-      skipped: importPreview.duplicateCount,
-      errors: importPreview.errors.length,
-    });
-
-    setTimeout(() => {
-      onClose();
-    }, 2000);
+    try {
+      await onImport(newMonthData);
+      setImportStatus({
+        success: true,
+        added: addedCount,
+        skipped: importPreview.duplicateCount,
+        errors: importPreview.errors.length,
+      });
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+    } catch (e) {
+      // Data is loaded in the app (setData ran) but Firestore save failed.
+      // Keep modal open so user sees the error and can retry manually.
+      setImportStatus({
+        error: e?.message || "Cloud save failed — data is loaded in app. Use SAVE NOW to retry.",
+      });
+    }
   };
 
   if (!open) return null;
