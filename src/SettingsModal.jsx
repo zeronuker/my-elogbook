@@ -1510,11 +1510,13 @@ const settingsCss = `
     color: var(--cb-ink);
     font-weight: 600;
     margin-bottom: 3px;
+    text-align: left;
   }
   .sm-misc-card-desc {
     font-size: calc(11.5px * var(--fs));
     color: var(--cb-ink-2);
     letter-spacing: 0.02em;
+    text-align: left;
   }
   .sm-misc-card-split {
     flex-direction: column;
