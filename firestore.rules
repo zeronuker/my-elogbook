@@ -7,6 +7,23 @@ service cloud.firestore {
       allow read, write: if request.auth.uid == uid;
     }
 
+    // Logbook data — tighter write rule overrides the wildcard above
+    // Prevents any write that would replace a non-empty logbookData map with {}
+    match /users/{uid}/logbook/data {
+      allow read: if request.auth.uid == uid;
+
+      allow write: if request.auth.uid == uid
+        && !(
+          // Document already exists with non-empty logbookData...
+          resource != null
+          && 'logbookData' in resource.data
+          && resource.data.logbookData.size() > 0
+          // ...and the incoming write would make logbookData empty
+          && 'logbookData' in request.resource.data
+          && request.resource.data.logbookData.size() == 0
+        );
+    }
+
     // Public data (if needed)
     match /public/{document=**} {
       allow read: if true;
