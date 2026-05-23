@@ -129,6 +129,7 @@ const CHANGELOG = [
       "FIX: Dates entered as DD/MM or DD/MM/YYYY are normalised to day-number on input — prevents silent export omission.",
       "FIX: Export now includes rows with DD/MM format dates (e.g. '15/05') in addition to day-number and DD/MM/YYYY formats.",
       "FIX: SAVE NOW and auto-save now always use the live React state — stale ref could previously cause logbookData to be wiped from Firestore.",
+      "Column visibility revamped — DAY, NIGHT, and TOTAL columns are now always visible; only TYPE, MARKINGS, CAPTAIN, HOC, PF, DEP, ARR, STD, STA are toggleable.",
       "FIX: Hiding columns in Settings no longer resets on the 3rd toggle — auto-save was overwriting the Settings draft mid-edit via Firestore onSnapshot.",
       "FIX: Settings Save button no longer disappears off-screen on small screens — footer now always stays anchored to the bottom of the modal.",
       "FIX: Hiding a column no longer shifts all subsequent data cells left — hidden columns now render a narrow stub td to keep header and data rows aligned.",
@@ -567,28 +568,23 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount }) {
   );
 }
 
-// ── Column visibility definitions (all togglable; DATE and # are always shown) ─
+// ── Column visibility definitions ──────────────────────────────────────────────
+// DAY (P1, P1U/S, P2), NIGHT (P1, P1U/S, P2) and TOTAL are always visible.
+// Only these columns are user-toggleable:
 const COL_TOGGLE_DEFS = [
-  { key: "type",        label: "TYPE",         group: "AIRCRAFT", badge: null },
-  { key: "markings",    label: "MARKINGS",     group: "AIRCRAFT", badge: null },
-  { key: "captain",     label: "CAPTAIN",      group: null,       badge: null },
-  { key: "cap",         label: "HOC",          group: null,       badge: null, hint: "Holder Operating Capacity" },
-  { key: "pilotFlying", label: "PILOT FLYING", group: null,       badge: null },
-  { key: "departure",   label: "DEP",          group: "SECTORS",  badge: null },
-  { key: "arrival",     label: "ARR",          group: "SECTORS",  badge: null },
-  { key: "std",         label: "STD",          group: null,       badge: null },
-  { key: "sta",         label: "STA",          group: null,       badge: null },
-  { key: "dayP1",       label: "DAY P1",       group: "DAY",      badge: "#22c55e" },
-  { key: "dayP1US",     label: "DAY P1U/S",    group: "DAY",      badge: "#ef4444" },
-  { key: "dayP2",       label: "DAY P2",       group: "DAY",      badge: "#eab308" },
-  { key: "nightP1",     label: "NIGHT P1",     group: "NIGHT",    badge: "#22c55e" },
-  { key: "nightP1US",   label: "NIGHT P1U/S",  group: "NIGHT",    badge: "#ef4444" },
-  { key: "nightP2",     label: "NIGHT P2",     group: "NIGHT",    badge: "#eab308" },
-  { key: "total",       label: "TOTAL",        group: null,       badge: "#4fc3f7" },
+  { key: "type",        label: "TYPE",         group: "AIRCRAFT" },
+  { key: "markings",    label: "MARKINGS",     group: "AIRCRAFT" },
+  { key: "captain",     label: "CAPTAIN",      group: null       },
+  { key: "cap",         label: "HOC",          group: null       },
+  { key: "pilotFlying", label: "PILOT FLYING", group: null       },
+  { key: "departure",   label: "DEP",          group: "SECTORS"  },
+  { key: "arrival",     label: "ARR",          group: "SECTORS"  },
+  { key: "std",         label: "STD",          group: null       },
+  { key: "sta",         label: "STA",          group: null       },
 ];
 
-const DAY_KEYS   = ["dayP1", "dayP1US", "dayP2"];
-const NIGHT_KEYS = ["nightP1", "nightP1US", "nightP2"];
+// Columns that can never be hidden — filtered out of hiddenColumns on load (migration)
+const ALWAYS_VISIBLE = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"];
 
 // ════════════════════════════════════════════════════════════════════
 //  APPEARANCE TAB
@@ -724,18 +720,9 @@ function AppearanceTab({ d, upd }) {
       </SmRow>
 
       {(() => {
-        const hidden   = new Set(d.hiddenColumns || []);
-        const dayVis   = DAY_KEYS.filter(k => !hidden.has(k)).length;
-        const nightVis = NIGHT_KEYS.filter(k => !hidden.has(k)).length;
-
-        const isDisabled = (key) => {
-          if (DAY_KEYS.includes(key)   && dayVis   === 1 && !hidden.has(key)) return true;
-          if (NIGHT_KEYS.includes(key) && nightVis === 1 && !hidden.has(key)) return true;
-          return false;
-        };
+        const hidden = new Set(d.hiddenColumns || []);
 
         const toggle = (key) => {
-          if (isDisabled(key)) return;
           if (hidden.has(key)) {
             upd({ hiddenColumns: (d.hiddenColumns || []).filter(k => k !== key) });
           } else {
@@ -749,20 +736,14 @@ function AppearanceTab({ d, upd }) {
             <SmRow>
               <div className="sm-col-vis-grid">
                 {COL_TOGGLE_DEFS.map(def => {
-                  const isHidden  = hidden.has(def.key);
-                  const disabled  = isDisabled(def.key);
+                  const isHidden = hidden.has(def.key);
                   return (
                     <button
                       key={def.key}
-                      className={`sm-col-chip${isHidden ? "" : " on"}${disabled ? " locked" : ""}`}
+                      className={`sm-col-chip${isHidden ? "" : " on"}`}
                       onClick={() => toggle(def.key)}
-                      title={
-                        disabled  ? "At least one column in this group must remain visible" :
-                        isHidden  ? `Show ${def.label}` :
-                                    `Hide ${def.label}`
-                      }
+                      title={isHidden ? `Show ${def.label}` : `Hide ${def.label}`}
                     >
-                      {def.badge && <span className="sm-col-chip-dot" style={{ background: def.badge }} />}
                       {def.label}
                     </button>
                   );

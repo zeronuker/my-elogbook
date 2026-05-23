@@ -1051,7 +1051,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const autoCalcCols = ["total","dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"];
 
   // ── Column visibility helpers ────────────────────────────────────────
-  const hiddenCols    = new Set(settings.hiddenColumns || []);
+  // DAY/NIGHT time cols and TOTAL are always visible — strip any legacy entries
+  const ALWAYS_VISIBLE_COLS = new Set(["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"]);
+  const hiddenCols    = new Set((settings.hiddenColumns || []).filter(k => !ALWAYS_VISIBLE_COLS.has(k)));
   const isColVisible  = (key) => !hiddenCols.has(key);
   const unhideColumn  = (key) => {
     const next = { ...settings, hiddenColumns: (settings.hiddenColumns || []).filter(k => k !== key) };
