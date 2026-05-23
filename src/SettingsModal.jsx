@@ -128,6 +128,7 @@ const CHANGELOG = [
       "FIX: loadData no longer calls setData({}) when Firestore logbookData is an empty map — prevents wiping unsaved local data.",
       "FIX: Dates entered as DD/MM or DD/MM/YYYY are normalised to day-number on input — prevents silent export omission.",
       "FIX: Export now includes rows with DD/MM format dates (e.g. '15/05') in addition to day-number and DD/MM/YYYY formats.",
+      "FIX: SAVE NOW and auto-save now always use the live React state — stale ref could previously cause logbookData to be wiped from Firestore.",
     ],
   },
   {

@@ -519,7 +519,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     const intervalMins = Number(settings.autoSaveInterval ?? 5);
     if (intervalMins === 0) return;
     const interval = setInterval(() => {
-      saveData();
+      saveData(dataRef.current);
     }, intervalMins * 60 * 1000);
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1526,7 +1526,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               if (saveStatus === "error") {
                 return (
                   <span style={{ ...chipStyle("#ef4444"), cursor: "pointer" }}
-                    onClick={saveData}
+                    onClick={() => saveData(data)}
                     title="Click to retry save"
                   >
                     Save error · Retry
@@ -1547,7 +1547,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               const shadow  = isAmber ? "0 0 8px rgba(245,197,66,0.25)" : "0 0 8px rgba(79,195,247,0.2)";
               return (
                 <button
-                  onClick={saveData}
+                  onClick={() => saveData(data)}
                   disabled={saveStatus === "saving"}
                   title={autoOff ? "Auto-save is off — click to save manually" : "Save data to cloud"}
                   className="save-button"
@@ -2729,7 +2729,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
               >DISMISS</button>
               <button
-                onClick={() => { setSaveStatus("dirty"); saveData(); }}
+                onClick={() => { setSaveStatus("dirty"); saveData(data); }}
                 style={{
                   background: "rgba(239,68,68,0.10)", border: "1px solid #ef4444", borderRadius: 4,
                   color: "#ef4444", fontFamily: "var(--elb-font, 'Courier New', monospace)",
