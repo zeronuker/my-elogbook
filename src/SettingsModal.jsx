@@ -129,6 +129,7 @@ const CHANGELOG = [
       "FIX: Dates entered as DD/MM or DD/MM/YYYY are normalised to day-number on input — prevents silent export omission.",
       "FIX: Export now includes rows with DD/MM format dates (e.g. '15/05') in addition to day-number and DD/MM/YYYY formats.",
       "FIX: SAVE NOW and auto-save now always use the live React state — stale ref could previously cause logbookData to be wiped from Firestore.",
+      "FIX: Hiding columns in Settings no longer resets on the 3rd toggle — auto-save was overwriting the Settings draft mid-edit via Firestore onSnapshot.",
       "FIX: Settings Save button no longer disappears off-screen on small screens — footer now always stays anchored to the bottom of the modal.",
       "FIX: Hiding a column no longer shifts all subsequent data cells left — hidden columns now render a narrow stub td to keep header and data rows aligned.",
       "FIX: Hiding a solo column (CAPTAIN, HOC, PF, STD, STA, TOTAL) no longer shifts sub-header row — stub now correctly spans both header rows.",
@@ -247,12 +248,15 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
     }
   }, [open]);
 
-  // Resync draft whenever upstream settings change (includes after save)
+  // Sync draft from settings only when the modal opens — NOT on every settings
+  // reference change while open (auto-save writes settings to Firestore, the
+  // onSnapshot confirmation fires setSettings with a new object reference, which
+  // was resetting the draft mid-edit and discarding unsaved column/appearance changes).
   useEffect(() => {
     if (open) {
       setDraft({ ...DEFAULT_SETTINGS, ...(settings || {}) });
     }
-  }, [open, settings]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ESC key closes
   useEffect(() => {
