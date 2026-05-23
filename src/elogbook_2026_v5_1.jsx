@@ -1620,6 +1620,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
               display: "flex",
               alignItems: "flex-start",
               gap: 10,
+              textAlign: "left",
             }}>
               <div style={{ lineHeight: 1.6 }}>
                 <span style={{ color: "#4fc3f7", fontWeight: 700 }}>
