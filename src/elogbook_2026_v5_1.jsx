@@ -693,11 +693,11 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       });
 
       // Last-resort guard: if cleanData ended up empty but the source had real month keys,
-      // something is structurally wrong. Abort rather than overwrite real Firestore data with {}.
+      // dataRef is momentarily stale (React effect hasn't synced yet). Don't write {} —
+      // silently abort and mark dirty so the next save or auto-save retries cleanly.
       if (Object.keys(cleanData).length === 0 && Object.keys(dataToSave).length > 0) {
-        console.error("[saveData] BLOCKED: cleanData={} but source had keys — all values failed Array.isArray. Aborting to prevent data loss.");
-        setSaveError("Save blocked — data structure error detected. Please refresh the page.");
-        setSaveStatus("error");
+        console.warn("[saveData] cleanData={} despite source having keys — stale ref, aborting silently.");
+        setSaveStatus("dirty");
         return false;
       }
 
