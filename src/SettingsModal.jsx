@@ -129,6 +129,7 @@ const CHANGELOG = [
       "FIX: Dates entered as DD/MM or DD/MM/YYYY are normalised to day-number on input — prevents silent export omission.",
       "FIX: Export now includes rows with DD/MM format dates (e.g. '15/05') in addition to day-number and DD/MM/YYYY formats.",
       "FIX: SAVE NOW and auto-save now always use the live React state — stale ref could previously cause logbookData to be wiped from Firestore.",
+      "FIX: Settings Save button no longer disappears off-screen on small screens — footer now always stays anchored to the bottom of the modal.",
       "FIX: Hiding a column no longer shifts all subsequent data cells left — hidden columns now render a narrow stub td to keep header and data rows aligned.",
       "FIX: Hiding a solo column (CAPTAIN, HOC, PF, STD, STA, TOTAL) no longer shifts sub-header row — stub now correctly spans both header rows.",
       "Real-time multi-device sync: app now stays live with Firestore — changes saved on any device appear on all other open devices within seconds.",
@@ -1235,9 +1236,9 @@ const settingsCss = `
 
   /* ── Body ───────────────────────────────────────────────────────── */
   .sm-body {
-    flex: 0 0 auto; overflow-y: auto;
+    flex: 1 1 auto; overflow-y: auto;
     padding: 24px 28px;
-    max-height: calc(88vh - 220px);
+    min-height: 0; /* required: allows flex child to shrink below content size so footer stays visible */
   }
   .sm-body::-webkit-scrollbar { width: 4px; }
   .sm-body::-webkit-scrollbar-track { background: transparent; }
@@ -1817,7 +1818,7 @@ const settingsCss = `
   @media (max-width: 600px) {
     .sm-modal { max-height: 96vh; }
     .sm-head { padding: 16px 18px 14px; }
-    .sm-body { padding: 16px 18px; max-height: calc(96vh - 200px); }
+    .sm-body { padding: 16px 18px; }
     .sm-foot { padding: 12px 18px; flex-direction: column; align-items: stretch; gap: 10px; }
     .sm-foot-btns { justify-content: flex-end; }
     .sm-accent-grid { grid-template-columns: repeat(3, 1fr); }
