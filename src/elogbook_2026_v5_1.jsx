@@ -1697,9 +1697,11 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   padding: "2px 0",
                   lineHeight: 1.2,
                 };
-                const stub = (key, label) => (
+                // rowSpan=1 for sub-header stubs (row 2), rowSpan=2 for solo-column stubs (row 1)
+                const stub = (key, label, rowSpan = 1) => (
                   <th
                     key={`stub-${key}`}
+                    rowSpan={rowSpan}
                     style={stubBase}
                     onClick={() => unhideColumn(key)}
                     title={`Show ${label}`}
@@ -1707,10 +1709,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                     <span style={stubText}>{label}</span>
                   </th>
                 );
-                // Solo th helper (rowSpan=2)
+                // Solo th helper (rowSpan=2) — stub must also use rowSpan=2 or row 2 cells shift
                 const soloTh = (key, content, extraStyle = {}) => isColVisible(key)
                   ? <th key={key} rowSpan={2} style={{ ...thStyle, ...extraStyle }}>{content}</th>
-                  : stub(key, typeof content === "string" ? content : key.toUpperCase());
+                  : stub(key, typeof content === "string" ? content : key.toUpperCase(), 2);
 
                 return (
                   <thead>
@@ -1727,14 +1729,14 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                             <span style={{ display: "block" }}>OPERATING</span>
                             <span style={{ display: "block" }}>CAPACITY</span>
                           </th>
-                        : stub("cap", "HOC")
+                        : stub("cap", "HOC", 2)
                       }
                       {isColVisible("pilotFlying")
                         ? <th key="pilotFlying" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
                             <span style={{ display: "block" }}>PILOT</span>
                             <span style={{ display: "block" }}>FLYING</span>
                           </th>
-                        : stub("pilotFlying", "PF")
+                        : stub("pilotFlying", "PF", 2)
                       }
                       {/* SECTORS group — colSpan always 2 */}
                       <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>SECTORS</th>
@@ -1744,14 +1746,14 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                             <span style={{ display: "block" }}>STD</span>
                             <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
                           </th>
-                        : stub("std", "STD")
+                        : stub("std", "STD", 2)
                       }
                       {isColVisible("sta")
                         ? <th key="sta" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
                             <span style={{ display: "block" }}>STA</span>
                             <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
                           </th>
-                        : stub("sta", "STA")
+                        : stub("sta", "STA", 2)
                       }
                       {/* DAY group — colSpan always 3 */}
                       <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>

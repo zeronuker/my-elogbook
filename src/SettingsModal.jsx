@@ -130,6 +130,7 @@ const CHANGELOG = [
       "FIX: Export now includes rows with DD/MM format dates (e.g. '15/05') in addition to day-number and DD/MM/YYYY formats.",
       "FIX: SAVE NOW and auto-save now always use the live React state — stale ref could previously cause logbookData to be wiped from Firestore.",
       "FIX: Hiding a column no longer shifts all subsequent data cells left — hidden columns now render a narrow stub td to keep header and data rows aligned.",
+      "FIX: Hiding a solo column (CAPTAIN, HOC, PF, STD, STA, TOTAL) no longer shifts sub-header row — stub now correctly spans both header rows.",
       "Real-time multi-device sync: app now stays live with Firestore — changes saved on any device appear on all other open devices within seconds.",
       "Sync conflict protection: if another device saves while you have unsaved local changes, a banner prompts you to Save Mine or Discard & Sync.",
     ],
