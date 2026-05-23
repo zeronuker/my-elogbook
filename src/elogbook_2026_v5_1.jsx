@@ -3,7 +3,7 @@ import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
 
@@ -464,6 +464,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef(initialData()); // initialised to match data state — prevents {} being written if a save fires before first effect run
   const dataLoadedRef = useRef(false); // true only after a successful loadData — prevents saving initialData() over real data
+  const unsubSnapshotRef = useRef(null); // Firestore onSnapshot unsubscribe fn — cleaned up on sign-out
+  const saveStatusRef = useRef("idle"); // mirrors saveStatus for use inside async snapshot closure
+  const [remoteUpdatePending, setRemoteUpdatePending] = useState(false); // another device saved while we have unsaved changes
+  const pendingRemoteDataRef = useRef(null); // the latest remote docData waiting to be applied
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
@@ -491,21 +495,24 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   // IMPORTANT: onAuthStateChanged fires on EVERY token refresh (~hourly), not just sign-in.
   // Guard with dataLoadedRef so token refreshes never re-read Firestore and overwrite local data.
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
+    const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setAuthLoading(false);
       if (u) {
-        // Only load on first sign-in — skip token-refresh re-fires that would wipe local state
+        // Only load on first sign-in — skip token-refresh re-fires (onSnapshot handles live updates)
         if (!dataLoadedRef.current) {
-          try {
-            await loadData(u.uid);
-          } catch (e) {
-            console.error("Initial load error:", e);
-          }
+          loadData(u.uid);
+          loadProfile(u.uid);
         }
       } else {
-        // User signed out — reset so next sign-in loads fresh data from Firestore
+        // User signed out — tear down listener and reset for next sign-in
+        if (unsubSnapshotRef.current) {
+          unsubSnapshotRef.current();
+          unsubSnapshotRef.current = null;
+        }
         dataLoadedRef.current = false;
+        setRemoteUpdatePending(false);
+        pendingRemoteDataRef.current = null;
       }
     });
     return unsub;
@@ -534,39 +541,80 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     if (!ok) throw new Error("Cloud save failed — data is loaded in app. Use SAVE NOW to retry.");
   };
 
-  // ── Load data from Firestore ──
-  const loadData = async (uid) => {
-    const ref = doc(db, "users", uid, "logbook", "data");
-    const snap = await getDoc(ref);
-    // In all cases (existing user or new user), mark data as loaded so saveData is unblocked.
-    // For existing users this fires after the data is set; for new users it fires immediately.
-    dataLoadedRef.current = true;
+  // ── Helper: apply a Firestore docData snapshot to React state ──
+  const applyDocData = (docData) => {
+    const raw = docData.logbookData;
+    // Guard: {} is truthy in JS — never overwrite local state with an empty map
+    if (raw && Object.keys(raw).length > 0) {
+      const normalized = {};
+      Object.keys(raw).forEach(key => {
+        const [mIdx] = key.split("-").map(Number);
+        normalized[key] = normalizeMonthRows(raw[key], mIdx, null);
+      });
+      setData(normalized);
+    }
+    if (docData.settings) {
+      const merged = { ...DEFAULT_SETTINGS, ...docData.settings };
+      if (!Array.isArray(merged.carryForward) || !merged.carryForward.some(r => r.type)) {
+        merged.carryForward = DEFAULT_SETTINGS.carryForward;
+      }
+      settingsRef.current = merged;
+      setSettings(merged);
+    }
+  };
 
-    if (snap.exists()) {
-      const docData = snap.data();
-      const raw = docData.logbookData;
-      // Guard: {} is truthy in JS, but an empty logbookData map means no real data to restore.
-      // Never overwrite local state with an empty map — it would wipe any unsaved imported or manual data.
-      if (raw && Object.keys(raw).length > 0) {
-        const normalized = {};
-        Object.keys(raw).forEach(key => {
-          const [mIdx] = key.split("-").map(Number);
-          normalized[key] = normalizeMonthRows(raw[key], mIdx, null);
-        });
-        setData(normalized);
-      }
-      if (docData.settings) {
-        const merged = { ...DEFAULT_SETTINGS, ...docData.settings };
-        // Guard: don't replace carry-forward with empty/corrupt cloud data
-        if (!Array.isArray(merged.carryForward) || !merged.carryForward.some(r => r.type)) {
-          merged.carryForward = DEFAULT_SETTINGS.carryForward;
-        }
-        settingsRef.current = merged;
-        setSettings(merged);
-      }
+  // ── Load data from Firestore via real-time listener ──
+  // Sets up an onSnapshot subscription so all open devices stay in sync automatically.
+  // First callback is the initial load; subsequent callbacks are remote updates.
+  const loadData = (uid) => {
+    // Tear down any existing listener before re-subscribing (e.g. on manual refresh)
+    if (unsubSnapshotRef.current) {
+      unsubSnapshotRef.current();
+      unsubSnapshotRef.current = null;
     }
 
-    // Load profile data and merge into settings
+    const ref = doc(db, "users", uid, "logbook", "data");
+    let isInitialFire = true;
+
+    unsubSnapshotRef.current = onSnapshot(ref, (snap) => {
+      if (isInitialFire) {
+        // ── Initial load ──
+        isInitialFire = false;
+        dataLoadedRef.current = true;
+        if (snap.exists()) applyDocData(snap.data());
+        return;
+      }
+
+      // ── Remote update from another device ──
+      // Skip echoes of our own local writes (Firestore fires immediately for optimistic updates)
+      if (snap.metadata.hasPendingWrites) return;
+      if (!snap.exists()) return;
+
+      const docData = snap.data();
+      const raw = docData.logbookData;
+      if (!raw || Object.keys(raw).length === 0) return;
+
+      if (saveStatusRef.current === "dirty" || saveStatusRef.current === "error") {
+        // Conflict: local unsaved changes — store the remote data and prompt user
+        pendingRemoteDataRef.current = docData;
+        setRemoteUpdatePending(true);
+      } else {
+        // Clean state — apply remote update silently
+        applyDocData(docData);
+        const now = new Date();
+        const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        setLastSaveTime(`${dateStr} • ${timeStr}`);
+        setSaveStatus("saved");
+      }
+    }, (error) => {
+      console.error("Firestore listener error:", error);
+      dataLoadedRef.current = true;
+    });
+  };
+
+  // ── Load profile data and merge into settings (migration fallback) ──
+  const loadProfile = async (uid) => {
     try {
       const profileRef = doc(db, "users", uid, "profile", "data");
       const profileSnap = await getDoc(profileRef);
@@ -605,6 +653,17 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   // ── Keep settingsRef in sync so saveData never reads a stale closure ──
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
+  // ── Keep saveStatusRef in sync for use inside the onSnapshot closure ──
+  useEffect(() => { saveStatusRef.current = saveStatus; }, [saveStatus]);
+
+  // ── Auto-dismiss the remote-update conflict banner once user saves ──
+  useEffect(() => {
+    if (saveStatus === "saved") {
+      setRemoteUpdatePending(false);
+      pendingRemoteDataRef.current = null;
+    }
+  }, [saveStatus]);
+
   // ── Keep dataRef in sync so the auto-save interval always reads current data ──
   useEffect(() => { dataRef.current = data; }, [data]);
 
@@ -638,24 +697,17 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   // ── Refresh with animation ──
+  // Re-establishes the onSnapshot listener — first callback applies fresh Firestore data.
   const refreshData = async () => {
     if (!user || refreshStatus === "refreshing") return;
     setRefreshStatus("refreshing");
     const start = Date.now();
-    try {
-      await loadData(user.uid);
-      // Ensure spinner is visible for at least 800ms
-      const elapsed = Date.now() - start;
-      if (elapsed < 800) await new Promise(r => setTimeout(r, 800 - elapsed));
-      setRefreshStatus("refreshed");
-      setTimeout(() => setRefreshStatus("idle"), 2500);
-    } catch (e) {
-      console.error("Refresh error:", e);
-      const elapsed = Date.now() - start;
-      if (elapsed < 800) await new Promise(r => setTimeout(r, 800 - elapsed));
-      setRefreshStatus("error");
-      setTimeout(() => setRefreshStatus("idle"), 3000);
-    }
+    loadData(user.uid); // synchronous — re-subscribes; first snapshot callback delivers fresh data
+    // Minimum 800ms spinner so the animation is visible
+    const elapsed = Date.now() - start;
+    if (elapsed < 800) await new Promise(r => setTimeout(r, 800 - elapsed));
+    setRefreshStatus("refreshed");
+    setTimeout(() => setRefreshStatus("idle"), 2500);
   };
 
   // ── Save data to Firestore ──
@@ -2739,6 +2791,95 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.18)"}
                 onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.10)"}
               >↺ RETRY</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── REMOTE UPDATE CONFLICT BANNER ── */}
+      {/* Shown when another device saves while this device has unsaved local changes */}
+      {remoteUpdatePending && (
+        <div
+          style={{
+            position: "fixed", inset: 0,
+            background: "rgba(0,0,0,0.72)",
+            zIndex: 3000,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <div style={{
+            background: "var(--cb-surface-1, #141a2e)",
+            border: "1px solid rgba(245,197,66,0.3)",
+            borderTop: "2px solid #f5c542",
+            borderRadius: 6,
+            padding: "20px 22px 18px",
+            maxWidth: 420, width: "100%",
+            boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
+            animation: "popIn 0.15s ease",
+            fontFamily: "var(--elb-font, 'Courier New', monospace)",
+          }}>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
+              <div>
+                <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#f5c542", marginBottom: 5 }}>SYNC CONFLICT</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>ANOTHER DEVICE SAVED</div>
+              </div>
+              <button
+                onClick={() => setRemoteUpdatePending(false)}
+                style={{
+                  background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
+                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
+                  width: 22, height: 22, cursor: "pointer", flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#f5c542"; e.currentTarget.style.color = "#f5c542"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
+              >✕</button>
+            </div>
+            <div style={{ height: 1, background: "rgba(245,197,66,0.2)", marginBottom: 14 }} />
+            {/* Message */}
+            <div style={{ fontSize: 13, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.7, marginBottom: 14 }}>
+              Another device saved new data to the cloud. You have unsaved local changes — your work is protected.
+              <br /><br />
+              Save your changes first to keep them, or discard and pull the latest cloud version.
+            </div>
+            {/* Action Buttons */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button
+                onClick={() => {
+                  // Apply remote data, discard local changes
+                  if (pendingRemoteDataRef.current) applyDocData(pendingRemoteDataRef.current);
+                  pendingRemoteDataRef.current = null;
+                  setRemoteUpdatePending(false);
+                  setSaveStatus("saved");
+                  const now = new Date();
+                  const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+                  const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+                  setLastSaveTime(`${dateStr} • ${timeStr}`);
+                }}
+                style={{
+                  background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
+                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px", cursor: "pointer",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--cb-accent, #4fc3f7)"; e.currentTarget.style.color = "var(--cb-accent, #4fc3f7)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
+              >DISCARD &amp; SYNC</button>
+              <button
+                onClick={() => {
+                  setRemoteUpdatePending(false);
+                  saveData(data);
+                }}
+                style={{
+                  background: "rgba(245,197,66,0.10)", border: "1px solid #f5c542", borderRadius: 4,
+                  color: "#f5c542", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 20px", cursor: "pointer",
+                  fontWeight: 700,
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(245,197,66,0.18)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(245,197,66,0.10)"}
+              >💾 SAVE MINE</button>
             </div>
           </div>
         </div>
