@@ -464,6 +464,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [lastSyncTime, setLastSyncTime] = useState("");
   const [syncConflict, setSyncConflict] = useState(null); // { cloudData } when conflict detected
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [cloudNewerBanner, setCloudNewerBanner] = useState(false);
 
   // ── PWA update prompt ──
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
@@ -564,13 +565,33 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       const localSettings = localStorage.getItem(lsSettingsKey(uid));
 
       if (localRaw) {
-        // Local data exists — use it directly
+        // Local data exists — use it directly (instant, no network)
         const parsed = JSON.parse(localRaw);
         applyDocData({
           logbookData: parsed,
           settings: localSettings ? JSON.parse(localSettings) : null,
         });
         dataLoadedRef.current = true;
+
+        // Background check: is the cloud newer than our last sync?
+        // Runs silently — only shows a banner, never modifies local data automatically.
+        if (navigator.onLine) {
+          try {
+            const ref  = doc(db, "users", uid, "logbook", "data");
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+              const cloudUpdatedAt = snap.data().updatedAt ? new Date(snap.data().updatedAt).getTime() : 0;
+              const lastSyncedAt   = localStorage.getItem(lsSaveKey(uid));
+              const lastSyncedMs   = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
+              if (cloudUpdatedAt > lastSyncedMs && cloudUpdatedAt > 0 && lastSyncedMs > 0) {
+                setCloudNewerBanner(true);
+              }
+            }
+          } catch (checkErr) {
+            // Silent — background check failure should never affect the user
+            console.warn("Background cloud check failed:", checkErr);
+          }
+        }
         return;
       }
 
@@ -746,6 +767,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
       const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
       setLastSyncTime(`${dateStr} · ${timeStr}`);
+      setCloudNewerBanner(false);
       setSyncStatus("synced");
       setTimeout(() => setSyncStatus("idle"), 3000);
     } catch (e) {
@@ -773,6 +795,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
     setLastSyncTime(`${dateStr} · ${timeStr}`);
+    setCloudNewerBanner(false);
     setSyncConflict(null);
     setSyncStatus("synced");
     setTimeout(() => setSyncStatus("idle"), 3000);
@@ -2920,6 +2943,55 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         type={feedbackType}
         user={user}
       />
+
+      {/* ── CLOUD NEWER BANNER ── */}
+      {/* Shown on app open when cloud has newer data than last sync on this device */}
+      {cloudNewerBanner && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 3500,
+          background: "linear-gradient(135deg, rgba(59,141,255,0.15), rgba(63,224,197,0.10))",
+          borderBottom: "1px solid rgba(63,224,197,0.3)",
+          padding: "10px 20px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 12, flexWrap: "wrap",
+          fontFamily: "var(--elb-font, 'Courier New', monospace)",
+          backdropFilter: "blur(8px)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 14 }}>☁</span>
+            <div>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "var(--elb-acc, #3FE0C5)" }}>
+                CLOUD HAS NEWER DATA
+              </span>
+              <span style={{ fontSize: 11, color: "var(--cb-ink-dim, #7c87a3)", letterSpacing: "0.04em", marginLeft: 10 }}>
+                Another device synced after your last sync on this device
+              </span>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button
+              onClick={syncData}
+              style={{
+                background: "var(--elb-acc, #3FE0C5)", color: "#0a0f1e",
+                border: "none", borderRadius: 4,
+                fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
+                padding: "5px 14px", cursor: "pointer",
+              }}
+            >SYNC NOW</button>
+            <button
+              onClick={() => setCloudNewerBanner(false)}
+              style={{
+                background: "transparent", border: "1px solid rgba(63,224,197,0.3)", borderRadius: 4,
+                color: "var(--cb-ink-dim, #7c87a3)",
+                fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                fontSize: 11, letterSpacing: "0.08em",
+                padding: "5px 12px", cursor: "pointer",
+              }}
+            >DISMISS</button>
+          </div>
+        </div>
+      )}
 
       {/* ── SYNC CONFLICT MODAL ── */}
       {/* Shown when Firestore has newer data than this device's last sync */}
