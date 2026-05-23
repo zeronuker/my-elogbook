@@ -67,7 +67,6 @@ export const DEFAULT_SETTINGS = {
   // Preferences
   dateFormat: "D",
   rowsPerPage: 15,
-  autoSaveInterval: "5",
   dayNightMethod: "fixed",
   useStandardFormula: true,
   preFlightBuffer: 75,
@@ -223,22 +222,13 @@ const TAB_DEFAULTS = {
   preferences: {
     dateFormat: "D",
     rowsPerPage: 15,
-    autoSaveInterval: "5",
-    dayNightMethod: "fixed",
+      dayNightMethod: "fixed",
     useStandardFormula: true,
     preFlightBuffer: 75,
     postFlightBuffer: 15,
   },
 };
 
-// ── Auto-save options ─────────────────────────────────────────────────
-const AUTO_SAVE_OPTIONS = [
-  { value: "0",  label: "Off"  },
-  { value: "1",  label: "1m"   },
-  { value: "5",  label: "5m"   },
-  { value: "10", label: "10m"  },
-  { value: "30", label: "30m"  },
-];
 
 // ════════════════════════════════════════════════════════════════════
 //  Main component
@@ -776,8 +766,6 @@ function AppearanceTab({ d, upd }) {
 //  PREFERENCES TAB
 // ════════════════════════════════════════════════════════════════════
 function PreferencesTab({ d, upd }) {
-  const autoSave = String(d.autoSaveInterval ?? "5");
-
   return (
     <div className="sm-tab-content">
 
@@ -801,16 +789,6 @@ function PreferencesTab({ d, upd }) {
           options={["10", "15", "20", "30", "50"]}
           labels={["10 rows", "15 rows (default)", "20 rows", "30 rows", "50 rows"]}
           onChange={(v) => upd({ rowsPerPage: Number(v) })}
-        />
-      </SmField>
-
-      <SmSectionHead title="Saving" />
-
-      <SmField label="Auto-save interval" hint="Saves your work in the background. Set to Off if you prefer manual control.">
-        <SmSegmented
-          value={autoSave}
-          onChange={(v) => upd({ autoSaveInterval: v })}
-          options={AUTO_SAVE_OPTIONS}
         />
       </SmField>
 

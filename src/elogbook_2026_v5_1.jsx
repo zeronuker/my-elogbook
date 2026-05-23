@@ -3,7 +3,7 @@ import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { doc, setDoc, getDoc, onSnapshot, addDoc, collection } from "firebase/firestore";
+import { doc, setDoc, getDoc, addDoc, collection } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
 import FeedbackModal from "./FeedbackModal";
@@ -465,10 +465,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef(initialData()); // initialised to match data state — prevents {} being written if a save fires before first effect run
   const dataLoadedRef = useRef(false); // true only after a successful loadData — prevents saving initialData() over real data
-  const unsubSnapshotRef = useRef(null); // Firestore onSnapshot unsubscribe fn — cleaned up on sign-out
-  const saveStatusRef = useRef("idle"); // mirrors saveStatus for use inside async snapshot closure
-  const [remoteUpdatePending, setRemoteUpdatePending] = useState(false); // another device saved while we have unsaved changes
-  const pendingRemoteDataRef = useRef(null); // the latest remote docData waiting to be applied
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
@@ -502,46 +498,27 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       setUser(u);
       setAuthLoading(false);
       if (u) {
-        // Only load on first sign-in — skip token-refresh re-fires (onSnapshot handles live updates)
+        // Only load on first sign-in — skip token-refresh re-fires
         if (!dataLoadedRef.current) {
           loadData(u.uid);
           loadProfile(u.uid);
         }
       } else {
-        // User signed out — tear down listener and reset for next sign-in
-        if (unsubSnapshotRef.current) {
-          unsubSnapshotRef.current();
-          unsubSnapshotRef.current = null;
-        }
+        // User signed out — reset for next sign-in
         dataLoadedRef.current = false;
-        setRemoteUpdatePending(false);
-        pendingRemoteDataRef.current = null;
       }
     });
     return unsub;
   }, []);
 
-  // ── Auto-save on user-configured interval ──
-  // dataRef.current always holds the latest data so the interval closure never goes stale.
-  // Removing `data` from deps prevents the interval from resetting on every keystroke.
-  useEffect(() => {
-    if (!user) return;
-    const intervalMins = Number(settings.autoSaveInterval ?? 5);
-    if (intervalMins === 0) return;
-    const interval = setInterval(() => {
-      saveData(dataRef.current);
-    }, intervalMins * 60 * 1000);
-    return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, settings.autoSaveInterval]);
 
   // ── Handle import — called directly by ExportImportModal ──
   // Returns true on success. Throws on save failure so the modal can show a specific error.
   const handleImport = async (importedData) => {
     dataLoadedRef.current = true; // import replaces data — treat as loaded
     setData(importedData);
-    const ok = await saveData(importedData);
-    if (!ok) throw new Error("Cloud save failed — data is loaded in app. Use SAVE NOW to retry.");
+    const ok = saveData(importedData);
+    if (!ok) throw new Error("Local save failed — data is loaded in app. Use SAVE NOW to retry.");
   };
 
   // ── Helper: apply a Firestore docData snapshot to React state ──
@@ -566,54 +543,44 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     }
   };
 
-  // ── Load data from Firestore via real-time listener ──
-  // Sets up an onSnapshot subscription so all open devices stay in sync automatically.
-  // First callback is the initial load; subsequent callbacks are remote updates.
-  const loadData = (uid) => {
-    // Tear down any existing listener before re-subscribing (e.g. on manual refresh)
-    if (unsubSnapshotRef.current) {
-      unsubSnapshotRef.current();
-      unsubSnapshotRef.current = null;
-    }
+  // ── localStorage helpers ──
+  const lsKey      = (uid) => `elb_data_${uid}`;
+  const lsSettingsKey = (uid) => `elb_settings_${uid}`;
+  const lsSaveKey  = (uid) => `elb_last_local_save_${uid}`;
 
-    const ref = doc(db, "users", uid, "logbook", "data");
-    let isInitialFire = true;
+  // ── Load data — localStorage first, Firestore fallback (migration) ──
+  const loadData = async (uid) => {
+    try {
+      const localRaw      = localStorage.getItem(lsKey(uid));
+      const localSettings = localStorage.getItem(lsSettingsKey(uid));
 
-    unsubSnapshotRef.current = onSnapshot(ref, (snap) => {
-      if (isInitialFire) {
-        // ── Initial load ──
-        isInitialFire = false;
+      if (localRaw) {
+        // Local data exists — use it directly
+        const parsed = JSON.parse(localRaw);
+        applyDocData({
+          logbookData: parsed,
+          settings: localSettings ? JSON.parse(localSettings) : null,
+        });
         dataLoadedRef.current = true;
-        if (snap.exists()) applyDocData(snap.data());
         return;
       }
 
-      // ── Remote update from another device ──
-      // Skip echoes of our own local writes (Firestore fires immediately for optimistic updates)
-      if (snap.metadata.hasPendingWrites) return;
-      if (!snap.exists()) return;
-
-      const docData = snap.data();
-      const raw = docData.logbookData;
-      if (!raw || Object.keys(raw).length === 0) return;
-
-      if (saveStatusRef.current === "dirty" || saveStatusRef.current === "error") {
-        // Conflict: local unsaved changes — store the remote data and prompt user
-        pendingRemoteDataRef.current = docData;
-        setRemoteUpdatePending(true);
-      } else {
-        // Clean state — apply remote update silently
-        applyDocData(docData);
-        const now = new Date();
-        const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-        const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-        setLastSaveTime(`${dateStr} • ${timeStr}`);
-        setSaveStatus("saved");
-      }
-    }, (error) => {
-      console.error("Firestore listener error:", error);
+      // No local data — first load or new device — pull from Firestore
+      const ref  = doc(db, "users", uid, "logbook", "data");
+      const snap = await getDoc(ref);
       dataLoadedRef.current = true;
-    });
+      if (snap.exists()) {
+        const docData = snap.data();
+        applyDocData(docData);
+        // Persist to localStorage so future loads are instant
+        if (docData.logbookData) localStorage.setItem(lsKey(uid), JSON.stringify(docData.logbookData));
+        if (docData.settings)    localStorage.setItem(lsSettingsKey(uid), JSON.stringify(docData.settings));
+        localStorage.setItem(lsSaveKey(uid), new Date().toISOString());
+      }
+    } catch (err) {
+      console.error("Load error:", err);
+      dataLoadedRef.current = true;
+    }
   };
 
   // ── Load profile data and merge into settings (migration fallback) ──
@@ -639,36 +606,31 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     }
   };
 
-  // ── Warn before tab close / navigation when auto-save is OFF and changes are unsaved ──
-  // Fires on "dirty" (edited but not saved) AND "error" (save attempted but failed)
+  // ── Warn before tab close if localStorage save errored ──
   useEffect(() => {
     const handler = (e) => {
-      const autoOff = Number(settings.autoSaveInterval) === 0;
-      if (autoOff && (saveStatus === "dirty" || saveStatus === "error")) {
+      if (saveStatus === "error") {
         e.preventDefault();
-        e.returnValue = ""; // required for Chrome to show the native dialog
+        e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [settings.autoSaveInterval, saveStatus]);
+  }, [saveStatus]);
 
   // ── Keep settingsRef in sync so saveData never reads a stale closure ──
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
-  // ── Keep saveStatusRef in sync for use inside the onSnapshot closure ──
-  useEffect(() => { saveStatusRef.current = saveStatus; }, [saveStatus]);
-
-  // ── Auto-dismiss the remote-update conflict banner once user saves ──
-  useEffect(() => {
-    if (saveStatus === "saved") {
-      setRemoteUpdatePending(false);
-      pendingRemoteDataRef.current = null;
-    }
-  }, [saveStatus]);
-
-  // ── Keep dataRef in sync so the auto-save interval always reads current data ──
+  // ── Keep dataRef in sync ──
   useEffect(() => { dataRef.current = data; }, [data]);
+
+  // ── Save-on-change: write to localStorage on every data update ──
+  // localStorage is synchronous and instant — no network, no interval needed.
+  // Skip until dataLoadedRef is true to avoid overwriting real data with empty initialData().
+  useEffect(() => {
+    if (!dataLoadedRef.current) return;
+    saveData(data);
+  }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Sync data-theme attribute on <html> for brand.css dark/light tokens ──
   useEffect(() => {
@@ -686,26 +648,25 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Save settings only (separate from logbook auto-save) ──
-  const saveSettings = async (next) => {
-    settingsRef.current = next; // update ref immediately before any async gap
+  // ── Save settings to localStorage ──
+  const saveSettings = (next) => {
+    settingsRef.current = next;
     setSettings(next);
     if (!user) return;
     try {
-      const ref = doc(db, "users", user.uid, "logbook", "data");
-      await setDoc(ref, { settings: next, updatedAt: new Date().toISOString() }, { merge: true });
+      localStorage.setItem(lsSettingsKey(user.uid), JSON.stringify(next));
     } catch (e) {
       console.error("Settings save error:", e);
     }
   };
 
   // ── Refresh with animation ──
-  // Re-establishes the onSnapshot listener — first callback applies fresh Firestore data.
+  // Re-fetches data from Firestore (one-time getDoc).
   const refreshData = async () => {
     if (!user || refreshStatus === "refreshing") return;
     setRefreshStatus("refreshing");
     const start = Date.now();
-    loadData(user.uid); // synchronous — re-subscribes; first snapshot callback delivers fresh data
+    await loadData(user.uid);
     // Minimum 800ms spinner so the animation is visible
     const elapsed = Date.now() - start;
     if (elapsed < 800) await new Promise(r => setTimeout(r, 800 - elapsed));
@@ -729,10 +690,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     return val;
   };
 
-  const saveData = async (dataOverride) => {
-    if (!user) return;
+  const saveData = (dataOverride) => {
+    if (!user) return true;
     // Never save before loadData has completed — prevents overwriting real data with initialData() empty rows
-    if (!dataLoadedRef.current) return;
+    if (!dataLoadedRef.current) return false;
     setSaveStatus("saving");
     try {
       // Regenerate IDs sequentially for each month to prevent duplicates
@@ -740,34 +701,19 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       const dataToSave = dataOverride || dataRef.current;
       Object.keys(dataToSave).forEach(monthKey => {
         const rows = dataToSave[monthKey];
-        if (!Array.isArray(rows)) return; // skip corrupted month entries
-        cleanData[monthKey] = rows.map((row, idx) => ({
-          ...row,
-          id: idx + 1, // Ensure IDs are 1, 2, 3, ... in order
-        }));
+        if (!Array.isArray(rows)) return;
+        cleanData[monthKey] = rows.map((row, idx) => ({ ...row, id: idx + 1 }));
       });
 
-      const ref = doc(db, "users", user.uid, "logbook", "data");
-
-      // Sanitize settings to remove NaN/undefined before writing to Firestore
-      const settingsToSave = sanitizeForFirestore(settingsRef.current);
-
-      // Create a 15-second timeout promise
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Save timed out — check your connection")), 15000)
-      );
-
-      // Race the save operation against the timeout
-      await Promise.race([
-        setDoc(ref, { logbookData: cleanData, settings: settingsToSave, updatedAt: new Date().toISOString() }, { merge: true }),
-        timeoutPromise
-      ]);
+      // Write to localStorage — instant, no network required
+      localStorage.setItem(lsKey(user.uid), JSON.stringify(cleanData));
+      localStorage.setItem(lsSettingsKey(user.uid), JSON.stringify(settingsRef.current));
+      localStorage.setItem(lsSaveKey(user.uid), new Date().toISOString());
 
       const now = new Date();
       const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
       const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      const fullStr = `${dateStr} • ${timeStr}`;
-      setLastSaveTime(fullStr);
+      setLastSaveTime(`${dateStr} • ${timeStr}`);
       setSaveStatus("saved");
       return true;
     } catch (e) {
@@ -940,9 +886,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       value = normalized;
     }
 
-    // Mark dirty so the header chip reflects unsaved changes
-    setSaveStatus(prev => (prev === "saving" ? "saving" : "dirty"));
-
     setData(prev => {
       let current = [...(prev[monthKey] || makeMonthRows(selectedMonth, selectedYear))];
       // Extend stored rows if the edited row is beyond what's been saved (virtual display rows)
@@ -992,7 +935,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   const deleteRow = (rowIdx) => {
-    setSaveStatus(prev => (prev === "saving" ? "saving" : "dirty"));
     setData(prev => {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
       const newRows = current.filter((_, i) => i !== rowIdx);
@@ -1002,7 +944,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   const addSector = () => {
-    setSaveStatus(prev => (prev === "saving" ? "saving" : "dirty"));
     setData(prev => {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
       // Next ID should be length + 1, ensuring no gaps
@@ -1559,54 +1500,28 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
           <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "flex-end" }}>
             {/* Save chip */}
             {(() => {
-              const autoOff = Number(settings.autoSaveInterval) === 0;
-              const chipStyle = (color) => ({
-                fontStyle: "italic", fontSize: 10, letterSpacing: "0.10em", color,
-              });
-              // auto-save off + never saved yet
-              if (autoOff && !lastSaveTime && saveStatus !== "saving" && saveStatus !== "error") {
-                return <span style={chipStyle("#f5c542")}>Auto-save off · Not yet saved</span>;
-              }
-              // auto-save off + has saved before — show last save time persistently
-              if (autoOff && lastSaveTime && (saveStatus === "idle" || saveStatus === "saved")) {
-                return <span style={chipStyle("#22c55e")}>Saved · {lastSaveTime}</span>;
-              }
-              if (saveStatus === "dirty") {
-                return <span style={chipStyle("#f5c542")}>Unsaved changes</span>;
-              }
-              if (saveStatus === "saving") {
-                return <span style={chipStyle("#3B8DFF")}>Saving…</span>;
-              }
-              if (saveStatus === "saved" && lastSaveTime && !autoOff) {
-                return <span style={chipStyle("#22c55e")}>Saved · {lastSaveTime}</span>;
-              }
-              if (saveStatus === "error") {
-                return (
-                  <span style={{ ...chipStyle("#ef4444"), cursor: "pointer" }}
-                    onClick={() => saveData(data)}
-                    title="Click to retry save"
-                  >
-                    Save error · Retry
-                  </span>
-                );
-              }
+              const chipStyle = (color) => ({ fontStyle: "italic", fontSize: 10, letterSpacing: "0.10em", color });
+              if (saveStatus === "saving") return <span style={chipStyle("#3B8DFF")}>Saving…</span>;
+              if (saveStatus === "saved" && lastSaveTime) return <span style={chipStyle("#22c55e")}>Saved · {lastSaveTime}</span>;
+              if (saveStatus === "error") return (
+                <span style={{ ...chipStyle("#ef4444"), cursor: "pointer" }} onClick={() => saveData(data)} title="Click to retry">
+                  Save error · Retry
+                </span>
+              );
               return null;
             })()}
             {/* SAVE NOW button */}
             {(() => {
-              const autoOff = Number(settings.autoSaveInterval) === 0;
-              const isAmber = saveStatus === "dirty" || (autoOff && saveStatus !== "error" && saveStatus !== "saving");
               const isRed   = saveStatus === "error";
-              const color   = isRed ? "#ef4444" : isAmber ? "#f5c542" : "var(--elb-acc,#4fc3f7)";
-              const bg      = isRed   ? "linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.08))"
-                            : isAmber ? "linear-gradient(135deg,rgba(245,197,66,0.12),rgba(245,197,66,0.06))"
-                            : "linear-gradient(135deg,var(--cb-surface-2,#1b2340),var(--cb-surface-1,#141a2e))";
-              const shadow  = isAmber ? "0 0 8px rgba(245,197,66,0.25)" : "0 0 8px rgba(79,195,247,0.2)";
+              const color   = isRed ? "#ef4444" : "var(--elb-acc,#4fc3f7)";
+              const bg      = isRed ? "linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.08))"
+                                    : "linear-gradient(135deg,var(--cb-surface-2,#1b2340),var(--cb-surface-1,#141a2e))";
+              const shadow  = isRed ? "0 0 8px rgba(239,68,68,0.25)" : "0 0 8px rgba(79,195,247,0.2)";
               return (
                 <button
                   onClick={() => saveData(data)}
                   disabled={saveStatus === "saving"}
-                  title={autoOff ? "Auto-save is off — click to save manually" : "Save data to cloud"}
+                  title="Save to local storage"
                   className="save-button"
                   style={{
                     flexShrink: 0, background: bg,
@@ -2743,7 +2658,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       {/* ── AUTOSAVE ERROR MODAL ── */}
       {saveStatus === "error" && (
         <div
-          onClick={e => { if (e.target === e.currentTarget) { setSaveStatus("dirty"); setSaveError(""); } }}
+          onClick={e => { if (e.target === e.currentTarget) { setSaveStatus("idle"); setSaveError(""); } }}
           style={{
             position: "fixed", inset: 0,
             background: "rgba(0,0,0,0.72)",
@@ -2770,7 +2685,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>SAVE FAILED</div>
               </div>
               <button
-                onClick={() => { setSaveStatus("dirty"); setSaveError(""); }}
+                onClick={() => { setSaveStatus("idle"); setSaveError(""); }}
                 style={{
                   background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
                   color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
@@ -2794,7 +2709,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             {/* Action Buttons */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
               <button
-                onClick={() => { setSaveStatus("dirty"); setSaveError(""); }}
+                onClick={() => { setSaveStatus("idle"); setSaveError(""); }}
                 style={{
                   background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
                   color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
@@ -2814,95 +2729,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.18)"}
                 onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.10)"}
               >↺ RETRY</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── REMOTE UPDATE CONFLICT BANNER ── */}
-      {/* Shown when another device saves while this device has unsaved local changes */}
-      {remoteUpdatePending && (
-        <div
-          style={{
-            position: "fixed", inset: 0,
-            background: "rgba(0,0,0,0.72)",
-            zIndex: 3000,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            padding: 20,
-          }}
-        >
-          <div style={{
-            background: "var(--cb-surface-1, #141a2e)",
-            border: "1px solid rgba(245,197,66,0.3)",
-            borderTop: "2px solid #f5c542",
-            borderRadius: 6,
-            padding: "20px 22px 18px",
-            maxWidth: 420, width: "100%",
-            boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
-            animation: "popIn 0.15s ease",
-            fontFamily: "var(--elb-font, 'Courier New', monospace)",
-          }}>
-            {/* Header */}
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
-              <div>
-                <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#f5c542", marginBottom: 5 }}>SYNC CONFLICT</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>ANOTHER DEVICE SAVED</div>
-              </div>
-              <button
-                onClick={() => setRemoteUpdatePending(false)}
-                style={{
-                  background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
-                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
-                  width: 22, height: 22, cursor: "pointer", flexShrink: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#f5c542"; e.currentTarget.style.color = "#f5c542"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
-              >✕</button>
-            </div>
-            <div style={{ height: 1, background: "rgba(245,197,66,0.2)", marginBottom: 14 }} />
-            {/* Message */}
-            <div style={{ fontSize: 13, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.7, marginBottom: 14 }}>
-              Another device saved new data to the cloud. You have unsaved local changes — your work is protected.
-              <br /><br />
-              Save your changes first to keep them, or discard and pull the latest cloud version.
-            </div>
-            {/* Action Buttons */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button
-                onClick={() => {
-                  // Apply remote data, discard local changes
-                  if (pendingRemoteDataRef.current) applyDocData(pendingRemoteDataRef.current);
-                  pendingRemoteDataRef.current = null;
-                  setRemoteUpdatePending(false);
-                  setSaveStatus("saved");
-                  const now = new Date();
-                  const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-                  const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-                  setLastSaveTime(`${dateStr} • ${timeStr}`);
-                }}
-                style={{
-                  background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
-                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px", cursor: "pointer",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--cb-accent, #4fc3f7)"; e.currentTarget.style.color = "var(--cb-accent, #4fc3f7)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
-              >DISCARD &amp; SYNC</button>
-              <button
-                onClick={() => {
-                  setRemoteUpdatePending(false);
-                  saveData(data);
-                }}
-                style={{
-                  background: "rgba(245,197,66,0.10)", border: "1px solid #f5c542", borderRadius: 4,
-                  color: "#f5c542", fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 20px", cursor: "pointer",
-                  fontWeight: 700,
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(245,197,66,0.18)"}
-                onMouseLeave={e => e.currentTarget.style.background = "rgba(245,197,66,0.10)"}
-              >💾 SAVE MINE</button>
             </div>
           </div>
         </div>
