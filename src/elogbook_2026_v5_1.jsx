@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useRegisterSW } from "virtual:pwa-register/react";
 import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
 import { db, auth, googleProvider } from "./firebase";
@@ -463,6 +464,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [lastSyncTime, setLastSyncTime] = useState("");
   const [syncConflict, setSyncConflict] = useState(null); // { cloudData } when conflict detected
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // ── PWA update prompt ──
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -2962,6 +2966,42 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         </div>
       )}
 
+      {/* ── PWA UPDATE PROMPT ── */}
+      {/* Only shown when a new service worker is waiting AND saves are not pending */}
+      {needRefresh && saveStatus === "saved" && (
+        <div style={{
+          position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)",
+          background: "var(--cb-surface-1, #141a2e)",
+          border: "1px solid var(--elb-acc, #3FE0C5)", borderRadius: 6,
+          padding: "12px 18px", zIndex: 5000,
+          display: "flex", alignItems: "center", gap: 14,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+          fontFamily: "var(--elb-font, 'Courier New', monospace)",
+          maxWidth: "calc(100vw - 40px)",
+        }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "var(--elb-acc, #3FE0C5)", marginBottom: 2 }}>
+              UPDATE AVAILABLE
+            </div>
+            <div style={{ fontSize: 11, color: "var(--cb-ink-dim, #7c87a3)", letterSpacing: "0.04em" }}>
+              A new version of C·B eLogBook is ready
+            </div>
+          </div>
+          <button
+            onClick={() => updateServiceWorker(true)}
+            style={{
+              background: "var(--elb-acc, #3FE0C5)", color: "#0a0f1e",
+              border: "none", borderRadius: 4,
+              fontFamily: "var(--elb-font, 'Courier New', monospace)",
+              fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
+              padding: "6px 14px", cursor: "pointer", whiteSpace: "nowrap",
+            }}
+          >
+            UPDATE
+          </button>
+        </div>
+      )}
+
       {/* ── MIGRATION OVERLAY ── */}
       {/* Shown once on first load when pulling existing data from Firestore into localStorage */}
       {migrating && (
@@ -2992,7 +3032,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.2 · CAAM</span>
+        <span>eLOGBOOK v6.4 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

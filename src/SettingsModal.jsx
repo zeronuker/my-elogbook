@@ -103,7 +103,21 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.3", date: "May 2026", current: true,
+    v: "v6.4", date: "May 2026", current: true,
+    title: "Local-first architecture · PWA · offline support · manual sync",
+    notes: [
+      "NEW: Local-first architecture — all data now saves to device storage instantly. No network required to save.",
+      "NEW: Manual SYNC button — push your logbook to the cloud and pull to other devices on demand.",
+      "NEW: Sync conflict modal — when another device has newer cloud data, choose Keep Local or Keep Cloud.",
+      "NEW: Offline indicator — toolbar shows OFFLINE chip when internet is unavailable; SYNC button disabled.",
+      "NEW: PWA support — install C·B eLogBook on iOS and Android home screens. App loads and works fully offline after first install.",
+      "NEW: Auto-update prompt — notifies you when a new version is available, updates safely after saves complete.",
+      "IMP: Save-on-change — data writes to device storage on every edit. Auto-save interval setting removed.",
+      "IMP: Existing users migrated automatically on first load — your Firestore data is pulled to local storage seamlessly.",
+    ],
+  },
+  {
+    v: "v6.3", date: "May 2026", current: false,
     title: "In-app feedback · bug reports · feature requests",
     notes: [
       "NEW: In-app feedback system — Report a Bug and Suggest a Feature now open a native modal instead of an external link.",
