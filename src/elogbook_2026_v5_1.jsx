@@ -545,7 +545,9 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     if (snap.exists()) {
       const docData = snap.data();
       const raw = docData.logbookData;
-      if (raw) {
+      // Guard: {} is truthy in JS, but an empty logbookData map means no real data to restore.
+      // Never overwrite local state with an empty map — it would wipe any unsaved imported or manual data.
+      if (raw && Object.keys(raw).length > 0) {
         const normalized = {};
         Object.keys(raw).forEach(key => {
           const [mIdx] = key.split("-").map(Number);
@@ -689,6 +691,15 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
           id: idx + 1, // Ensure IDs are 1, 2, 3, ... in order
         }));
       });
+
+      // Last-resort guard: if cleanData ended up empty but the source had real month keys,
+      // something is structurally wrong. Abort rather than overwrite real Firestore data with {}.
+      if (Object.keys(cleanData).length === 0 && Object.keys(dataToSave).length > 0) {
+        console.error("[saveData] BLOCKED: cleanData={} but source had keys — all values failed Array.isArray. Aborting to prevent data loss.");
+        setSaveError("Save blocked — data structure error detected. Please refresh the page.");
+        setSaveStatus("error");
+        return false;
+      }
 
       const ref = doc(db, "users", user.uid, "logbook", "data");
 

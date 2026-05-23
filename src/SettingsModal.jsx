@@ -125,6 +125,8 @@ const CHANGELOG = [
       "FIX: Import modal now shows an explicit error if the cloud save fails instead of silently showing success.",
       "FIX: Re-importing Excel no longer creates duplicate rows for manually-entered flights.",
       "FIX: Browser close warning now fires when last save errored (not just when dirty).",
+      "FIX: loadData no longer calls setData({}) when Firestore logbookData is an empty map — prevents wiping unsaved local data.",
+      "FIX: saveData now aborts with an error if cleanData resolves to {} despite source having real month keys — last-resort data-loss guard.",
     ],
   },
   {
