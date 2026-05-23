@@ -459,12 +459,17 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [saveError, setSaveError] = useState(""); // stores last error message for display
   const [lastSaveTime, setLastSaveTime] = useState(""); // Format: "DD MMM YYYY • HH:MM:SS"
   const [refreshStatus, setRefreshStatus] = useState("idle");
+  const [syncStatus, setSyncStatus] = useState("idle"); // idle | syncing | synced | error
+  const [lastSyncTime, setLastSyncTime] = useState("");
+  const [syncConflict, setSyncConflict] = useState(null); // { cloudData } when conflict detected
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef(initialData()); // initialised to match data state — prevents {} being written if a save fires before first effect run
   const dataLoadedRef = useRef(false); // true only after a successful loadData — prevents saving initialData() over real data
+  const [migrating, setMigrating] = useState(false); // true while pulling existing data from Firestore on first load
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
@@ -566,6 +571,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       }
 
       // No local data — first load or new device — pull from Firestore
+      setMigrating(true);
       const ref  = doc(db, "users", uid, "logbook", "data");
       const snap = await getDoc(ref);
       dataLoadedRef.current = true;
@@ -577,9 +583,11 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         if (docData.settings)    localStorage.setItem(lsSettingsKey(uid), JSON.stringify(docData.settings));
         localStorage.setItem(lsSaveKey(uid), new Date().toISOString());
       }
+      setMigrating(false);
     } catch (err) {
       console.error("Load error:", err);
       dataLoadedRef.current = true;
+      setMigrating(false);
     }
   };
 
@@ -617,6 +625,18 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [saveStatus]);
+
+  // ── Track online/offline status ──
+  useEffect(() => {
+    const goOnline  = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online",  goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online",  goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
 
   // ── Keep settingsRef in sync so saveData never reads a stale closure ──
   useEffect(() => { settingsRef.current = settings; }, [settings]);
@@ -672,6 +692,86 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     if (elapsed < 800) await new Promise(r => setTimeout(r, 800 - elapsed));
     setRefreshStatus("refreshed");
     setTimeout(() => setRefreshStatus("idle"), 2500);
+  };
+
+  // ── Sync local data to/from Firestore (manual, user-triggered) ──
+  // 1. PULL: fetch Firestore document and compare updatedAt timestamp with last local sync.
+  // 2. If Firestore is newer → show conflict modal (user chooses Keep Local or Keep Cloud).
+  // 3. If no conflict → PUSH local data to Firestore.
+  const syncData = async () => {
+    if (!user || syncStatus === "syncing" || !isOnline) return;
+    setSyncStatus("syncing");
+    try {
+      const ref = doc(db, "users", user.uid, "logbook", "data");
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Sync timed out")), 15000)
+      );
+
+      // PULL — check if Firestore has newer data than last sync
+      const snap = await Promise.race([getDoc(ref), timeoutPromise]);
+      if (snap.exists()) {
+        const cloudData = snap.data();
+        const cloudUpdatedAt  = cloudData.updatedAt ? new Date(cloudData.updatedAt).getTime()  : 0;
+        const lastSyncedAt    = localStorage.getItem(lsSaveKey(user.uid));
+        const lastSyncedMs    = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
+
+        if (cloudUpdatedAt > lastSyncedMs && cloudUpdatedAt > 0 && lastSyncedMs > 0) {
+          // Firestore is newer than our last sync — conflict
+          setSyncStatus("idle");
+          setSyncConflict({ cloudData });
+          return;
+        }
+      }
+
+      // No conflict — PUSH local data to Firestore
+      const cleanData = {};
+      Object.keys(dataRef.current).forEach(monthKey => {
+        const rows = dataRef.current[monthKey];
+        if (!Array.isArray(rows)) return;
+        cleanData[monthKey] = rows.map((row, idx) => ({ ...row, id: idx + 1 }));
+      });
+      const settingsToSave = sanitizeForFirestore(settingsRef.current);
+      await Promise.race([
+        setDoc(ref, { logbookData: cleanData, settings: settingsToSave, updatedAt: new Date().toISOString() }, { merge: true }),
+        timeoutPromise,
+      ]);
+
+      // Record sync timestamp
+      const now = new Date();
+      localStorage.setItem(lsSaveKey(user.uid), now.toISOString());
+      const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+      const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      setLastSyncTime(`${dateStr} · ${timeStr}`);
+      setSyncStatus("synced");
+      setTimeout(() => setSyncStatus("idle"), 3000);
+    } catch (e) {
+      console.error("Sync error:", e);
+      setSyncStatus("error");
+      setTimeout(() => setSyncStatus("idle"), 5000);
+    }
+  };
+
+  // ── Conflict resolution: Keep Local — push local data over cloud ──
+  const resolveKeepLocal = async () => {
+    setSyncConflict(null);
+    await syncData();
+  };
+
+  // ── Conflict resolution: Keep Cloud — pull cloud data into local ──
+  const resolveKeepCloud = () => {
+    if (!syncConflict?.cloudData) return;
+    applyDocData(syncConflict.cloudData);
+    const { logbookData, settings: cloudSettings } = syncConflict.cloudData;
+    if (logbookData) localStorage.setItem(lsKey(user.uid), JSON.stringify(logbookData));
+    if (cloudSettings) localStorage.setItem(lsSettingsKey(user.uid), JSON.stringify(cloudSettings));
+    const now = new Date();
+    localStorage.setItem(lsSaveKey(user.uid), now.toISOString());
+    const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    setLastSyncTime(`${dateStr} · ${timeStr}`);
+    setSyncConflict(null);
+    setSyncStatus("synced");
+    setTimeout(() => setSyncStatus("idle"), 3000);
   };
 
   // ── Save data to Firestore ──
@@ -1424,28 +1524,40 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
             {refreshStatus === "refreshing" && (
               <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
             )}
-            {refreshStatus === "refreshed" && (
-              <span style={{ fontSize: 11, color: "#22c55e", letterSpacing: "0.1em", fontWeight: 700 }}>✓ REFRESHED</span>
+            {/* Offline indicator */}
+            {!isOnline && (
+              <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700, background: "rgba(245,197,66,0.1)", border: "1px solid rgba(245,197,66,0.3)", borderRadius: 3, padding: "2px 8px" }}>
+                ✈ OFFLINE
+              </span>
             )}
-            {refreshStatus === "error" && (
-              <span style={{ fontSize: 11, color: "#ef4444", letterSpacing: "0.1em", fontWeight: 700 }}>✗ REFRESH FAILED</span>
+            {/* Sync status chips */}
+            {isOnline && syncStatus === "synced" && (
+              <span style={{ fontSize: 11, color: "#22c55e", letterSpacing: "0.1em", fontWeight: 700 }}>✓ SYNCED</span>
             )}
-              {/* Refresh */}
+            {isOnline && syncStatus === "error" && (
+              <span style={{ fontSize: 11, color: "#ef4444", letterSpacing: "0.1em", fontWeight: 700 }}>✗ SYNC FAILED</span>
+            )}
+            {isOnline && lastSyncTime && syncStatus === "idle" && (
+              <span style={{ fontSize: 10, color: "#3a6a8a", letterSpacing: "0.08em", fontStyle: "italic" }}>
+                SYNCED · {lastSyncTime}
+              </span>
+            )}
+              {/* SYNC button */}
               <button
-                onClick={refreshData}
-                disabled={refreshStatus === "refreshing"}
-                title={refreshStatus === "refreshing" ? "Refreshing..." : "Refresh data from cloud"}
+                onClick={syncData}
+                disabled={syncStatus === "syncing" || !isOnline}
+                title={!isOnline ? "Offline — connect to sync" : syncStatus === "syncing" ? "Syncing…" : "Sync to cloud"}
                 style={{
                   ...iconBtnStyle,
-                  color: refreshStatus === "refreshed" ? "#4fc77a" : refreshStatus === "error" ? "#ef4444" : refreshStatus === "refreshing" ? "#f5c542" : "#3a6a8a",
-                  borderColor: refreshStatus === "refreshed" ? "#4fc77a" : refreshStatus === "error" ? "#ef4444" : refreshStatus === "refreshing" ? "#f5c542" : "#1e3a5f",
-                  opacity: refreshStatus === "refreshing" ? 0.6 : 1,
-                  cursor: refreshStatus === "refreshing" ? "not-allowed" : "pointer",
+                  color: !isOnline ? "#2a4a6a" : syncStatus === "synced" ? "#22c55e" : syncStatus === "error" ? "#ef4444" : syncStatus === "syncing" ? "#f5c542" : "#3a6a8a",
+                  borderColor: !isOnline ? "#1e3a5f" : syncStatus === "synced" ? "#22c55e" : syncStatus === "error" ? "#ef4444" : syncStatus === "syncing" ? "#f5c542" : "#1e3a5f",
+                  opacity: (syncStatus === "syncing" || !isOnline) ? 0.4 : 1,
+                  cursor: (syncStatus === "syncing" || !isOnline) ? "not-allowed" : "pointer",
                 }}
               >
                 <svg
                   width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  style={{ animation: refreshStatus === "refreshing" ? "spin 1s linear infinite" : "none" }}
+                  style={{ animation: syncStatus === "syncing" ? "spin 1s linear infinite" : "none" }}
                 >
                   <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
                   <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
@@ -2804,6 +2916,69 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         type={feedbackType}
         user={user}
       />
+
+      {/* ── SYNC CONFLICT MODAL ── */}
+      {/* Shown when Firestore has newer data than this device's last sync */}
+      {syncConflict && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 4000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+          fontFamily: "var(--elb-font, 'Courier New', monospace)",
+        }}>
+          <div style={{
+            background: "var(--cb-surface-1, #141a2e)",
+            border: "1px solid rgba(245,197,66,0.3)", borderTop: "2px solid #f5c542",
+            borderRadius: 6, padding: "20px 22px 18px",
+            maxWidth: 420, width: "100%",
+            boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
+          }}>
+            <div style={{ fontSize: 10, letterSpacing: "0.16em", color: "#f5c542", marginBottom: 5 }}>SYNC CONFLICT</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em", marginBottom: 12 }}>
+              CLOUD HAS NEWER DATA
+            </div>
+            <div style={{ height: 1, background: "rgba(245,197,66,0.2)", marginBottom: 14 }} />
+            <div style={{ fontSize: 13, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.7, marginBottom: 18 }}>
+              Another device synced to the cloud after your last sync. Choose which version to keep.
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button
+                onClick={resolveKeepCloud}
+                style={{
+                  background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
+                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px", cursor: "pointer",
+                }}
+              >☁ KEEP CLOUD</button>
+              <button
+                onClick={resolveKeepLocal}
+                style={{
+                  background: "rgba(245,197,66,0.10)", border: "1px solid #f5c542", borderRadius: 4,
+                  color: "#f5c542", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 20px", cursor: "pointer", fontWeight: 700,
+                }}
+              >💾 KEEP LOCAL</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MIGRATION OVERLAY ── */}
+      {/* Shown once on first load when pulling existing data from Firestore into localStorage */}
+      {migrating && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(10,16,32,0.92)", zIndex: 5000,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontFamily: "var(--elb-font, 'Courier New', monospace)",
+        }}>
+          <div style={{ textAlign: "center", color: "var(--elb-acc, #3FE0C5)" }}>
+            <div style={{ fontSize: 28, marginBottom: 14 }}>✈</div>
+            <div style={{ fontSize: 13, letterSpacing: "0.18em", marginBottom: 8 }}>MIGRATING YOUR DATA</div>
+            <div style={{ fontSize: 11, letterSpacing: "0.1em", color: "#7c87a3" }}>
+              One-time setup · Your logbook is moving to local storage
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── FOOTER ── */}
       <div style={{
