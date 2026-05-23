@@ -3,9 +3,10 @@ import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
 import { db, auth, googleProvider } from "./firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, getDoc, onSnapshot, addDoc, collection } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
+import FeedbackModal from "./FeedbackModal";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -471,6 +472,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackType, setFeedbackType] = useState("bug");
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
   // Branded confirmation modal (replaces window.confirm)
@@ -2914,6 +2917,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         onPreview={setPreviewSettings}
         userEmail={user?.email}
         onDeleteAccount={onDeleteAccount}
+        onReportBug={() => { setFeedbackType("bug"); setFeedbackOpen(true); }}
+        onRequestFeature={() => { setFeedbackType("feature"); setFeedbackOpen(true); }}
       />
 
       {/* ── BRANDED CONFIRM DIALOG (replaces window.confirm) ── */}
@@ -2964,6 +2969,14 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         settings={settings}
         user={user}
         onImport={handleImport}
+      />
+
+      {/* ── FEEDBACK MODAL ── */}
+      <FeedbackModal
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        type={feedbackType}
+        user={user}
       />
 
       {/* ── FOOTER ── */}

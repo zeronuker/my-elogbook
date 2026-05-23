@@ -104,7 +104,15 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.2", date: "May 2026", current: true,
+    v: "v6.3", date: "May 2026", current: true,
+    title: "In-app feedback · bug reports · feature requests",
+    notes: [
+      "NEW: In-app feedback system — Report a Bug and Suggest a Feature now open a native modal instead of an external link.",
+      "Feedback submissions are stored in Firestore and include user email, app version, and timestamp — no extra login required.",
+    ],
+  },
+  {
+    v: "v6.2", date: "May 2026", current: false,
     title: "Column visibility · UX polish · live preview",
     notes: [
       "Column visibility: toggle any logbook column on/off from Settings → Appearance.",
@@ -235,7 +243,7 @@ const AUTO_SAVE_OPTIONS = [
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount }) {
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReportBug, onRequestFeature }) {
   const [tab, setTab]               = useState("profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -327,7 +335,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
-          {tab === "misc"        && <MiscTab />}
+          {tab === "misc"        && <MiscTab onReportBug={onReportBug} onRequestFeature={onRequestFeature} />}
         </div>
 
         {/* ── FOOT ── */}
@@ -868,7 +876,7 @@ const MISC_CARDS = [
   },
 ];
 
-function MiscTab() {
+function MiscTab({ onReportBug, onRequestFeature }) {
   const [showHistory, setShowHistory] = useState(false);
   const currentEntry = CHANGELOG.find(e => e.current);
   const pastEntries  = CHANGELOG.filter(e => !e.current);
@@ -896,23 +904,23 @@ function MiscTab() {
         ))}
         {/* Combined bug + feature banner */}
         <div className="sm-misc-card sm-misc-card-split">
-          <a href="https://claudeborne.my/bug-report" target="_blank" rel="noopener noreferrer" className="sm-misc-split-item">
+          <button className="sm-misc-split-item" onClick={onReportBug} style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", width: "100%" }}>
             <span className="sm-misc-card-icon">🐛</span>
             <div className="sm-misc-card-body">
               <div className="sm-misc-card-title">REPORT A BUG</div>
               <div className="sm-misc-card-desc">Something broken? Let us know</div>
             </div>
-            <span className="sm-misc-card-arrow">↗</span>
-          </a>
+            <span className="sm-misc-card-arrow">→</span>
+          </button>
           <div className="sm-misc-split-divider" />
-          <a href="https://claudeborne.my/feature-request" target="_blank" rel="noopener noreferrer" className="sm-misc-split-item">
+          <button className="sm-misc-split-item" onClick={onRequestFeature} style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", width: "100%" }}>
             <span className="sm-misc-card-icon">💡</span>
             <div className="sm-misc-card-body">
               <div className="sm-misc-card-title">SUGGEST A FEATURE</div>
               <div className="sm-misc-card-desc">Request something new</div>
             </div>
-            <span className="sm-misc-card-arrow">↗</span>
-          </a>
+            <span className="sm-misc-card-arrow">→</span>
+          </button>
         </div>
       </div>
 
