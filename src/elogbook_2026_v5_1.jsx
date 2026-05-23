@@ -1625,7 +1625,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 <span style={{ color: "#4fc3f7", fontWeight: 700 }}>
                   {MONTHS[selectedMonth].toUpperCase()} {selectedYear} —
                 </span>
-                {" "}Click any cell to enter data. Time fields accept HH:MM (e.g. 02:30) or HHMM (e.g. 0230) format. TOTAL auto-calculates from Day + Night columns. ({rows.length} rows)
+                {" "}Click any cell to enter data. Date field accepts day number only (e.g. 15). Time fields accept HH:MM (e.g. 02:30) or HHMM (e.g. 0230) format. TOTAL auto-calculates from Day + Night columns. ({rows.length} rows)
               </div>
             </div>
 
