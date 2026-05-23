@@ -127,6 +127,8 @@ const CHANGELOG = [
       "FIX: Browser close warning now fires when last save errored (not just when dirty).",
       "FIX: loadData no longer calls setData({}) when Firestore logbookData is an empty map — prevents wiping unsaved local data.",
       "FIX: saveData now aborts with an error if cleanData resolves to {} despite source having real month keys — last-resort data-loss guard.",
+      "FIX: Dates entered as DD/MM or DD/MM/YYYY are normalised to day-number on input — prevents silent export omission.",
+      "FIX: Export now includes rows with DD/MM format dates (e.g. '15/05') in addition to day-number and DD/MM/YYYY formats.",
     ],
   },
   {

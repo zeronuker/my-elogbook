@@ -926,6 +926,15 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
           if (hh >= 24 || mm >= 60) normalizedValue = "";
         }
       }
+      // Normalise date input: strip month/year if user types "15/05" or "15/05/2026" — store only the day number
+      // The month is already encoded in the month key; day number is all that's needed.
+      if (field === "date" && normalizedValue) {
+        const parts = normalizedValue.split("/");
+        if (parts.length >= 2) {
+          // "15/05" → "15",  "15/05/2026" → "15"
+          normalizedValue = parts[0].replace(/^0+/, "") || parts[0]; // strip leading zeros except "0"
+        }
+      }
       const AUTO_CAPTAIN_RANKS = ["Flight Examiner", "Flight Instructor", "Captain"];
       const updatedRow = { ...current[rowIdx], [field]: normalizedValue };
       if (field === "date" && normalizedValue && AUTO_CAPTAIN_RANKS.includes(settingsRef.current.defaultRank) && !updatedRow.captain) {

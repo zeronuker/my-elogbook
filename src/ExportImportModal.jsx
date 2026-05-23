@@ -81,13 +81,20 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
         let rowDate;
         if (typeof row.date === 'string' && row.date.includes('/')) {
-          // Already a full DD/MM/YYYY string (e.g. from a previous import)
           const parts = row.date.split('/');
           if (parts.length === 3) {
+            // Full DD/MM/YYYY (imported rows)
             const day   = parts[0].padStart(2, '0');
             const month = parts[1].padStart(2, '0');
             const year  = parts[2];
             rowDate = new Date(`${year}-${month}-${day}T00:00:00Z`);
+          } else if (parts.length === 2) {
+            // DD/MM entered manually (e.g. "15/05") — reconstruct year from month key
+            const day = parseInt(parts[0]);
+            if (!day || isNaN(day) || day < 1 || day > 31) return;
+            const month = String(keyMonthIdx + 1).padStart(2, '0');
+            const dayStr = String(day).padStart(2, '0');
+            rowDate = new Date(`${keyYear}-${month}-${dayStr}T00:00:00Z`);
           } else {
             return;
           }
