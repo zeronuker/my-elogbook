@@ -1815,8 +1815,22 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                         for (let ci = 0; ci < columns.length; ci++) {
                           const col = columns[ci];
 
-                          // Skip hidden columns in data rows
-                          if (hiddenCols.has(col.key)) continue;
+                          // Hidden column: render a narrow stub <td> (same width as the stub <th>)
+                          // so data rows stay column-aligned with the header. Skipping entirely
+                          // causes all subsequent cells to shift left under the wrong header.
+                          if (hiddenCols.has(col.key)) {
+                            if (!skipAutoCalc) {
+                              cells.push(
+                                <td
+                                  key={`stub-${col.key}`}
+                                  onClick={() => unhideColumn(col.key)}
+                                  title={`Show ${col.label}`}
+                                  style={{ width: 13, minWidth: 13, maxWidth: 13, padding: 0, cursor: "pointer", borderRight: "1px solid rgba(30,58,95,0.4)" }}
+                                />
+                              );
+                            }
+                            continue;
+                          }
 
                           const isEditing = editingCell?.rowIdx === rowIdx && editingCell?.field === col.key;
                           const isTime = timeCols.includes(col.key);
@@ -2049,21 +2063,23 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                   <td colSpan={totalsLabelColSpan} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
                     MONTHLY TOTALS →
                   </td>
-                  {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].filter(isColVisible).map(k => (
-                    <td key={k} style={{
-                      ...tdStyle,
-                      textAlign: "center",
-                      color: k === "total" ? "#4fc3f7"
-                        : (k === "dayP1" || k === "nightP1") ? "#22c55e"
-                        : (k === "dayP2" || k === "nightP2") ? "#eab308"
-                        : (k === "dayP1US" || k === "nightP1US") ? "#ef4444"
-                        : "#4fc3f7",
-                      fontWeight: 700,
-                      fontSize: 14,
-                    }}>
-                      {totalsRow[k]}
-                    </td>
-                  ))}
+                  {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].map(k =>
+                    hiddenCols.has(k)
+                      ? <td key={`stub-${k}`} onClick={() => unhideColumn(k)} title={`Show ${k}`} style={{ width: 13, minWidth: 13, maxWidth: 13, padding: 0, cursor: "pointer", borderRight: "1px solid rgba(30,58,95,0.4)" }} />
+                      : <td key={k} style={{
+                          ...tdStyle,
+                          textAlign: "center",
+                          color: k === "total" ? "#4fc3f7"
+                            : (k === "dayP1" || k === "nightP1") ? "#22c55e"
+                            : (k === "dayP2" || k === "nightP2") ? "#eab308"
+                            : (k === "dayP1US" || k === "nightP1US") ? "#ef4444"
+                            : "#4fc3f7",
+                          fontWeight: 700,
+                          fontSize: 14,
+                        }}>
+                          {totalsRow[k]}
+                        </td>
+                  )}
                   <td style={{ ...tdStyle }} />
                   <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px" }}>
                     <button
