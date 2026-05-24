@@ -474,6 +474,10 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef(initialData()); // initialised to match data state — prevents {} being written if a save fires before first effect run
   const dataLoadedRef = useRef(false); // true only after a successful loadData — prevents saving initialData() over real data
+  const localDirtyRef = useRef(false); // true if local data changed since last cloud sync — used for conflict detection
+  const saveChipDebounceRef = useRef(null); // debounce: saving → saved (1 s after last keystroke)
+  const saveChipFadeRef     = useRef(null); // saved → fading (after 2 s display)
+  const saveChipIdleRef     = useRef(null); // fading → idle (after 0.5 s fade)
   const [migrating, setMigrating] = useState(false); // true while pulling existing data from Firestore on first load
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
@@ -554,9 +558,31 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
   };
 
   // ── localStorage helpers ──
-  const lsKey      = (uid) => `elb_data_${uid}`;
-  const lsSettingsKey = (uid) => `elb_settings_${uid}`;
-  const lsSaveKey  = (uid) => `elb_last_local_save_${uid}`;
+  const lsKey            = (uid) => `elb_data_${uid}`;
+  const lsSettingsKey    = (uid) => `elb_settings_${uid}`;
+  const lsSaveKey        = (uid) => `elb_last_local_save_${uid}`;
+  const lsSyncDisplayKey = (uid) => `elb_last_sync_display_${uid}`;
+
+  // ── Background cloud timestamp check ──
+  // Silently fetches Firestore updatedAt and compares to local lastSyncedAt.
+  // Shows cloud-newer banner if cloud is ahead. Never modifies local data.
+  const runCloudCheck = async (uid) => {
+    if (!navigator.onLine) return;
+    try {
+      const ref  = doc(db, "users", uid, "logbook", "data");
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const cloudUpdatedAt = snap.data().updatedAt ? new Date(snap.data().updatedAt).getTime() : 0;
+        const lastSyncedAt   = localStorage.getItem(lsSaveKey(uid));
+        const lastSyncedMs   = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
+        if (cloudUpdatedAt > lastSyncedMs && cloudUpdatedAt > 0 && lastSyncedMs > 0) {
+          setCloudNewerBanner(true);
+        }
+      }
+    } catch (err) {
+      console.warn("Background cloud check failed:", err);
+    }
+  };
 
   // ── Load data — localStorage first, Firestore fallback (migration) ──
   const loadData = async (uid) => {
@@ -573,25 +599,12 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         });
         dataLoadedRef.current = true;
 
-        // Background check: is the cloud newer than our last sync?
-        // Runs silently — only shows a banner, never modifies local data automatically.
-        if (navigator.onLine) {
-          try {
-            const ref  = doc(db, "users", uid, "logbook", "data");
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-              const cloudUpdatedAt = snap.data().updatedAt ? new Date(snap.data().updatedAt).getTime() : 0;
-              const lastSyncedAt   = localStorage.getItem(lsSaveKey(uid));
-              const lastSyncedMs   = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
-              if (cloudUpdatedAt > lastSyncedMs && cloudUpdatedAt > 0 && lastSyncedMs > 0) {
-                setCloudNewerBanner(true);
-              }
-            }
-          } catch (checkErr) {
-            // Silent — background check failure should never affect the user
-            console.warn("Background cloud check failed:", checkErr);
-          }
-        }
+        // Restore last sync display timestamp so toolbar shows it even offline
+        const storedSyncDisplay = localStorage.getItem(lsSyncDisplayKey(uid));
+        if (storedSyncDisplay) setLastSyncTime(storedSyncDisplay);
+
+        // Background cloud check — runs silently, shows banner if cloud is newer
+        runCloudCheck(uid);
         return;
       }
 
@@ -606,7 +619,15 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         // Persist to localStorage so future loads are instant
         if (docData.logbookData) localStorage.setItem(lsKey(uid), JSON.stringify(docData.logbookData));
         if (docData.settings)    localStorage.setItem(lsSettingsKey(uid), JSON.stringify(docData.settings));
-        localStorage.setItem(lsSaveKey(uid), new Date().toISOString());
+        const now = new Date();
+        const syncIso = now.toISOString();
+        const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+        const displayStr = `${dateStr} · ${timeStr}`;
+        localStorage.setItem(lsSaveKey(uid), syncIso);
+        localStorage.setItem(lsSyncDisplayKey(uid), displayStr);
+        setLastSyncTime(displayStr);
+        localDirtyRef.current = false;
       }
       setMigrating(false);
     } catch (err) {
@@ -651,9 +672,13 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     return () => window.removeEventListener("beforeunload", handler);
   }, [saveStatus]);
 
-  // ── Track online/offline status ──
+  // ── Track online/offline status + cloud check on reconnect ──
   useEffect(() => {
-    const goOnline  = () => setIsOnline(true);
+    const goOnline = () => {
+      setIsOnline(true);
+      // Run cloud check when connection is restored — banner appears if cloud is ahead
+      if (user?.uid) runCloudCheck(user.uid);
+    };
     const goOffline = () => setIsOnline(false);
     window.addEventListener("online",  goOnline);
     window.addEventListener("offline", goOffline);
@@ -661,7 +686,18 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       window.removeEventListener("online",  goOnline);
       window.removeEventListener("offline", goOffline);
     };
-  }, []);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Cloud check on app resume (tab/PWA comes back to foreground) ──
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && user?.uid && navigator.onLine) {
+        runCloudCheck(user.uid);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Keep settingsRef in sync so saveData never reads a stale closure ──
   useEffect(() => { settingsRef.current = settings; }, [settings]);
@@ -735,16 +771,35 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       // PULL — check if Firestore has newer data than last sync
       const snap = await Promise.race([getDoc(ref), timeoutPromise]);
       if (snap.exists()) {
-        const cloudData = snap.data();
-        const cloudUpdatedAt  = cloudData.updatedAt ? new Date(cloudData.updatedAt).getTime()  : 0;
-        const lastSyncedAt    = localStorage.getItem(lsSaveKey(user.uid));
-        const lastSyncedMs    = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
+        const cloudData      = snap.data();
+        const cloudUpdatedAt = cloudData.updatedAt ? new Date(cloudData.updatedAt).getTime() : 0;
+        const lastSyncedAt   = localStorage.getItem(lsSaveKey(user.uid));
+        const lastSyncedMs   = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
 
         if (cloudUpdatedAt > lastSyncedMs && cloudUpdatedAt > 0 && lastSyncedMs > 0) {
-          // Firestore is newer than our last sync — conflict
-          setSyncStatus("idle");
-          setSyncConflict({ cloudData });
-          return;
+          if (localDirtyRef.current) {
+            // Cloud is newer AND local has unsaved changes — genuine conflict, let user decide
+            setSyncStatus("idle");
+            setSyncConflict({ cloudData });
+            return;
+          } else {
+            // Cloud is newer but local has no changes since last sync — silent pull
+            applyDocData(cloudData);
+            if (cloudData.logbookData) localStorage.setItem(lsKey(user.uid), JSON.stringify(cloudData.logbookData));
+            if (cloudData.settings)    localStorage.setItem(lsSettingsKey(user.uid), JSON.stringify(cloudData.settings));
+            const now = new Date();
+            const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+            const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+            const displayStr = `${dateStr} · ${timeStr}`;
+            localStorage.setItem(lsSaveKey(user.uid), now.toISOString());
+            localStorage.setItem(lsSyncDisplayKey(user.uid), displayStr);
+            setLastSyncTime(displayStr);
+            setCloudNewerBanner(false);
+            localDirtyRef.current = false;
+            setSyncStatus("synced");
+            setTimeout(() => setSyncStatus("idle"), 3000);
+            return;
+          }
         }
       }
 
@@ -763,10 +818,13 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
       // Record sync timestamp
       const now = new Date();
-      localStorage.setItem(lsSaveKey(user.uid), now.toISOString());
       const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
       const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-      setLastSyncTime(`${dateStr} · ${timeStr}`);
+      const displayStr = `${dateStr} · ${timeStr}`;
+      localStorage.setItem(lsSaveKey(user.uid), now.toISOString());
+      localStorage.setItem(lsSyncDisplayKey(user.uid), displayStr);
+      setLastSyncTime(displayStr);
+      localDirtyRef.current = false;
       setCloudNewerBanner(false);
       setSyncStatus("synced");
       setTimeout(() => setSyncStatus("idle"), 3000);
@@ -791,10 +849,13 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     if (logbookData) localStorage.setItem(lsKey(user.uid), JSON.stringify(logbookData));
     if (cloudSettings) localStorage.setItem(lsSettingsKey(user.uid), JSON.stringify(cloudSettings));
     const now = new Date();
-    localStorage.setItem(lsSaveKey(user.uid), now.toISOString());
     const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-    setLastSyncTime(`${dateStr} · ${timeStr}`);
+    const displayStr = `${dateStr} · ${timeStr}`;
+    localStorage.setItem(lsSaveKey(user.uid), now.toISOString());
+    localStorage.setItem(lsSyncDisplayKey(user.uid), displayStr);
+    setLastSyncTime(displayStr);
+    localDirtyRef.current = false;
     setCloudNewerBanner(false);
     setSyncConflict(null);
     setSyncStatus("synced");
@@ -821,7 +882,21 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
     if (!user) return true;
     // Never save before loadData has completed — prevents overwriting real data with initialData() empty rows
     if (!dataLoadedRef.current) return false;
+
+    // ── Visual: show SAVING... immediately, transition to SAVED after 1s of no edits ──
+    // The actual localStorage write is instant — this is purely for user feedback.
     setSaveStatus("saving");
+    clearTimeout(saveChipDebounceRef.current);
+    clearTimeout(saveChipFadeRef.current);
+    clearTimeout(saveChipIdleRef.current);
+    saveChipDebounceRef.current = setTimeout(() => {
+      setSaveStatus("saved");
+      saveChipFadeRef.current = setTimeout(() => {
+        setSaveStatus("fading");
+        saveChipIdleRef.current = setTimeout(() => setSaveStatus("idle"), 500);
+      }, 2000);
+    }, 1000);
+
     try {
       // Regenerate IDs sequentially for each month to prevent duplicates
       const cleanData = {};
@@ -839,11 +914,13 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       localStorage.setItem(lsKey(user.uid), JSON.stringify(cleanData));
       localStorage.setItem(lsSettingsKey(user.uid), JSON.stringify(settingsRef.current));
 
+      // Mark local as dirty — used by conflict detection to distinguish Scenario 1 vs 2
+      localDirtyRef.current = true;
+
       const now = new Date();
       const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
       const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
       setLastSaveTime(`${dateStr} • ${timeStr}`);
-      setSaveStatus("saved");
       return true;
     } catch (e) {
       console.error("Save error:", e);
@@ -1401,19 +1478,15 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         : undefined,
     }}>
       <style>{`
-        @keyframes spin    { from { transform: rotate(0deg);   } to { transform: rotate(360deg); } }
-        @keyframes fadeIn  { from { opacity: 0;                } to { opacity: 1;                } }
-        @keyframes blink   { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-        @keyframes popIn   { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
-        @keyframes cb-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.75); } }
+        @keyframes spin      { from { transform: rotate(0deg);   } to { transform: rotate(360deg); } }
+        @keyframes fadeIn    { from { opacity: 0;                } to { opacity: 1;                } }
+        @keyframes blink     { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+        @keyframes popIn     { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+        @keyframes cb-pulse  { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.75); } }
+        @keyframes save-pulse { 0% { opacity:0; text-shadow: 0 0 12px rgba(34,197,94,0.9); }
+                                40% { opacity:1; text-shadow: 0 0 8px rgba(34,197,94,0.6); }
+                                100% { opacity:1; text-shadow: none; } }
         ${themeCss}
-        @media (max-width: 768px) {
-          .save-button-text { display: none; }
-          .save-button { padding: 4px 8px !important; }
-        }
-        @media (min-width: 769px) {
-          .save-button-icon { display: none; }
-        }
         /* ── Topbar responsive ── */
         .elb-topbar {
           overflow: hidden;
@@ -1637,46 +1710,36 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
                 </svg>
               </button>
             </div>
-          {/* Save row: chip + SAVE NOW */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "flex-end" }}>
-            {/* Save chip */}
-            {(() => {
-              const chipStyle = (color) => ({ fontStyle: "italic", fontSize: 10, letterSpacing: "0.10em", color });
-              if (saveStatus === "saving") return <span style={chipStyle("#3B8DFF")}>Saving…</span>;
-              if (saveStatus === "saved" && lastSaveTime) return <span style={chipStyle("#22c55e")}>Saved · {lastSaveTime}</span>;
-              if (saveStatus === "error") return (
-                <span style={{ ...chipStyle("#ef4444"), cursor: "pointer" }} onClick={() => saveData(data)} title="Click to retry">
-                  Save error · Retry
-                </span>
-              );
-              return null;
-            })()}
-            {/* SAVE NOW button */}
-            {(() => {
-              const isRed   = saveStatus === "error";
-              const color   = isRed ? "#ef4444" : "var(--elb-acc,#4fc3f7)";
-              const bg      = isRed ? "linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.08))"
-                                    : "linear-gradient(135deg,var(--cb-surface-2,#1b2340),var(--cb-surface-1,#141a2e))";
-              const shadow  = isRed ? "0 0 8px rgba(239,68,68,0.25)" : "0 0 8px rgba(79,195,247,0.2)";
-              return (
-                <button
-                  onClick={() => saveData(data)}
-                  disabled={saveStatus === "saving"}
-                  title="Save to local storage"
-                  className="save-button"
-                  style={{
-                    flexShrink: 0, background: bg,
-                    border: `1px solid ${color}`, borderRadius: 4, color,
-                    fontFamily: "'Courier New',monospace", fontSize: 11, letterSpacing: "0.15em",
-                    padding: "4px 12px", cursor: saveStatus === "saving" ? "wait" : "pointer",
-                    boxShadow: shadow, opacity: saveStatus === "saving" ? 0.7 : 1, fontWeight: 700,
-                  }}
-                >
-                  <span className="save-button-text">{saveStatus === "saving" ? "⏳ SAVING" : saveStatus === "error" ? "❌ ERROR" : "💾 SAVE NOW"}</span>
-                  <span className="save-button-icon">{saveStatus === "saving" ? "⏳" : saveStatus === "error" ? "❌" : "💾"}</span>
-                </button>
-              );
-            })()}
+          {/* Save chip — right-aligned, purely visual, does not affect actual save behaviour */}
+          <div style={{ display: "flex", justifyContent: "flex-end", minHeight: 18 }}>
+            {saveStatus === "saving" && (
+              <span style={{
+                fontSize: 10, fontStyle: "italic", letterSpacing: "0.10em",
+                color: "#f5c542", display: "flex", alignItems: "center", gap: 5,
+              }}>
+                <span style={{ display: "inline-block", animation: "spin 0.7s linear infinite", fontSize: 12 }}>↻</span>
+                SAVING...
+              </span>
+            )}
+            {(saveStatus === "saved" || saveStatus === "fading") && lastSaveTime && (
+              <span style={{
+                fontSize: 10, fontStyle: "italic", fontWeight: 700, letterSpacing: "0.10em",
+                color: "#22c55e", display: "flex", alignItems: "center", gap: 5,
+                animation: saveStatus === "saved" ? "save-pulse 0.6s ease-out" : "none",
+                opacity: saveStatus === "fading" ? 0 : 1,
+                transition: saveStatus === "fading" ? "opacity 0.5s ease" : "none",
+              }}>
+                ✓ SAVED TO LOCAL STORAGE &nbsp;{lastSaveTime}
+              </span>
+            )}
+            {saveStatus === "error" && (
+              <span style={{
+                fontSize: 10, fontStyle: "italic", letterSpacing: "0.10em",
+                color: "#ef4444", cursor: "pointer",
+              }} onClick={() => saveData(data)} title="Click to retry">
+                ✕ SAVE ERROR · RETRY
+              </span>
+            )}
           </div>
           </div>
         </div>
@@ -3042,7 +3105,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
 
       {/* ── PWA UPDATE PROMPT ── */}
       {/* Only shown when a new service worker is waiting AND saves are not pending */}
-      {needRefresh && saveStatus === "saved" && (
+      {needRefresh && saveStatus !== "saving" && (
         <div style={{
           position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)",
           background: "var(--cb-surface-1, #141a2e)",

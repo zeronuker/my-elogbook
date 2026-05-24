@@ -114,6 +114,11 @@ const CHANGELOG = [
       "NEW: Auto-update prompt — notifies you when a new version is available, updates safely after saves complete.",
       "IMP: Save-on-change — data writes to device storage on every edit. Auto-save interval setting removed.",
       "IMP: Existing users migrated automatically on first load — your Firestore data is pulled to local storage seamlessly.",
+      "IMP: Last synced timestamp now persists across sessions — toolbar always shows when data was last pushed to cloud, even offline.",
+      "IMP: Cloud-newer check now runs on reconnect and when app returns to foreground — banner appears automatically if another device has synced.",
+      "IMP: Sync no longer shows conflict modal when local data is unchanged — silently pulls cloud data if no local edits exist since last sync.",
+      "IMP: Save chip reworked — SAVING... (yellow, animated) transitions to SAVED TO LOCAL STORAGE (green) after editing pauses. SAVE NOW button removed.",
+      "FIX: Last-synced timestamp was incorrectly updated on every local save — conflict detection now works correctly across multiple devices.",
     ],
   },
   {
