@@ -833,9 +833,11 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       });
 
       // Write to localStorage — instant, no network required
+      // NOTE: lsSaveKey is intentionally NOT updated here — it tracks cloud sync time only,
+      // not local save time. Updating it here would fool the conflict detection into thinking
+      // local data is newer than Firestore, suppressing the cloud-newer banner.
       localStorage.setItem(lsKey(user.uid), JSON.stringify(cleanData));
       localStorage.setItem(lsSettingsKey(user.uid), JSON.stringify(settingsRef.current));
-      localStorage.setItem(lsSaveKey(user.uid), new Date().toISOString());
 
       const now = new Date();
       const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
