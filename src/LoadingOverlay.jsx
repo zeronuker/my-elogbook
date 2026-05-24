@@ -27,7 +27,7 @@ function LoadingOverlay({ countdown }) {
         left: 0,
         width: '100%',
         height: '100%',
-        background: '#0a0d12',
+        background: '#0a1020',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -41,8 +41,8 @@ function LoadingOverlay({ countdown }) {
         style={{
           width: '48px',
           height: '48px',
-          border: '3px solid rgba(79, 195, 247, 0.2)',
-          borderTop: '3px solid #4fc3f7',
+          border: '3px solid rgba(63, 224, 197, 0.15)',
+          borderTop: '3px solid #3FE0C5',
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }}
@@ -51,8 +51,8 @@ function LoadingOverlay({ countdown }) {
       {/* Message */}
       <div
         style={{
-          color: '#4fc3f7',
-          fontFamily: 'Courier New',
+          color: '#3FE0C5',
+          fontFamily: "'JetBrains Mono', monospace",
           fontSize: '14px',
           fontWeight: '500',
           textAlign: 'center',

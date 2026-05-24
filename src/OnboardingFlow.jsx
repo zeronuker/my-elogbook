@@ -245,12 +245,14 @@ function OnboardingFlow({
 
   // CSS
   const styles = `
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Tourney:wght@700&display=swap');
     :root {
-      --bg:#0a0d12;--surface:#0d1520;
-      --border:#1e3a5f;--border2:#0f1e2d;
-      --accent:#4fc3f7;--green:#22c55e;--red:#ef4444;
-      --text:#ffffff;--muted:#b8d6e5;--dim:#2a4a6a;
-      --mono:'Courier New',monospace;
+      --bg:#0a1020;--surface:#141a2e;--raised:#1b2340;
+      --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.07);
+      --accent:#3FE0C5;--green:#22c55e;--red:#ef4444;
+      --text:#e8ecf5;--muted:#b8c0d4;--dim:#7c87a3;
+      --mono:'JetBrains Mono',monospace;
+      --grad:linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -272,8 +274,8 @@ function OnboardingFlow({
       content: '';
       position: fixed; inset: 0;
       background-image:
-        linear-gradient(rgba(79,195,247,0.025) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(79,195,247,0.025) 1px,transparent 1px);
+        linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px);
       background-size: 40px 40px;
       pointer-events: none;
       z-index: -1;
@@ -290,8 +292,8 @@ function OnboardingFlow({
 
     .onb-prog-fill {
       height: 100%;
-      background: var(--accent);
-      box-shadow: 0 0 8px rgba(79,195,247,0.6);
+      background: var(--grad);
+      box-shadow: 0 0 8px rgba(63,224,197,0.5);
       transition: width 0.5s ease;
     }
 
@@ -328,7 +330,7 @@ function OnboardingFlow({
 
     .onb-cbar {
       height: 3px;
-      background: linear-gradient(90deg, var(--accent), #2196f3);
+      background: var(--grad);
     }
 
     .onb-cbody { padding: 26px 30px; }
@@ -374,7 +376,7 @@ function OnboardingFlow({
     .onb-field input,
     .onb-field select {
       width: 100%;
-      background: #080b10;
+      background: var(--raised);
       border: 1px solid var(--border);
       border-radius: 3px;
       color: var(--text);
@@ -415,12 +417,12 @@ function OnboardingFlow({
     }
 
     .onb-btn-p {
-      background: rgba(79,195,247,0.1);
+      background: rgba(63,224,197,0.1);
       border: 1px solid var(--accent);
       color: var(--accent);
     }
 
-    .onb-btn-p:hover { background: rgba(79,195,247,0.2); }
+    .onb-btn-p:hover { background: rgba(63,224,197,0.2); }
 
     .onb-btn-g {
       background: transparent;
@@ -443,7 +445,7 @@ function OnboardingFlow({
     .onb-btn-done:hover { background: rgba(34,197,94,0.22); }
 
     .onb-btn-google {
-      background: #080b10;
+      background: var(--raised);
       border: 1px solid var(--border);
       color: var(--text);
       display: flex;
@@ -498,16 +500,19 @@ function OnboardingFlow({
       width: 100%;
     }
 
-    .onb-land-logo {
-      font-size: 56px;
-      margin-bottom: 18px;
-      filter: drop-shadow(0 0 24px rgba(79,195,247,0.5));
+    .onb-land-logo-wrap {
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 16px rgba(63,224,197,0.55));
     }
 
     .onb-land-title {
-      font-size: 36px;
+      font-family: 'Tourney', sans-serif;
+      font-size: 32px;
       font-weight: 700;
-      color: var(--text);
+      background: var(--grad);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
       letter-spacing: 0.2em;
       margin-bottom: 5px;
     }
@@ -545,8 +550,8 @@ function OnboardingFlow({
     }
 
     .onb-badge-blue {
-      background: rgba(79,195,247,0.1);
-      border: 1px solid rgba(79,195,247,0.3);
+      background: rgba(63,224,197,0.1);
+      border: 1px solid rgba(63,224,197,0.3);
       color: var(--accent);
     }
 
@@ -574,8 +579,8 @@ function OnboardingFlow({
     }
 
     .onb-lbtn:hover { border-color: var(--muted); }
-    .onb-lbtn.signup { border-color: var(--accent); background: rgba(79,195,247,0.08); }
-    .onb-lbtn.signup:hover { background: rgba(79,195,247,0.15); border-color: var(--accent); }
+    .onb-lbtn.signup { border-color: var(--accent); background: rgba(63,224,197,0.08); }
+    .onb-lbtn.signup:hover { background: rgba(63,224,197,0.15); border-color: var(--accent); }
 
     .onb-lbtn-icon { font-size: 32px; margin-bottom: 12px; }
     .onb-lbtn-title { font-size: 15px; font-weight: 700; letter-spacing: 0.1em; color: var(--text); margin-bottom: 6px; }
@@ -639,7 +644,7 @@ function OnboardingFlow({
     }
 
     .onb-email-box {
-      background: #080b10;
+      background: var(--raised);
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 20px;
@@ -701,7 +706,7 @@ function OnboardingFlow({
     .onb-pwd-invalid { color: var(--red); }
 
     .onb-pwd-requirements {
-      background: rgba(79,195,247,0.04);
+      background: rgba(63,224,197,0.04);
       border: 1px solid var(--border);
       border-radius: 3px;
       padding: 10px 12px;
@@ -746,15 +751,27 @@ function OnboardingFlow({
   // Screen: Landing
   const ScreenLanding = () => (
     <div className="onb-land">
-      <div className="onb-land-logo">✈</div>
+      <div className="onb-land-logo-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="72" height="72">
+          <defs>
+            <linearGradient id="cb-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#3FE0C5"/>
+              <stop offset="55%" stopColor="#3B8DFF"/>
+              <stop offset="100%" stopColor="#5B6BFF"/>
+            </linearGradient>
+          </defs>
+          <polyline points="6,18 6,4 96,4 96,96 50,96" fill="none" stroke="url(#cb-grad)" strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter"/>
+          <text x="50" y="74" textAnchor="middle" fontFamily="Tourney,sans-serif" fontSize="52" fontWeight="700" fill="url(#cb-grad)">C</text>
+        </svg>
+      </div>
       <div className="onb-land-title">CLAUDEBORNE</div>
-      <div className="onb-land-ver">eLOGBOOK V6.2 · CAAM / MCAR 2016</div>
-      <div className="onb-land-tag">Your CAAM-compliant digital pilot logbook.<br/>Accessible anywhere. Secure. Always in sync.</div>
+      <div className="onb-land-ver">eLOGBOOK V6.4 · CAAM / MCAR 2016</div>
+      <div className="onb-land-tag">Your personal electronic logbook.<br/>Accessible anywhere. Works offline. Sync on demand.</div>
       <div className="onb-badges">
         <span className="onb-badge onb-badge-blue">✓ CAD 1901</span>
         <span className="onb-badge onb-badge-blue">✓ MCAR 2016 Part 69 & Part 74</span>
         <span className="onb-badge onb-badge-green">✓ FREE</span>
-        <span className="onb-badge onb-badge-green">✓ CLOUD SYNC</span>
+        <span className="onb-badge onb-badge-green">✓ OFFLINE-FIRST</span>
       </div>
       <div className="onb-land-btns">
         <div className="onb-lbtn" onClick={() => goTo('login')}>
@@ -882,7 +899,7 @@ function OnboardingFlow({
         <div className="onb-done-sub">Your logbook is set up and ready.<br/>Start logging your first flight now.</div>
         <div className="onb-done-pills">
           <span className="onb-badge onb-badge-green">✓ ACCOUNT CREATED</span>
-          <span className="onb-badge onb-badge-blue">✓ CLOUD SYNC ON</span>
+          <span className="onb-badge onb-badge-blue">✓ OFFLINE-READY</span>
           <span className="onb-badge onb-badge-blue">✓ DATA SECURED</span>
         </div>
         <button className="onb-btn onb-btn-done" onClick={handleOpenLogbook} disabled={isLoading}>
