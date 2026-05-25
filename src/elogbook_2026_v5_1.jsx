@@ -1531,7 +1531,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       }}>
         {/* LEFT: Brand */}
         <div className="elb-topbar-brand" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="/brand/icons/favicon-32.png" alt="ClaudeBorne" width="32" height="32" style={{ flexShrink: 0, display: "block" }} />
+          <img src="/brand/icons/icon-72.png" alt="ClaudeBorne" width="44" height="44" style={{ flexShrink: 0, display: "block" }} />
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <span style={{
               fontFamily: "'Tourney', system-ui, sans-serif",
