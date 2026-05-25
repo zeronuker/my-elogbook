@@ -265,6 +265,19 @@ function App() {
       setIsSigningUp(false)
       return { success: true }
     } catch (error) {
+      // COOP / popup-dismissed errors: the popup auth may have actually succeeded
+      // but Chrome's Cross-Origin-Opener-Policy blocked the message channel back.
+      // onAuthStateChanged will still fire if auth succeeded — don't show an error.
+      const silentCodes = [
+        'auth/popup-closed-by-user',
+        'auth/cancelled-popup-request',
+        'auth/popup-blocked',
+      ]
+      if (silentCodes.includes(error.code)) {
+        console.log('Google popup dismissed or COOP-blocked — waiting for onAuthStateChanged')
+        setIsSigningUp(false)
+        return { success: true }
+      }
       console.error('Google auth error:', error)
       setSignupError('Google sign-in failed.')
       setIsSigningUp(false)
