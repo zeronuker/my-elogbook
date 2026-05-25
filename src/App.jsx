@@ -3,11 +3,12 @@ import { auth, db } from './firebase'
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
-  reauthenticateWithPopup,
+  reauthenticateWithRedirect,
   deleteUser,
   sendEmailVerification
 } from 'firebase/auth'
@@ -28,6 +29,43 @@ function App() {
   const [authSuccess, setAuthSuccess] = useState(false)
   const prevUserRef = useRef(null)
   const onboardingDoneRef = useRef(false)
+
+  // Handle Google redirect result on app load (signInWithRedirect flow)
+  useEffect(() => {
+    getRedirectResult(auth).then(async (result) => {
+      if (!result) return // No redirect in progress — normal load
+      const googleUser = result.user
+      console.log('Google redirect result, user:', googleUser.email)
+
+      const profileSnap = await getDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'))
+      if (!profileSnap.exists()) {
+        // New user — create profile, stay on onboarding
+        await setDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'), {
+          email: googleUser.email,
+          fullName: googleUser.displayName || '',
+          staffId: '',
+          licenceNumber: '',
+          licenceType: 'ATPL(A)',
+          organization: '',
+          onboardingComplete: false,
+          emailVerified: true,
+          createdAt: new Date().toISOString()
+        })
+        setUser(googleUser)
+      } else {
+        // Existing user — navigate to logbook
+        const profileData = profileSnap.data()
+        const isComplete = profileData.onboardingComplete || profileData.emailVerified
+        setUser(googleUser)
+        if (isComplete) {
+          setAuthSuccess(true)
+          setCountdown(3)
+        }
+      }
+    }).catch((error) => {
+      console.error('Redirect result error:', error)
+    })
+  }, [])
 
   // Listen to auth state
   useEffect(() => {
@@ -216,72 +254,19 @@ function App() {
     }
   }
 
-  // Google signup/login
+  // Google signup/login — uses redirect (no popup) for PWA/iOS/COOP compatibility
   const handleGoogleAuth = async () => {
     setIsSigningUp(true)
     setSignupError(null)
-
     try {
       const provider = new GoogleAuthProvider()
-      const result = await signInWithPopup(auth, provider)
-      const googleUser = result.user
-      console.log('Google auth successful, user:', googleUser.email)
-
-      // Check if profile exists
-      const profileSnap = await getDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'))
-      console.log('Profile exists:', profileSnap.exists())
-
-      if (!profileSnap.exists()) {
-        // New user: create profile
-        console.log('Creating new profile for:', googleUser.email)
-        await setDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'), {
-          email: googleUser.email,
-          fullName: googleUser.displayName || '',
-          staffId: '',
-          licenceNumber: '',
-          licenceType: 'ATPL(A)',
-          organization: '',
-          onboardingComplete: false,
-          emailVerified: true,
-          createdAt: new Date().toISOString()
-        })
-        // New user: stay on onboarding (Step 3)
-        setUser(googleUser)
-      } else {
-        // Existing user: check if onboarding is complete
-        const profileData = profileSnap.data()
-        const isComplete = profileData.onboardingComplete || profileData.emailVerified
-        console.log('Existing user, onboarding complete:', isComplete)
-
-        setUser(googleUser)
-        if (isComplete) {
-          // Skip onboarding for existing users
-          setAuthSuccess(true)
-          setCountdown(3)
-          // Profile check effect will set showOnboarding(false) based on profile data
-        }
-      }
-
-      setIsSigningUp(false)
-      return { success: true }
+      await signInWithRedirect(auth, provider)
+      // Page navigates away — execution stops here.
+      // Result is handled by getRedirectResult() on the next load.
     } catch (error) {
-      // COOP / popup-dismissed errors: the popup auth may have actually succeeded
-      // but Chrome's Cross-Origin-Opener-Policy blocked the message channel back.
-      // onAuthStateChanged will still fire if auth succeeded — don't show an error.
-      const silentCodes = [
-        'auth/popup-closed-by-user',
-        'auth/cancelled-popup-request',
-        'auth/popup-blocked',
-      ]
-      if (silentCodes.includes(error.code)) {
-        console.log('Google popup dismissed or COOP-blocked — waiting for onAuthStateChanged')
-        setIsSigningUp(false)
-        return { success: true }
-      }
-      console.error('Google auth error:', error)
-      setSignupError('Google sign-in failed.')
+      console.error('Google redirect error:', error)
+      setSignupError('Google sign-in failed. Please try again.')
       setIsSigningUp(false)
-      return { success: false, error: 'Google sign-in failed.' }
     }
   }
 
@@ -323,7 +308,7 @@ function App() {
         const providerId = user.providerData[0]?.providerId
         if (providerId === 'google.com') {
           try {
-            await reauthenticateWithPopup(user, new GoogleAuthProvider())
+            await reauthenticateWithRedirect(user, new GoogleAuthProvider())
             await deleteDoc(doc(db, 'users', user.uid, 'profile', 'data'))
             await deleteDoc(doc(db, 'users', user.uid, 'logbook', 'data'))
             await deleteUser(user)
