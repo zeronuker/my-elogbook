@@ -964,7 +964,7 @@ function MiscTab({ onFeedback, needRefresh, updateServiceWorker, checkForUpdate,
           </a>
         ))}
         {/* Single feedback banner */}
-        <button className="sm-misc-card" onClick={onFeedback} style={{ background: "none", border: "1px solid var(--cb-line-2)", cursor: "pointer", textAlign: "left", width: "100%" }}>
+        <button className="sm-misc-card" onClick={onFeedback}>
           <span className="sm-misc-card-icon">💬</span>
           <div className="sm-misc-card-body">
             <div className="sm-misc-card-title">SEND FEEDBACK</div>
@@ -1712,6 +1712,10 @@ const settingsCss = `
     border-left: 3px solid var(--cb-mint);
     text-decoration: none;
     transition: background 120ms, border-left-color 120ms;
+    box-sizing: border-box; width: 100%;
+    cursor: pointer; text-align: left;
+    font-family: inherit;
+    border-radius: 0;
   }
   .sm-misc-card:hover { background: var(--cb-surface-2); border-left-color: var(--cb-blue); }
   .sm-misc-card-icon { font-size: 20px; flex-shrink: 0; line-height: 1; }
