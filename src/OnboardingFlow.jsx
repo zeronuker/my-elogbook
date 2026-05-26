@@ -754,17 +754,7 @@ function OnboardingFlow({
   const ScreenLanding = () => (
     <div className="onb-land">
       <div className="onb-land-logo-wrap">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="72" height="72">
-          <defs>
-            <linearGradient id="cb-grad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#3FE0C5"/>
-              <stop offset="55%" stopColor="#3B8DFF"/>
-              <stop offset="100%" stopColor="#5B6BFF"/>
-            </linearGradient>
-          </defs>
-          <polyline points="6,18 6,4 96,4 96,96 50,96" fill="none" stroke="url(#cb-grad)" strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter"/>
-          <text x="50" y="74" textAnchor="middle" fontFamily="Tourney,sans-serif" fontSize="52" fontWeight="700" fill="url(#cb-grad)">C</text>
-        </svg>
+        <img src="/brand/icons/logo-192.png" width="72" height="72" style={{ borderRadius: 16 }} />
       </div>
       <div className="onb-land-title">CLAUDEBORNE</div>
       <div className="onb-land-ver">eLOGBOOK V6.4 · CAAM / MCAR 2016</div>
