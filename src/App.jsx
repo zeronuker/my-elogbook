@@ -8,7 +8,9 @@ import {
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
+  EmailAuthProvider,
   reauthenticateWithRedirect,
+  reauthenticateWithCredential,
   deleteUser,
   sendEmailVerification
 } from 'firebase/auth'
@@ -40,9 +42,15 @@ function App() {
         const currentUser = result?.user || auth.currentUser
         if (currentUser) {
           try {
+            await deleteUser(currentUser)
             await deleteDoc(doc(db, 'users', currentUser.uid, 'profile', 'data'))
             await deleteDoc(doc(db, 'users', currentUser.uid, 'logbook', 'data'))
-            await deleteUser(currentUser)
+            // Clear all localStorage data for this user
+            const uid = currentUser.uid
+            localStorage.removeItem(`elb_data_${uid}`)
+            localStorage.removeItem(`elb_settings_${uid}`)
+            localStorage.removeItem(`elb_last_local_save_${uid}`)
+            localStorage.removeItem(`elb_last_sync_display_${uid}`)
           } catch (deleteError) {
             console.error('Account deletion after reauth failed:', deleteError)
           }
@@ -280,37 +288,62 @@ function App() {
     }
   }
 
+  // Clear all localStorage data for a given uid
+  const clearLocalStorage = (uid) => {
+    localStorage.removeItem(`elb_data_${uid}`)
+    localStorage.removeItem(`elb_settings_${uid}`)
+    localStorage.removeItem(`elb_last_local_save_${uid}`)
+    localStorage.removeItem(`elb_last_sync_display_${uid}`)
+  }
+
   // Delete account and all data (client-side, no Cloud Function required)
+  // Returns 'redirecting' if a Google re-auth redirect was initiated.
   const handleDeleteAccount = async () => {
     if (!user) return
+    const uid = user.uid
     try {
-      // Attempt deletion — may throw requires-recent-login if session is old
-      await deleteDoc(doc(db, 'users', user.uid, 'profile', 'data'))
-      await deleteDoc(doc(db, 'users', user.uid, 'logbook', 'data'))
+      // Delete auth user first — if this fails, data is still intact
       await deleteUser(user)
+      await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
+      await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
+      clearLocalStorage(uid)
     } catch (error) {
       if (error.code === 'auth/requires-recent-login') {
         const providerId = user.providerData[0]?.providerId
         if (providerId === 'google.com') {
           try {
             // Store flag so the redirect-return handler completes the deletion
-            sessionStorage.setItem('pendingAccountDelete', user.uid)
+            sessionStorage.setItem('pendingAccountDelete', uid)
             await reauthenticateWithRedirect(user, new GoogleAuthProvider())
             // Page navigates away here — execution stops.
             // Deletion is completed by getRedirectResult() on return.
+            return 'redirecting'
           } catch (reAuthError) {
             sessionStorage.removeItem('pendingAccountDelete')
             console.error('Re-authentication failed:', reAuthError)
             throw new Error(reAuthError.message || 'Re-authentication failed. Please try again.')
           }
         } else {
-          // Email/password users: require recent login — surface as an error to the caller
-          throw new Error('For security, please sign out and sign back in before deleting your account.')
+          // Signal to the UI that a password prompt is needed
+          throw Object.assign(new Error('requires-recent-login'), { code: 'auth/requires-recent-login' })
         }
       } else {
         console.error('Account deletion failed:', error)
+        throw error
       }
     }
+  }
+
+  // Re-authenticate email/password user then delete — called from SettingsModal password prompt
+  const handleReauthAndDelete = async (password) => {
+    if (!user) return
+    const uid = user.uid
+    const credential = EmailAuthProvider.credential(user.email, password)
+    await reauthenticateWithCredential(user, credential)
+    await deleteUser(user)
+    await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
+    await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
+    clearLocalStorage(uid)
   }
 
   if (authLoading) {
@@ -338,7 +371,12 @@ function App() {
 
   return (
     <>
-      <ELogbook2026 onLogout={() => signOut(auth)} onDeleteAccount={handleDeleteAccount} />
+      <ELogbook2026
+        onLogout={() => signOut(auth)}
+        onDeleteAccount={handleDeleteAccount}
+        onReauthAndDelete={handleReauthAndDelete}
+        userProvider={user?.providerData[0]?.providerId || 'password'}
+      />
       {showLoadingOverlay && <LoadingOverlay countdown={countdown} />}
     </>
   )

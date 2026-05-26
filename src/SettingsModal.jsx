@@ -252,7 +252,7 @@ const TAB_DEFAULTS = {
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReportBug, onRequestFeature }) {
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, userProvider, onReportBug, onRequestFeature }) {
   const [tab, setTab]               = useState("profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -341,7 +341,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
 
         {/* ── BODY ── */}
         <div className="sm-body">
-          {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} />}
+          {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} userProvider={userProvider} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
           {tab === "misc"        && <MiscTab onReportBug={onReportBug} onRequestFeature={onRequestFeature} />}
@@ -368,9 +368,13 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
 // ════════════════════════════════════════════════════════════════════
 //  PROFILE TAB
 // ════════════════════════════════════════════════════════════════════
-function ProfileTab({ d, upd, userEmail, onDeleteAccount }) {
+function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, userProvider }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleteError, setDeleteError] = useState(null);
+  const [deleteError, setDeleteError]     = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [needsPassword, setNeedsPassword] = useState(false);
+  const [password, setPassword]           = useState('');
+  const isGoogle = userProvider === 'google.com';
   const rows = d.carryForward || [CF_EMPTY()];
 
   return (
@@ -537,36 +541,96 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount }) {
         <button
           type="button"
           className="sm-delete-trigger"
-          onClick={() => setConfirmDelete(true)}
+          onClick={() => { setConfirmDelete(true); setDeleteError(null); setNeedsPassword(false); setPassword(''); }}
         >
           <span className="sm-delete-trigger-label">Delete account &amp; all data</span>
           <span className="sm-delete-trigger-hint">Permanently removes your account and all logbook data. This cannot be undone.</span>
         </button>
-      ) : (
+      ) : needsPassword ? (
+        /* ── Password re-auth prompt (email/password users) ── */
         <div className="sm-delete-confirm">
-          <div className="sm-delete-warn">⚠ This cannot be undone</div>
+          <div className="sm-delete-warn">⚠ Confirm your identity</div>
           <div className="sm-delete-body">
-            All logbook data, carry-forward hours, and your eLOGBOOK account will be permanently
-            deleted. You will be asked to re-authenticate with Google before deletion proceeds.
+            Enter your password to permanently delete your account and all logbook data.
           </div>
-          <div className="sm-delete-actions">
-            <button type="button" className="cb-btn-ghost" onClick={() => setConfirmDelete(false)}>
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Your password"
+            disabled={deleteLoading}
+            style={{
+              width: "100%", marginTop: 10, padding: "8px 10px",
+              background: "var(--elb-bg, #0a0d12)", border: "1px solid var(--elb-border, #1e3a5f)",
+              borderRadius: 4, color: "var(--elb-txt, #c8d6e5)",
+              fontFamily: "var(--elb-font, 'Courier New', monospace)",
+              fontSize: "calc(12px * var(--fs))", letterSpacing: "0.05em", boxSizing: "border-box",
+            }}
+          />
+          <div className="sm-delete-actions" style={{ marginTop: 10 }}>
+            <button type="button" className="cb-btn-ghost" disabled={deleteLoading}
+              onClick={() => { setNeedsPassword(false); setPassword(''); setDeleteError(null); }}>
               Cancel
             </button>
             <button
               type="button"
               className="cb-btn-danger"
+              disabled={deleteLoading || !password}
               onClick={async () => {
-                setConfirmDelete(false);
+                setDeleteLoading(true);
                 setDeleteError(null);
                 try {
-                  if (onDeleteAccount) await onDeleteAccount();
+                  if (onReauthAndDelete) await onReauthAndDelete(password);
                 } catch (err) {
-                  setDeleteError(err.message || "Account deletion failed. Please try again.");
+                  setDeleteLoading(false);
+                  setDeleteError(err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
+                    ? 'Incorrect password. Please try again.'
+                    : err.message || 'Deletion failed. Please try again.');
                 }
               }}
             >
-              Confirm Delete
+              {deleteLoading ? 'Deleting...' : 'Delete Account'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* ── Initial confirmation panel ── */
+        <div className="sm-delete-confirm">
+          <div className="sm-delete-warn">⚠ This cannot be undone</div>
+          <div className="sm-delete-body">
+            All logbook data, carry-forward hours, and your eLOGBOOK account will be permanently deleted.
+            {isGoogle
+              ? ' You will be redirected to Google to confirm your identity before deletion proceeds.'
+              : ' You will be asked to enter your password to confirm.'}
+          </div>
+          <div className="sm-delete-actions">
+            <button type="button" className="cb-btn-ghost" disabled={deleteLoading}
+              onClick={() => setConfirmDelete(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="cb-btn-danger"
+              disabled={deleteLoading}
+              onClick={async () => {
+                setDeleteLoading(true);
+                setDeleteError(null);
+                try {
+                  const result = onDeleteAccount && await onDeleteAccount();
+                  if (result === 'redirecting') return; // page navigating away
+                  setDeleteLoading(false);
+                } catch (err) {
+                  setDeleteLoading(false);
+                  if (err.code === 'auth/requires-recent-login') {
+                    // Email/password user needs password prompt
+                    setNeedsPassword(true);
+                  } else {
+                    setDeleteError(err.message || 'Account deletion failed. Please try again.');
+                  }
+                }
+              }}
+            >
+              {deleteLoading ? 'Deleting...' : 'Confirm Delete'}
             </button>
           </div>
         </div>

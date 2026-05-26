@@ -448,7 +448,7 @@ function makeThemeCss(settings = {}) {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export default function ELogbook2026({ onLogout, onDeleteAccount }) {
+export default function ELogbook2026({ onLogout, onDeleteAccount, onReauthAndDelete, userProvider }) {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -2947,6 +2947,8 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         onPreview={setPreviewSettings}
         userEmail={user?.email}
         onDeleteAccount={onDeleteAccount}
+        onReauthAndDelete={onReauthAndDelete}
+        userProvider={userProvider}
         onReportBug={() => { setFeedbackType("bug"); setFeedbackOpen(true); }}
         onRequestFeature={() => { setFeedbackType("feature"); setFeedbackOpen(true); }}
       />
