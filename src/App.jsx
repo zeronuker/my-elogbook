@@ -33,6 +33,23 @@ function App() {
   // Handle Google redirect result on app load (signInWithRedirect flow)
   useEffect(() => {
     getRedirectResult(auth).then(async (result) => {
+      // Check for pending account deletion (reauthenticateWithRedirect flow)
+      const pendingDeleteUid = sessionStorage.getItem('pendingAccountDelete')
+      if (pendingDeleteUid) {
+        sessionStorage.removeItem('pendingAccountDelete')
+        const currentUser = result?.user || auth.currentUser
+        if (currentUser) {
+          try {
+            await deleteDoc(doc(db, 'users', currentUser.uid, 'profile', 'data'))
+            await deleteDoc(doc(db, 'users', currentUser.uid, 'logbook', 'data'))
+            await deleteUser(currentUser)
+          } catch (deleteError) {
+            console.error('Account deletion after reauth failed:', deleteError)
+          }
+        }
+        return
+      }
+
       if (!result) return // No redirect in progress — normal load
       const googleUser = result.user
       console.log('Google redirect result, user:', googleUser.email)
@@ -308,11 +325,13 @@ function App() {
         const providerId = user.providerData[0]?.providerId
         if (providerId === 'google.com') {
           try {
+            // Store flag so the redirect-return handler completes the deletion
+            sessionStorage.setItem('pendingAccountDelete', user.uid)
             await reauthenticateWithRedirect(user, new GoogleAuthProvider())
-            await deleteDoc(doc(db, 'users', user.uid, 'profile', 'data'))
-            await deleteDoc(doc(db, 'users', user.uid, 'logbook', 'data'))
-            await deleteUser(user)
+            // Page navigates away here — execution stops.
+            // Deletion is completed by getRedirectResult() on return.
           } catch (reAuthError) {
+            sessionStorage.removeItem('pendingAccountDelete')
             console.error('Re-authentication failed:', reAuthError)
             throw new Error(reAuthError.message || 'Re-authentication failed. Please try again.')
           }
