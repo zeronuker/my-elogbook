@@ -103,7 +103,19 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.4", date: "May 2026", current: true,
+    v: "v6.5", date: "May 2026", current: true,
+    title: "How-To Guide · UI polish · export fix",
+    notes: [
+      "NEW: In-app How-To Guide — 8 sections covering getting started, installing the app, logging flights, day/night calculation, carry forward hours, syncing, exporting, and settings.",
+      "IMP: Toolbar icons enlarged and colour updated to mint for consistency.",
+      "IMP: Export/Import icon stroke weight corrected to match other toolbar icons.",
+      "IMP: How-To Guide and Send Feedback banners now equal size in Settings.",
+      "IMP: Landing page logo updated to C Mark.",
+      "FIX: Excel export Summary and Flights tabs showed 0:00:00 for all day/night/total columns — flight times are now computed correctly during export.",
+    ],
+  },
+  {
+    v: "v6.4", date: "May 2026", current: false,
     title: "Local-first architecture · PWA · offline support · manual sync",
     notes: [
       "NEW: Local-first architecture — all data now saves to device storage instantly. No network required to save.",
