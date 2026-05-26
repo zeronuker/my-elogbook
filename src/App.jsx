@@ -27,8 +27,6 @@ function App() {
   const [isSigningUp, setIsSigningUp] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
-  const [countdown, setCountdown] = useState(3)
-  const [authSuccess, setAuthSuccess] = useState(false)
   const prevUserRef = useRef(null)
   const onboardingDoneRef = useRef(false)
 
@@ -45,7 +43,6 @@ function App() {
             await deleteUser(currentUser)
             await deleteDoc(doc(db, 'users', currentUser.uid, 'profile', 'data'))
             await deleteDoc(doc(db, 'users', currentUser.uid, 'logbook', 'data'))
-            // Clear all localStorage data for this user
             const uid = currentUser.uid
             localStorage.removeItem(`elb_data_${uid}`)
             localStorage.removeItem(`elb_settings_${uid}`)
@@ -63,7 +60,7 @@ function App() {
 
       const profileSnap = await getDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'))
       if (!profileSnap.exists()) {
-        // New user — create profile, stay on onboarding
+        // New user — create profile, let profile check handle navigation
         await setDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'), {
           email: googleUser.email,
           fullName: googleUser.displayName || '',
@@ -77,14 +74,17 @@ function App() {
         })
         setUser(googleUser)
       } else {
-        // Existing user — navigate to logbook
+        // Existing user — navigate directly to logbook without waiting for profile check
         const profileData = profileSnap.data()
         const isComplete = profileData.onboardingComplete || profileData.emailVerified
-        setUser(googleUser)
         if (isComplete) {
-          setAuthSuccess(true)
-          setCountdown(3)
+          // Directly set navigation state — no countdown, no reload risk
+          onboardingDoneRef.current = true
+          setShowOnboarding(false)
+          setShowLoadingOverlay(true)
+          setTimeout(() => setShowLoadingOverlay(false), 1500)
         }
+        setUser(googleUser)
       }
     }).catch((error) => {
       console.error('Redirect result error:', error)
@@ -107,37 +107,10 @@ function App() {
     return unsubscribe
   }, [])
 
-  // Safety timeout: if auth succeeded but showOnboarding didn't update after 3 sec, refresh
-  useEffect(() => {
-    if (!authSuccess || !user) return
-
-    if (showOnboarding === false) {
-      // Auth succeeded and user navigated to logbook, clear overlay
-      setShowLoadingOverlay(false)
-      setAuthSuccess(false)
-      return
-    }
-
-    // Auth succeeded but still on onboarding — start countdown and force refresh
-    setShowLoadingOverlay(true)
-    const timer = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          console.warn('Safety timeout: forcing page refresh after auth success')
-          window.location.reload()
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [user, showOnboarding, authSuccess])
-
-  // Check profile and set onboarding state (waits for profile before deciding)
+  // Check profile and set onboarding state
   useEffect(() => {
     if (!user) {
-      setShowOnboarding(true) // No user, show onboarding
+      setShowOnboarding(true)
       return
     }
 
@@ -145,7 +118,7 @@ function App() {
       try {
         const profileSnap = await getDoc(doc(db, 'users', user.uid, 'profile', 'data'))
 
-        // Don't override if user already explicitly completed onboarding
+        // Don't override if getRedirectResult or onboarding already made a decision
         if (onboardingDoneRef.current) return
 
         if (profileSnap.exists()) {
@@ -153,8 +126,10 @@ function App() {
 
           if (profileData.onboardingComplete === true || profileData.emailVerified === true) {
             setShowOnboarding(false)
+            setShowLoadingOverlay(false)
           } else {
             setShowOnboarding(true)
+            setShowLoadingOverlay(false)
           }
 
           // Auto-complete onboarding for old verified users
@@ -167,10 +142,19 @@ function App() {
           }
         } else {
           setShowOnboarding(true)
+          setShowLoadingOverlay(false)
         }
       } catch (err) {
         console.error('Error checking profile:', err)
-        setShowOnboarding(true) // Fallback to onboarding on error
+        // If Firestore fails for an authenticated Google user, let them in rather
+        // than stranding them on the landing page
+        const isGoogle = user?.providerData?.[0]?.providerId === 'google.com'
+        if (isGoogle) {
+          setShowOnboarding(false)
+        } else {
+          setShowOnboarding(true)
+        }
+        setShowLoadingOverlay(false)
       }
     }
 
@@ -230,8 +214,7 @@ function App() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      setAuthSuccess(true)
-      setCountdown(3)
+      setShowLoadingOverlay(true) // Overlay while profile check runs
       setIsSigningUp(false)
       return { success: true }
     } catch (error) {
@@ -271,7 +254,6 @@ function App() {
           doc(db, 'users', user.uid, 'profile', 'data'),
           {
             ...profileData,
-            // Map organization from signup to airline for Settings compatibility
             airline: profileData.organization || profileData.airline || '',
             onboardingComplete: true,
             emailVerified: true
@@ -282,7 +264,6 @@ function App() {
     } catch (err) {
       console.error('Error completing onboarding:', err)
     } finally {
-      // Block any in-flight profile checks from overriding navigation
       onboardingDoneRef.current = true
       setShowOnboarding(false)
     }
@@ -302,7 +283,6 @@ function App() {
     if (!user) return
     const uid = user.uid
     try {
-      // Delete auth user first — if this fails, data is still intact
       await deleteUser(user)
       await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
       await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
@@ -312,11 +292,8 @@ function App() {
         const providerId = user.providerData[0]?.providerId
         if (providerId === 'google.com') {
           try {
-            // Store flag so the redirect-return handler completes the deletion
             sessionStorage.setItem('pendingAccountDelete', uid)
             await reauthenticateWithRedirect(user, new GoogleAuthProvider())
-            // Page navigates away here — execution stops.
-            // Deletion is completed by getRedirectResult() on return.
             return 'redirecting'
           } catch (reAuthError) {
             sessionStorage.removeItem('pendingAccountDelete')
@@ -324,7 +301,6 @@ function App() {
             throw new Error(reAuthError.message || 'Re-authentication failed. Please try again.')
           }
         } else {
-          // Signal to the UI that a password prompt is needed
           throw Object.assign(new Error('requires-recent-login'), { code: 'auth/requires-recent-login' })
         }
       } else {
@@ -364,7 +340,7 @@ function App() {
           showLogoutConfirm={showLogoutConfirm}
           onClearError={() => setSignupError(null)}
         />
-        {showLoadingOverlay && <LoadingOverlay countdown={countdown} />}
+        {showLoadingOverlay && <LoadingOverlay />}
       </>
     )
   }
@@ -377,7 +353,7 @@ function App() {
         onReauthAndDelete={handleReauthAndDelete}
         userProvider={user?.providerData[0]?.providerId || 'password'}
       />
-      {showLoadingOverlay && <LoadingOverlay countdown={countdown} />}
+      {showLoadingOverlay && <LoadingOverlay />}
     </>
   )
 }

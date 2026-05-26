@@ -1,23 +1,5 @@
-import { useState, useEffect } from 'react'
-
-function LoadingOverlay({ countdown }) {
-  const [message, setMessage] = useState('Setting up your logbook...')
-
-  useEffect(() => {
-    switch (countdown) {
-      case 3:
-        setMessage('Setting up your logbook...')
-        break
-      case 2:
-        setMessage('Syncing your profile...')
-        break
-      case 1:
-        setMessage('Finalizing your account...')
-        break
-      default:
-        setMessage('Setting up your logbook...')
-    }
-  }, [countdown])
+function LoadingOverlay() {
+  const message = 'Setting up your logbook...'
 
   return (
     <div
