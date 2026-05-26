@@ -1714,7 +1714,9 @@ const settingsCss = `
     transition: background 120ms, border-left-color 120ms;
     box-sizing: border-box; width: 100%;
     cursor: pointer; text-align: left;
-    font-family: inherit;
+    font-family: inherit; font-size: inherit;
+    line-height: inherit;
+    -webkit-appearance: none; appearance: none;
     border-radius: 0;
   }
   .sm-misc-card:hover { background: var(--cb-surface-2); border-left-color: var(--cb-blue); }
