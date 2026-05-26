@@ -616,8 +616,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, use
                 setDeleteLoading(true);
                 setDeleteError(null);
                 try {
-                  const result = onDeleteAccount && await onDeleteAccount();
-                  if (result === 'redirecting') return; // page navigating away
+                  await (onDeleteAccount && onDeleteAccount());
                   setDeleteLoading(false);
                 } catch (err) {
                   setDeleteLoading(false);

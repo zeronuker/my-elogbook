@@ -3,13 +3,12 @@ import { auth, db } from './firebase'
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
   EmailAuthProvider,
-  reauthenticateWithRedirect,
+  reauthenticateWithPopup,
   reauthenticateWithCredential,
   deleteUser,
   sendEmailVerification
@@ -30,66 +29,6 @@ function App() {
   const prevUserRef = useRef(null)
   const onboardingDoneRef = useRef(false)
 
-  // Handle Google redirect result on app load (signInWithRedirect flow)
-  useEffect(() => {
-    getRedirectResult(auth).then(async (result) => {
-      // Check for pending account deletion (reauthenticateWithRedirect flow)
-      const pendingDeleteUid = sessionStorage.getItem('pendingAccountDelete')
-      if (pendingDeleteUid) {
-        sessionStorage.removeItem('pendingAccountDelete')
-        const currentUser = result?.user || auth.currentUser
-        if (currentUser) {
-          try {
-            await deleteUser(currentUser)
-            await deleteDoc(doc(db, 'users', currentUser.uid, 'profile', 'data'))
-            await deleteDoc(doc(db, 'users', currentUser.uid, 'logbook', 'data'))
-            const uid = currentUser.uid
-            localStorage.removeItem(`elb_data_${uid}`)
-            localStorage.removeItem(`elb_settings_${uid}`)
-            localStorage.removeItem(`elb_last_local_save_${uid}`)
-            localStorage.removeItem(`elb_last_sync_display_${uid}`)
-          } catch (deleteError) {
-            console.error('Account deletion after reauth failed:', deleteError)
-          }
-        }
-        return
-      }
-
-      if (!result) return // No redirect in progress — normal load
-      const googleUser = result.user
-
-      const profileSnap = await getDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'))
-      if (!profileSnap.exists()) {
-        // New user — create profile, let profile check handle navigation
-        await setDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'), {
-          email: googleUser.email,
-          fullName: googleUser.displayName || '',
-          staffId: '',
-          licenceNumber: '',
-          licenceType: 'ATPL(A)',
-          organization: '',
-          onboardingComplete: false,
-          emailVerified: true,
-          createdAt: new Date().toISOString()
-        })
-        setUser(googleUser)
-      } else {
-        // Existing user — navigate directly to logbook without waiting for profile check
-        const profileData = profileSnap.data()
-        const isComplete = profileData.onboardingComplete || profileData.emailVerified
-        if (isComplete) {
-          // Directly set navigation state — no countdown, no reload risk
-          onboardingDoneRef.current = true
-          setShowOnboarding(false)
-          setShowLoadingOverlay(true)
-          setTimeout(() => setShowLoadingOverlay(false), 1500)
-        }
-        setUser(googleUser)
-      }
-    }).catch((error) => {
-      console.error('Redirect result error:', error)
-    })
-  }, [])
 
   // Listen to auth state
   useEffect(() => {
@@ -240,16 +179,43 @@ function App() {
     }
   }
 
-  // Google signup/login — uses redirect (no popup) for PWA/iOS/COOP compatibility
+  // Google signup/login — popup-based for reliable cross-browser auth
   const handleGoogleAuth = async () => {
     setIsSigningUp(true)
     setSignupError(null)
     try {
-      await signInWithRedirect(auth, new GoogleAuthProvider())
-      // Page navigates away — execution stops here.
-      // Result is handled by getRedirectResult() on the next load.
+      const result = await signInWithPopup(auth, new GoogleAuthProvider())
+      const googleUser = result.user
+
+      const profileSnap = await getDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'))
+      if (!profileSnap.exists()) {
+        await setDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'), {
+          email: googleUser.email,
+          fullName: googleUser.displayName || '',
+          staffId: '',
+          licenceNumber: '',
+          licenceType: 'ATPL(A)',
+          organization: '',
+          onboardingComplete: false,
+          emailVerified: true,
+          createdAt: new Date().toISOString()
+        })
+      }
+      onboardingDoneRef.current = true
+      setShowOnboarding(false)
+      setShowLoadingOverlay(true)
+      setTimeout(() => setShowLoadingOverlay(false), 1500)
+      setIsSigningUp(false)
     } catch (error) {
-      console.error('Google redirect error:', error)
+      // Silently ignore user-cancelled popup
+      if (
+        error.code === 'auth/popup-closed-by-user' ||
+        error.code === 'auth/cancelled-popup-request'
+      ) {
+        setIsSigningUp(false)
+        return
+      }
+      console.error('Google auth error:', error)
       setSignupError('Google sign-in failed. Please try again.')
       setIsSigningUp(false)
     }
@@ -286,7 +252,6 @@ function App() {
   }
 
   // Delete account and all data (client-side, no Cloud Function required)
-  // Returns 'redirecting' if a Google re-auth redirect was initiated.
   const handleDeleteAccount = async () => {
     if (!user) return
     const uid = user.uid
@@ -300,11 +265,12 @@ function App() {
         const providerId = user.providerData[0]?.providerId
         if (providerId === 'google.com') {
           try {
-            sessionStorage.setItem('pendingAccountDelete', uid)
-            await reauthenticateWithRedirect(user, new GoogleAuthProvider())
-            return 'redirecting'
+            await reauthenticateWithPopup(user, new GoogleAuthProvider())
+            await deleteUser(user)
+            await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
+            await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
+            clearLocalStorage(uid)
           } catch (reAuthError) {
-            sessionStorage.removeItem('pendingAccountDelete')
             console.error('Re-authentication failed:', reAuthError)
             throw new Error(reAuthError.message || 'Re-authentication failed. Please try again.')
           }
