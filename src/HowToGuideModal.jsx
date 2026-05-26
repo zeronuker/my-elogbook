@@ -398,7 +398,7 @@ export default function HowToGuideModal({ open, onClose }) {
 
           {/* Content */}
           <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
-            <div style={{ fontSize: 12, letterSpacing: "0.14em", color: "#3FE0C5", fontWeight: 700, marginBottom: 18, textTransform: "uppercase" }}>
+            <div style={{ fontSize: 12, letterSpacing: "0.14em", color: "#3FE0C5", fontWeight: 700, marginBottom: 18, textTransform: "uppercase", textAlign: "left" }}>
               {icon} &nbsp;{title}
             </div>
             <Content />
@@ -422,10 +422,11 @@ export default function HowToGuideModal({ open, onClose }) {
       </div>
 
       <style>{`
-        .htg-content p { margin: 0 0 14px; line-height: 1.75; font-size: 13px; color: #c8dce8; }
-        .htg-content h4 { font-size: 10px; letter-spacing: 0.16em; color: #4fc3f7; font-weight: 700; text-transform: uppercase; margin: 22px 0 8px; font-family: Courier New, monospace; }
-        .htg-content ul { margin: 0 0 10px 0; padding-left: 20px; }
-        .htg-content li { margin-bottom: 7px; line-height: 1.65; font-size: 13px; color: #c8dce8; }
+        .htg-content { text-align: left; }
+        .htg-content p { margin: 0 0 14px; line-height: 1.75; font-size: 13px; color: #c8dce8; text-align: left; }
+        .htg-content h4 { font-size: 10px; letter-spacing: 0.16em; color: #4fc3f7; font-weight: 700; text-transform: uppercase; margin: 22px 0 8px; font-family: Courier New, monospace; text-align: left; }
+        .htg-content ul { margin: 0 0 10px 0; padding-left: 20px; text-align: left; }
+        .htg-content li { margin-bottom: 7px; line-height: 1.65; font-size: 13px; color: #c8dce8; text-align: left; }
         .htg-content strong { color: #e2eef5; font-weight: 600; }
       `}</style>
     </div>
