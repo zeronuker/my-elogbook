@@ -147,6 +147,22 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     return (h + m / 60) / 24;
   };
 
+  const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr || typeof timeStr !== "string") return 0;
+    const parts = timeStr.trim().split(":");
+    if (parts.length !== 2) return 0;
+    const h = parseInt(parts[0]) || 0;
+    const m = parseInt(parts[1]) || 0;
+    return h * 60 + m;
+  };
+
+  const minutesToTime = (mins) => {
+    if (!mins) return "0:00";
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h}:${String(m).padStart(2, "0")}`;
+  };
+
   const exportToExcel = () => {
     const rows = getRowsInDateRange().sort((a, b) => {
       // _fullDate is set by getRowsInDateRange for all rows regardless of date format
@@ -340,22 +356,6 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     setTimeout(() => setExportStatus(null), 3000);
   };
 
-  // Helper functions for time conversion
-  const parseTimeToMinutes = (timeStr) => {
-    if (!timeStr || typeof timeStr !== "string") return 0;
-    const parts = timeStr.trim().split(":");
-    if (parts.length !== 2) return 0;
-    const h = parseInt(parts[0]) || 0;
-    const m = parseInt(parts[1]) || 0;
-    return h * 60 + m;
-  };
-
-  const minutesToTime = (mins) => {
-    if (!mins) return "0:00";
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return `${h}:${String(m).padStart(2, "0")}`;
-  };
 
 
   const handleExport = () => {
