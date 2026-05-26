@@ -322,6 +322,7 @@ function App() {
   return (
     <>
       <ELogbook2026
+        user={user}
         onLogout={() => signOut(auth)}
         onDeleteAccount={handleDeleteAccount}
         onReauthAndDelete={handleReauthAndDelete}

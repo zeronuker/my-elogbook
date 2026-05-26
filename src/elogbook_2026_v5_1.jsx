@@ -3,7 +3,7 @@ import { useRegisterSW } from "virtual:pwa-register/react";
 import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
 import { db, auth } from "./firebase";
-import { signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { doc, setDoc, getDoc, addDoc, collection } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
@@ -448,9 +448,7 @@ function makeThemeCss(settings = {}) {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export default function ELogbook2026({ onLogout, onDeleteAccount, onReauthAndDelete, userProvider }) {
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauthAndDelete, userProvider }) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [data, setData] = useState(initialData);
@@ -504,26 +502,19 @@ export default function ELogbook2026({ onLogout, onDeleteAccount, onReauthAndDel
     confirmResolveRef.current?.(false);
   };
 
-  // ── Auth listener ──
-  // IMPORTANT: onAuthStateChanged fires on EVERY token refresh (~hourly), not just sign-in.
-  // Guard with dataLoadedRef so token refreshes never re-read Firestore and overwrite local data.
+  // ── Data loading — triggered by user prop from App.jsx ──
+  // useEffect on user prop replaces onAuthStateChanged listener — App.jsx owns auth state.
+  // dataLoadedRef guards against re-loading on token-refresh re-renders (user ref changes hourly).
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setAuthLoading(false);
-      if (u) {
-        // Only load on first sign-in — skip token-refresh re-fires
-        if (!dataLoadedRef.current) {
-          loadData(u.uid);
-          loadProfile(u.uid);
-        }
-      } else {
-        // User signed out — reset for next sign-in
-        dataLoadedRef.current = false;
+    if (user) {
+      if (!dataLoadedRef.current) {
+        loadData(user.uid);
+        loadProfile(user.uid);
       }
-    });
-    return unsub;
-  }, []);
+    } else {
+      dataLoadedRef.current = false;
+    }
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   // ── Handle import — called directly by ExportImportModal ──
@@ -1000,7 +991,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount, onReauthAndDel
   // Inject theme CSS vars early so loading/login screens are also themed
   const themeCss = makeThemeCss(previewSettings || settings);
 
-  if (authLoading) {
+  if (!user) {
     return (
       <>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" />
@@ -1015,48 +1006,6 @@ export default function ELogbook2026({ onLogout, onDeleteAccount, onReauthAndDel
     );
   }
 
-  // ── Login screen ──
-  if (!user) {
-    return (
-      <>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" />
-      <style>{themeCss}</style>
-      <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-txt, #c8d6e5)" }}>
-        <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-border, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
-          <img src="/brand/icons/icon-72.png" alt="ClaudeBorne" width="48" height="48" style={{ display: "block", margin: "0 auto 8px" }} />
-          <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V6.4</div>
-          <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
-          <div style={{ fontSize: 11, color: "var(--elb-txt-muted, #3a5a7a)", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
-          <button
-            onClick={() => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => console.error("Sign in error:", e))}
-            style={{
-              background: "var(--elb-bg2, #0d1520)",
-              border: "1px solid var(--elb-acc, #4fc3f7)",
-              borderRadius: 6,
-              color: "var(--elb-acc, #4fc3f7)",
-              fontFamily: "var(--elb-font, 'Courier New', monospace)",
-              fontSize: 13,
-              letterSpacing: "0.15em",
-              padding: "12px 28px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              margin: "0 auto",
-              boxShadow: "0 0 16px rgba(79,195,247,0.2)",
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.5 26.8 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.6l6.2 5.2C36.9 40.2 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
-            SIGN IN WITH GOOGLE
-          </button>
-          <div style={{ fontSize: 11, color: "var(--elb-txt-muted, #2a4a6a)", marginTop: 20 }}>
-            Your logbook data is private and linked to your Google account
-          </div>
-        </div>
-      </div>
-      </>
-    );
-  }
 
   // ── Per-month state ──
   const monthKey = `${selectedMonth}-${selectedYear}`;
