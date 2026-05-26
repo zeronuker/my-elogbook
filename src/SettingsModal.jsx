@@ -1203,6 +1203,7 @@ const settingsCss = `
     --cb-mint:         #3FE0C5;
     --cb-blue:         #3B8DFF;
     --cb-violet:       #5B6BFF;
+    --cb-grad:         linear-gradient(135deg, #3FE0C5, #3B8DFF);
     --cb-font-display: 'Tourney', system-ui, sans-serif;
   }
 
