@@ -119,6 +119,7 @@ const CHANGELOG = [
       "IMP: Sync no longer shows conflict modal when local data is unchanged — silently pulls cloud data if no local edits exist since last sync.",
       "IMP: Save chip reworked — SAVING... (yellow, animated) transitions to SAVED TO LOCAL STORAGE (green) after editing pauses. SAVE NOW button removed.",
       "FIX: Last-synced timestamp was incorrectly updated on every local save — conflict detection now works correctly across multiple devices.",
+      "FIX: Excel export Summary and Flights tabs showed 0:00:00 for all day/night/total columns — flight times are now computed correctly during export.",
     ],
   },
   {

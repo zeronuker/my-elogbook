@@ -19,7 +19,7 @@ const COLUMN_ORDER = [
   "nightP1", "nightP1US", "nightP2", "total", "remarks", "autoland"
 ];
 
-export default function ExportImportModal({ open, onClose, monthData, settings, user, onImport }) {
+export default function ExportImportModal({ open, onClose, monthData, settings, user, onImport, computeFlightTimes }) {
   const [tab, setTab] = useState("export");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -238,21 +238,31 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       return headerMap[col] || col.toUpperCase();
     });
 
-    const flightData = rows.map(row => COLUMN_ORDER.map(col => {
-      if (col === 'date') {
-        // Use _fullDate (Date object set by getRowsInDateRange) for accurate serial
-        if (row._fullDate) {
-          const epoch = new Date(Date.UTC(1900, 0, 1));
-          return Math.floor((row._fullDate - epoch) / 86400000) + 2;
+    const flightData = rows.map(row => {
+      const ft = computeFlightTimes ? computeFlightTimes(row, row._year, row._monthIdx) : {};
+      const ftTotalMins = ['dayP1','dayP1US','dayP2','nightP1','nightP1US','nightP2']
+        .reduce((acc, k) => acc + parseTimeToMinutes(ft[k] || ""), 0);
+      return COLUMN_ORDER.map(col => {
+        if (col === 'date') {
+          // Use _fullDate (Date object set by getRowsInDateRange) for accurate serial
+          if (row._fullDate) {
+            const epoch = new Date(Date.UTC(1900, 0, 1));
+            return Math.floor((row._fullDate - epoch) / 86400000) + 2;
+          }
+          return dateToExcelSerial(row.date);
         }
-        return dateToExcelSerial(row.date);
-      }
-      if (['std', 'sta', 'dayP1', 'dayP1US', 'dayP2', 'nightP1', 'nightP1US', 'nightP2', 'total'].includes(col)) {
-        const decimal = timeToDecimal(row[col]);
-        return decimal;
-      }
-      return row[col] || "";
-    }));
+        if (['dayP1', 'dayP1US', 'dayP2', 'nightP1', 'nightP1US', 'nightP2'].includes(col)) {
+          return timeToDecimal(ft[col] || "");
+        }
+        if (col === 'total') {
+          return timeToDecimal(minutesToTime(ftTotalMins));
+        }
+        if (['std', 'sta'].includes(col)) {
+          return timeToDecimal(row[col]);
+        }
+        return row[col] || "";
+      });
+    });
 
     const wsFlights = XLSX.utils.aoa_to_sheet([flightHeaders, ...flightData]);
     wsFlights['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 6 }, { wch: 8 }, { wch: 8 }, { wch: 11 }, { wch: 11 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }];
@@ -272,20 +282,24 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     rows.forEach(row => {
       // Use _fullDate set by getRowsInDateRange — works for both DD/MM/YYYY and day-number dates
       if (!row._fullDate) return;
+      // Compute flight times dynamically (raw row.dayP1 etc. are always "" — calculated at render time)
+      const ft = computeFlightTimes ? computeFlightTimes(row, row._year, row._monthIdx) : {};
       const m = String(row._fullDate.getUTCMonth() + 1).padStart(2, '0');
       const y = String(row._fullDate.getUTCFullYear());
       const monthKey = `${y}-${m}`;
       if (!monthlySummary[monthKey]) {
         monthlySummary[monthKey] = { dayP1: 0, dayP1US: 0, dayP2: 0, nightP1: 0, nightP1US: 0, nightP2: 0, flights: 0, total: 0 };
       }
-      monthlySummary[monthKey].dayP1 += parseTimeToMinutes(row.dayP1) || 0;
-      monthlySummary[monthKey].dayP1US += parseTimeToMinutes(row.dayP1US) || 0;
-      monthlySummary[monthKey].dayP2 += parseTimeToMinutes(row.dayP2) || 0;
-      monthlySummary[monthKey].nightP1 += parseTimeToMinutes(row.nightP1) || 0;
-      monthlySummary[monthKey].nightP1US += parseTimeToMinutes(row.nightP1US) || 0;
-      monthlySummary[monthKey].nightP2 += parseTimeToMinutes(row.nightP2) || 0;
+      monthlySummary[monthKey].dayP1 += parseTimeToMinutes(ft.dayP1 || "") || 0;
+      monthlySummary[monthKey].dayP1US += parseTimeToMinutes(ft.dayP1US || "") || 0;
+      monthlySummary[monthKey].dayP2 += parseTimeToMinutes(ft.dayP2 || "") || 0;
+      monthlySummary[monthKey].nightP1 += parseTimeToMinutes(ft.nightP1 || "") || 0;
+      monthlySummary[monthKey].nightP1US += parseTimeToMinutes(ft.nightP1US || "") || 0;
+      monthlySummary[monthKey].nightP2 += parseTimeToMinutes(ft.nightP2 || "") || 0;
       monthlySummary[monthKey].flights += 1;
-      monthlySummary[monthKey].total += parseTimeToMinutes(row.total) || 0;
+      const ftTotalMins = ['dayP1','dayP1US','dayP2','nightP1','nightP1US','nightP2']
+        .reduce((acc, k) => acc + parseTimeToMinutes(ft[k] || ""), 0);
+      monthlySummary[monthKey].total += ftTotalMins;
     });
 
     const summaryHeaders = ["Month", "Day P1", "Day P1 U/S", "Day P2", "Night P1", "Night P1 U/S", "Night P2", "Flights", "Total"];

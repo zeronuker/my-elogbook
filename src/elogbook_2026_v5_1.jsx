@@ -2977,6 +2977,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         settings={settings}
         user={user}
         onImport={handleImport}
+        computeFlightTimes={(row, year, monthIdx) => calcFlightTimes(row, settings.dayNightMethod, year, monthIdx)}
       />
 
       {/* ── FEEDBACK MODAL ── */}
