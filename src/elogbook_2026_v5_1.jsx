@@ -464,8 +464,32 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [cloudNewerBanner, setCloudNewerBanner] = useState(false);
 
-  // ── PWA update prompt ──
-  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
+  // ── PWA update prompt + manual check ──
+  const swRegistrationRef = useRef(null);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateChecked, setUpdateChecked] = useState(false);
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
+    onRegisteredSW(_url, registration) {
+      swRegistrationRef.current = registration;
+    },
+  });
+
+  const checkForUpdate = async () => {
+    if (!swRegistrationRef.current) return;
+    setCheckingUpdate(true);
+    setUpdateChecked(false);
+    try {
+      await swRegistrationRef.current.update();
+    } catch (e) {
+      console.error('SW update check failed:', e);
+    }
+    // Give needRefresh state a moment to propagate before showing result
+    setTimeout(() => {
+      setCheckingUpdate(false);
+      setUpdateChecked(true);
+      setTimeout(() => setUpdateChecked(false), 4000);
+    }, 1000);
+  };
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -2900,6 +2924,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         userProvider={userProvider}
         onReportBug={() => { setFeedbackType("bug"); setFeedbackOpen(true); }}
         onRequestFeature={() => { setFeedbackType("feature"); setFeedbackOpen(true); }}
+        needRefresh={needRefresh}
+        updateServiceWorker={updateServiceWorker}
+        checkForUpdate={checkForUpdate}
+        checkingUpdate={checkingUpdate}
+        updateChecked={updateChecked}
       />
 
       {/* ── BRANDED CONFIRM DIALOG (replaces window.confirm) ── */}

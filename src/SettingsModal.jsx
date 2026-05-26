@@ -252,7 +252,7 @@ const TAB_DEFAULTS = {
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, userProvider, onReportBug, onRequestFeature }) {
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, userProvider, onReportBug, onRequestFeature, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
   const [tab, setTab]               = useState("profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -344,7 +344,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} userProvider={userProvider} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
-          {tab === "misc"        && <MiscTab onReportBug={onReportBug} onRequestFeature={onRequestFeature} />}
+          {tab === "misc"        && <MiscTab onReportBug={onReportBug} onRequestFeature={onRequestFeature} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} />}
         </div>
 
         {/* ── FOOT ── */}
@@ -936,7 +936,7 @@ const MISC_CARDS = [
   },
 ];
 
-function MiscTab({ onReportBug, onRequestFeature }) {
+function MiscTab({ onReportBug, onRequestFeature, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
   const [showHistory, setShowHistory] = useState(false);
   const currentEntry = CHANGELOG.find(e => e.current);
   const pastEntries  = CHANGELOG.filter(e => !e.current);
@@ -982,6 +982,32 @@ function MiscTab({ onReportBug, onRequestFeature }) {
             <span className="sm-misc-card-arrow">→</span>
           </button>
         </div>
+      </div>
+
+      <SmSectionHead title="App Update" hint="// check for new version" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 0 16px' }}>
+        {needRefresh ? (
+          <button
+            onClick={() => updateServiceWorker(true)}
+            style={{ background: 'var(--elb-acc)', color: '#0a0f1e', border: 'none', borderRadius: 4, padding: '6px 14px', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', cursor: 'pointer' }}
+          >
+            UPDATE NOW
+          </button>
+        ) : (
+          <button
+            onClick={checkForUpdate}
+            disabled={checkingUpdate}
+            style={{ background: 'transparent', color: checkingUpdate ? 'var(--elb-txt-muted)' : 'var(--elb-acc)', border: '1px solid currentColor', borderRadius: 4, padding: '6px 14px', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', cursor: checkingUpdate ? 'default' : 'pointer', opacity: checkingUpdate ? 0.6 : 1 }}
+          >
+            {checkingUpdate ? 'CHECKING...' : 'CHECK FOR UPDATES'}
+          </button>
+        )}
+        {updateChecked && !needRefresh && (
+          <span style={{ fontSize: 11, color: '#3FE0C5', letterSpacing: '0.06em' }}>✓ UP TO DATE</span>
+        )}
+        {needRefresh && !checkingUpdate && (
+          <span style={{ fontSize: 11, color: 'var(--elb-acc)', letterSpacing: '0.06em' }}>NEW VERSION AVAILABLE</span>
+        )}
       </div>
 
       <SmSectionHead title="Changelog" hint="// version history" />
