@@ -1623,7 +1623,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 title={!isOnline ? "Offline — connect to sync" : syncStatus === "syncing" ? "Syncing…" : "Sync to cloud"}
                 style={{
                   ...iconBtnStyle,
-                  color: !isOnline ? "#2a4a6a" : syncStatus === "synced" ? "#22c55e" : syncStatus === "error" ? "#ef4444" : syncStatus === "syncing" ? "#f5c542" : "#3a6a8a",
+                  color: !isOnline ? "#2a4a6a" : syncStatus === "synced" ? "#22c55e" : syncStatus === "error" ? "#ef4444" : syncStatus === "syncing" ? "#f5c542" : "#3FE0C5",
                   borderColor: !isOnline ? "#1e3a5f" : syncStatus === "synced" ? "#22c55e" : syncStatus === "error" ? "#ef4444" : syncStatus === "syncing" ? "#f5c542" : "#1e3a5f",
                   opacity: (syncStatus === "syncing" || !isOnline) ? 0.4 : 1,
                   cursor: (syncStatus === "syncing" || !isOnline) ? "not-allowed" : "pointer",
@@ -1655,7 +1655,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 title="Settings"
                 style={{
                   ...iconBtnStyle,
-                  color: settingsOpen ? "#4fc3f7" : "#3a6a8a",
+                  color: settingsOpen ? "#4fc3f7" : "#3FE0C5",
                   borderColor: settingsOpen ? "#4fc3f7" : "#1e3a5f",
                   background: settingsOpen ? "rgba(79,195,247,0.1)" : "transparent",
                 }}
@@ -1671,11 +1671,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 title="Sign out"
                 style={{
                   ...iconBtnStyle,
-                  color: "var(--elb-txt-muted, #3a6a8a)",
+                  color: "#3FE0C5",
                   borderColor: "var(--elb-border, #1e3a5f)",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-border, #1e3a5f)"; e.currentTarget.style.color = "var(--elb-txt-muted, #3a6a8a)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-border, #1e3a5f)"; e.currentTarget.style.color = "#3FE0C5"; }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
@@ -3161,7 +3161,7 @@ const iconBtnStyle = {
   background: "transparent",
   border: "1px solid var(--elb-border, #1e3a5f)",
   borderRadius: 4,
-  color: "var(--elb-txt-muted, #3a6a8a)",
+  color: "#3FE0C5",
   cursor: "pointer",
   padding: "5px 7px",
   display: "flex",
