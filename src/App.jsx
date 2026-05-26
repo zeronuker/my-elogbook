@@ -124,7 +124,15 @@ function App() {
         if (profileSnap.exists()) {
           const profileData = profileSnap.data()
 
-          if (profileData.onboardingComplete === true || profileData.emailVerified === true) {
+          const isComplete = profileData.onboardingComplete === true || profileData.emailVerified === true
+          const isGoogleUser = user?.providerData?.[0]?.providerId === 'google.com'
+          if (isComplete || isGoogleUser) {
+            // Google users are inherently verified — let them in even if profile flags are stale
+            if (isGoogleUser && !isComplete) {
+              // Auto-fix stale profile flags
+              setDoc(doc(db, 'users', user.uid, 'profile', 'data'), { onboardingComplete: true, emailVerified: true }, { merge: true })
+                .catch(err => console.error('Profile flag update failed:', err))
+            }
             setShowOnboarding(false)
             setShowLoadingOverlay(false)
           } else {

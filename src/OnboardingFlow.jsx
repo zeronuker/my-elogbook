@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, memo } from 'react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 
 // Extract ScreenSignUp1 outside component to prevent recreation
 const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSignup, onGoogleAuth, signupError, isLoading, goTo }) => {
@@ -164,6 +165,7 @@ function OnboardingFlow({
   showLogoutConfirm,
   onClearError
 }) {
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
   const [authMode, setAuthMode] = useState('landing');
   const [formData, setFormData] = useState({
     email: '',
@@ -950,6 +952,30 @@ function OnboardingFlow({
           </div>
         ))}
       </div>
+
+      {/* ── PWA update banner — shown when a new version is available ── */}
+      {needRefresh && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          background: '#0d1a2e', border: '1px solid #3FE0C5', borderRadius: 6,
+          padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12,
+          fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: 12,
+          color: '#c8d6e5', zIndex: 9999, whiteSpace: 'nowrap', boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+        }}>
+          <span style={{ color: '#3FE0C5' }}>↑</span>
+          <span>New version available</span>
+          <button
+            onClick={() => updateServiceWorker(true)}
+            style={{
+              background: '#3FE0C5', color: '#0a0d12', border: 'none', borderRadius: 4,
+              padding: '4px 12px', fontFamily: 'inherit', fontSize: 11,
+              fontWeight: 700, letterSpacing: '0.08em', cursor: 'pointer',
+            }}
+          >
+            UPDATE
+          </button>
+        </div>
+      )}
     </div>
   );
 }
