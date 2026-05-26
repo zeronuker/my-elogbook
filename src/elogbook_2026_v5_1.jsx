@@ -7,6 +7,7 @@ import { signOut } from "firebase/auth";
 import { doc, setDoc, getDoc, addDoc, collection } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
+import HowToGuideModal from "./HowToGuideModal";
 import FeedbackModal from "./FeedbackModal";
 
 const MONTHS = [
@@ -505,6 +506,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
   // Branded confirmation modal (replaces window.confirm)
@@ -2922,6 +2924,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         onReauthAndDelete={onReauthAndDelete}
         userProvider={userProvider}
         onFeedback={() => setFeedbackOpen(true)}
+        onGuide={() => setGuideOpen(true)}
         needRefresh={needRefresh}
         updateServiceWorker={updateServiceWorker}
         checkForUpdate={checkForUpdate}
@@ -2984,8 +2987,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <FeedbackModal
         open={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
-
         user={user}
+      />
+
+      {/* ── HOW-TO GUIDE MODAL ── */}
+      <HowToGuideModal
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
       />
 
       {/* ── CLOUD NEWER BANNER ── */}

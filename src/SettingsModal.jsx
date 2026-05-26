@@ -253,7 +253,7 @@ const TAB_DEFAULTS = {
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, userProvider, onFeedback, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
   const [tab, setTab]               = useState("profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -345,7 +345,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} userProvider={userProvider} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
-          {tab === "misc"        && <MiscTab onFeedback={onFeedback} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} />}
+          {tab === "misc"        && <MiscTab onFeedback={onFeedback} onGuide={onGuide} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} />}
         </div>
 
         {/* ── FOOT ── */}
@@ -937,7 +937,7 @@ const MISC_CARDS = [
   },
 ];
 
-function MiscTab({ onFeedback, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
+function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
   const [showHistory, setShowHistory] = useState(false);
   const currentEntry = CHANGELOG.find(e => e.current);
   const pastEntries  = CHANGELOG.filter(e => !e.current);
@@ -948,11 +948,9 @@ function MiscTab({ onFeedback, needRefresh, updateServiceWorker, checkForUpdate,
       <SmSectionHead title="Support" hint="// guides · feedback · bugs" />
       <div className="sm-misc-cards">
         {MISC_CARDS.map(card => (
-          <a
+          <button
             key={card.id}
-            href={card.href}
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={onGuide}
             className="sm-misc-card"
           >
             <span className="sm-misc-card-icon">{card.icon}</span>
@@ -960,8 +958,8 @@ function MiscTab({ onFeedback, needRefresh, updateServiceWorker, checkForUpdate,
               <div className="sm-misc-card-title">{card.title}</div>
               <div className="sm-misc-card-desc">{card.desc}</div>
             </div>
-            <span className="sm-misc-card-arrow">↗</span>
-          </a>
+            <span className="sm-misc-card-arrow">→</span>
+          </button>
         ))}
         {/* Single feedback banner */}
         <button className="sm-misc-card" onClick={onFeedback}>
