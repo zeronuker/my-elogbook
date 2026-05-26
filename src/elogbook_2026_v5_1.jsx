@@ -505,7 +505,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackType, setFeedbackType] = useState("bug");
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
   // Branded confirmation modal (replaces window.confirm)
@@ -2922,8 +2921,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         onDeleteAccount={onDeleteAccount}
         onReauthAndDelete={onReauthAndDelete}
         userProvider={userProvider}
-        onReportBug={() => { setFeedbackType("bug"); setFeedbackOpen(true); }}
-        onRequestFeature={() => { setFeedbackType("feature"); setFeedbackOpen(true); }}
+        onFeedback={() => setFeedbackOpen(true)}
         needRefresh={needRefresh}
         updateServiceWorker={updateServiceWorker}
         checkForUpdate={checkForUpdate}
@@ -2985,7 +2983,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <FeedbackModal
         open={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
-        type={feedbackType}
+
         user={user}
       />
 

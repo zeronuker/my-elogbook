@@ -252,7 +252,7 @@ const TAB_DEFAULTS = {
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, userProvider, onReportBug, onRequestFeature, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, userProvider, onFeedback, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
   const [tab, setTab]               = useState("profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -344,7 +344,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} userProvider={userProvider} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
-          {tab === "misc"        && <MiscTab onReportBug={onReportBug} onRequestFeature={onRequestFeature} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} />}
+          {tab === "misc"        && <MiscTab onFeedback={onFeedback} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} />}
         </div>
 
         {/* ── FOOT ── */}
@@ -936,7 +936,7 @@ const MISC_CARDS = [
   },
 ];
 
-function MiscTab({ onReportBug, onRequestFeature, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
+function MiscTab({ onFeedback, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
   const [showHistory, setShowHistory] = useState(false);
   const currentEntry = CHANGELOG.find(e => e.current);
   const pastEntries  = CHANGELOG.filter(e => !e.current);
@@ -962,26 +962,15 @@ function MiscTab({ onReportBug, onRequestFeature, needRefresh, updateServiceWork
             <span className="sm-misc-card-arrow">↗</span>
           </a>
         ))}
-        {/* Combined bug + feature banner */}
-        <div className="sm-misc-card sm-misc-card-split">
-          <button className="sm-misc-split-item" onClick={onReportBug} style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", width: "100%" }}>
-            <span className="sm-misc-card-icon">🐛</span>
-            <div className="sm-misc-card-body">
-              <div className="sm-misc-card-title">REPORT A BUG</div>
-              <div className="sm-misc-card-desc">Something broken? Let us know</div>
-            </div>
-            <span className="sm-misc-card-arrow">→</span>
-          </button>
-          <div className="sm-misc-split-divider" />
-          <button className="sm-misc-split-item" onClick={onRequestFeature} style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", width: "100%" }}>
-            <span className="sm-misc-card-icon">💡</span>
-            <div className="sm-misc-card-body">
-              <div className="sm-misc-card-title">SUGGEST A FEATURE</div>
-              <div className="sm-misc-card-desc">Request something new</div>
-            </div>
-            <span className="sm-misc-card-arrow">→</span>
-          </button>
-        </div>
+        {/* Single feedback banner */}
+        <button className="sm-misc-card" onClick={onFeedback} style={{ background: "none", border: "1px solid var(--cb-line-2)", cursor: "pointer", textAlign: "left", width: "100%" }}>
+          <span className="sm-misc-card-icon">💬</span>
+          <div className="sm-misc-card-body">
+            <div className="sm-misc-card-title">SEND FEEDBACK</div>
+            <div className="sm-misc-card-desc">Report a bug or suggest a feature</div>
+          </div>
+          <span className="sm-misc-card-arrow">→</span>
+        </button>
       </div>
 
       <SmSectionHead title="App Update" hint="// check for new version" />
