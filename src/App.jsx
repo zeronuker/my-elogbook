@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { auth, db } from './firebase'
 import {
   createUserWithEmailAndPassword,
@@ -52,7 +52,6 @@ function App() {
 
       if (!result) return // No redirect in progress — normal load
       const googleUser = result.user
-      console.log('Google redirect result, user:', googleUser.email)
 
       const profileSnap = await getDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'))
       if (!profileSnap.exists()) {
@@ -87,18 +86,14 @@ function App() {
   // Listen to auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log('Auth state changed, user:', currentUser?.email)
-
       // Detect logout: user was authenticated, now is null
       if (prevUserRef.current && !currentUser) {
-        console.log('User logged out, showing confirmation')
         setShowLogoutConfirm(true)
       }
 
       prevUserRef.current = currentUser
       setUser(currentUser)
       setAuthLoading(false)
-      // Profile check in separate effect will determine showOnboarding
     })
 
     return unsubscribe
@@ -110,27 +105,17 @@ function App() {
 
     if (showOnboarding === false) {
       // Auth succeeded and user navigated to logbook, clear overlay
-      console.log('Safety timeout: auth success confirmed, clearing overlay')
       setShowLoadingOverlay(false)
       setAuthSuccess(false)
       return
     }
 
-    // Auth succeeded but still on onboarding, start countdown
-    console.log('Safety timeout: showing overlay, starting 3-second countdown', {
-      userEmail: user?.email,
-      showOnboarding
-    })
+    // Auth succeeded but still on onboarding — start countdown and force refresh
     setShowLoadingOverlay(true)
     const timer = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
-          // 3 seconds elapsed, refresh if still on onboarding
-          console.warn('Safety timeout: forcing page refresh', {
-            showOnboarding,
-            userEmail: user?.email,
-            isLoading: authLoading
-          })
+          console.warn('Safety timeout: forcing page refresh after auth success')
           window.location.reload()
           return 0
         }
@@ -150,11 +135,7 @@ function App() {
 
     const checkProfile = async () => {
       try {
-        const start = performance.now()
         const profileSnap = await getDoc(doc(db, 'users', user.uid, 'profile', 'data'))
-        const duration = performance.now() - start
-        console.log('Profile query took:', duration.toFixed(2), 'ms')
-        console.log('Profile check - exists:', profileSnap.exists(), 'onboardingComplete:', profileSnap.data()?.onboardingComplete)
 
         // Don't override if user already explicitly completed onboarding
         if (onboardingDoneRef.current) return
@@ -162,19 +143,14 @@ function App() {
         if (profileSnap.exists()) {
           const profileData = profileSnap.data()
 
-          // If onboarding is complete, show logbook
           if (profileData.onboardingComplete === true || profileData.emailVerified === true) {
-            console.log('Onboarding complete, showing logbook')
             setShowOnboarding(false)
           } else {
-            // New user, show onboarding
-            console.log('New user detected, showing onboarding')
             setShowOnboarding(true)
           }
 
           // Auto-complete onboarding for old verified users
           if (profileData.emailVerified && !profileData.onboardingComplete) {
-            console.log('Auto-completing onboarding for verified user')
             await setDoc(
               doc(db, 'users', user.uid, 'profile', 'data'),
               { onboardingComplete: true },
@@ -182,7 +158,6 @@ function App() {
             )
           }
         } else {
-          console.log('No profile found, showing onboarding')
           setShowOnboarding(true)
         }
       } catch (err) {
@@ -200,11 +175,9 @@ function App() {
     setSignupError(null)
 
     try {
-      // Create auth user
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const newUser = userCredential.user
 
-      // Create profile doc in Firestore
       await setDoc(doc(db, 'users', newUser.uid, 'profile', 'data'), {
         email,
         fullName: fullName || '',
@@ -217,10 +190,8 @@ function App() {
         createdAt: new Date().toISOString()
       })
 
-      // Send verification email
       try {
         await sendEmailVerification(newUser)
-        console.log('Verification email sent to:', newUser.email)
       } catch (emailError) {
         console.error('Email verification error:', emailError)
       }
@@ -253,7 +224,6 @@ function App() {
       await signInWithEmailAndPassword(auth, email, password)
       setAuthSuccess(true)
       setCountdown(3)
-      // Auth listener will handle user state and navigation
       setIsSigningUp(false)
       return { success: true }
     } catch (error) {
@@ -276,8 +246,7 @@ function App() {
     setIsSigningUp(true)
     setSignupError(null)
     try {
-      const provider = new GoogleAuthProvider()
-      await signInWithRedirect(auth, provider)
+      await signInWithRedirect(auth, new GoogleAuthProvider())
       // Page navigates away — execution stops here.
       // Result is handled by getRedirectResult() on the next load.
     } catch (error) {
@@ -289,7 +258,6 @@ function App() {
 
   const handleOnboardingComplete = async (profileData = {}) => {
     try {
-      // Update Firestore profile with final data and mark onboarding complete
       if (user) {
         await setDoc(
           doc(db, 'users', user.uid, 'profile', 'data'),

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
-import { db, auth, googleProvider } from "./firebase";
+import { db, auth } from "./firebase";
 import { signInWithRedirect, signOut, onAuthStateChanged, GoogleAuthProvider } from "firebase/auth";
 import { doc, setDoc, getDoc, addDoc, collection } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
@@ -1007,7 +1007,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
         <style>{themeCss}</style>
         <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-acc, #4fc3f7)" }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 26, marginBottom: 12 }}>✈</div>
+          <img src="/brand/icons/icon-72.png" alt="ClaudeBorne" width="36" height="36" style={{ marginBottom: 12, display: "block", margin: "0 auto 12px" }} />
           <div style={{ fontSize: 13, letterSpacing: "0.2em" }}>LOADING eLOGBOOK...</div>
         </div>
       </div>
@@ -1023,7 +1023,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
       <style>{themeCss}</style>
       <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-txt, #c8d6e5)" }}>
         <div style={{ textAlign: "center", padding: 40, border: "1px solid var(--elb-border, #1e3a5f)", borderRadius: 8, background: "var(--elb-bg2, #0d1520)", maxWidth: 380 }}>
-          <div style={{ fontSize: 38, marginBottom: 8 }}>✈</div>
+          <img src="/brand/icons/icon-72.png" alt="ClaudeBorne" width="48" height="48" style={{ display: "block", margin: "0 auto 8px" }} />
           <div style={{ fontSize: 15, letterSpacing: "0.2em", color: "var(--elb-acc, #4fc3f7)", marginBottom: 4 }}>eLOGBOOK V6.4</div>
           <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
           <div style={{ fontSize: 11, color: "var(--elb-txt-muted, #3a5a7a)", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
@@ -3148,7 +3148,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount }) {
           fontFamily: "var(--elb-font, 'Courier New', monospace)",
         }}>
           <div style={{ textAlign: "center", color: "var(--elb-acc, #3FE0C5)" }}>
-            <div style={{ fontSize: 28, marginBottom: 14 }}>✈</div>
+            <img src="/brand/icons/icon-72.png" alt="ClaudeBorne" width="40" height="40" style={{ display: "block", margin: "0 auto 14px" }} />
             <div style={{ fontSize: 13, letterSpacing: "0.18em", marginBottom: 8 }}>MIGRATING YOUR DATA</div>
             <div style={{ fontSize: 11, letterSpacing: "0.1em", color: "#7c87a3" }}>
               One-time setup · Your logbook is moving to local storage

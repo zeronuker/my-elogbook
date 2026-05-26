@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Icon studio (dev tool, not part of main app)
+icon-studio.html
+src/icon-studio-main.jsx
+src/ClaudeBorne-Icons.jsx
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
