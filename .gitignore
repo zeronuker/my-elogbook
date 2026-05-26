@@ -17,6 +17,9 @@ icon-studio.html
 src/icon-studio-main.jsx
 src/ClaudeBorne-Icons.jsx
 
+# Sensitive credentials — never commit
+serviceAccountKey.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

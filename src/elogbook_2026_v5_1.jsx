@@ -3,7 +3,7 @@ import { useRegisterSW } from "virtual:pwa-register/react";
 import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
 import { db, auth } from "./firebase";
-import { signInWithRedirect, signOut, onAuthStateChanged, GoogleAuthProvider } from "firebase/auth";
+import { signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "firebase/auth";
 import { doc, setDoc, getDoc, addDoc, collection } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
@@ -1028,7 +1028,7 @@ export default function ELogbook2026({ onLogout, onDeleteAccount, onReauthAndDel
           <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #5a7a9a)", letterSpacing: "0.1em", marginBottom: 8 }}>CAA MALAYSIA · MCAR 2016</div>
           <div style={{ fontSize: 11, color: "var(--elb-txt-muted, #3a5a7a)", marginBottom: 32 }}>Compliant with CAD 1901 • MCAR 2016 Part 7 & 8 • ICAO Annex 1</div>
           <button
-            onClick={() => signInWithRedirect(auth, new GoogleAuthProvider()).catch(e => console.error("Sign in error:", e))}
+            onClick={() => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => console.error("Sign in error:", e))}
             style={{
               background: "var(--elb-bg2, #0d1520)",
               border: "1px solid var(--elb-acc, #4fc3f7)",
