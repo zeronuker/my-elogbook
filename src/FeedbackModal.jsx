@@ -307,15 +307,16 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
                     <button
                       className={`fb-type-btn ${type === "feature" ? "active" : ""}`}
                       onClick={() => setType("feature")}
-                      style={{ textAlign: "left" }}
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
                     >
-                      <span style={{ fontSize: 14 }}>💡</span> Feature Request
+                      <span style={{ fontSize: 14, flexShrink: 0 }}>💡</span>
+                      <span style={{ flex: 1, textAlign: "center" }}>Feature Request</span>
                     </button>
                     <button
                       className={`fb-type-btn ${type === "general" ? "active" : ""}`}
                       onClick={() => setType("general")}
                     >
-                      <span style={{ fontSize: 14 }}>✉</span> General
+                      <span style={{ fontSize: 14 }}>🛰️</span> General
                     </button>
                   </div>
                 </div>
