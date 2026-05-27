@@ -307,6 +307,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
                     <button
                       className={`fb-type-btn ${type === "feature" ? "active" : ""}`}
                       onClick={() => setType("feature")}
+                      style={{ textAlign: "left" }}
                     >
                       <span style={{ fontSize: 14 }}>💡</span> Feature Request
                     </button>
