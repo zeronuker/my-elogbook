@@ -8,6 +8,26 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const APP_VERSION = "v6.5";
 
+// ── Google Form dual-write (fire-and-forget) ─────────────────────────────────
+const GF_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdUR2dmIbFXxalz29VkWfHZbIJlJq7sHHjZwZvm1741OCsgzA/formResponse";
+const GF_FIELDS = {
+  type:    "entry.1726619161",
+  subject: "entry.1516881691",
+  message: "entry.1999386103",
+  version: "entry.247546104",
+  email:   "entry.1988935079",
+};
+
+function submitToGoogleForm({ type, subject, message, version, email }) {
+  const body = new URLSearchParams();
+  body.append(GF_FIELDS.type,    type);
+  body.append(GF_FIELDS.subject, subject);
+  body.append(GF_FIELDS.message, message);
+  body.append(GF_FIELDS.version, version);
+  body.append(GF_FIELDS.email,   email || "not signed in");
+  fetch(GF_URL, { method: "POST", mode: "no-cors", body }).catch(() => {});
+}
+
 const css = `
   .fb-backdrop {
     position: fixed; inset: 0;
@@ -205,6 +225,12 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
     setSubmitting(true);
     setError("");
     try {
+      const typeLabel = type === "bug" ? "Bug Report" : "Feature Request";
+      const fullMessage = steps.trim()
+        ? `${description.trim()}\n\nSteps to reproduce:\n${steps.trim()}`
+        : description.trim();
+
+      // Primary write → Firestore
       await addDoc(collection(db, "feedback"), {
         type,
         description: description.trim(),
@@ -214,6 +240,16 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
         version: APP_VERSION,
         timestamp: serverTimestamp(),
       });
+
+      // Secondary write → Google Form (fire-and-forget, no-cors)
+      submitToGoogleForm({
+        type:    typeLabel,
+        subject: `${typeLabel} — ${APP_VERSION}`,
+        message: fullMessage,
+        version: APP_VERSION,
+        email:   user?.email || "",
+      });
+
       setSubmitted(true);
     } catch (err) {
       console.error("Feedback submit error:", err);
