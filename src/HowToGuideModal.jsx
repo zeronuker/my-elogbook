@@ -2,6 +2,53 @@ import { useState, useEffect } from "react";
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
+function ColumnGuideMockup() {
+  const cols = [
+    { label: "DATE",     value: "15",      desc: "Day of month" },
+    { label: "TYPE",     value: "B737",    desc: "Aircraft type" },
+    { label: "MARKINGS", value: "9M-XXX",  desc: "Registration" },
+    { label: "CAPTAIN",  value: "SELF",    desc: "PIC name" },
+    { label: "H.O.C",    value: "P1",      desc: "Your capacity" },
+    { label: "SECTORS",  value: "2",       desc: "No. of sectors" },
+    { label: "DEP",      value: "WMKK",    desc: "Departure ICAO" },
+    { label: "ARR",      value: "WMBT",    desc: "Arrival ICAO" },
+    { label: "STD",      value: "08:30",   desc: "Sched dep UTC" },
+    { label: "STA",      value: "10:15",   desc: "Sched arr UTC" },
+    { label: "RMK",      value: "✎",       desc: "Notes" },
+  ];
+  return (
+    <div style={{ overflowX: "auto", margin: "14px 0 20px", border: "1px solid #1e3a5f", borderRadius: 6 }}>
+      <table style={{ borderCollapse: "collapse", fontFamily: "Courier New, monospace", fontSize: 11, width: "100%" }}>
+        <thead>
+          <tr style={{ background: "#060b14" }}>
+            {cols.map(c => (
+              <th key={c.label} style={{ padding: "7px 10px", color: "#3FE0C5", letterSpacing: "0.1em", fontWeight: 700, borderBottom: "2px solid #1e3a5f", borderRight: "1px solid #0f1e30", whiteSpace: "nowrap", textAlign: "center" }}>
+                {c.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr style={{ background: "#0a0f1a" }}>
+            {cols.map(c => (
+              <td key={c.label} style={{ padding: "7px 10px", color: "#e2eef5", borderRight: "1px solid #0f1e30", borderBottom: "1px solid #0f1e30", textAlign: "center", whiteSpace: "nowrap" }}>
+                {c.value}
+              </td>
+            ))}
+          </tr>
+          <tr style={{ background: "#060b14" }}>
+            {cols.map(c => (
+              <td key={c.label} style={{ padding: "5px 10px 7px", color: "#4a7a9a", fontSize: 10, borderRight: "1px solid #0f1e30", textAlign: "center", whiteSpace: "nowrap", letterSpacing: "0.05em" }}>
+                {c.desc}
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function Screenshot({ label }) {
   return (
     <div style={{
@@ -161,7 +208,7 @@ const SECTIONS = [
           <li><strong>Remarks</strong> — any additional notes (tap the remarks icon)</li>
         </ul>
 
-        <Screenshot label="Remarks modal" />
+        <ColumnGuideMockup />
 
         <Tip>Once all rows are filled, tap the + ADD SECTOR button to add a new row.</Tip>
       </div>
