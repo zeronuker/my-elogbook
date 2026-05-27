@@ -225,7 +225,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
     setSubmitting(true);
     setError("");
     try {
-      const typeLabel = type === "bug" ? "Bug Report" : "Feature Request";
+      const typeLabel = type === "bug" ? "Bug Report" : type === "feature" ? "Feature Request" : "General Feedback";
       const fullMessage = steps.trim()
         ? `${description.trim()}\n\nSteps to reproduce:\n${steps.trim()}`
         : description.trim();
@@ -279,10 +279,10 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
           {submitted ? (
             /* SUCCESS STATE */
             <div className="fb-success">
-              <span className="fb-success-icon">{type === "bug" ? "🐛" : "💡"}</span>
+              <span className="fb-success-icon">{type === "bug" ? "🐛" : type === "feature" ? "💡" : "✉"}</span>
               <div className="fb-success-title">Thank you!</div>
               <div className="fb-success-sub">
-                Your {type === "bug" ? "bug report" : "feature request"} has been received.<br />
+                Your {type === "bug" ? "bug report" : type === "feature" ? "feature request" : "message"} has been received.<br />
                 We review all submissions and will follow up if needed.
               </div>
               <button className="fb-btn fb-btn-submit" style={{ marginTop: 8 }} onClick={handleClose}>
@@ -310,13 +310,19 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
                     >
                       💡 Feature Request
                     </button>
+                    <button
+                      className={`fb-type-btn ${type === "general" ? "active" : ""}`}
+                      onClick={() => setType("general")}
+                    >
+                      ✉ General
+                    </button>
                   </div>
                 </div>
 
                 {/* Description */}
                 <div className="fb-field">
                   <div className="fb-label">
-                    {type === "bug" ? "What went wrong?" : "What would you like?"}
+                    {type === "bug" ? "What went wrong?" : type === "feature" ? "What would you like?" : "Your message"}
                   </div>
                   <textarea
                     className="fb-textarea"
@@ -324,7 +330,9 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
                     placeholder={
                       type === "bug"
                         ? "Describe the issue clearly..."
-                        : "Describe the feature you'd like to see..."
+                        : type === "feature"
+                        ? "Describe the feature you'd like to see..."
+                        : "Write your message here..."
                     }
                     value={description}
                     onChange={e => setDesc(e.target.value)}
