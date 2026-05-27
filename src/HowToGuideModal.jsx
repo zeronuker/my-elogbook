@@ -414,10 +414,9 @@ export default function HowToGuideModal({ open, onClose }) {
           >← PREV</button>
           <span style={{ fontSize: 10, color: "#3a6a8a", letterSpacing: "0.1em" }}>{active + 1} / {SECTIONS.length}</span>
           <button
-            onClick={() => setActive(prev => Math.min(SECTIONS.length - 1, prev + 1))}
-            disabled={active === SECTIONS.length - 1}
-            style={{ background: "transparent", border: "1px solid #1e3a5f", borderRadius: 4, color: active === SECTIONS.length - 1 ? "#1e3a5f" : "#3a6a8a", padding: "5px 14px", cursor: active === SECTIONS.length - 1 ? "default" : "pointer", fontSize: 11, letterSpacing: "0.08em", fontFamily: "Courier New, monospace" }}
-          >NEXT →</button>
+            onClick={() => active === SECTIONS.length - 1 ? onClose() : setActive(prev => prev + 1)}
+            style={{ background: active === SECTIONS.length - 1 ? "rgba(63,224,197,0.1)" : "transparent", border: `1px solid ${active === SECTIONS.length - 1 ? "#3FE0C5" : "#1e3a5f"}`, borderRadius: 4, color: active === SECTIONS.length - 1 ? "#3FE0C5" : "#3a6a8a", padding: "5px 14px", cursor: "pointer", fontSize: 11, letterSpacing: "0.08em", fontFamily: "Courier New, monospace" }}
+          >{active === SECTIONS.length - 1 ? "FINISH ✓" : "NEXT →"}</button>
         </div>
       </div>
 
