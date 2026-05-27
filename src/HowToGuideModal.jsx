@@ -2,6 +2,81 @@ import { useState, useEffect } from "react";
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
+// ── Shared mockup primitives ──────────────────────────────────────────────────
+
+const mockField = (label, value, hint) => (
+  <div key={label} style={{ marginBottom: 10 }}>
+    <div style={{ fontSize: 9, letterSpacing: "0.12em", color: "#3a6a8a", marginBottom: 4 }}>{label}</div>
+    <div style={{
+      background: "#060b14", border: "1px solid #1e3a5f", borderRadius: 4,
+      padding: "7px 10px", fontSize: 12, color: hint ? "#3a6a8a" : "#c8dce8",
+      fontFamily: "Courier New, monospace", letterSpacing: "0.04em",
+    }}>{value}</div>
+  </div>
+);
+
+const mockBtn = (label, primary) => (
+  <div style={{
+    background: primary ? "rgba(63,224,197,0.12)" : "transparent",
+    border: `1px solid ${primary ? "#3FE0C5" : "#1e3a5f"}`,
+    borderRadius: 4, padding: "8px 0", textAlign: "center",
+    color: primary ? "#3FE0C5" : "#5a8aaa",
+    fontSize: 11, letterSpacing: "0.12em", fontFamily: "Courier New, monospace",
+    fontWeight: primary ? 700 : 400, marginBottom: 8,
+  }}>{label}</div>
+);
+
+function LandingPageMockup() {
+  return (
+    <div style={{ background: "#060b14", border: "1px solid #1e3a5f", borderRadius: 6, padding: "24px 28px", margin: "14px 0 20px", textAlign: "center" }}>
+      {/* Logo */}
+      <div style={{ width: 52, height: 52, borderRadius: 12, background: "#0a0d12", border: "1px solid #1e3a5f", margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ color: "#3FE0C5", fontSize: 22, fontWeight: 700, fontFamily: "Courier New, monospace" }}>C</span>
+      </div>
+      <div style={{ fontSize: 13, letterSpacing: "0.22em", color: "#e2eef5", fontWeight: 700, fontFamily: "Courier New, monospace", marginBottom: 4 }}>CLAUDEBORNE</div>
+      <div style={{ fontSize: 9, letterSpacing: "0.14em", color: "#3a6a8a", marginBottom: 22, fontFamily: "Courier New, monospace" }}>eLOGBOOK V6.5 · CAAM / MCAR 2016</div>
+      <div style={{ maxWidth: 240, margin: "0 auto" }}>
+        {mockBtn("SIGN UP", true)}
+        {mockBtn("LOG IN", false)}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0" }}>
+          <div style={{ flex: 1, height: 1, background: "#1e3a5f" }} />
+          <span style={{ fontSize: 9, color: "#3a6a8a", letterSpacing: "0.08em" }}>OR</span>
+          <div style={{ flex: 1, height: 1, background: "#1e3a5f" }} />
+        </div>
+        {mockBtn("G  CONTINUE WITH GOOGLE", false)}
+      </div>
+    </div>
+  );
+}
+
+function SignUpFormMockup() {
+  return (
+    <div style={{ background: "#060b14", border: "1px solid #1e3a5f", borderRadius: 6, padding: "20px 24px", margin: "14px 0 20px", maxWidth: 360 }}>
+      <div style={{ fontSize: 10, letterSpacing: "0.16em", color: "#3FE0C5", fontWeight: 700, marginBottom: 16, fontFamily: "Courier New, monospace" }}>CREATE ACCOUNT</div>
+      {mockField("EMAIL ADDRESS", "pilot@example.com", false)}
+      {mockField("PASSWORD", "••••••••••", false)}
+      {mockField("CONFIRM PASSWORD", "••••••••••", false)}
+      <div style={{ marginTop: 14 }}>{mockBtn("SIGN UP", true)}</div>
+      <div style={{ fontSize: 10, color: "#3a6a8a", letterSpacing: "0.06em", marginTop: 8, fontFamily: "Courier New, monospace" }}>
+        A verification email will be sent to your inbox.
+      </div>
+    </div>
+  );
+}
+
+function PilotProfileMockup() {
+  return (
+    <div style={{ background: "#060b14", border: "1px solid #1e3a5f", borderRadius: 6, padding: "20px 24px", margin: "14px 0 20px", maxWidth: 360 }}>
+      <div style={{ fontSize: 10, letterSpacing: "0.16em", color: "#3FE0C5", fontWeight: 700, marginBottom: 16, fontFamily: "Courier New, monospace" }}>PILOT PROFILE</div>
+      {mockField("FULL NAME", "CAPT. AMIR RASHID", false)}
+      {mockField("LICENCE NUMBER", "ML-XXXXXX", false)}
+      {mockField("LICENCE TYPE", "ATPL(A)", false)}
+      {mockField("AIRLINE / OPERATOR", "MALAYSIA AIRLINES", false)}
+      <div style={{ marginTop: 14 }}>{mockBtn("SAVE PROFILE", true)}</div>
+    </div>
+  );
+}
+
 function ColumnGuideMockup() {
   const cols = [
     { label: "DATE",     value: "15",      desc: "Day of month" },
@@ -114,7 +189,7 @@ const SECTIONS = [
       <div className="htg-content">
         <p>ClaudeBorne eLogBook requires an account to keep your logbook securely backed up to the cloud. You can sign up with your email or use Google for a faster setup.</p>
 
-        <Screenshot label="Landing page" />
+        <LandingPageMockup />
 
         <h4>Creating an account</h4>
         <ul>
@@ -123,7 +198,7 @@ const SECTIONS = [
           <li>Check your inbox and verify your email before logging in</li>
         </ul>
 
-        <Screenshot label="Sign up form" />
+        <SignUpFormMockup />
 
         <h4>Signing in with Google</h4>
         <ul>
@@ -137,7 +212,7 @@ const SECTIONS = [
           <li>This information appears in your exported logbook</li>
         </ul>
 
-        <Screenshot label="Pilot profile setup" />
+        <PilotProfileMockup />
       </div>
     ),
   },
