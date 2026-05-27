@@ -19,6 +19,9 @@ src/ClaudeBorne-Icons.jsx
 
 # Sensitive credentials — never commit
 serviceAccountKey.json
+.env
+.env.local
+.env.*.local
 
 # Dev scripts and tools
 populate-logbook.js
