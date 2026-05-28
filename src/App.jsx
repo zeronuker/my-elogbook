@@ -4,11 +4,14 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
   EmailAuthProvider,
   reauthenticateWithPopup,
+  reauthenticateWithRedirect,
   reauthenticateWithCredential,
   deleteUser,
   sendEmailVerification
@@ -17,6 +20,20 @@ import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore'
 import ELogbook2026 from './elogbook_2026_v5_1'
 import OnboardingFlow from './OnboardingFlow'
 import LoadingOverlay from './LoadingOverlay'
+
+// Detect if running as an installed PWA (standalone mode).
+// PWAs need redirect-based auth — popups don't work properly in standalone contexts
+// on iOS Safari View Controller and Android Chrome Custom Tabs.
+const isPWA = () => {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true || // iOS Safari
+    document.referrer.startsWith('android-app://')
+  )
+}
+
+// Session key used to prevent infinite reload loops from the auto-recovery safety net
+const AUTH_RECOVERY_KEY = 'elb_auth_recovery_attempted'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -28,7 +45,83 @@ function App() {
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
   const prevUserRef = useRef(null)
   const onboardingDoneRef = useRef(false)
+  const prevIsSigningUpRef = useRef(false)
 
+  // Shared helper: create the Firestore profile doc for a Google user if missing.
+  // Used by both popup (handleGoogleAuth) and redirect (getRedirectResult) flows.
+  const ensureGoogleProfile = async (googleUser) => {
+    const profileRef = doc(db, 'users', googleUser.uid, 'profile', 'data')
+    const profileSnap = await getDoc(profileRef)
+    if (!profileSnap.exists()) {
+      await setDoc(profileRef, {
+        email: googleUser.email,
+        fullName: googleUser.displayName || '',
+        staffId: '',
+        licenceNumber: '',
+        licenceType: 'ATPL(A)',
+        organization: '',
+        onboardingComplete: false,
+        emailVerified: true,
+        createdAt: new Date().toISOString()
+      })
+    }
+  }
+
+  // Clear all localStorage data for a given uid
+  const clearLocalStorage = (uid) => {
+    localStorage.removeItem(`elb_data_${uid}`)
+    localStorage.removeItem(`elb_settings_${uid}`)
+    localStorage.removeItem(`elb_last_local_save_${uid}`)
+    localStorage.removeItem(`elb_last_sync_display_${uid}`)
+  }
+
+  // Handle Google redirect result on app load.
+  // Used by PWA Google sign-in flow (signInWithRedirect) and PWA account-delete re-auth.
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then(async (result) => {
+        // Check for pending account deletion from reauthenticateWithRedirect
+        const pendingDeleteUid = sessionStorage.getItem('pendingAccountDelete')
+        if (pendingDeleteUid) {
+          sessionStorage.removeItem('pendingAccountDelete')
+          const currentUser = result?.user || auth.currentUser
+          if (currentUser && currentUser.uid === pendingDeleteUid) {
+            try {
+              await deleteUser(currentUser)
+              await deleteDoc(doc(db, 'users', pendingDeleteUid, 'profile', 'data'))
+              await deleteDoc(doc(db, 'users', pendingDeleteUid, 'logbook', 'data'))
+              clearLocalStorage(pendingDeleteUid)
+            } catch (deleteError) {
+              console.error('Account deletion after reauth redirect failed:', deleteError)
+            }
+          }
+          return
+        }
+
+        if (!result) return // No sign-in redirect in progress — normal page load
+
+        // Successful Google sign-in via redirect (PWA flow)
+        const googleUser = result.user
+        try {
+          await ensureGoogleProfile(googleUser)
+        } catch (err) {
+          console.error('Profile setup after redirect failed:', err)
+          // Don't block sign-in — checkProfile useEffect will handle fallback
+        }
+        onboardingDoneRef.current = true
+        setShowOnboarding(false)
+        setShowLoadingOverlay(true)
+        setTimeout(() => setShowLoadingOverlay(false), 1500)
+      })
+      .catch((error) => {
+        sessionStorage.removeItem('pendingAccountDelete')
+        console.error('Redirect result error:', error)
+        // Only show error if a redirect was actually attempted (not on fresh load)
+        if (error.code && error.code !== 'auth/no-auth-event') {
+          setSignupError('Google sign-in failed. Please try again, or use email/password instead.')
+        }
+      })
+  }, [])
 
   // Listen to auth state
   useEffect(() => {
@@ -108,6 +201,60 @@ function App() {
     checkProfile()
   }, [user])
 
+  // ── Auto-recovery safety net ───────────────────────────────────────────
+  // Detects rare stuck states where Firebase auth succeeded but the React UI
+  // is still showing the login screen (caused by browser extensions interfering
+  // with the popup handshake, transient COOP issues, etc.). One-shot per session
+  // to avoid reload loops.
+  //
+  // Trigger 1: a sign-in attempt just finished (isSigningUp true → false)
+  // but the UI is still on login, and Firebase says we're authenticated.
+  useEffect(() => {
+    const wasSigningUp = prevIsSigningUpRef.current
+    prevIsSigningUpRef.current = isSigningUp
+    if (!wasSigningUp || isSigningUp) return
+
+    // Give state updates a moment to settle, then check for stuck state
+    const timer = setTimeout(() => {
+      const stillStuck =
+        (showOnboarding || showLogoutConfirm) &&
+        auth.currentUser &&
+        !isSigningUp
+      if (stillStuck && !sessionStorage.getItem(AUTH_RECOVERY_KEY)) {
+        sessionStorage.setItem(AUTH_RECOVERY_KEY, '1')
+        console.warn('Auth completed but UI stuck on login screen — reloading to recover')
+        window.location.reload()
+      }
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [isSigningUp, showOnboarding, showLogoutConfirm])
+
+  // Trigger 2: a sign-in attempt is hanging (popup never resolved). After 20s,
+  // give up. If Firebase actually authenticated in the background, reload to
+  // pick up the session; otherwise show an actionable error.
+  useEffect(() => {
+    if (!isSigningUp) return
+    const timer = setTimeout(() => {
+      if (!isSigningUp) return // already finished
+      console.warn('Sign-in attempt timed out after 20s')
+      setIsSigningUp(false)
+      if (auth.currentUser && !sessionStorage.getItem(AUTH_RECOVERY_KEY)) {
+        sessionStorage.setItem(AUTH_RECOVERY_KEY, '1')
+        window.location.reload()
+      } else if (!auth.currentUser) {
+        setSignupError('Sign-in timed out. If you use ad blockers or popup blockers, try disabling them on this site, or sign in with email/password instead.')
+      }
+    }, 20000)
+    return () => clearTimeout(timer)
+  }, [isSigningUp])
+
+  // Clear the one-shot recovery flag once the user is successfully in the app
+  useEffect(() => {
+    if (!showOnboarding && !showLogoutConfirm && user) {
+      sessionStorage.removeItem(AUTH_RECOVERY_KEY)
+    }
+  }, [showOnboarding, showLogoutConfirm, user])
+
   // Signup with email/password
   const handleSignup = async (email, password, fullName) => {
     setIsSigningUp(true)
@@ -179,28 +326,30 @@ function App() {
     }
   }
 
-  // Google signup/login — popup-based for reliable cross-browser auth
+  // Google signup/login — uses redirect on PWA (popups don't work in standalone mode),
+  // popup on regular browsers (better UX, no page navigation).
   const handleGoogleAuth = async () => {
     setIsSigningUp(true)
     setSignupError(null)
+
+    // PWA path: full-page redirect to Google, return handled by getRedirectResult on app reload
+    if (isPWA()) {
+      try {
+        await signInWithRedirect(auth, new GoogleAuthProvider())
+        // Page navigates away; execution stops here.
+      } catch (error) {
+        console.error('Google redirect error:', error)
+        setSignupError('Google sign-in failed. Please try again, or use email/password instead.')
+        setIsSigningUp(false)
+      }
+      return
+    }
+
+    // Desktop / browser path: popup
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider())
       const googleUser = result.user
-
-      const profileSnap = await getDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'))
-      if (!profileSnap.exists()) {
-        await setDoc(doc(db, 'users', googleUser.uid, 'profile', 'data'), {
-          email: googleUser.email,
-          fullName: googleUser.displayName || '',
-          staffId: '',
-          licenceNumber: '',
-          licenceType: 'ATPL(A)',
-          organization: '',
-          onboardingComplete: false,
-          emailVerified: true,
-          createdAt: new Date().toISOString()
-        })
-      }
+      await ensureGoogleProfile(googleUser)
       onboardingDoneRef.current = true
       setShowOnboarding(false)
       setShowLoadingOverlay(true)
@@ -215,8 +364,22 @@ function App() {
         setIsSigningUp(false)
         return
       }
+
+      // Provide actionable messages for common failure modes (ad blockers, popup blockers, etc.)
+      let errorMsg = 'Google sign-in failed. Please try again.'
+      if (error.code === 'auth/popup-blocked') {
+        errorMsg = 'Popup was blocked. Please allow popups for this site, or sign in with email/password instead.'
+      } else if (
+        error.code === 'auth/network-request-failed' ||
+        (typeof error.message === 'string' && error.message.toLowerCase().includes('network'))
+      ) {
+        errorMsg = 'Sign-in blocked by network. This is often caused by ad blockers — try disabling them on this site, or use email/password sign-in instead.'
+      } else if (error.code === 'auth/internal-error') {
+        errorMsg = 'Sign-in failed. If you use ad blockers or popup blockers, try disabling them on this site, or sign in with email/password.'
+      }
+
       console.error('Google auth error:', error)
-      setSignupError('Google sign-in failed. Please try again.')
+      setSignupError(errorMsg)
       setIsSigningUp(false)
     }
   }
@@ -243,15 +406,9 @@ function App() {
     }
   }
 
-  // Clear all localStorage data for a given uid
-  const clearLocalStorage = (uid) => {
-    localStorage.removeItem(`elb_data_${uid}`)
-    localStorage.removeItem(`elb_settings_${uid}`)
-    localStorage.removeItem(`elb_last_local_save_${uid}`)
-    localStorage.removeItem(`elb_last_sync_display_${uid}`)
-  }
-
-  // Delete account and all data (client-side, no Cloud Function required)
+  // Delete account and all data (client-side, no Cloud Function required).
+  // For Google users on PWA, uses reauthenticateWithRedirect — the rest of the
+  // deletion completes in the getRedirectResult handler after the redirect returns.
   const handleDeleteAccount = async () => {
     if (!user) return
     const uid = user.uid
@@ -265,12 +422,21 @@ function App() {
         const providerId = user.providerData[0]?.providerId
         if (providerId === 'google.com') {
           try {
+            // PWA: use redirect (popup doesn't work in standalone mode).
+            // The delete itself runs in the getRedirectResult handler on return.
+            if (isPWA()) {
+              sessionStorage.setItem('pendingAccountDelete', uid)
+              await reauthenticateWithRedirect(user, new GoogleAuthProvider())
+              return // page navigates away
+            }
+            // Desktop browser: popup
             await reauthenticateWithPopup(user, new GoogleAuthProvider())
             await deleteUser(user)
             await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
             await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
             clearLocalStorage(uid)
           } catch (reAuthError) {
+            sessionStorage.removeItem('pendingAccountDelete')
             console.error('Re-authentication failed:', reAuthError)
             throw new Error(reAuthError.message || 'Re-authentication failed. Please try again.')
           }

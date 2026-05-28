@@ -103,7 +103,18 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.5", date: "May 2026", current: true,
+    v: "v6.6", date: "May 2026", current: true,
+    title: "Google sign-in reliability fix",
+    notes: [
+      "FIX: Google sign-in on installed PWA (iPad / Android) no longer leaves the app stuck on the login screen — now uses redirect-based auth on PWA where popups don't work properly.",
+      "FIX: Google sign-in on desktop browsers with ad blockers / popup blockers now shows a clear error message instead of silently failing.",
+      "NEW: Auto-recovery safety net — if Google sign-in succeeds but the UI gets stuck on the login screen, the app now auto-reloads to recover (one-shot per session, no manual refresh needed).",
+      "IMP: Sign-in attempt now times out after 20 seconds with an actionable error message — no more permanently stuck \"LOGGING IN...\" button.",
+      "IMP: Google account-delete re-auth on PWA now uses redirect flow (matches PWA sign-in pattern).",
+    ],
+  },
+  {
+    v: "v6.5", date: "May 2026", current: false,
     title: "How-To Guide · UI polish · export fix",
     notes: [
       "NEW: In-app How-To Guide — 8 sections covering getting started, installing the app, logging flights, day/night calculation, carry forward hours, syncing, exporting, and settings.",

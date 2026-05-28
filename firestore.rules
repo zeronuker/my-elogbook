@@ -24,6 +24,11 @@ service cloud.firestore {
         );
     }
 
+    // Feedback submissions — any signed-in user can write
+    match /feedback/{docId} {
+      allow create: if request.auth != null;
+    }
+
     // Public data (if needed)
     match /public/{document=**} {
       allow read: if true;
