@@ -103,14 +103,21 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.6", date: "May 2026", current: true,
-    title: "Google sign-in reliability fix",
+    v: "v6.6.1", date: "May 2026", current: true,
+    title: "Hotfix — revert PWA redirect auth",
     notes: [
-      "FIX: Google sign-in on installed PWA (iPad / Android) no longer leaves the app stuck on the login screen — now uses redirect-based auth on PWA where popups don't work properly.",
+      "FIX: Revert v6.6 PWA redirect-based Google sign-in — installed PWAs were landing on the welcome page after Google sign-in with no auth. Reverted to popup-based flow (same as v6.5 behaviour on PWA).",
+      "IMP: Desktop Google sign-in improvements from v6.6 retained — auto-recovery reload, 20s timeout, ad-blocker error messages all still active.",
+      "PWA Google sign-in fix is in progress via a different approach (Google Identity Services); v6.6.1 restores PWA users to v6.5 behaviour in the meantime.",
+    ],
+  },
+  {
+    v: "v6.6", date: "May 2026", current: false,
+    title: "Google sign-in reliability (desktop)",
+    notes: [
       "FIX: Google sign-in on desktop browsers with ad blockers / popup blockers now shows a clear error message instead of silently failing.",
       "NEW: Auto-recovery safety net — if Google sign-in succeeds but the UI gets stuck on the login screen, the app now auto-reloads to recover (one-shot per session, no manual refresh needed).",
       "IMP: Sign-in attempt now times out after 20 seconds with an actionable error message — no more permanently stuck \"LOGGING IN...\" button.",
-      "IMP: Google account-delete re-auth on PWA now uses redirect flow (matches PWA sign-in pattern).",
     ],
   },
   {
