@@ -503,6 +503,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const saveChipIdleRef     = useRef(null); // fading → idle (after 0.5 s fade)
   const [migrating, setMigrating] = useState(false); // true while pulling existing data from Firestore on first load
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState(null); // null → SettingsModal defaults to "profile"
+  const [hiddenColsToastVisible, setHiddenColsToastVisible] = useState(false); // toast above table (transient, 5s auto-fade)
+  const prevHiddenColsCountRef = useRef(null); // tracks hidden-col count to detect "just hid a column"
+  const hiddenColsToastTimerRef = useRef(null);
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -1178,12 +1182,38 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // DAY/NIGHT time cols and TOTAL are always visible — strip any legacy entries
   const ALWAYS_VISIBLE_COLS = new Set(["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"]);
   const hiddenCols    = new Set((settings.hiddenColumns || []).filter(k => !ALWAYS_VISIBLE_COLS.has(k)));
+  const hiddenColsCount = hiddenCols.size;
   const isColVisible  = (key) => !hiddenCols.has(key);
   const unhideColumn  = (key) => {
     const next = { ...settings, hiddenColumns: (settings.hiddenColumns || []).filter(k => k !== key) };
     setSettings(next);
     saveSettings(next);
   };
+  // Open Settings on the Appearance tab — used by the hidden-columns badge & toast
+  const openSettingsOnAppearance = () => {
+    setSettingsInitialTab("appearance");
+    setSettingsOpen(true);
+  };
+
+  // Hidden-columns toast: shows when (a) the page mounts with hidden columns,
+  // or (b) the user just hid a new column. Auto-fades after 5s; user can also dismiss.
+  useEffect(() => {
+    const prev = prevHiddenColsCountRef.current;
+    prevHiddenColsCountRef.current = hiddenColsCount;
+    // Show on first run if any hidden, or whenever count increases
+    const shouldShow = (prev === null && hiddenColsCount > 0) || (prev !== null && hiddenColsCount > prev);
+    if (!shouldShow) {
+      // If everything is unhidden, immediately hide the toast as well
+      if (hiddenColsCount === 0) setHiddenColsToastVisible(false);
+      return;
+    }
+    setHiddenColsToastVisible(true);
+    if (hiddenColsToastTimerRef.current) clearTimeout(hiddenColsToastTimerRef.current);
+    hiddenColsToastTimerRef.current = setTimeout(() => setHiddenColsToastVisible(false), 5000);
+    return () => {
+      if (hiddenColsToastTimerRef.current) clearTimeout(hiddenColsToastTimerRef.current);
+    };
+  }, [hiddenColsCount]);
   // Number of visible auto-calc columns (for HOC warning colSpan)
   const autoCalcVisibleCount = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].filter(isColVisible).length;
   // Totals-row label colSpan: # + DATE + visible solo/group cols before time cols
@@ -1516,7 +1546,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             <span style={{
               fontFamily: "'JetBrains Mono','Courier New',monospace",
               fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.30)", lineHeight: 1, textAlign: "left",
-            }}>ELOGBOOK · V6.6.1</span>
+            }}>ELOGBOOK · V6.7</span>
           </div>
           <span className="elb-topbar-caam" style={{
             marginLeft: 6,
@@ -1653,19 +1683,31 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               </button>
               {/* Settings */}
               <button
-                onClick={() => setSettingsOpen(true)}
-                title="Settings"
+                onClick={() => { setSettingsInitialTab(null); setSettingsOpen(true); }}
+                title={hiddenColsCount > 0 ? `Settings · ${hiddenColsCount} hidden column${hiddenColsCount > 1 ? "s" : ""}` : "Settings"}
                 style={{
                   ...iconBtnStyle,
                   color: settingsOpen ? "#4fc3f7" : "#3FE0C5",
                   borderColor: settingsOpen ? "#4fc3f7" : "#1e3a5f",
                   background: settingsOpen ? "rgba(79,195,247,0.1)" : "transparent",
+                  position: "relative",
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="3"/>
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
+                {hiddenColsCount > 0 && (
+                  <span style={{
+                    position: "absolute", top: -4, right: -4,
+                    background: "#3FE0C5", color: "#0a0d12",
+                    borderRadius: "50%", minWidth: 14, height: 14,
+                    fontSize: 9, fontWeight: 700, lineHeight: "14px",
+                    textAlign: "center", padding: "0 3px",
+                    border: "1px solid var(--elb-bg, #0a0d12)",
+                    fontFamily: "'JetBrains Mono','Courier New',monospace",
+                  }}>{hiddenColsCount}</span>
+                )}
               </button>
               {/* Sign Out */}
               <button
@@ -1771,91 +1813,104 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               </div>
             </div>
 
+            {/* Hidden-columns reminder toast — appears transiently when a column is hidden
+                (or on page load if any are hidden), auto-fades after 5s. Click the strip
+                to manage visibility in Settings → Appearance. The gear icon also carries a
+                persistent count badge while hidden cols > 0. */}
+            {hiddenColsToastVisible && hiddenColsCount > 0 && (
+              <div
+                onClick={openSettingsOnAppearance}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  gap: 10, margin: "0 0 10px 0", padding: "6px 12px",
+                  background: "rgba(63,224,197,0.06)",
+                  border: "1px solid rgba(63,224,197,0.22)",
+                  borderRadius: 4, cursor: "pointer",
+                  fontFamily: "'JetBrains Mono','Courier New',monospace",
+                  fontSize: 11, color: "#3FE0C5", letterSpacing: "0.08em",
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(63,224,197,0.12)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(63,224,197,0.06)"}
+                title="Open Settings → Appearance to manage column visibility"
+              >
+                <span>
+                  👁 {hiddenColsCount} column{hiddenColsCount > 1 ? "s" : ""} hidden — click to manage in Settings
+                </span>
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    if (hiddenColsToastTimerRef.current) clearTimeout(hiddenColsToastTimerRef.current);
+                    setHiddenColsToastVisible(false);
+                  }}
+                  title="Dismiss"
+                  style={{
+                    background: "transparent", border: "none", color: "#3FE0C5",
+                    cursor: "pointer", fontSize: 14, padding: "0 4px", lineHeight: 1,
+                    opacity: 0.6,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = "1"}
+                  onMouseLeave={e => e.currentTarget.style.opacity = "0.6"}
+                >✕</button>
+              </div>
+            )}
+
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
               {(() => {
-                // Stub styles for hidden columns
-                const stubBase = {
-                  ...thStyle,
-                  width: 13, minWidth: 13, maxWidth: 13,
-                  padding: "2px 0",
-                  cursor: "pointer",
-                  background: "rgba(63,224,197,0.04)",
-                  borderLeft: "1px solid rgba(63,224,197,0.18)",
-                  overflow: "hidden",
-                  verticalAlign: "middle",
-                };
-                const stubText = {
-                  display: "block",
-                  writingMode: "vertical-rl",
-                  transform: "rotate(180deg)",
-                  fontSize: 7,
-                  letterSpacing: "0.08em",
-                  color: "rgba(63,224,197,0.45)",
-                  userSelect: "none",
-                  padding: "2px 0",
-                  lineHeight: 1.2,
-                };
-                // rowSpan=1 for sub-header stubs (row 2), rowSpan=2 for solo-column stubs (row 1)
-                const stub = (key, label, rowSpan = 1) => (
-                  <th
-                    key={`stub-${key}`}
-                    rowSpan={rowSpan}
-                    style={stubBase}
-                    onClick={() => unhideColumn(key)}
-                    title={`Show ${label}`}
-                  >
-                    <span style={stubText}>{label}</span>
-                  </th>
-                );
-                // Solo th helper (rowSpan=2) — stub must also use rowSpan=2 or row 2 cells shift
+                // Solo th helper (rowSpan=2) — hidden columns are not rendered at all.
+                // Hidden columns are also skipped in the body row, keeping alignment intact.
                 const soloTh = (key, content, extraStyle = {}) => isColVisible(key)
                   ? <th key={key} rowSpan={2} style={{ ...thStyle, ...extraStyle }}>{content}</th>
-                  : stub(key, typeof content === "string" ? content : key.toUpperCase(), 2);
+                  : null;
+
+                // Dynamic colSpan for sub-grouped headers — skip group entirely if all subs hidden
+                const aircraftSpan = (isColVisible("type") ? 1 : 0) + (isColVisible("markings") ? 1 : 0);
+                const sectorsSpan  = (isColVisible("departure") ? 1 : 0) + (isColVisible("arrival") ? 1 : 0);
 
                 return (
                   <thead>
                     <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                       <th rowSpan={2} style={thStyle}>#</th>
                       <th rowSpan={2} style={thStyle}>DATE</th>
-                      {/* AIRCRAFT group — colSpan always 2 (visible cols + stubs) */}
-                      <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>AIRCRAFT</th>
+                      {/* AIRCRAFT group — colSpan reflects visible sub-cols; omitted when both hidden */}
+                      {aircraftSpan > 0 && (
+                        <th colSpan={aircraftSpan} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>AIRCRAFT</th>
+                      )}
                       {/* Solo columns */}
                       {soloTh("captain", "CAPTAIN")}
-                      {isColVisible("cap")
-                        ? <th key="cap" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                            <span style={{ display: "block" }}>HOLDER</span>
-                            <span style={{ display: "block" }}>OPERATING</span>
-                            <span style={{ display: "block" }}>CAPACITY</span>
-                          </th>
-                        : stub("cap", "HOC", 2)
-                      }
-                      {isColVisible("pilotFlying")
-                        ? <th key="pilotFlying" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                            <span style={{ display: "block" }}>PILOT</span>
-                            <span style={{ display: "block" }}>FLYING</span>
-                          </th>
-                        : stub("pilotFlying", "PF", 2)
-                      }
-                      {/* SECTORS group — colSpan always 2 */}
-                      <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>SECTORS</th>
+                      {isColVisible("cap") && (
+                        <th key="cap" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                          <span style={{ display: "block" }}>HOLDER</span>
+                          <span style={{ display: "block" }}>OPERATING</span>
+                          <span style={{ display: "block" }}>CAPACITY</span>
+                        </th>
+                      )}
+                      {isColVisible("pilotFlying") && (
+                        <th key="pilotFlying" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                          <span style={{ display: "block" }}>PILOT</span>
+                          <span style={{ display: "block" }}>FLYING</span>
+                        </th>
+                      )}
+                      {/* SECTORS group — colSpan reflects visible sub-cols; omitted when both hidden */}
+                      {sectorsSpan > 0 && (
+                        <th colSpan={sectorsSpan} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>SECTORS</th>
+                      )}
                       {/* STD / STA */}
-                      {isColVisible("std")
-                        ? <th key="std" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                            <span style={{ display: "block" }}>STD</span>
-                            <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
-                          </th>
-                        : stub("std", "STD", 2)
-                      }
-                      {isColVisible("sta")
-                        ? <th key="sta" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                            <span style={{ display: "block" }}>STA</span>
-                            <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
-                          </th>
-                        : stub("sta", "STA", 2)
-                      }
-                      {/* DAY group — colSpan always 3 */}
+                      {isColVisible("std") && (
+                        <th key="std" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                          <span style={{ display: "block" }}>STD</span>
+                          <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
+                        </th>
+                      )}
+                      {isColVisible("sta") && (
+                        <th key="sta" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                          <span style={{ display: "block" }}>STA</span>
+                          <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
+                        </th>
+                      )}
+                      {/* DAY group — colSpan always 3 (sub-cols always visible) */}
                       <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
-                      {/* NIGHT group — colSpan always 3 */}
+                      {/* NIGHT group — colSpan always 3 (sub-cols always visible) */}
                       <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                       {/* TOTAL */}
                       {soloTh("total", "TOTAL")}
@@ -1865,19 +1920,19 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                     </tr>
                     <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                       {/* AIRCRAFT sub-headers */}
-                      {isColVisible("type")     ? <th style={thSubStyle}>TYPE</th>    : stub("type", "TYPE")}
-                      {isColVisible("markings") ? <th style={thSubStyle}>MARKINGS</th>: stub("markings", "MRKG")}
+                      {isColVisible("type")     && <th style={thSubStyle}>TYPE</th>}
+                      {isColVisible("markings") && <th style={thSubStyle}>MARKINGS</th>}
                       {/* SECTORS sub-headers */}
-                      {isColVisible("departure")? <th style={thSubStyle}>DEP</th>     : stub("departure", "DEP")}
-                      {isColVisible("arrival")  ? <th style={thSubStyle}>ARR</th>     : stub("arrival", "ARR")}
+                      {isColVisible("departure")&& <th style={thSubStyle}>DEP</th>}
+                      {isColVisible("arrival")  && <th style={thSubStyle}>ARR</th>}
                       {/* DAY sub-headers */}
-                      {isColVisible("dayP1")    ? <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>    : stub("dayP1", "P1")}
-                      {isColVisible("dayP1US")  ? <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>: stub("dayP1US", "P1U/S")}
-                      {isColVisible("dayP2")    ? <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>    : stub("dayP2", "P2")}
+                      <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
+                      <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
+                      <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>
                       {/* NIGHT sub-headers */}
-                      {isColVisible("nightP1")  ? <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P1</th>    : stub("nightP1", "P1")}
-                      {isColVisible("nightP1US")? <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>: stub("nightP1US", "P1U/S")}
-                      {isColVisible("nightP2")  ? <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P2</th>    : stub("nightP2", "P2")}
+                      <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P1</th>
+                      <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
+                      <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P2</th>
                     </tr>
                   </thead>
                 );
@@ -1915,22 +1970,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         for (let ci = 0; ci < columns.length; ci++) {
                           const col = columns[ci];
 
-                          // Hidden column: render a narrow stub <td> (same width as the stub <th>)
-                          // so data rows stay column-aligned with the header. Skipping entirely
-                          // causes all subsequent cells to shift left under the wrong header.
-                          if (hiddenCols.has(col.key)) {
-                            if (!skipAutoCalc) {
-                              cells.push(
-                                <td
-                                  key={`stub-${col.key}`}
-                                  onClick={() => unhideColumn(col.key)}
-                                  title={`Show ${col.label}`}
-                                  style={{ width: 13, minWidth: 13, maxWidth: 13, padding: 0, cursor: "pointer", borderRight: "1px solid rgba(30,58,95,0.4)" }}
-                                />
-                              );
-                            }
-                            continue;
-                          }
+                          // Hidden column: skip rendering entirely. Header rows above skip
+                          // the matching <th> with the same condition, so column alignment
+                          // is preserved without any placeholder cell.
+                          if (hiddenCols.has(col.key)) continue;
 
                           const isEditing = editingCell?.rowIdx === rowIdx && editingCell?.field === col.key;
                           const isTime = timeCols.includes(col.key);
@@ -2163,23 +2206,22 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   <td colSpan={totalsLabelColSpan} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
                     MONTHLY TOTALS →
                   </td>
-                  {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].map(k =>
-                    hiddenCols.has(k)
-                      ? <td key={`stub-${k}`} onClick={() => unhideColumn(k)} title={`Show ${k}`} style={{ width: 13, minWidth: 13, maxWidth: 13, padding: 0, cursor: "pointer", borderRight: "1px solid rgba(30,58,95,0.4)" }} />
-                      : <td key={k} style={{
-                          ...tdStyle,
-                          textAlign: "center",
-                          color: k === "total" ? "#4fc3f7"
-                            : (k === "dayP1" || k === "nightP1") ? "#22c55e"
-                            : (k === "dayP2" || k === "nightP2") ? "#eab308"
-                            : (k === "dayP1US" || k === "nightP1US") ? "#ef4444"
-                            : "#4fc3f7",
-                          fontWeight: 700,
-                          fontSize: 14,
-                        }}>
-                          {totalsRow[k]}
-                        </td>
-                  )}
+                  {/* DAY/NIGHT/TOTAL columns are always visible — no hidden-state branch needed */}
+                  {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].map(k => (
+                    <td key={k} style={{
+                      ...tdStyle,
+                      textAlign: "center",
+                      color: k === "total" ? "#4fc3f7"
+                        : (k === "dayP1" || k === "nightP1") ? "#22c55e"
+                        : (k === "dayP2" || k === "nightP2") ? "#eab308"
+                        : (k === "dayP1US" || k === "nightP1US") ? "#ef4444"
+                        : "#4fc3f7",
+                      fontWeight: 700,
+                      fontSize: 14,
+                    }}>
+                      {totalsRow[k]}
+                    </td>
+                  ))}
                   <td style={{ ...tdStyle }} />
                   <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px" }}>
                     <button
@@ -2915,7 +2957,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       {/* ── SETTINGS MODAL ── */}
       <SettingsModal
         open={settingsOpen}
-        onClose={() => { setSettingsOpen(false); setPreviewSettings(null); }}
+        initialTab={settingsInitialTab}
+        onClose={() => { setSettingsOpen(false); setPreviewSettings(null); setSettingsInitialTab(null); }}
         settings={settings}
         onSave={saveSettings}
         onPreview={setPreviewSettings}
@@ -3156,7 +3199,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.6.1 · CAAM</span>
+        <span>eLOGBOOK v6.7 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

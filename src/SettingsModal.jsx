@@ -103,7 +103,18 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.6.1", date: "May 2026", current: true,
+    v: "v6.7", date: "May 2026", current: true,
+    title: "Column hide actually hides · gear badge · toast reminder",
+    notes: [
+      "FIX: Hiding a column now removes it entirely from the table — previously it was reduced to a 13-pixel stub that still took horizontal space, defeating the purpose of hiding.",
+      "FIX: AIRCRAFT and SECTORS group headers now disappear when both their sub-columns are hidden — previously the group label stayed visible above empty stubs.",
+      "NEW: Gear icon carries a count badge whenever columns are hidden — at a glance you can see how many are tucked away.",
+      "NEW: Toast strip above the table briefly appears when you hide a column (or on page load if any are hidden) — auto-fades after 5 seconds, or click ✕ to dismiss.",
+      "NEW: Clicking the badge or toast opens Settings directly on the Appearance tab to manage column visibility.",
+    ],
+  },
+  {
+    v: "v6.6.1", date: "May 2026", current: false,
     title: "Hotfix — revert PWA redirect auth",
     notes: [
       "FIX: Revert v6.6 PWA redirect-based Google sign-in — installed PWAs were landing on the welcome page after Google sign-in with no auth. Reverted to popup-based flow (same as v6.5 behaviour on PWA).",
@@ -283,19 +294,20 @@ const TAB_DEFAULTS = {
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
-  const [tab, setTab]               = useState("profile");
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, initialTab }) {
+  const [tab, setTab]               = useState(initialTab || "profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
   const [resetFlash, setResetFlash] = useState(false);
 
-  // Reset tab/flash when modal opens
+  // Reset tab/flash when modal opens. If a caller passed initialTab (e.g. the
+  // hidden-columns chip/badge), honour it on each open — otherwise default to profile.
   useEffect(() => {
     if (open) {
-      setTab("profile");
+      setTab(initialTab || "profile");
       setSavedFlash(false);
     }
-  }, [open]);
+  }, [open, initialTab]);
 
   // Sync draft from settings only when the modal opens — NOT on every settings
   // reference change while open (auto-save writes settings to Firestore, the
@@ -843,7 +855,7 @@ function AppearanceTab({ d, upd }) {
 
         return (
           <>
-            <SmSectionHead title="Column visibility" hint="// click to hide · click stub in table header to restore" />
+            <SmSectionHead title="Column visibility" hint="// click any chip to hide or restore" />
             <SmRow>
               <div className="sm-col-vis-grid">
                 {COL_TOGGLE_DEFS.map(def => {
