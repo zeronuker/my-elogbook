@@ -377,16 +377,42 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
 
         {/* ── TABS ── */}
         <nav className="sm-tabs">
-          {SETTINGS_TABS.map((st) => (
-            <button
-              key={st.id}
-              className={`sm-tab${tab === st.id ? " on" : ""}`}
-              onClick={() => setTab(st.id)}
-            >
-              <span className="sm-tab-label">{st.label}</span>
-              <span className="sm-tab-hint">{st.hint}</span>
-            </button>
-          ))}
+          {SETTINGS_TABS.map((st) => {
+            // Hidden-columns badge on the Appearance tab (matches the gear-icon badge
+            // shown in the toolbar). Only renders when at least one toggleable column
+            // is currently hidden in the user's settings.
+            const showHiddenBadge =
+              st.id === "appearance" &&
+              (draft.hiddenColumns || []).filter(k => !ALWAYS_VISIBLE.includes(k)).length > 0;
+            const hiddenCount = showHiddenBadge
+              ? (draft.hiddenColumns || []).filter(k => !ALWAYS_VISIBLE.includes(k)).length
+              : 0;
+            return (
+              <button
+                key={st.id}
+                className={`sm-tab${tab === st.id ? " on" : ""}`}
+                onClick={() => setTab(st.id)}
+                style={{ position: "relative" }}
+              >
+                <span className="sm-tab-label">{st.label}</span>
+                <span className="sm-tab-hint">{st.hint}</span>
+                {showHiddenBadge && (
+                  <span
+                    title={`${hiddenCount} hidden column${hiddenCount > 1 ? "s" : ""}`}
+                    style={{
+                      position: "absolute", top: 6, right: 8,
+                      background: "#3FE0C5", color: "#0a0d12",
+                      borderRadius: "50%", minWidth: 14, height: 14,
+                      fontSize: 9, fontWeight: 700, lineHeight: "14px",
+                      textAlign: "center", padding: "0 3px",
+                      border: "1px solid var(--cb-surface-1, #141a2e)",
+                      fontFamily: "'JetBrains Mono','Courier New',monospace",
+                    }}
+                  >{hiddenCount}</span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         {/* ── BODY ── */}
@@ -882,7 +908,7 @@ function AppearanceTab({ d, upd }) {
             </SmRow>
             {(d.hiddenColumns || []).length > 0 && (
               <div className="sm-col-vis-hint">
-                {(d.hiddenColumns || []).length} column{(d.hiddenColumns || []).length > 1 ? "s" : ""} hidden · click a stub in the table header to restore individually, or{" "}
+                {(d.hiddenColumns || []).length} column{(d.hiddenColumns || []).length > 1 ? "s" : ""} hidden · click any chip above to restore individually, or{" "}
                 <button className="sm-col-vis-reset" onClick={() => upd({ hiddenColumns: [] })}>show all</button>
               </div>
             )}
