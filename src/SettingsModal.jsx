@@ -103,7 +103,18 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.7.1", date: "May 2026", current: true,
+    v: "v6.8", date: "June 2026", current: true,
+    title: "Column visibility expansion · Settings polish · regulatory popups",
+    notes: [
+      "NEW: Every logbook column is now toggleable — including DAY P1 / P1 U/S / P2, NIGHT P1 / P1 U/S / P2, and TOTAL. Previously these seven were forced-visible.",
+      "NEW: The Appearance tab in Settings now shows the same mint count badge that appears on the toolbar gear icon, so you can spot the hidden-columns control without opening the tab first.",
+      "IMP: Limits & Recency regulatory reference popups (all 7) now have consistent left text alignment across title, body, and note sections.",
+      "IMP: Limits & Recency disclaimer trimmed from ~95 words to ~30 — keeps the reference-only framing and user-responsibility note; regulation references corrected to CAD 1901 and MCAR 2016 Part 69 & Part 74.",
+      "IMP: Settings → Appearance → Column visibility hint updated — \"click a stub in the table header to restore\" was stale text from before v6.7 removed stubs.",
+    ],
+  },
+  {
+    v: "v6.7.1", date: "May 2026", current: false,
     title: "Hotfix — account deletion order",
     notes: [
       "FIX: Account deletion now removes Firestore data before invalidating the auth user. Previous order could leave logbook data orphaned in the cloud if Firestore was slow to acknowledge the auth-token revocation between deleteUser() and the subsequent deleteDoc() calls.",
