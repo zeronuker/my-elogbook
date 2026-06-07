@@ -2676,15 +2676,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               background: "rgba(79,195,247,0.04)", border: "1px solid rgba(79,195,247,0.1)",
               borderRadius: 4, padding: "10px 14px", marginTop: 20,
               fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.04em", lineHeight: 1.7,
+              textAlign: "left",
             }}>
-              <span style={{ color: "#4fc3f7" }}>⚠ DISCLAIMER:</span> This FTL display is for{" "}
-              <span style={{ color: "#4fc3f7" }}>reference purposes only</span> and is based solely on
-              flight data entered into this logbook. Duty time is estimated as STD − 1:15 to STA + 0:15
-              per sector. It may not reflect positioning flights, simulator sessions, standby duty or
-              records held elsewhere. The pilot and operator remain solely responsible for ensuring full
-              compliance with <span style={{ color: "#4fc3f7" }}>CAD 1901 ISS01/REV01</span>,{" "}
-              <span style={{ color: "#4fc3f7" }}>MCAR 2016 Part 7</span>, and all applicable CAAM
-              regulations. Always verify with your Operations department before accepting a duty assignment.
+              <span style={{ color: "#4fc3f7" }}>⚠ DISCLAIMER:</span> The information displayed is for{" "}
+              <span style={{ color: "#4fc3f7" }}>references only</span> and is solely based on logbook data.
+              Compliance with <span style={{ color: "#4fc3f7" }}>CAD 1901</span> and{" "}
+              <span style={{ color: "#4fc3f7" }}>MCAR 2016 Part 69 &amp; Part 74</span> remains the users responsibility.
             </div>
 
           </div>
