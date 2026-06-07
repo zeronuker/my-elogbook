@@ -2835,9 +2835,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             }}>
               {/* Header */}
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
-                <div>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "var(--cb-accent, #4fc3f7)", marginBottom: 5 }}>{p.para}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em", lineHeight: 1.45 }}>{p.title}</div>
+                <div style={{ textAlign: "left" }}>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "var(--cb-accent, #4fc3f7)", marginBottom: 5, textAlign: "left" }}>{p.para}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em", lineHeight: 1.45, textAlign: "left" }}>{p.title}</div>
                 </div>
                 <button
                   onClick={() => setActivePopup(null)}
@@ -2854,7 +2854,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               <div style={{ height: 1, background: "var(--cb-line-2, #1e3a5f)", marginBottom: 14 }} />
               {/* Body */}
               <div
-                style={{ fontSize: "var(--elb-desc-sz)", color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.9, letterSpacing: "0.03em" }}
+                style={{ fontSize: "var(--elb-desc-sz)", color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.9, letterSpacing: "0.03em", textAlign: "left" }}
                 dangerouslySetInnerHTML={{ __html: p.body }}
               />
               {/* Note */}
@@ -2865,7 +2865,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                     background: "rgba(79,195,247,0.06)",
                     borderLeft: "2px solid var(--cb-accent, #4fc3f7)",
                     borderRadius: "0 3px 3px 0",
-                    fontSize: "var(--elb-hint-sz)", color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.75, letterSpacing: "0.03em",
+                    fontSize: "var(--elb-hint-sz)", color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.75, letterSpacing: "0.03em", textAlign: "left",
                   }}
                   dangerouslySetInnerHTML={{ __html: p.note }}
                 />
