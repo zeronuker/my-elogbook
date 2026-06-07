@@ -1179,9 +1179,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const autoCalcCols = ["total","dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"];
 
   // ── Column visibility helpers ────────────────────────────────────────
-  // DAY/NIGHT time cols and TOTAL are always visible — strip any legacy entries
-  const ALWAYS_VISIBLE_COLS = new Set(["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"]);
-  const hiddenCols    = new Set((settings.hiddenColumns || []).filter(k => !ALWAYS_VISIBLE_COLS.has(k)));
+  // All columns are now toggleable — including DAY/NIGHT time cols and TOTAL.
+  // (Previously dayP1, dayP1US, dayP2, nightP1, nightP1US, nightP2 and total were
+  // forced-visible; users can now hide any of them.)
+  const hiddenCols    = new Set(settings.hiddenColumns || []);
   const hiddenColsCount = hiddenCols.size;
   const isColVisible  = (key) => !hiddenCols.has(key);
   const unhideColumn  = (key) => {
@@ -1866,6 +1867,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 // Dynamic colSpan for sub-grouped headers — skip group entirely if all subs hidden
                 const aircraftSpan = (isColVisible("type") ? 1 : 0) + (isColVisible("markings") ? 1 : 0);
                 const sectorsSpan  = (isColVisible("departure") ? 1 : 0) + (isColVisible("arrival") ? 1 : 0);
+                const daySpan      = (isColVisible("dayP1") ? 1 : 0) + (isColVisible("dayP1US") ? 1 : 0) + (isColVisible("dayP2") ? 1 : 0);
+                const nightSpan    = (isColVisible("nightP1") ? 1 : 0) + (isColVisible("nightP1US") ? 1 : 0) + (isColVisible("nightP2") ? 1 : 0);
 
                 return (
                   <thead>
@@ -1908,10 +1911,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                           <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
                         </th>
                       )}
-                      {/* DAY group — colSpan always 3 (sub-cols always visible) */}
-                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
-                      {/* NIGHT group — colSpan always 3 (sub-cols always visible) */}
-                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
+                      {/* DAY group — colSpan reflects visible sub-cols; omitted when all hidden */}
+                      {daySpan > 0 && (
+                        <th colSpan={daySpan} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
+                      )}
+                      {/* NIGHT group — colSpan reflects visible sub-cols; omitted when all hidden */}
+                      {nightSpan > 0 && (
+                        <th colSpan={nightSpan} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
+                      )}
                       {/* TOTAL */}
                       {soloTh("total", "TOTAL")}
                       {/* Action cols */}
@@ -1926,13 +1933,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                       {isColVisible("departure")&& <th style={thSubStyle}>DEP</th>}
                       {isColVisible("arrival")  && <th style={thSubStyle}>ARR</th>}
                       {/* DAY sub-headers */}
-                      <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>
-                      <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
-                      <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>
+                      {isColVisible("dayP1")    && <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>}
+                      {isColVisible("dayP1US")  && <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>}
+                      {isColVisible("dayP2")    && <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>}
                       {/* NIGHT sub-headers */}
-                      <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P1</th>
-                      <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>
-                      <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P2</th>
+                      {isColVisible("nightP1")  && <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P1</th>}
+                      {isColVisible("nightP1US")&& <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>}
+                      {isColVisible("nightP2")  && <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P2</th>}
                     </tr>
                   </thead>
                 );
@@ -1967,6 +1974,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                       {(() => {
                         const cells = [];
                         let skipAutoCalc = false;
+                        // Anchor the HOC warning banner to the FIRST visible auto-calc column.
+                        // Previously hard-coded to "dayP1" — now that dayP1 itself can be hidden,
+                        // we find the first auto-calc col the user hasn't hidden.
+                        const firstAutoCalcVisible = autoCalcCols.find(k => !hiddenCols.has(k));
                         for (let ci = 0; ci < columns.length; ci++) {
                           const col = columns[ci];
 
@@ -1979,7 +1990,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                           const isTime = timeCols.includes(col.key);
                           const isAutoCalc = autoCalcCols.includes(col.key);
 
-                          if (needsCapWarning && col.key === "dayP1") {
+                          if (needsCapWarning && firstAutoCalcVisible && col.key === firstAutoCalcVisible) {
                             skipAutoCalc = true;
                             cells.push(
                               <td key="hoc-warning" colSpan={autoCalcVisibleCount} style={{ ...tdStyle, background: "rgba(249,115,22,0.06)", borderLeft: "2px solid rgba(249,115,22,0.4)", textAlign: "center", color: "#f97316", fontSize: 11, fontStyle: "italic", letterSpacing: "0.05em", padding: "6px 10px", whiteSpace: "nowrap" }}>
@@ -2206,22 +2217,24 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   <td colSpan={totalsLabelColSpan} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
                     MONTHLY TOTALS →
                   </td>
-                  {/* DAY/NIGHT/TOTAL columns are always visible — no hidden-state branch needed */}
-                  {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].map(k => (
-                    <td key={k} style={{
-                      ...tdStyle,
-                      textAlign: "center",
-                      color: k === "total" ? "#4fc3f7"
-                        : (k === "dayP1" || k === "nightP1") ? "#22c55e"
-                        : (k === "dayP2" || k === "nightP2") ? "#eab308"
-                        : (k === "dayP1US" || k === "nightP1US") ? "#ef4444"
-                        : "#4fc3f7",
-                      fontWeight: 700,
-                      fontSize: 14,
-                    }}>
-                      {totalsRow[k]}
-                    </td>
-                  ))}
+                  {/* DAY/NIGHT/TOTAL totals — filter to visible columns only */}
+                  {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"]
+                    .filter(k => !hiddenCols.has(k))
+                    .map(k => (
+                      <td key={k} style={{
+                        ...tdStyle,
+                        textAlign: "center",
+                        color: k === "total" ? "#4fc3f7"
+                          : (k === "dayP1" || k === "nightP1") ? "#22c55e"
+                          : (k === "dayP2" || k === "nightP2") ? "#eab308"
+                          : (k === "dayP1US" || k === "nightP1US") ? "#ef4444"
+                          : "#4fc3f7",
+                        fontWeight: 700,
+                        fontSize: 14,
+                      }}>
+                        {totalsRow[k]}
+                      </td>
+                    ))}
                   <td style={{ ...tdStyle }} />
                   <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px" }}>
                     <button

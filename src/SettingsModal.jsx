@@ -725,8 +725,9 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, use
 }
 
 // ── Column visibility definitions ──────────────────────────────────────────────
-// DAY (P1, P1U/S, P2), NIGHT (P1, P1U/S, P2) and TOTAL are always visible.
-// Only these columns are user-toggleable:
+// Every logbook column is user-toggleable, including the DAY/NIGHT time cols and
+// the TOTAL column. (Previously dayP1, dayP1US, dayP2, nightP1, nightP1US, nightP2
+// and total were forced-visible.)
 const COL_TOGGLE_DEFS = [
   { key: "type",        label: "TYPE",         group: "AIRCRAFT" },
   { key: "markings",    label: "MARKINGS",     group: "AIRCRAFT" },
@@ -737,10 +738,18 @@ const COL_TOGGLE_DEFS = [
   { key: "arrival",     label: "ARR",          group: "SECTORS"  },
   { key: "std",         label: "STD",          group: null       },
   { key: "sta",         label: "STA",          group: null       },
+  { key: "dayP1",       label: "DAY P1",       group: "DAY"      },
+  { key: "dayP1US",     label: "DAY P1 U/S",   group: "DAY"      },
+  { key: "dayP2",       label: "DAY P2",       group: "DAY"      },
+  { key: "nightP1",     label: "NIGHT P1",     group: "NIGHT"    },
+  { key: "nightP1US",   label: "NIGHT P1 U/S", group: "NIGHT"    },
+  { key: "nightP2",     label: "NIGHT P2",     group: "NIGHT"    },
+  { key: "total",       label: "TOTAL",        group: null       },
 ];
 
-// Columns that can never be hidden — filtered out of hiddenColumns on load (migration)
-const ALWAYS_VISIBLE = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"];
+// Kept for backwards-compatible filtering logic (migration of legacy state).
+// Empty array because all columns are now toggleable.
+const ALWAYS_VISIBLE = [];
 
 // ════════════════════════════════════════════════════════════════════
 //  APPEARANCE TAB
