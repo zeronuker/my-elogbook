@@ -103,7 +103,14 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.7", date: "May 2026", current: true,
+    v: "v6.7.1", date: "May 2026", current: true,
+    title: "Hotfix — account deletion order",
+    notes: [
+      "FIX: Account deletion now removes Firestore data before invalidating the auth user. Previous order could leave logbook data orphaned in the cloud if Firestore was slow to acknowledge the auth-token revocation between deleteUser() and the subsequent deleteDoc() calls.",
+    ],
+  },
+  {
+    v: "v6.7", date: "May 2026", current: false,
     title: "Column hide actually hides · gear badge · toast reminder",
     notes: [
       "FIX: Hiding a column now removes it entirely from the table — previously it was reduced to a 13-pixel stub that still took horizontal space, defeating the purpose of hiding.",

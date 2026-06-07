@@ -332,24 +332,34 @@ function App() {
   }
 
   // Delete account and all data (client-side, no Cloud Function required).
+  //
+  // Order matters: Firestore docs must be deleted BEFORE the auth user.
+  // Once `deleteUser()` runs, the auth token is invalidated and subsequent
+  // `deleteDoc` calls would fail the Firestore rule `request.auth.uid == uid`,
+  // orphaning the user's data. So: Firestore first → localStorage → deleteUser.
+  //
+  // deleteDoc is idempotent on missing docs, so if any step needs a retry
+  // (e.g. after a reauth), re-running the deletes is safe.
   const handleDeleteAccount = async () => {
     if (!user) return
     const uid = user.uid
     try {
-      await deleteUser(user)
       await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
       await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
       clearLocalStorage(uid)
+      await deleteUser(user)
     } catch (error) {
       if (error.code === 'auth/requires-recent-login') {
         const providerId = user.providerData[0]?.providerId
         if (providerId === 'google.com') {
           try {
             await reauthenticateWithPopup(user, new GoogleAuthProvider())
-            await deleteUser(user)
+            // Firestore docs may already be deleted from the first attempt; deleteDoc
+            // is a no-op on missing docs, so this is safe to repeat.
             await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
             await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
             clearLocalStorage(uid)
+            await deleteUser(user)
           } catch (reAuthError) {
             console.error('Re-authentication failed:', reAuthError)
             throw new Error(reAuthError.message || 'Re-authentication failed. Please try again.')
@@ -364,16 +374,21 @@ function App() {
     }
   }
 
-  // Re-authenticate email/password user then delete — called from SettingsModal password prompt
+  // Re-authenticate email/password user then delete — called from SettingsModal
+  // password prompt after handleDeleteAccount threw `auth/requires-recent-login`.
+  //
+  // Same order as handleDeleteAccount: Firestore docs → localStorage → deleteUser.
+  // Profile/logbook docs may already be gone from the first (failed) attempt;
+  // deleteDoc is idempotent so re-calling on missing docs is a safe no-op.
   const handleReauthAndDelete = async (password) => {
     if (!user) return
     const uid = user.uid
     const credential = EmailAuthProvider.credential(user.email, password)
     await reauthenticateWithCredential(user, credential)
-    await deleteUser(user)
     await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
     await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
     clearLocalStorage(uid)
+    await deleteUser(user)
   }
 
   if (authLoading) {
