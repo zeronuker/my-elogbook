@@ -156,6 +156,7 @@ function OnboardingFlow({
   signupError,
   isLoading,
   showLogoutConfirm,
+  showAccountDeleted,
   onClearError
 }) {
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
@@ -215,12 +216,21 @@ function OnboardingFlow({
     }
   }, [showLogoutConfirm]);
 
-  // Auto-navigate to landing after logout confirmation
+  // Show account-deleted screen when a deletion completes
+  useEffect(() => {
+    if (showAccountDeleted && authMode !== 'accountDeleted') {
+      goTo('accountDeleted')
+    }
+  }, [showAccountDeleted]);
+
+  // Auto-navigate to landing after the logout / account-deleted confirmation
   useEffect(() => {
     if (authMode === 'logout') {
-      const timer = setTimeout(() => {
-        goTo('landing')
-      }, 3000)
+      const timer = setTimeout(() => goTo('landing'), 3000)
+      return () => clearTimeout(timer)
+    }
+    if (authMode === 'accountDeleted') {
+      const timer = setTimeout(() => goTo('landing'), 4000)
       return () => clearTimeout(timer)
     }
   }, [authMode]);
@@ -865,6 +875,16 @@ function OnboardingFlow({
     </div>
   );
 
+  // Screen: Account Deleted Confirmation
+  const ScreenAccountDeleted = () => (
+    <div className="onb-done">
+      <div className="onb-done-icon" style={{ fontSize: 56, color: '#3FE0C5' }}>✓</div>
+      <div className="onb-done-ttl" style={{ color: '#3FE0C5' }}>ACCOUNT DELETED</div>
+      <div className="onb-done-sub">Your account and all logbook data have been permanently removed.</div>
+      <div style={{ fontSize: 11, color: '#7a9aaa', marginTop: 20, letterSpacing: '0.08em' }}>Returning to start in a few seconds...</div>
+    </div>
+  );
+
   // Screen: Done
   const ScreenDone = () => {
     const handleOpenLogbook = async () => {
@@ -905,6 +925,7 @@ function OnboardingFlow({
     emailVerification: <ScreenEmailVerification />,
     signup2: <ScreenSignUp2 formData={formData} updateFormData={updateFormData} isLoading={isLoading} goTo={goTo} />,
     logout: <ScreenLogout />,
+    accountDeleted: <ScreenAccountDeleted />,
     done: <ScreenDone />
   };
 

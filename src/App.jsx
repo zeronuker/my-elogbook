@@ -29,6 +29,8 @@ function App() {
   const [signupError, setSignupError] = useState(null)
   const [isSigningUp, setIsSigningUp] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [showAccountDeleted, setShowAccountDeleted] = useState(false)
+  const accountDeletedRef = useRef(false) // set just before the deleteUser() that removes the account
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
   const prevUserRef = useRef(null)
   const onboardingDoneRef = useRef(false)
@@ -65,9 +67,20 @@ function App() {
   // Listen to auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      // Detect logout: user was authenticated, now is null
+      // Detect the user→null transition. It's an account deletion if a delete
+      // handler set the flag just before deleteUser(); otherwise it's a logout.
       if (prevUserRef.current && !currentUser) {
-        setShowLogoutConfirm(true)
+        if (accountDeletedRef.current) {
+          accountDeletedRef.current = false
+          setShowAccountDeleted(true)
+        } else {
+          setShowLogoutConfirm(true)
+        }
+      }
+      // A new user signed in — clear the account-deleted screen so signing up
+      // again (after a deletion) lands in the app rather than staying stuck.
+      if (currentUser) {
+        setShowAccountDeleted(false)
       }
 
       prevUserRef.current = currentUser
@@ -370,8 +383,10 @@ function App() {
       await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
       await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
       clearLocalStorage(uid)
+      accountDeletedRef.current = true // so the auth listener shows "account deleted", not "logged out"
       await deleteUser(user)
     } catch (error) {
+      accountDeletedRef.current = false // deleteUser did not complete (e.g. needs re-auth)
       if (error.code === 'auth/requires-recent-login') {
         const providerId = user.providerData[0]?.providerId
         if (providerId === 'google.com') {
@@ -410,6 +425,7 @@ function App() {
     await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
     await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
     clearLocalStorage(uid)
+    accountDeletedRef.current = true
     await deleteUser(user)
   }
 
@@ -424,6 +440,7 @@ function App() {
     await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
     await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
     clearLocalStorage(uid)
+    accountDeletedRef.current = true
     await deleteUser(user)
   }
 
@@ -441,6 +458,7 @@ function App() {
     await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
     await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
     clearLocalStorage(uid)
+    accountDeletedRef.current = true
     await deleteUser(user)
   }
 
@@ -448,7 +466,7 @@ function App() {
     return <div style={{ background: '#0a0d12', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Courier New' }}>Loading...</div>
   }
 
-  if (showOnboarding || showLogoutConfirm) {
+  if (showOnboarding || showLogoutConfirm || showAccountDeleted) {
     return (
       <>
         <OnboardingFlow
@@ -461,6 +479,7 @@ function App() {
           signupError={signupError}
           isLoading={isSigningUp}
           showLogoutConfirm={showLogoutConfirm}
+          showAccountDeleted={showAccountDeleted}
           onClearError={() => setSignupError(null)}
         />
         {showLoadingOverlay && <LoadingOverlay />}
