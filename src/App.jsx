@@ -14,7 +14,7 @@ import {
   deleteUser,
   sendEmailVerification
 } from 'firebase/auth'
-import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore'
+import { doc, setDoc, getDoc, deleteDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore'
 import ELogbook2026 from './elogbook_2026_v5_1'
 import OnboardingFlow from './OnboardingFlow'
 import LoadingOverlay from './LoadingOverlay'
@@ -62,6 +62,19 @@ function App() {
     localStorage.removeItem(`elb_settings_${uid}`)
     localStorage.removeItem(`elb_last_local_save_${uid}`)
     localStorage.removeItem(`elb_last_sync_display_${uid}`)
+  }
+
+  // GDPR erasure: anonymise the user's feedback submissions (blank uid + email,
+  // keep the content) before the account is deleted. Best-effort and
+  // non-blocking — a failure here never prevents account deletion. Must run
+  // while the user is still authenticated (the Firestore rule checks uid).
+  const anonymizeFeedback = async (uid) => {
+    try {
+      const snap = await getDocs(query(collection(db, 'feedback'), where('uid', '==', uid)))
+      await Promise.all(snap.docs.map(d => updateDoc(d.ref, { uid: '[deleted]', email: '[deleted]' })))
+    } catch (err) {
+      console.error('Feedback anonymisation failed (non-blocking):', err)
+    }
   }
 
   // Listen to auth state
@@ -383,6 +396,7 @@ function App() {
       await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
       await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
       clearLocalStorage(uid)
+      await anonymizeFeedback(uid)
       accountDeletedRef.current = true // so the auth listener shows "account deleted", not "logged out"
       await deleteUser(user)
     } catch (error) {
@@ -425,6 +439,7 @@ function App() {
     await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
     await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
     clearLocalStorage(uid)
+    await anonymizeFeedback(uid)
     accountDeletedRef.current = true
     await deleteUser(user)
   }
@@ -440,6 +455,7 @@ function App() {
     await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
     await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
     clearLocalStorage(uid)
+    await anonymizeFeedback(uid)
     accountDeletedRef.current = true
     await deleteUser(user)
   }
@@ -458,6 +474,7 @@ function App() {
     await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
     await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
     clearLocalStorage(uid)
+    await anonymizeFeedback(uid)
     accountDeletedRef.current = true
     await deleteUser(user)
   }
