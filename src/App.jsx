@@ -85,6 +85,7 @@ function App() {
       if (prevUserRef.current && !currentUser) {
         if (accountDeletedRef.current) {
           accountDeletedRef.current = false
+          localStorage.removeItem('elb_pending_delete') // deletion completed cleanly
           setShowAccountDeleted(true)
         } else {
           setShowLogoutConfirm(true)
@@ -103,6 +104,40 @@ function App() {
 
     return unsubscribe
   }, [])
+
+  // Resume an interrupted account deletion on load. If the previous run was cut
+  // short (crash / tab close mid-sequence), finish erasing the data and remove
+  // the auth account so nothing is left orphaned.
+  useEffect(() => {
+    if (authLoading) return
+    const pendingUid = localStorage.getItem('elb_pending_delete')
+    if (!pendingUid) return
+    const current = auth.currentUser
+    const finish = async () => {
+      try {
+        // Only act if still signed in as the user who was being deleted.
+        // If auth is already gone (deleteUser had succeeded), or it's a
+        // different user, there's nothing safe to do — just clear the flag.
+        if (current && current.uid === pendingUid) {
+          await deleteDoc(doc(db, 'users', pendingUid, 'profile', 'data')).catch(() => {})
+          await deleteDoc(doc(db, 'users', pendingUid, 'logbook', 'data')).catch(() => {})
+          clearLocalStorage(pendingUid)
+          await anonymizeFeedback(pendingUid)
+          accountDeletedRef.current = true
+          await deleteUser(current) // if this needs re-auth it throws; data is already erased
+        }
+      } catch (err) {
+        // deleteUser may require recent login — data erasure already done; the
+        // user can re-trigger deletion from Settings to remove the auth account.
+        accountDeletedRef.current = false
+        console.error('Resuming interrupted deletion did not fully complete:', err)
+      } finally {
+        localStorage.removeItem('elb_pending_delete')
+      }
+    }
+    finish()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading])
 
   // Check profile and set onboarding state
   useEffect(() => {
@@ -392,6 +427,9 @@ function App() {
   const handleDeleteAccount = async () => {
     if (!user) return
     const uid = user.uid
+    // Mark a deletion in progress so an interrupted run (crash / tab close /
+    // network drop mid-sequence) can be finished on the next app load.
+    localStorage.setItem('elb_pending_delete', uid)
     try {
       await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
       await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
