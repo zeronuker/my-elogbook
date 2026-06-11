@@ -104,7 +104,16 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.11", date: "June 2026", current: true,
+    v: "v6.12", date: "June 2026", current: true,
+    title: "Account deletion polish",
+    notes: [
+      "NEW: After deleting your account you now see a clear confirmation — \"✓ ACCOUNT DELETED\" — instead of the generic signed-out screen.",
+      "NEW: Right-to-erasure — any feedback you submitted is anonymised (your email and ID removed) when you delete your account.",
+      "IMP: If account deletion is interrupted (app closed mid-way, lost connection), it now resumes and finishes cleanly the next time you open the app, so nothing is left half-deleted.",
+    ],
+  },
+  {
+    v: "v6.11", date: "June 2026", current: false,
     title: "Google account deletion works on PWA",
     notes: [
       "FIX: Deleting a Google account from an installed PWA now works. When Google asks you to re-confirm your identity, the app uses Google Identity Services (the same reliable method as sign-in) instead of a popup — so it no longer gets stuck on iPad / Android home-screen apps.",

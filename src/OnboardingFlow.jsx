@@ -760,7 +760,7 @@ function OnboardingFlow({
         <img src="/brand/icons/logo-192.png" width="72" height="72" style={{ borderRadius: 16 }} />
       </div>
       <div className="onb-land-title">CLAUDEBORNE</div>
-      <div className="onb-land-ver">eLOGBOOK V6.11 · CAAM / MCAR 2016</div>
+      <div className="onb-land-ver">eLOGBOOK V6.12 · CAAM / MCAR 2016</div>
       <div className="onb-land-tag">Your personal electronic logbook.<br/>Accessible anywhere. Works offline. Sync on demand.</div>
       <div className="onb-badges">
         <span className="onb-badge onb-badge-blue">✓ CAD 1901</span>
