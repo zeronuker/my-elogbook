@@ -1623,7 +1623,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             <span style={{
               fontFamily: "'JetBrains Mono','Courier New',monospace",
               fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.30)", lineHeight: 1, textAlign: "left",
-            }}>ELOGBOOK · V6.12</span>
+            }}>ELOGBOOK · V6.12.1</span>
           </div>
           <span className="elb-topbar-caam" style={{
             marginLeft: 6,
@@ -2052,10 +2052,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                       {(() => {
                         const cells = [];
                         let skipAutoCalc = false;
-                        // Anchor the HOC warning banner to the FIRST visible auto-calc column.
-                        // Previously hard-coded to "dayP1" — now that dayP1 itself can be hidden,
-                        // we find the first auto-calc col the user hasn't hidden.
-                        const firstAutoCalcVisible = autoCalcCols.find(k => !hiddenCols.has(k));
+                        // Anchor the HOC warning banner to the FIRST visible auto-calc column
+                        // in DISPLAY order (dayP1 → … → total). Must walk `columns` (table
+                        // order), not `autoCalcCols` (which lists "total" first) — otherwise
+                        // the banner anchors at TOTAL and its colSpan spills past the table.
+                        const firstAutoCalcVisible = columns.find(c => autoCalcCols.includes(c.key) && !hiddenCols.has(c.key))?.key;
                         for (let ci = 0; ci < columns.length; ci++) {
                           const col = columns[ci];
 
@@ -3289,7 +3290,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.12 · CAAM</span>
+        <span>eLOGBOOK v6.12.1 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

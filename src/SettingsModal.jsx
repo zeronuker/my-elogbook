@@ -104,7 +104,14 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.12", date: "June 2026", current: true,
+    v: "v6.12.1", date: "June 2026", current: true,
+    title: "Hotfix — HOC warning banner overflow",
+    notes: [
+      "FIX: The \"HOLDER OPERATING CAPACITY required\" banner now spans exactly the DAY, NIGHT and TOTAL columns instead of overflowing past the table into the action buttons. It was anchoring on the TOTAL column by mistake.",
+    ],
+  },
+  {
+    v: "v6.12", date: "June 2026", current: false,
     title: "Account deletion polish",
     notes: [
       "NEW: After deleting your account you now see a clear confirmation — \"✓ ACCOUNT DELETED\" — instead of the generic signed-out screen.",
