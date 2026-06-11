@@ -192,9 +192,85 @@ function calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx) {
   return { day: Math.max(0, totalMins - nightMins), night: nightMins };
 }
 
+// Civil-twilight boundary for aviation night: sun centre 6° below horizon.
+// Matches the ICAO/EASA definition of night (end of evening civil twilight to
+// start of morning civil twilight) and is the physical basis of the CAD-6
+// sunset+20 / sunrise−20 heuristic the older method approximated.
+const CIVIL_TWILIGHT_RAD = -6 * Math.PI / 180;
+
+// Module-level memo so identical (std/sta/date/dep/arr) inputs aren't recomputed
+// across the many calcFlightTimes calls per render. Bounded; cleared when large.
+const _routeDayNightCache = new Map();
+
+// Most-accurate day/night split: integrate the sun's elevation along the actual
+// great-circle route. Samples the aircraft's interpolated position once per minute
+// (assuming constant ground speed), computes the sun's altitude at each
+// position+time, and counts the minute as night when the sun is below civil
+// twilight (−6°). Requires BOTH departure and arrival coordinates; falls back to
+// the departure-anchored method (or fixed UTC) when coordinates are missing.
+function calcDayNightRoute(std, sta, dayStr, depIcao, arrIcao, year, monthIdx) {
+  if (!std || !sta) return { day: 0, night: 0 };
+  const dep = getCoords(depIcao);
+  const arr = getCoords(arrIcao);
+  // Need both endpoints to interpolate a route. Degrade gracefully.
+  if (!dep || !arr) {
+    return dep
+      ? calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx)
+      : calcDayNight(std, sta);
+  }
+
+  const key = `${std}|${sta}|${dayStr}|${depIcao}|${arrIcao}|${year}|${monthIdx}`;
+  const cached = _routeDayNightCache.get(key);
+  if (cached) return cached;
+
+  const toM = t => { const [h, m] = t.trim().split(":").map(Number); return h * 60 + m; };
+  let stdM = toM(std), staM = toM(sta);
+  if (staM <= stdM) staM += 1440;
+  const totalMins = staM - stdM;
+  if (totalMins <= 0 || totalMins > 18 * 60) return { day: 0, night: 0 };
+
+  const D     = parseInt(dayStr) || 1;
+  const depMs = Date.UTC(year, monthIdx, D) + stdM * 60000;
+
+  // Great-circle interpolation (spherical linear interp) between endpoints.
+  const toRad = d => d * Math.PI / 180;
+  const lat1 = toRad(dep.lat), lon1 = toRad(dep.lon);
+  const lat2 = toRad(arr.lat), lon2 = toRad(arr.lon);
+  const dSig = 2 * Math.asin(Math.sqrt(
+    Math.sin((lat2 - lat1) / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin((lon2 - lon1) / 2) ** 2
+  ));
+  const interp = (f) => {
+    if (dSig < 1e-9) return { lat: dep.lat, lon: dep.lon };
+    const A = Math.sin((1 - f) * dSig) / Math.sin(dSig);
+    const B = Math.sin(f * dSig)       / Math.sin(dSig);
+    const x = A * Math.cos(lat1) * Math.cos(lon1) + B * Math.cos(lat2) * Math.cos(lon2);
+    const y = A * Math.cos(lat1) * Math.sin(lon1) + B * Math.cos(lat2) * Math.sin(lon2);
+    const z = A * Math.sin(lat1)                  + B * Math.sin(lat2);
+    return {
+      lat: Math.atan2(z, Math.sqrt(x * x + y * y)) * 180 / Math.PI,
+      lon: Math.atan2(y, x) * 180 / Math.PI,
+    };
+  };
+
+  // Sample each 1-minute slice at its midpoint (mid-point Riemann sum).
+  let nightMins = 0;
+  for (let i = 0; i < totalMins; i++) {
+    const f = (i + 0.5) / totalMins;
+    const t = new Date(depMs + (i + 0.5) * 60000);
+    const p = interp(f);
+    if (SunCalc.getPosition(t, p.lat, p.lon).altitude < CIVIL_TWILIGHT_RAD) nightMins++;
+  }
+  const result = { day: totalMins - nightMins, night: nightMins };
+
+  if (_routeDayNightCache.size > 2000) _routeDayNightCache.clear();
+  _routeDayNightCache.set(key, result);
+  return result;
+}
+
 function calcFlightTimes(row, method, year, monthIdx) {
   const { day, night } = method === "sunrise"
-    ? calcDayNightDynamic(row.std, row.sta, row.date, row.departure, year, monthIdx)
+    ? calcDayNightRoute(row.std, row.sta, row.date, row.departure, row.arrival, year, monthIdx)
     : calcDayNight(row.std, row.sta);
   const cap = row.cap;
   const result = { dayP1: "", dayP1US: "", dayP2: "", nightP1: "", nightP1US: "", nightP2: "" };
@@ -1547,7 +1623,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             <span style={{
               fontFamily: "'JetBrains Mono','Courier New',monospace",
               fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.30)", lineHeight: 1, textAlign: "left",
-            }}>ELOGBOOK · V6.8</span>
+            }}>ELOGBOOK · V6.9</span>
           </div>
           <span className="elb-topbar-caam" style={{
             marginLeft: 6,
@@ -1960,8 +2036,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   };
                   const capStyle = capColors[row.cap] || null;
                   const dynMode = settings.dayNightMethod === "sunrise";
+                  // Route (sun) method needs BOTH endpoints — highlight either when its
+                  // coordinates aren't in the database (the calc falls back in that case).
                   const isDepUnknown = dynMode && row.departure && !getCoords(row.departure);
-                  // isArrUnknown intentionally omitted — arrival coords are not used in day/night calculation
+                  const isArrUnknown = dynMode && row.arrival   && !getCoords(row.arrival);
 
                   return (
                     <tr
@@ -2141,8 +2219,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                                   placeholder={isTime ? "00:00" : ""}
                                 />
                               ) : (
-                                (col.key === "departure" && isDepUnknown)
-                                  ? <span style={{ color: "rgba(155,188,212,0.6)", background: "rgba(155,188,212,0.1)", border: "1px solid rgba(155,188,212,0.35)", borderRadius: 3, padding: "2px 6px" }}>{displayVal}</span>
+                                ((col.key === "departure" && isDepUnknown) || (col.key === "arrival" && isArrUnknown))
+                                  ? <span title="Airport not in coordinates database — Route (sun) day/night falls back for this sector" style={{ color: "rgba(155,188,212,0.6)", background: "rgba(155,188,212,0.1)", border: "1px solid rgba(155,188,212,0.35)", borderRadius: 3, padding: "2px 6px" }}>{displayVal}</span>
                                   : <span style={{ opacity: displayVal ? 1 : 0.2 }}>{displayVal || "—"}</span>
                               )}
                             </td>
@@ -3209,7 +3287,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.8 · CAAM</span>
+        <span>eLOGBOOK v6.9 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

@@ -6,7 +6,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 //  FeedbackModal — in-app bug report / feature request → Firestore
 // ════════════════════════════════════════════════════════════════════
 
-const APP_VERSION = "v6.8";
+const APP_VERSION = "v6.9";
 
 // ── Google Form dual-write (fire-and-forget) ─────────────────────────────────
 const GF_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdUR2dmIbFXxalz29VkWfHZbIJlJq7sHHjZwZvm1741OCsgzA/formResponse";

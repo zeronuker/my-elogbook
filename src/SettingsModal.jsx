@@ -103,7 +103,17 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.8", date: "June 2026", current: true,
+    v: "v6.9", date: "June 2026", current: true,
+    title: "Route-based day/night calculation",
+    notes: [
+      "NEW: The Sunrise/Sunset day/night method has been upgraded to a route-integrated calculation, renamed Route (sun). Night is now counted whenever the sun is below civil twilight (−6°), computed minute by minute along the actual great-circle route between departure and arrival airports.",
+      "IMP: Day/night now accounts for the aircraft moving between time zones. An eastbound flight landing into the sunrise correctly logs its final stretch as day — previously the whole sector was anchored to the departure airport (or a fixed UTC band) and could be logged as 100% night.",
+      "IMP: Both departure AND arrival airport codes now drive the calculation. If either is missing from the coordinates database, that sector falls back to the Fixed bands method, and the unrecognised code is highlighted in the table.",
+      "IMP: −6° civil twilight matches the ICAO/EASA definition of night and is the physical basis of the CAD-6 sunset+20 / sunrise−20 heuristic the previous method approximated.",
+    ],
+  },
+  {
+    v: "v6.8", date: "June 2026", current: false,
     title: "Column visibility expansion · Settings polish · regulatory popups",
     notes: [
       "NEW: Every logbook column is now toggleable — including DAY P1 / P1 U/S / P2, NIGHT P1 / P1 U/S / P2, and TOTAL. Previously these seven were forced-visible.",
@@ -977,15 +987,15 @@ function PreferencesTab({ d, upd }) {
           value={d.dayNightMethod || "fixed"}
           onChange={(v) => upd({ dayNightMethod: v })}
           options={[
-            { value: "fixed",   label: "Fixed bands"    },
-            { value: "sunrise", label: "Sunrise/sunset" },
+            { value: "fixed",   label: "Fixed bands"  },
+            { value: "sunrise", label: "Route (sun)"  },
           ]}
         />
       </SmField>
 
       <SmHint>
         <b>Fixed</b> · Night = 11:30 – 23:30 UTC. Same boundaries everywhere.<br />
-        <b>Sunrise / sunset</b> · Night = sunset + 20 min → sunrise − 20 min at departure airport (CAD-6). Falls back to Fixed for airports not in database.
+        <b>Route (sun)</b> · Night = sun below civil twilight (−6°), computed along the actual great-circle route minute by minute. Most accurate — accounts for the aircraft moving between time zones. Needs both departure &amp; arrival airports in the database; falls back to Fixed otherwise.
       </SmHint>
 
       <SmSectionHead title="Duty buffers" hint="// for FTL cumulative duty calculations" />

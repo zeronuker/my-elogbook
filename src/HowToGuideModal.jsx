@@ -34,7 +34,7 @@ function LandingPageMockup() {
         <span style={{ color: "#3FE0C5", fontSize: 22, fontWeight: 700, fontFamily: "Courier New, monospace" }}>C</span>
       </div>
       <div style={{ fontSize: 13, letterSpacing: "0.22em", color: "#e2eef5", fontWeight: 700, fontFamily: "Courier New, monospace", marginBottom: 4 }}>CLAUDEBORNE</div>
-      <div style={{ fontSize: 9, letterSpacing: "0.14em", color: "#3a6a8a", marginBottom: 22, fontFamily: "Courier New, monospace" }}>eLOGBOOK V6.8 · CAAM / MCAR 2016</div>
+      <div style={{ fontSize: 9, letterSpacing: "0.14em", color: "#3a6a8a", marginBottom: 22, fontFamily: "Courier New, monospace" }}>eLOGBOOK V6.9 · CAAM / MCAR 2016</div>
       <div style={{ maxWidth: 240, margin: "0 auto" }}>
         {mockBtn("SIGN UP", true)}
         {mockBtn("LOG IN", false)}
@@ -264,8 +264,8 @@ function DayNightSettingMockup() {
     <div style={{ background: "#060b14", border: "1px solid #1e3a5f", borderRadius: 6, padding: "16px 20px", margin: "14px auto 20px", maxWidth: 400 }}>
       <div style={{ fontSize: 9, letterSpacing: "0.12em", color: "#3a6a8a", marginBottom: 12, fontFamily: "Courier New, monospace" }}>DAY / NIGHT CALCULATION METHOD</div>
       {[
-        { label: "Fixed UTC", desc: "Night: 11:30 – 23:30 UTC", selected: false },
-        { label: "Sunrise / Sunset (CAD-6 Part 1)", desc: "Based on departure airport coordinates", selected: true },
+        { label: "Fixed bands", desc: "Night: 11:30 – 23:30 UTC", selected: false },
+        { label: "Route (sun)", desc: "Sun below −6° along the great-circle route", selected: true },
       ].map(opt => (
         <div key={opt.label} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", background: opt.selected ? "rgba(63,224,197,0.06)" : "#0a0f1a", border: `1px solid ${opt.selected ? "#3FE0C5" : "#1e3a5f"}`, borderRadius: 4, marginBottom: 8 }}>
           <div style={{ width: 13, height: 13, borderRadius: "50%", border: `2px solid ${opt.selected ? "#3FE0C5" : "#3a6a8a"}`, background: opt.selected ? "#3FE0C5" : "transparent", flexShrink: 0, marginTop: 2 }} />
@@ -334,7 +334,7 @@ function ToolbarSyncMockup() {
   return (
     <div style={{ background: "#060b14", border: "1px solid #1e3a5f", borderRadius: 6, margin: "14px auto 20px", overflow: "hidden" }}>
       <div style={{ background: "#0a0f1a", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ fontSize: 9, color: "#3FE0C5", letterSpacing: "0.12em", fontFamily: "Courier New, monospace", fontWeight: 700 }}>CLAUDEBORNE · ELOGBOOK V6.8</div>
+        <div style={{ fontSize: 9, color: "#3FE0C5", letterSpacing: "0.12em", fontFamily: "Courier New, monospace", fontWeight: 700 }}>CLAUDEBORNE · ELOGBOOK V6.9</div>
         <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
             <div style={{ background: "rgba(63,224,197,0.12)", border: "1px solid #3FE0C5", borderRadius: 4, padding: "4px 8px" }}>
@@ -635,8 +635,8 @@ const SECTIONS = [
 
         <h4>Two calculation methods are available</h4>
         <ul>
-          <li><strong>Fixed UTC</strong> — night is defined as 11:30–23:30 UTC. Simple and consistent.</li>
-          <li><strong>Sunrise/Sunset (CAD-6 Part 1)</strong> — night is calculated based on actual sunrise and sunset times at your departure airport. More accurate for CAD-6 Part 1 compliance.</li>
+          <li><strong>Fixed bands</strong> — night is defined as 11:30–23:30 UTC. Simple and consistent everywhere.</li>
+          <li><strong>Route (sun)</strong> — the most accurate option. Night is counted whenever the sun sits below civil twilight (−6°), computed minute by minute along the actual great-circle route between your departure and arrival airports. This accounts for the aircraft moving between time zones — for example, an eastbound flight that lands into the sunrise correctly logs the final stretch as day.</li>
         </ul>
 
         <h4>To change the method</h4>
@@ -647,7 +647,7 @@ const SECTIONS = [
 
         <DayNightSettingMockup />
 
-        <Note>The sunrise/sunset method requires a valid ICAO departure airport code to calculate correctly.</Note>
+        <Note>The Route (sun) method needs valid ICAO codes for both departure and arrival airports. If either airport isn't in the database, that sector falls back to the Fixed bands method.</Note>
 
         <DayNightSplitMockup />
       </div>
