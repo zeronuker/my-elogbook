@@ -103,7 +103,17 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.9", date: "June 2026", current: true,
+    v: "v6.10", date: "June 2026", current: true,
+    title: "Google sign-in rebuilt with Google Identity Services",
+    notes: [
+      "NEW: Google sign-in now uses Google Identity Services (GIS). On installed PWAs (iPad / Android home-screen app), Google sign-in works reliably — no more getting stuck on the login screen or having to force-quit and reopen.",
+      "IMP: Desktop Google sign-in is also more robust against ad blockers and popup blockers, since GIS doesn't rely on a popup handshake.",
+      "IMP: If the Google script is ever blocked, the button automatically falls back to the previous popup method, and email/password sign-in is always available.",
+      "Email/password sign-in is unchanged.",
+    ],
+  },
+  {
+    v: "v6.9", date: "June 2026", current: false,
     title: "Route-based day/night calculation",
     notes: [
       "NEW: The Sunrise/Sunset day/night method has been upgraded to a route-integrated calculation, renamed Route (sun). Night is now counted whenever the sun is below civil twilight (−6°), computed minute by minute along the actual great-circle route between departure and arrival airports.",

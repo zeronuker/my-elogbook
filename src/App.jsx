@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithCredential,
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
@@ -264,10 +265,32 @@ function App() {
     }
   }
 
-  // Google signup/login — popup-based.
-  // Note: on installed PWAs (iPad / Android), popup auth has known issues with
-  // browser-context isolation. The auto-recovery effects below and a planned
-  // Google Identity Services integration are the path forward there.
+  // Google sign-in via Google Identity Services (GIS).
+  // GIS returns an ID token in a same-context callback, so it works inside
+  // installed PWAs where Firebase's popup/redirect flows fail. This is the
+  // primary Google path; handleGoogleAuth (popup) remains only as a fallback
+  // for environments where the GIS Client ID isn't configured.
+  const handleGoogleCredential = async (idToken) => {
+    setIsSigningUp(true)
+    setSignupError(null)
+    try {
+      const credential = GoogleAuthProvider.credential(idToken)
+      const result = await signInWithCredential(auth, credential)
+      await ensureGoogleProfile(result.user)
+      onboardingDoneRef.current = true
+      setShowOnboarding(false)
+      setShowLoadingOverlay(true)
+      setTimeout(() => setShowLoadingOverlay(false), 1500)
+      setIsSigningUp(false)
+    } catch (error) {
+      console.error('Google credential sign-in error:', error)
+      setSignupError('Google sign-in failed. Please try again, or use email/password instead.')
+      setIsSigningUp(false)
+    }
+  }
+
+  // Google signup/login — popup-based. Retained as a fallback used only when the
+  // GIS Client ID is not configured (see GoogleSignInButton).
   const handleGoogleAuth = async () => {
     setIsSigningUp(true)
     setSignupError(null)
@@ -403,6 +426,7 @@ function App() {
           onSignup={handleSignup}
           onLogin={handleLogin}
           onGoogleAuth={handleGoogleAuth}
+          onGoogleCredential={handleGoogleCredential}
           onOnboardingComplete={handleOnboardingComplete}
           signupError={signupError}
           isLoading={isSigningUp}

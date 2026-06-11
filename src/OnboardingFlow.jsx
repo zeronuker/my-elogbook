@@ -1,19 +1,13 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import GoogleSignInButton from './GoogleSignInButton';
 
 // Extract ScreenSignUp1 outside component to prevent recreation
-const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSignup, onGoogleAuth, signupError, isLoading, goTo }) => {
+const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSignup, onGoogleAuth, onGoogleCredential, active, signupError, isLoading, goTo }) => {
   const handleSignupClick = async () => {
     const result = await onSignup(formData.email, formData.password, formData.fullName)
     if (result.success) {
       goTo('emailVerification')
-    }
-  }
-
-  const handleGoogleSignup = async () => {
-    const result = await onGoogleAuth()
-    if (result.success) {
-      // Auth state listener will handle navigation
     }
   }
 
@@ -104,9 +98,7 @@ const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSi
             <div className="onb-divider-text">OR</div>
             <div className="onb-divider-line"></div>
           </div>
-          <button className="onb-btn onb-btn-google" onClick={handleGoogleSignup} disabled={isLoading}>
-            <span style={{ fontSize: '14px', color: '#e8453c', fontWeight: '700' }}>G</span>CONTINUE WITH GOOGLE
-          </button>
+          <GoogleSignInButton onCredential={onGoogleCredential} onFallback={onGoogleAuth} active={active} disabled={isLoading} />
           <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '8px', color: 'var(--muted)', letterSpacing: '0.06em' }}>
             Already have an account? <span style={{ color: 'var(--accent)', cursor: 'pointer' }} onClick={() => goTo('login')}>LOG IN</span>
           </div>
@@ -159,6 +151,7 @@ function OnboardingFlow({
   onSignup,
   onLogin,
   onGoogleAuth,
+  onGoogleCredential,
   onOnboardingComplete,
   signupError,
   isLoading,
@@ -757,7 +750,7 @@ function OnboardingFlow({
         <img src="/brand/icons/logo-192.png" width="72" height="72" style={{ borderRadius: 16 }} />
       </div>
       <div className="onb-land-title">CLAUDEBORNE</div>
-      <div className="onb-land-ver">eLOGBOOK V6.9 · CAAM / MCAR 2016</div>
+      <div className="onb-land-ver">eLOGBOOK V6.10 · CAAM / MCAR 2016</div>
       <div className="onb-land-tag">Your personal electronic logbook.<br/>Accessible anywhere. Works offline. Sync on demand.</div>
       <div className="onb-badges">
         <span className="onb-badge onb-badge-blue">✓ CAD 1901</span>
@@ -826,9 +819,7 @@ function OnboardingFlow({
               <div className="onb-divider-text">OR</div>
               <div className="onb-divider-line"></div>
             </div>
-            <button className="onb-btn onb-btn-google" onClick={onGoogleAuth} disabled={isLoading}>
-              <span style={{ fontSize: '14px', color: '#e8453c', fontWeight: '700' }}>G</span>CONTINUE WITH GOOGLE
-            </button>
+            <GoogleSignInButton onCredential={onGoogleCredential} onFallback={onGoogleAuth} active={authMode === 'login'} disabled={isLoading} />
             <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '8px', color: 'var(--muted)', letterSpacing: '0.06em' }}>
               No account? <span style={{ color: 'var(--accent)', cursor: 'pointer' }} onClick={() => goTo('signup1')}>SIGN UP FREE</span>
             </div>
@@ -910,7 +901,7 @@ function OnboardingFlow({
   const screens = {
     landing: <ScreenLanding />,
     login: <ScreenLogin />,
-    signup1: <ScreenSignUp1 formData={formData} updateFormData={updateFormData} passwordValidation={passwordValidation} onSignup={onSignup} onGoogleAuth={onGoogleAuth} signupError={signupError} isLoading={isLoading} goTo={goTo} />,
+    signup1: <ScreenSignUp1 formData={formData} updateFormData={updateFormData} passwordValidation={passwordValidation} onSignup={onSignup} onGoogleAuth={onGoogleAuth} onGoogleCredential={onGoogleCredential} active={authMode === 'signup1'} signupError={signupError} isLoading={isLoading} goTo={goTo} />,
     emailVerification: <ScreenEmailVerification />,
     signup2: <ScreenSignUp2 formData={formData} updateFormData={updateFormData} isLoading={isLoading} goTo={goTo} />,
     logout: <ScreenLogout />,

@@ -1623,7 +1623,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             <span style={{
               fontFamily: "'JetBrains Mono','Courier New',monospace",
               fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.30)", lineHeight: 1, textAlign: "left",
-            }}>ELOGBOOK · V6.9</span>
+            }}>ELOGBOOK · V6.10</span>
           </div>
           <span className="elb-topbar-caam" style={{
             marginLeft: 6,
@@ -3287,7 +3287,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.9 · CAAM</span>
+        <span>eLOGBOOK v6.10 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
