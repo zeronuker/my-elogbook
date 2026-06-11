@@ -375,18 +375,11 @@ function App() {
       if (error.code === 'auth/requires-recent-login') {
         const providerId = user.providerData[0]?.providerId
         if (providerId === 'google.com') {
-          try {
-            await reauthenticateWithPopup(user, new GoogleAuthProvider())
-            // Firestore docs may already be deleted from the first attempt; deleteDoc
-            // is a no-op on missing docs, so this is safe to repeat.
-            await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
-            await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
-            clearLocalStorage(uid)
-            await deleteUser(user)
-          } catch (reAuthError) {
-            console.error('Re-authentication failed:', reAuthError)
-            throw new Error(reAuthError.message || 'Re-authentication failed. Please try again.')
-          }
+          // Signal the Settings modal to show a Google re-auth button (GIS).
+          // We no longer open a popup here — popups fail inside installed PWAs.
+          // The Firestore docs may already be deleted; deleteDoc is idempotent,
+          // so completing the deletion after re-auth is safe.
+          throw Object.assign(new Error('needs-google-reauth'), { code: 'needs-google-reauth' })
         } else {
           throw Object.assign(new Error('requires-recent-login'), { code: 'auth/requires-recent-login' })
         }
@@ -395,6 +388,43 @@ function App() {
         throw error
       }
     }
+  }
+
+  // Re-authenticate a Google user with a fresh GIS ID token, then complete the
+  // account deletion. Called from the Settings modal after handleDeleteAccount
+  // signals 'needs-google-reauth'. Works on PWA where popup re-auth cannot.
+  const handleReauthAndDeleteGoogle = async (idToken) => {
+    if (!user) return
+    const uid = user.uid
+    const credential = GoogleAuthProvider.credential(idToken)
+    try {
+      await reauthenticateWithCredential(user, credential)
+    } catch (err) {
+      if (err.code === 'auth/user-mismatch') {
+        throw new Error('That Google account does not match your logbook account. Please choose the account you signed in with.')
+      }
+      throw new Error(err.message || 'Re-authentication failed. Please try again.')
+    }
+    // deleteDoc is idempotent — safe even if the docs were already removed in
+    // the first (pre-reauth) attempt.
+    await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
+    await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
+    clearLocalStorage(uid)
+    await deleteUser(user)
+  }
+
+  // Popup-based Google re-auth + delete. Only used as a fallback when GIS is
+  // unavailable (script blocked / no Client ID). Works on desktop; on a PWA
+  // with GIS blocked there is no working path, so the user deletes from a
+  // browser instead.
+  const handleReauthAndDeleteGooglePopup = async () => {
+    if (!user) return
+    const uid = user.uid
+    await reauthenticateWithPopup(user, new GoogleAuthProvider())
+    await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
+    await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
+    clearLocalStorage(uid)
+    await deleteUser(user)
   }
 
   // Re-authenticate email/password user then delete — called from SettingsModal
@@ -445,6 +475,8 @@ function App() {
         onLogout={() => signOut(auth)}
         onDeleteAccount={handleDeleteAccount}
         onReauthAndDelete={handleReauthAndDelete}
+        onReauthAndDeleteGoogle={handleReauthAndDeleteGoogle}
+        onReauthAndDeleteGooglePopup={handleReauthAndDeleteGooglePopup}
         userProvider={user?.providerData[0]?.providerId || 'password'}
       />
       {showLoadingOverlay && <LoadingOverlay />}

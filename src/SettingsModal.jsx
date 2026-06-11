@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import GoogleSignInButton from "./GoogleSignInButton";
 
 // ════════════════════════════════════════════════════════════════════
 //  ClaudeBorne · eLogbook — Settings Modal (v6 brand rewrite)
@@ -103,7 +104,17 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.10", date: "June 2026", current: true,
+    v: "v6.11", date: "June 2026", current: true,
+    title: "Google account deletion works on PWA",
+    notes: [
+      "FIX: Deleting a Google account from an installed PWA now works. When Google asks you to re-confirm your identity, the app uses Google Identity Services (the same reliable method as sign-in) instead of a popup — so it no longer gets stuck on iPad / Android home-screen apps.",
+      "IMP: If the Google script is blocked, account deletion falls back to the previous popup method on desktop.",
+      "IMP: Clearer message if you pick the wrong Google account during deletion.",
+      "Email/password account deletion is unchanged.",
+    ],
+  },
+  {
+    v: "v6.10", date: "June 2026", current: false,
     title: "Google sign-in rebuilt with Google Identity Services",
     notes: [
       "NEW: Google sign-in now uses Google Identity Services (GIS). On installed PWAs (iPad / Android home-screen app), Google sign-in works reliably — no more getting stuck on the login screen or having to force-quit and reopen.",
@@ -332,7 +343,7 @@ const TAB_DEFAULTS = {
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, initialTab }) {
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, initialTab }) {
   const [tab, setTab]               = useState(initialTab || "profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -448,7 +459,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
 
         {/* ── BODY ── */}
         <div className="sm-body">
-          {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} userProvider={userProvider} />}
+          {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} onReauthAndDeleteGoogle={onReauthAndDeleteGoogle} onReauthAndDeleteGooglePopup={onReauthAndDeleteGooglePopup} userProvider={userProvider} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
           {tab === "misc"        && <MiscTab onFeedback={onFeedback} onGuide={onGuide} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} />}
@@ -475,11 +486,12 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
 // ════════════════════════════════════════════════════════════════════
 //  PROFILE TAB
 // ════════════════════════════════════════════════════════════════════
-function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, userProvider }) {
+function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteError, setDeleteError]     = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [needsPassword, setNeedsPassword] = useState(false);
+  const [needsGoogleReauth, setNeedsGoogleReauth] = useState(false);
   const [password, setPassword]           = useState('');
   const isGoogle = userProvider === 'google.com';
   const rows = d.carryForward || [CF_EMPTY()];
@@ -648,7 +660,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, use
         <button
           type="button"
           className="sm-delete-trigger"
-          onClick={() => { setConfirmDelete(true); setDeleteError(null); setNeedsPassword(false); setPassword(''); }}
+          onClick={() => { setConfirmDelete(true); setDeleteError(null); setNeedsPassword(false); setNeedsGoogleReauth(false); setPassword(''); }}
         >
           <span className="sm-delete-trigger-label">Delete account &amp; all data</span>
           <span className="sm-delete-trigger-hint">Permanently removes your account and all logbook data. This cannot be undone.</span>
@@ -700,6 +712,50 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, use
             </button>
           </div>
         </div>
+      ) : needsGoogleReauth ? (
+        /* ── Google re-auth prompt (Google users) — uses GIS so it works on PWA ── */
+        <div className="sm-delete-confirm">
+          <div className="sm-delete-warn">⚠ Confirm your identity</div>
+          <div className="sm-delete-body">
+            For your security, confirm with Google to permanently delete your account and all logbook data.
+            {deleteLoading && <span style={{ display: 'block', marginTop: 8, color: '#f5c542' }}>Deleting…</span>}
+          </div>
+          <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>
+            <GoogleSignInButton
+              active={true}
+              disabled={deleteLoading}
+              onCredential={async (idToken) => {
+                setDeleteLoading(true);
+                setDeleteError(null);
+                try {
+                  if (onReauthAndDeleteGoogle) await onReauthAndDeleteGoogle(idToken);
+                  // On success the app unmounts this modal as auth state goes null.
+                } catch (err) {
+                  setDeleteLoading(false);
+                  setDeleteError(err.message || 'Re-authentication failed. Please try again.');
+                }
+              }}
+              onFallback={async () => {
+                // GIS unavailable — fall back to popup-based Google re-auth + delete.
+                setDeleteLoading(true);
+                setDeleteError(null);
+                try {
+                  if (onReauthAndDeleteGooglePopup) await onReauthAndDeleteGooglePopup();
+                  setDeleteLoading(false);
+                } catch (err) {
+                  setDeleteLoading(false);
+                  setDeleteError(err.message || 'Account deletion failed. Please try again.');
+                }
+              }}
+            />
+          </div>
+          <div className="sm-delete-actions" style={{ marginTop: 10, justifyContent: 'center' }}>
+            <button type="button" className="cb-btn-ghost" disabled={deleteLoading}
+              onClick={() => { setNeedsGoogleReauth(false); setDeleteError(null); }}>
+              Cancel
+            </button>
+          </div>
+        </div>
       ) : (
         /* ── Initial confirmation panel ── */
         <div className="sm-delete-confirm">
@@ -707,7 +763,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, use
           <div className="sm-delete-body">
             All logbook data, carry-forward hours, and your eLOGBOOK account will be permanently deleted.
             {isGoogle
-              ? ' You will be redirected to Google to confirm your identity before deletion proceeds.'
+              ? ' You may be asked to confirm with Google before deletion proceeds.'
               : ' You will be asked to enter your password to confirm.'}
           </div>
           <div className="sm-delete-actions">
@@ -730,6 +786,9 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, use
                   if (err.code === 'auth/requires-recent-login') {
                     // Email/password user needs password prompt
                     setNeedsPassword(true);
+                  } else if (err.code === 'needs-google-reauth') {
+                    // Google user needs to re-confirm with Google (GIS — works on PWA)
+                    setNeedsGoogleReauth(true);
                   } else {
                     setDeleteError(err.message || 'Account deletion failed. Please try again.');
                   }
