@@ -449,13 +449,13 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     setImportPreview(null);
     setImportStatus(null);
 
+    if (!selectedFile.name.endsWith(".xlsx")) {
+      setImportStatus({ error: "Only .xlsx files are supported" });
+      return;
+    }
+
     try {
       const buffer = await selectedFile.arrayBuffer();
-
-      if (!selectedFile.name.endsWith(".xlsx")) {
-        setImportStatus({ error: "Only .xlsx files are supported" });
-        return;
-      }
 
       const workbook = XLSX.read(buffer, { type: "array" });
 

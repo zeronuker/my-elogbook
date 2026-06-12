@@ -149,10 +149,12 @@ function App() {
           await deleteUser(current) // if this needs re-auth it throws; data is already erased
         }
       } catch (err) {
-        // deleteUser may require recent login — data erasure already done; the
-        // user can re-trigger deletion from Settings to remove the auth account.
         accountDeletedRef.current = false
         console.error('Resuming interrupted deletion did not fully complete:', err)
+        // Data is already erased but the auth account couldn't be removed
+        // (likely needs re-auth). Surface a message so the user knows to finish
+        // via Settings → Delete Account.
+        setSignupError('Your logbook data was deleted but your account could not be fully removed. Open Settings → Delete Account to complete the process.')
       } finally {
         localStorage.removeItem('elb_pending_delete')
       }

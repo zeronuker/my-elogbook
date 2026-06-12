@@ -113,6 +113,9 @@ const CHANGELOG = [
       "NEW: The \"resend verification email\" link on the verify-email screen now works — it re-sends the link, with a 30-second cooldown to avoid duplicates.",
       "FIX: New versions now prompt automatically. The app re-checks for updates every 30 minutes and whenever you reopen it, instead of only when you tapped \"check for updates\" manually.",
       "NEW: Export All — a new button in the Export window exports every flight in your logbook to Excel without having to set a date range.",
+      "FIX: After clicking your verification link, the app now detects it immediately instead of staying stuck on the \"check your email\" screen until you manually refreshed.",
+      "FIX: If account deletion was interrupted and couldn't fully complete on the next app load, you now see a clear message telling you to finish via Settings → Delete Account instead of a silent failure.",
+      "FIX: Selecting a non-Excel file in the Import screen no longer loads the entire file into memory before rejecting it.",
     ],
   },
   {

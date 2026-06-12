@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, memo } from 'react';
+import { auth } from './firebase';
 import GoogleSignInButton from './GoogleSignInButton';
 
 // Extract ScreenSignUp1 outside component to prevent recreation
@@ -455,7 +456,7 @@ function OnboardingFlow({
     if (user && authMode === 'emailVerification') {
       const interval = setInterval(async () => {
         await user.reload()
-        if (user.emailVerified) {
+        if (auth.currentUser?.emailVerified) {
           clearInterval(interval)
           goTo('signup2')
         }
