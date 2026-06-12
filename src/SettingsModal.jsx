@@ -116,6 +116,8 @@ const CHANGELOG = [
       "FIX: After clicking your verification link, the app now detects it immediately instead of staying stuck on the \"check your email\" screen until you manually refreshed.",
       "FIX: If account deletion was interrupted and couldn't fully complete on the next app load, you now see a clear message telling you to finish via Settings → Delete Account instead of a silent failure.",
       "FIX: Selecting a non-Excel file in the Import screen no longer loads the entire file into memory before rejecting it.",
+      "FIX: The \"New version available\" update banner no longer throws if the service worker updater isn't ready yet.",
+      "FIX: If you log in twice in quick succession as the same account, the loading overlay can no longer get stuck from a stale timer.",
     ],
   },
   {

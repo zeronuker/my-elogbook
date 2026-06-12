@@ -1066,7 +1066,7 @@ function OnboardingFlow({
           <span style={{ color: '#3FE0C5' }}>↑</span>
           <span>New version available</span>
           <button
-            onClick={() => updateServiceWorker(true)}
+            onClick={() => updateServiceWorker?.(true)}
             style={{
               background: '#3FE0C5', color: '#0a0d12', border: 'none', borderRadius: 4,
               padding: '4px 12px', fontFamily: 'inherit', fontSize: 11,

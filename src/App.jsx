@@ -27,6 +27,11 @@ const AUTH_RECOVERY_KEY = 'elb_auth_recovery_attempted'
 // How often to poll for a new service worker while the app stays open.
 const SW_UPDATE_INTERVAL_MS = 30 * 60 * 1000 // 30 minutes
 
+// Module-level refs so onRegisteredSW can clear the previous interval/listener
+// if the SW re-registers (e.g. after an update), preventing accumulation.
+let _swIntervalId = null
+let _swVisibilityListener = null
+
 function App() {
   // Without an explicit poll, the browser only checks for a new SW on a full
   // navigation (~once/24h) — so an installed PWA resumed from the background
@@ -37,10 +42,11 @@ function App() {
       const check = () => {
         if (navigator.onLine) r.update().catch(() => {})
       }
-      setInterval(check, SW_UPDATE_INTERVAL_MS)
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') check()
-      })
+      if (_swIntervalId) clearInterval(_swIntervalId)
+      if (_swVisibilityListener) document.removeEventListener('visibilitychange', _swVisibilityListener)
+      _swVisibilityListener = () => { if (document.visibilityState === 'visible') check() }
+      _swIntervalId = setInterval(check, SW_UPDATE_INTERVAL_MS)
+      document.addEventListener('visibilitychange', _swVisibilityListener)
     },
   })
   const [user, setUser] = useState(null)
@@ -55,6 +61,7 @@ function App() {
   const prevUserRef = useRef(null)
   const onboardingDoneRef = useRef(false)
   const prevIsSigningUpRef = useRef(false)
+  const overlayTimeoutRef = useRef(null)
 
   // Shared helper: create the Firestore profile doc for a Google user if missing.
   // Used by both popup (handleGoogleAuth) and redirect (getRedirectResult) flows.
@@ -351,7 +358,12 @@ function App() {
       // object reference doesn't change (e.g. signing in again as the same uid
       // after a password reset) the effect won't re-run. Force-clear after 5s so
       // the overlay can't get stuck on "Setting up your logbook".
-      setTimeout(() => setShowLoadingOverlay(false), 5000)
+      // Store the ID so a rapid second login cancels the first timer.
+      if (overlayTimeoutRef.current) clearTimeout(overlayTimeoutRef.current)
+      overlayTimeoutRef.current = setTimeout(() => {
+        overlayTimeoutRef.current = null
+        setShowLoadingOverlay(false)
+      }, 5000)
       return { success: true }
     } catch (error) {
       let errorMsg = 'Login failed. Check your email and password.'
