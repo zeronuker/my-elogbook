@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, memo } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
 import GoogleSignInButton from './GoogleSignInButton';
 
 // Extract ScreenSignUp1 outside component to prevent recreation
@@ -158,9 +157,10 @@ function OnboardingFlow({
   isLoading,
   showLogoutConfirm,
   showAccountDeleted,
-  onClearError
+  onClearError,
+  needRefresh,
+  updateServiceWorker,
 }) {
-  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
   const [authMode, setAuthMode] = useState(() =>
     user?.providerData?.[0]?.providerId === 'google.com' ? 'signup2' : 'landing'
   );

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useRegisterSW } from 'virtual:pwa-register/react'
 import { auth, db } from './firebase'
 import {
   createUserWithEmailAndPassword,
@@ -24,6 +25,7 @@ import LoadingOverlay from './LoadingOverlay'
 const AUTH_RECOVERY_KEY = 'elb_auth_recovery_attempted'
 
 function App() {
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW()
   const [user, setUser] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(true)
   const [authLoading, setAuthLoading] = useState(true)
@@ -572,6 +574,8 @@ function App() {
           showLogoutConfirm={showLogoutConfirm}
           showAccountDeleted={showAccountDeleted}
           onClearError={() => setSignupError(null)}
+          needRefresh={needRefresh}
+          updateServiceWorker={updateServiceWorker}
         />
         {showLoadingOverlay && <LoadingOverlay />}
       </>
@@ -588,6 +592,8 @@ function App() {
         onReauthAndDeleteGoogle={handleReauthAndDeleteGoogle}
         onReauthAndDeleteGooglePopup={handleReauthAndDeleteGooglePopup}
         userProvider={user?.providerData[0]?.providerId || 'password'}
+        needRefresh={needRefresh}
+        updateServiceWorker={updateServiceWorker}
       />
       {showLoadingOverlay && <LoadingOverlay />}
     </>

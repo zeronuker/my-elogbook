@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useRegisterSW } from "virtual:pwa-register/react";
 import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
 import { db, auth } from "./firebase";
@@ -525,7 +524,7 @@ function makeThemeCss(settings = {}) {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider }) {
+export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider, needRefresh, updateServiceWorker }) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [data, setData] = useState(initialData);
@@ -542,21 +541,15 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [cloudNewerBanner, setCloudNewerBanner] = useState(false);
 
   // ── PWA update prompt + manual check ──
-  const swRegistrationRef = useRef(null);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateChecked, setUpdateChecked] = useState(false);
-  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
-    onRegisteredSW(_url, registration) {
-      swRegistrationRef.current = registration;
-    },
-  });
 
   const checkForUpdate = async () => {
-    if (!swRegistrationRef.current) return;
     setCheckingUpdate(true);
     setUpdateChecked(false);
     try {
-      await swRegistrationRef.current.update();
+      const reg = await navigator.serviceWorker?.ready;
+      await reg?.update();
     } catch (e) {
       console.error('SW update check failed:', e);
     }
