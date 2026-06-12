@@ -327,6 +327,12 @@ function App() {
       await signInWithEmailAndPassword(auth, email, password)
       setShowLoadingOverlay(true) // Overlay while profile check runs
       setIsSigningUp(false)
+
+      // Safety net: checkProfile normally clears the overlay, but if the user
+      // object reference doesn't change (e.g. signing in again as the same uid
+      // after a password reset) the effect won't re-run. Force-clear after 5s so
+      // the overlay can't get stuck on "Setting up your logbook".
+      setTimeout(() => setShowLoadingOverlay(false), 5000)
       return { success: true }
     } catch (error) {
       let errorMsg = 'Login failed. Check your email and password.'
@@ -452,45 +458,25 @@ function App() {
     }
   }
 
-  // Delete account and all data (client-side, no Cloud Function required).
+  // Begin account deletion. We re-authenticate BEFORE erasing anything, so
+  // cancelling the identity prompt can never leave a half-deleted account.
   //
-  // Order matters: Firestore docs must be deleted BEFORE the auth user.
-  // Once `deleteUser()` runs, the auth token is invalidated and subsequent
-  // `deleteDoc` calls would fail the Firestore rule `request.auth.uid == uid`,
-  // orphaning the user's data. So: Firestore first → localStorage → deleteUser.
-  //
-  // deleteDoc is idempotent on missing docs, so if any step needs a retry
-  // (e.g. after a reauth), re-running the deletes is safe.
+  // Why not delete here first: Firestore docs must be removed while the user is
+  // still authenticated (deleteUser invalidates the token, after which the rule
+  // `request.auth.uid == uid` rejects the deletes). Deleting docs up front means
+  // a cancelled re-auth would strand the data with the auth account still alive.
+  // Instead this routes straight to the provider's re-auth prompt; the actual
+  // erasure (reauth → Firestore docs → deleteUser) happens in the handlers below,
+  // only once identity is confirmed.
   const handleDeleteAccount = async () => {
     if (!user) return
-    const uid = user.uid
-    // Mark a deletion in progress so an interrupted run (crash / tab close /
-    // network drop mid-sequence) can be finished on the next app load.
-    localStorage.setItem('elb_pending_delete', uid)
-    try {
-      await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
-      await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
-      clearLocalStorage(uid)
-      await anonymizeFeedback(uid)
-      accountDeletedRef.current = true // so the auth listener shows "account deleted", not "logged out"
-      await deleteUser(user)
-    } catch (error) {
-      accountDeletedRef.current = false // deleteUser did not complete (e.g. needs re-auth)
-      if (error.code === 'auth/requires-recent-login') {
-        const providerId = user.providerData[0]?.providerId
-        if (providerId === 'google.com') {
-          // Signal the Settings modal to show a Google re-auth button (GIS).
-          // We no longer open a popup here — popups fail inside installed PWAs.
-          // The Firestore docs may already be deleted; deleteDoc is idempotent,
-          // so completing the deletion after re-auth is safe.
-          throw Object.assign(new Error('needs-google-reauth'), { code: 'needs-google-reauth' })
-        } else {
-          throw Object.assign(new Error('requires-recent-login'), { code: 'auth/requires-recent-login' })
-        }
-      } else {
-        console.error('Account deletion failed:', error)
-        throw error
-      }
+    const providerId = user.providerData[0]?.providerId
+    if (providerId === 'google.com') {
+      // Settings modal shows a Google re-auth button (GIS — works inside PWAs).
+      throw Object.assign(new Error('needs-google-reauth'), { code: 'needs-google-reauth' })
+    } else {
+      // Settings modal shows the password prompt.
+      throw Object.assign(new Error('requires-recent-login'), { code: 'auth/requires-recent-login' })
     }
   }
 
@@ -509,8 +495,9 @@ function App() {
       }
       throw new Error(err.message || 'Re-authentication failed. Please try again.')
     }
-    // deleteDoc is idempotent — safe even if the docs were already removed in
-    // the first (pre-reauth) attempt.
+    // Identity confirmed — now safe to erase. Mark a deletion in progress so an
+    // interrupted run (crash / tab close mid-sequence) finishes on next load.
+    localStorage.setItem('elb_pending_delete', uid)
     await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
     await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
     clearLocalStorage(uid)
@@ -527,6 +514,8 @@ function App() {
     if (!user) return
     const uid = user.uid
     await reauthenticateWithPopup(user, new GoogleAuthProvider())
+    // Identity confirmed — mark in progress, then erase.
+    localStorage.setItem('elb_pending_delete', uid)
     await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
     await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
     clearLocalStorage(uid)
@@ -536,16 +525,16 @@ function App() {
   }
 
   // Re-authenticate email/password user then delete — called from SettingsModal
-  // password prompt after handleDeleteAccount threw `auth/requires-recent-login`.
-  //
-  // Same order as handleDeleteAccount: Firestore docs → localStorage → deleteUser.
-  // Profile/logbook docs may already be gone from the first (failed) attempt;
-  // deleteDoc is idempotent so re-calling on missing docs is a safe no-op.
+  // password prompt after handleDeleteAccount signalled `auth/requires-recent-login`.
+  // Reauth happens first, so a wrong password / cancel erases nothing.
+  // Order: reauth → mark pending → Firestore docs → localStorage → deleteUser.
   const handleReauthAndDelete = async (password) => {
     if (!user) return
     const uid = user.uid
     const credential = EmailAuthProvider.credential(user.email, password)
     await reauthenticateWithCredential(user, credential)
+    // Identity confirmed — mark in progress, then erase.
+    localStorage.setItem('elb_pending_delete', uid)
     await deleteDoc(doc(db, 'users', uid, 'profile', 'data'))
     await deleteDoc(doc(db, 'users', uid, 'logbook', 'data'))
     clearLocalStorage(uid)

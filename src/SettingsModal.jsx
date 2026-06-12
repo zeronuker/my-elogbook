@@ -104,7 +104,17 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.12.2", date: "June 2026", current: true,
+    v: "v6.13", date: "June 2026", current: true,
+    title: "Sign-in & account deletion reliability",
+    notes: [
+      "FIX: Typing your email or password on the login and forgot-password screens no longer gets wiped mid-entry. The screens were quietly resetting on each redraw.",
+      "FIX: Logging in after a password reset no longer gets stuck on \"Setting up your logbook\" — the screen now always clears.",
+      "IMP: Deleting your account now confirms your identity before anything is removed. If you cancel at the password / Google prompt, nothing is deleted — no more half-removed accounts.",
+      "IMP: Removed a dead \"resend verification email\" link on the verify-email screen that did nothing when tapped.",
+    ],
+  },
+  {
+    v: "v6.12.2", date: "June 2026", current: false,
     title: "Hotfix — sign-up & sign-in flow",
     notes: [
       "FIX: New Google sign-ups now go through onboarding instead of dropping straight into the logbook.",

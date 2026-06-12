@@ -145,6 +145,218 @@ const ScreenSignUp2 = memo(({ formData, updateFormData, isLoading, goTo }) => {
   );
 });
 
+// Screen: Landing
+const ScreenLanding = memo(({ goTo }) => (
+  <div className="onb-land">
+    <div className="onb-land-logo-wrap">
+      <img src="/brand/icons/logo-192.png" width="72" height="72" style={{ borderRadius: 16 }} />
+    </div>
+    <div className="onb-land-title">CLAUDEBORNE</div>
+    <div className="onb-land-ver">eLOGBOOK V6.13 · CAAM / MCAR 2016</div>
+    <div className="onb-land-tag">Your personal electronic logbook.<br/>Accessible anywhere. Works offline. Sync on demand.</div>
+    <div className="onb-badges">
+      <span className="onb-badge onb-badge-blue">✓ CAD 1901</span>
+      <span className="onb-badge onb-badge-blue">✓ MCAR 2016 Part 69 & Part 74</span>
+      <span className="onb-badge onb-badge-green">✓ FREE</span>
+      <span className="onb-badge onb-badge-green">✓ OFFLINE-FIRST</span>
+    </div>
+    <div className="onb-land-btns">
+      <div className="onb-lbtn" onClick={() => goTo('login')}>
+        <div className="onb-lbtn-icon">🔑</div>
+        <div className="onb-lbtn-title">LOG IN</div>
+        <div className="onb-lbtn-sub">Access your existing logbook</div>
+      </div>
+      <div className="onb-lbtn signup" onClick={() => goTo('signup1')}>
+        <div className="onb-lbtn-icon">✨</div>
+        <div className="onb-lbtn-title">SIGN UP FREE</div>
+        <div className="onb-lbtn-sub">Create your pilot logbook today</div>
+      </div>
+    </div>
+    <div className="onb-land-legal">By continuing you agree to our Terms of Service.<br/>Your data is stored securely and privately.</div>
+  </div>
+));
+
+// Screen: Login
+const ScreenLogin = memo(({ onLogin, signupError, isLoading, onClearError, goTo, onGoogleCredential, onGoogleAuth, active }) => {
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
+
+  const handleLoginClick = async () => {
+    await onLogin(loginEmail, loginPassword)
+    // Auth state listener will handle navigation
+  }
+
+  return (
+    <div style={{ maxWidth: '380px', width: '100%' }}>
+      <button className="onb-back" onClick={() => goTo('landing')}>← BACK</button>
+      <div className="onb-card">
+        <div className="onb-cbar"></div>
+        <div className="onb-cbody">
+          <div className="onb-slbl">RETURNING PILOT</div>
+          <div className="onb-stitle">WELCOME BACK</div>
+          <div className="onb-ssub">Sign in to access your logbook from any device.</div>
+          {signupError && (
+            <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
+              {signupError}
+            </div>
+          )}
+          <div className="onb-field">
+            <label>EMAIL ADDRESS</label>
+            <input type="email" placeholder="your@email.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} disabled={isLoading} />
+          </div>
+          <div className="onb-field">
+            <label>PASSWORD</label>
+            <input type="password" placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} disabled={isLoading} />
+          </div>
+          <div style={{ textAlign: 'right', marginBottom: '4px' }}>
+            <span style={{ fontSize: '8px', color: 'var(--accent)', cursor: 'pointer', letterSpacing: '0.08em' }} onClick={() => { onClearError(); goTo('forgotPassword') }}>FORGOT PASSWORD?</span>
+          </div>
+          <button className="onb-btn onb-btn-p" onClick={handleLoginClick} disabled={isLoading || !loginEmail || !loginPassword}>
+            {isLoading ? 'LOGGING IN...' : 'LOG IN →'}
+          </button>
+          <div className="onb-divider">
+            <div className="onb-divider-line"></div>
+            <div className="onb-divider-text">OR</div>
+            <div className="onb-divider-line"></div>
+          </div>
+          <GoogleSignInButton onCredential={onGoogleCredential} onFallback={onGoogleAuth} active={active} disabled={isLoading} />
+          <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '8px', color: 'var(--muted)', letterSpacing: '0.06em' }}>
+            No account? <span style={{ color: 'var(--accent)', cursor: 'pointer' }} onClick={() => goTo('signup1')}>SIGN UP FREE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+});
+
+// Screen: Email Verification
+const ScreenEmailVerification = memo(({ email }) => (
+  <div style={{ maxWidth: '480px', width: '100%' }}>
+    <div className="onb-card">
+      <div className="onb-cbar"></div>
+      <div className="onb-cbody">
+        <div className="onb-slbl">NEW PILOT · STEP 2 OF 3</div>
+        <div className="onb-stitle">VERIFY YOUR EMAIL</div>
+        <div className="onb-ssub">We sent a verification link to your email. Click it to continue.</div>
+        <div className="onb-email-box">
+          <div className="onb-email-icon">✉️</div>
+          <div className="onb-email-addr">{email || 'check-your-email@example.com'}</div>
+          <div className="onb-email-desc">Click the verification link in your email to proceed. The link expires in 24 hours.</div>
+        </div>
+        <div className="onb-email-help">
+          💡 Didn't receive the email? Check your spam folder.
+        </div>
+        <button className="onb-btn onb-btn-g onb-waiting-btn" disabled>WAITING FOR VERIFICATION...</button>
+      </div>
+    </div>
+  </div>
+));
+
+// Screen: Forgot Password
+const ScreenForgotPassword = memo(({ onForgotPassword, goTo }) => {
+  const [fpEmail, setFpEmail] = useState('')
+  const [fpState, setFpState] = useState('idle') // idle | sending | sent | error
+  const [fpError, setFpError] = useState('')
+
+  const handleSubmit = async () => {
+    setFpState('sending')
+    const result = await onForgotPassword(fpEmail)
+    if (result.success) {
+      setFpState('sent')
+    } else {
+      setFpError(result.error)
+      setFpState('error')
+    }
+  }
+
+  return (
+    <div style={{ maxWidth: '380px', width: '100%' }}>
+      <button className="onb-back" onClick={() => goTo('login')}>← BACK</button>
+      <div className="onb-card">
+        <div className="onb-cbar"></div>
+        <div className="onb-cbody">
+          <div className="onb-slbl">ACCOUNT RECOVERY</div>
+          <div className="onb-stitle">RESET PASSWORD</div>
+          {fpState === 'sent' ? (
+            <>
+              <div className="onb-ssub">Reset link sent. Check your inbox (and spam folder).</div>
+              <div className="onb-email-box" style={{ marginTop: 16 }}>
+                <div className="onb-email-icon">✉️</div>
+                <div className="onb-email-addr">{fpEmail}</div>
+                <div className="onb-email-desc">Click the link in the email to set a new password. The link expires in 1 hour.</div>
+              </div>
+              <button className="onb-btn onb-btn-p" style={{ marginTop: 20 }} onClick={() => goTo('login')}>BACK TO LOGIN →</button>
+            </>
+          ) : (
+            <>
+              <div className="onb-ssub">Enter your account email and we'll send a reset link.</div>
+              {fpState === 'error' && (
+                <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
+                  {fpError}
+                </div>
+              )}
+              <div className="onb-field">
+                <label>EMAIL ADDRESS</label>
+                <input type="email" placeholder="your@email.com" value={fpEmail} onChange={(e) => setFpEmail(e.target.value)} disabled={fpState === 'sending'} />
+              </div>
+              <button className="onb-btn onb-btn-p" onClick={handleSubmit} disabled={fpState === 'sending' || !fpEmail}>
+                {fpState === 'sending' ? 'SENDING...' : 'SEND RESET LINK →'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+});
+
+// Screen: Logout Confirmation
+const ScreenLogout = memo(() => (
+  <div className="onb-done">
+    <div className="onb-done-icon" style={{ fontSize: 56 }}>👋</div>
+    <div className="onb-done-ttl" style={{ color: '#b8d6e5' }}>YOU'VE BEEN SIGNED OUT</div>
+    <div className="onb-done-sub">See you next time, Captain.</div>
+    <div style={{ fontSize: 11, color: '#7a9aaa', marginTop: 20, letterSpacing: '0.08em' }}>Returning to login in 3 seconds...</div>
+  </div>
+));
+
+// Screen: Account Deleted Confirmation
+const ScreenAccountDeleted = memo(() => (
+  <div className="onb-done">
+    <div className="onb-done-icon" style={{ fontSize: 56, color: '#3FE0C5' }}>✓</div>
+    <div className="onb-done-ttl" style={{ color: '#3FE0C5' }}>ACCOUNT DELETED</div>
+    <div className="onb-done-sub">Your account and all logbook data have been permanently removed.</div>
+    <div style={{ fontSize: 11, color: '#7a9aaa', marginTop: 20, letterSpacing: '0.08em' }}>Returning to start in a few seconds...</div>
+  </div>
+));
+
+// Screen: Done
+const ScreenDone = memo(({ onOnboardingComplete, formData, isLoading }) => {
+  const handleOpenLogbook = async () => {
+    await onOnboardingComplete({
+      licenceType: formData.licenseType,
+      licenceNumber: formData.licenseNumber,
+      organization: formData.organization
+    })
+  }
+
+  return (
+    <div className="onb-done">
+      <div className="onb-done-icon">✅</div>
+      <div className="onb-done-ttl">YOU'RE READY TO FLY</div>
+      <div className="onb-done-sub">Your logbook is set up and ready.<br/>Start logging your first flight now.</div>
+      <div className="onb-done-pills">
+        <span className="onb-badge onb-badge-green">✓ ACCOUNT CREATED</span>
+        <span className="onb-badge onb-badge-blue">✓ OFFLINE-READY</span>
+        <span className="onb-badge onb-badge-blue">✓ DATA SECURED</span>
+      </div>
+      <button className="onb-btn onb-btn-done" onClick={handleOpenLogbook} disabled={isLoading}>
+        {isLoading ? 'LOADING...' : 'OPEN MY LOGBOOK →'}
+      </button>
+    </div>
+  )
+});
+
 function OnboardingFlow({
   user,
   onSignup,
@@ -756,223 +968,6 @@ function OnboardingFlow({
     }
   `;
 
-  // Screen: Landing
-  const ScreenLanding = () => (
-    <div className="onb-land">
-      <div className="onb-land-logo-wrap">
-        <img src="/brand/icons/logo-192.png" width="72" height="72" style={{ borderRadius: 16 }} />
-      </div>
-      <div className="onb-land-title">CLAUDEBORNE</div>
-      <div className="onb-land-ver">eLOGBOOK V6.12.2 · CAAM / MCAR 2016</div>
-      <div className="onb-land-tag">Your personal electronic logbook.<br/>Accessible anywhere. Works offline. Sync on demand.</div>
-      <div className="onb-badges">
-        <span className="onb-badge onb-badge-blue">✓ CAD 1901</span>
-        <span className="onb-badge onb-badge-blue">✓ MCAR 2016 Part 69 & Part 74</span>
-        <span className="onb-badge onb-badge-green">✓ FREE</span>
-        <span className="onb-badge onb-badge-green">✓ OFFLINE-FIRST</span>
-      </div>
-      <div className="onb-land-btns">
-        <div className="onb-lbtn" onClick={() => goTo('login')}>
-          <div className="onb-lbtn-icon">🔑</div>
-          <div className="onb-lbtn-title">LOG IN</div>
-          <div className="onb-lbtn-sub">Access your existing logbook</div>
-        </div>
-        <div className="onb-lbtn signup" onClick={() => goTo('signup1')}>
-          <div className="onb-lbtn-icon">✨</div>
-          <div className="onb-lbtn-title">SIGN UP FREE</div>
-          <div className="onb-lbtn-sub">Create your pilot logbook today</div>
-        </div>
-      </div>
-      <div className="onb-land-legal">By continuing you agree to our Terms of Service.<br/>Your data is stored securely and privately.</div>
-    </div>
-  );
-
-  // Screen: Login
-  const ScreenLogin = () => {
-    const [loginEmail, setLoginEmail] = useState('')
-    const [loginPassword, setLoginPassword] = useState('')
-
-    const handleLoginClick = async () => {
-      const result = await onLogin(loginEmail, loginPassword)
-      if (result.success) {
-        // Auth state listener will handle navigation
-      }
-    }
-
-    return (
-      <div style={{ maxWidth: '380px', width: '100%' }}>
-        <button className="onb-back" onClick={() => goTo('landing')}>← BACK</button>
-        <div className="onb-card">
-          <div className="onb-cbar"></div>
-          <div className="onb-cbody">
-            <div className="onb-slbl">RETURNING PILOT</div>
-            <div className="onb-stitle">WELCOME BACK</div>
-            <div className="onb-ssub">Sign in to access your logbook from any device.</div>
-            {signupError && (
-              <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
-                {signupError}
-              </div>
-            )}
-            <div className="onb-field">
-              <label>EMAIL ADDRESS</label>
-              <input type="email" placeholder="your@email.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} disabled={isLoading} />
-            </div>
-            <div className="onb-field">
-              <label>PASSWORD</label>
-              <input type="password" placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} disabled={isLoading} />
-            </div>
-            <div style={{ textAlign: 'right', marginBottom: '4px' }}>
-              <span style={{ fontSize: '8px', color: 'var(--accent)', cursor: 'pointer', letterSpacing: '0.08em' }} onClick={() => { onClearError(); goTo('forgotPassword') }}>FORGOT PASSWORD?</span>
-            </div>
-            <button className="onb-btn onb-btn-p" onClick={handleLoginClick} disabled={isLoading || !loginEmail || !loginPassword}>
-              {isLoading ? 'LOGGING IN...' : 'LOG IN →'}
-            </button>
-            <div className="onb-divider">
-              <div className="onb-divider-line"></div>
-              <div className="onb-divider-text">OR</div>
-              <div className="onb-divider-line"></div>
-            </div>
-            <GoogleSignInButton onCredential={onGoogleCredential} onFallback={onGoogleAuth} active={authMode === 'login'} disabled={isLoading} />
-            <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '8px', color: 'var(--muted)', letterSpacing: '0.06em' }}>
-              No account? <span style={{ color: 'var(--accent)', cursor: 'pointer' }} onClick={() => goTo('signup1')}>SIGN UP FREE</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  };
-
-
-  // Screen: Email Verification
-  const ScreenEmailVerification = () => (
-    <div style={{ maxWidth: '480px', width: '100%' }}>
-      <div className="onb-card">
-        <div className="onb-cbar"></div>
-        <div className="onb-cbody">
-          <div className="onb-slbl">NEW PILOT · STEP 2 OF 3</div>
-          <div className="onb-stitle">VERIFY YOUR EMAIL</div>
-          <div className="onb-ssub">We sent a verification link to your email. Click it to continue.</div>
-          <div className="onb-email-box">
-            <div className="onb-email-icon">✉️</div>
-            <div className="onb-email-addr">{formData.email || 'check-your-email@example.com'}</div>
-            <div className="onb-email-desc">Click the verification link in your email to proceed. The link expires in 24 hours.</div>
-          </div>
-          <div className="onb-email-help">
-            💡 Didn't receive the email? Check your spam folder or<br/>
-            <span className="onb-email-help-link">resend verification email</span>
-          </div>
-          <button className="onb-btn onb-btn-g onb-waiting-btn" disabled>WAITING FOR VERIFICATION...</button>
-        </div>
-      </div>
-    </div>
-  );
-
-
-  // Screen: Forgot Password
-  const ScreenForgotPassword = () => {
-    const [fpEmail, setFpEmail] = useState('')
-    const [fpState, setFpState] = useState('idle') // idle | sending | sent | error
-    const [fpError, setFpError] = useState('')
-
-    const handleSubmit = async () => {
-      setFpState('sending')
-      const result = await onForgotPassword(fpEmail)
-      if (result.success) {
-        setFpState('sent')
-      } else {
-        setFpError(result.error)
-        setFpState('error')
-      }
-    }
-
-    return (
-      <div style={{ maxWidth: '380px', width: '100%' }}>
-        <button className="onb-back" onClick={() => goTo('login')}>← BACK</button>
-        <div className="onb-card">
-          <div className="onb-cbar"></div>
-          <div className="onb-cbody">
-            <div className="onb-slbl">ACCOUNT RECOVERY</div>
-            <div className="onb-stitle">RESET PASSWORD</div>
-            {fpState === 'sent' ? (
-              <>
-                <div className="onb-ssub">Reset link sent. Check your inbox (and spam folder).</div>
-                <div className="onb-email-box" style={{ marginTop: 16 }}>
-                  <div className="onb-email-icon">✉️</div>
-                  <div className="onb-email-addr">{fpEmail}</div>
-                  <div className="onb-email-desc">Click the link in the email to set a new password. The link expires in 1 hour.</div>
-                </div>
-                <button className="onb-btn onb-btn-p" style={{ marginTop: 20 }} onClick={() => goTo('login')}>BACK TO LOGIN →</button>
-              </>
-            ) : (
-              <>
-                <div className="onb-ssub">Enter your account email and we'll send a reset link.</div>
-                {fpState === 'error' && (
-                  <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
-                    {fpError}
-                  </div>
-                )}
-                <div className="onb-field">
-                  <label>EMAIL ADDRESS</label>
-                  <input type="email" placeholder="your@email.com" value={fpEmail} onChange={(e) => setFpEmail(e.target.value)} disabled={fpState === 'sending'} />
-                </div>
-                <button className="onb-btn onb-btn-p" onClick={handleSubmit} disabled={fpState === 'sending' || !fpEmail}>
-                  {fpState === 'sending' ? 'SENDING...' : 'SEND RESET LINK →'}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Screen: Logout Confirmation
-  const ScreenLogout = () => (
-    <div className="onb-done">
-      <div className="onb-done-icon" style={{ fontSize: 56 }}>👋</div>
-      <div className="onb-done-ttl" style={{ color: '#b8d6e5' }}>YOU'VE BEEN SIGNED OUT</div>
-      <div className="onb-done-sub">See you next time, Captain.</div>
-      <div style={{ fontSize: 11, color: '#7a9aaa', marginTop: 20, letterSpacing: '0.08em' }}>Returning to login in 3 seconds...</div>
-    </div>
-  );
-
-  // Screen: Account Deleted Confirmation
-  const ScreenAccountDeleted = () => (
-    <div className="onb-done">
-      <div className="onb-done-icon" style={{ fontSize: 56, color: '#3FE0C5' }}>✓</div>
-      <div className="onb-done-ttl" style={{ color: '#3FE0C5' }}>ACCOUNT DELETED</div>
-      <div className="onb-done-sub">Your account and all logbook data have been permanently removed.</div>
-      <div style={{ fontSize: 11, color: '#7a9aaa', marginTop: 20, letterSpacing: '0.08em' }}>Returning to start in a few seconds...</div>
-    </div>
-  );
-
-  // Screen: Done
-  const ScreenDone = () => {
-    const handleOpenLogbook = async () => {
-      await onOnboardingComplete({
-        licenceType: formData.licenseType,
-        licenceNumber: formData.licenseNumber,
-        organization: formData.organization
-      })
-    }
-
-    return (
-      <div className="onb-done">
-        <div className="onb-done-icon">✅</div>
-        <div className="onb-done-ttl">YOU'RE READY TO FLY</div>
-        <div className="onb-done-sub">Your logbook is set up and ready.<br/>Start logging your first flight now.</div>
-        <div className="onb-done-pills">
-          <span className="onb-badge onb-badge-green">✓ ACCOUNT CREATED</span>
-          <span className="onb-badge onb-badge-blue">✓ OFFLINE-READY</span>
-          <span className="onb-badge onb-badge-blue">✓ DATA SECURED</span>
-        </div>
-        <button className="onb-btn onb-btn-done" onClick={handleOpenLogbook} disabled={isLoading}>
-          {isLoading ? 'LOADING...' : 'OPEN MY LOGBOOK →'}
-        </button>
-      </div>
-    )
-  };
-
   // Progress bar & dots
   const signupModes = ['signup1', 'emailVerification', 'signup2', 'done'];
   const signupIndex = signupModes.indexOf(authMode);
@@ -980,15 +975,15 @@ function OnboardingFlow({
   const progressPercent = showProgress ? ((signupIndex + 1) / signupModes.length) * 100 : 0;
 
   const screens = {
-    landing: <ScreenLanding />,
-    login: <ScreenLogin />,
+    landing: <ScreenLanding goTo={goTo} />,
+    login: <ScreenLogin onLogin={onLogin} signupError={signupError} isLoading={isLoading} onClearError={onClearError} goTo={goTo} onGoogleCredential={onGoogleCredential} onGoogleAuth={onGoogleAuth} active={authMode === 'login'} />,
     signup1: <ScreenSignUp1 formData={formData} updateFormData={updateFormData} passwordValidation={passwordValidation} onSignup={onSignup} onGoogleAuth={onGoogleAuth} onGoogleCredential={onGoogleCredential} active={authMode === 'signup1'} signupError={signupError} isLoading={isLoading} goTo={goTo} />,
-    emailVerification: <ScreenEmailVerification />,
+    emailVerification: <ScreenEmailVerification email={formData.email} />,
     signup2: <ScreenSignUp2 formData={formData} updateFormData={updateFormData} isLoading={isLoading} goTo={goTo} />,
-    forgotPassword: <ScreenForgotPassword />,
+    forgotPassword: <ScreenForgotPassword onForgotPassword={onForgotPassword} goTo={goTo} />,
     logout: <ScreenLogout />,
     accountDeleted: <ScreenAccountDeleted />,
-    done: <ScreenDone />
+    done: <ScreenDone onOnboardingComplete={onOnboardingComplete} formData={formData} isLoading={isLoading} />
   };
 
   return (
