@@ -104,7 +104,17 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.12.1", date: "June 2026", current: true,
+    v: "v6.12.2", date: "June 2026", current: true,
+    title: "Hotfix — sign-up & sign-in flow",
+    notes: [
+      "FIX: New Google sign-ups now go through onboarding instead of dropping straight into the logbook.",
+      "FIX: Email sign-up no longer refreshes back to the landing page while waiting for email verification.",
+      "FIX: After verifying your email, logging in no longer gets stuck on \"Setting up your logbook\" — verified accounts now load correctly.",
+      "NEW: Forgot password — the login screen's FORGOT PASSWORD? link now sends a reset email.",
+    ],
+  },
+  {
+    v: "v6.12.1", date: "June 2026", current: false,
     title: "Hotfix — HOC warning banner overflow",
     notes: [
       "FIX: The \"HOLDER OPERATING CAPACITY required\" banner now spans exactly the DAY, NIGHT and TOTAL columns instead of overflowing past the table into the action buttons. It was anchoring on the TOTAL column by mistake.",

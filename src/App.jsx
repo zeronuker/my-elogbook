@@ -159,12 +159,17 @@ function App() {
         if (profileSnap.exists()) {
           const profileData = profileSnap.data()
 
-          const isComplete = profileData.onboardingComplete === true || profileData.emailVerified === true
+          // Firebase Auth is the source of truth for email verification — the
+          // Firestore flag lags behind (it's only written when in-app onboarding
+          // finishes). Honour user.emailVerified so a verified user who clicked
+          // the link out-of-band isn't stranded on the landing/onboarding screen.
+          const authEmailVerified = user?.emailVerified === true
+          const isComplete = profileData.onboardingComplete === true || profileData.emailVerified === true || authEmailVerified
           const isGoogleUser = user?.providerData?.[0]?.providerId === 'google.com'
           if (isComplete || isGoogleUser) {
-            // Google users are inherently verified — let them in even if profile flags are stale
-            if (isGoogleUser && !isComplete) {
-              // Auto-fix stale profile flags
+            // Reconcile stale flags for any inherently-verified user (Google or
+            // an email user Firebase Auth reports as verified)
+            if ((isGoogleUser || authEmailVerified) && profileData.onboardingComplete !== true) {
               setDoc(doc(db, 'users', user.uid, 'profile', 'data'), { onboardingComplete: true, emailVerified: true }, { merge: true })
                 .catch(err => console.error('Profile flag update failed:', err))
             }
@@ -219,10 +224,17 @@ function App() {
 
     // Give state updates a moment to settle, then check for stuck state
     const timer = setTimeout(() => {
+      // An unverified email/password user is *supposed* to be on the onboarding
+      // (verify-your-email) screen — that's not a stuck state. Reloading them
+      // here wrongly dumps them to the landing page.
+      const u = auth.currentUser
+      const awaitingEmailVerify =
+        u && !u.emailVerified && u.providerData?.[0]?.providerId === 'password'
       const stillStuck =
         (showOnboarding || showLogoutConfirm) &&
-        auth.currentUser &&
-        !isSigningUp
+        u &&
+        !isSigningUp &&
+        !awaitingEmailVerify
       if (stillStuck && !sessionStorage.getItem(AUTH_RECOVERY_KEY)) {
         sessionStorage.setItem(AUTH_RECOVERY_KEY, '1')
         console.warn('Auth completed but UI stuck on login screen — reloading to recover')
