@@ -3150,6 +3150,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
+        version="v6.13"
       />
 
       {/* ── CLOUD NEWER BANNER ── */}
