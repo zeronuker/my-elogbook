@@ -361,6 +361,21 @@ function App() {
     }
   }
 
+  // Resend the verification email to the currently signed-in (unverified) user.
+  // Called from the verify-email onboarding screen.
+  const handleResendVerification = async () => {
+    if (!auth.currentUser) return { success: false, error: 'Not signed in.' }
+    try {
+      await sendEmailVerification(auth.currentUser)
+      return { success: true }
+    } catch (error) {
+      const errorMsg = error.code === 'auth/too-many-requests'
+        ? 'Too many requests. Wait a moment and try again.'
+        : 'Could not resend. Try again.'
+      return { success: false, error: errorMsg }
+    }
+  }
+
   // Google sign-in via Google Identity Services (GIS).
   // GIS returns an ID token in a same-context callback, so it works inside
   // installed PWAs where Firebase's popup/redirect flows fail. This is the
@@ -558,6 +573,7 @@ function App() {
           onGoogleCredential={handleGoogleCredential}
           onOnboardingComplete={handleOnboardingComplete}
           onForgotPassword={handleForgotPassword}
+          onResendVerification={handleResendVerification}
           signupError={signupError}
           isLoading={isSigningUp}
           showLogoutConfirm={showLogoutConfirm}

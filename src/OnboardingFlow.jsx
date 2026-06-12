@@ -230,27 +230,67 @@ const ScreenLogin = memo(({ onLogin, signupError, isLoading, onClearError, goTo,
 });
 
 // Screen: Email Verification
-const ScreenEmailVerification = memo(({ email }) => (
-  <div style={{ maxWidth: '480px', width: '100%' }}>
-    <div className="onb-card">
-      <div className="onb-cbar"></div>
-      <div className="onb-cbody">
-        <div className="onb-slbl">NEW PILOT · STEP 2 OF 3</div>
-        <div className="onb-stitle">VERIFY YOUR EMAIL</div>
-        <div className="onb-ssub">We sent a verification link to your email. Click it to continue.</div>
-        <div className="onb-email-box">
-          <div className="onb-email-icon">✉️</div>
-          <div className="onb-email-addr">{email || 'check-your-email@example.com'}</div>
-          <div className="onb-email-desc">Click the verification link in your email to proceed. The link expires in 24 hours.</div>
+const ScreenEmailVerification = memo(({ email, onResendVerification }) => {
+  const [resendState, setResendState] = useState('idle') // idle | sending | sent | error
+  const [resendError, setResendError] = useState('')
+  const [cooldown, setCooldown] = useState(0)
+
+  // Tick the resend cooldown down to zero
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const t = setTimeout(() => setCooldown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [cooldown])
+
+  const handleResend = async () => {
+    if (cooldown > 0 || resendState === 'sending' || !onResendVerification) return
+    setResendState('sending')
+    setResendError('')
+    const res = await onResendVerification()
+    if (res.success) {
+      setResendState('sent')
+      setCooldown(30) // throttle repeat sends
+    } else {
+      setResendError(res.error || 'Could not resend. Try again.')
+      setResendState('error')
+    }
+  }
+
+  return (
+    <div style={{ maxWidth: '480px', width: '100%' }}>
+      <div className="onb-card">
+        <div className="onb-cbar"></div>
+        <div className="onb-cbody">
+          <div className="onb-slbl">NEW PILOT · STEP 2 OF 3</div>
+          <div className="onb-stitle">VERIFY YOUR EMAIL</div>
+          <div className="onb-ssub">We sent a verification link to your email. Click it to continue.</div>
+          <div className="onb-email-box">
+            <div className="onb-email-icon">✉️</div>
+            <div className="onb-email-addr">{email || 'check-your-email@example.com'}</div>
+            <div className="onb-email-desc">Click the verification link in your email to proceed. The link expires in 24 hours.</div>
+          </div>
+          <div className="onb-email-help">
+            💡 Didn't receive the email? Check your spam folder or{' '}
+            {cooldown > 0 ? (
+              <span style={{ opacity: 0.6 }}>resend in {cooldown}s</span>
+            ) : (
+              <span className="onb-email-help-link" onClick={handleResend}>
+                {resendState === 'sending' ? 'resending…' : 'resend verification email'}
+              </span>
+            )}
+            {resendState === 'sent' && (
+              <div style={{ color: 'var(--green)', marginTop: 6 }}>✓ Verification email sent</div>
+            )}
+            {resendState === 'error' && (
+              <div style={{ color: 'var(--red)', marginTop: 6 }}>{resendError}</div>
+            )}
+          </div>
+          <button className="onb-btn onb-btn-g onb-waiting-btn" disabled>WAITING FOR VERIFICATION...</button>
         </div>
-        <div className="onb-email-help">
-          💡 Didn't receive the email? Check your spam folder.
-        </div>
-        <button className="onb-btn onb-btn-g onb-waiting-btn" disabled>WAITING FOR VERIFICATION...</button>
       </div>
     </div>
-  </div>
-));
+  )
+});
 
 // Screen: Forgot Password
 const ScreenForgotPassword = memo(({ onForgotPassword, goTo }) => {
@@ -365,6 +405,7 @@ function OnboardingFlow({
   onGoogleCredential,
   onOnboardingComplete,
   onForgotPassword,
+  onResendVerification,
   signupError,
   isLoading,
   showLogoutConfirm,
@@ -978,7 +1019,7 @@ function OnboardingFlow({
     landing: <ScreenLanding goTo={goTo} />,
     login: <ScreenLogin onLogin={onLogin} signupError={signupError} isLoading={isLoading} onClearError={onClearError} goTo={goTo} onGoogleCredential={onGoogleCredential} onGoogleAuth={onGoogleAuth} active={authMode === 'login'} />,
     signup1: <ScreenSignUp1 formData={formData} updateFormData={updateFormData} passwordValidation={passwordValidation} onSignup={onSignup} onGoogleAuth={onGoogleAuth} onGoogleCredential={onGoogleCredential} active={authMode === 'signup1'} signupError={signupError} isLoading={isLoading} goTo={goTo} />,
-    emailVerification: <ScreenEmailVerification email={formData.email} />,
+    emailVerification: <ScreenEmailVerification email={formData.email} onResendVerification={onResendVerification} />,
     signup2: <ScreenSignUp2 formData={formData} updateFormData={updateFormData} isLoading={isLoading} goTo={goTo} />,
     forgotPassword: <ScreenForgotPassword onForgotPassword={onForgotPassword} goTo={goTo} />,
     logout: <ScreenLogout />,

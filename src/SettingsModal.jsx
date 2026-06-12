@@ -110,7 +110,7 @@ const CHANGELOG = [
       "FIX: Typing your email or password on the login and forgot-password screens no longer gets wiped mid-entry. The screens were quietly resetting on each redraw.",
       "FIX: Logging in after a password reset no longer gets stuck on \"Setting up your logbook\" — the screen now always clears.",
       "IMP: Deleting your account now confirms your identity before anything is removed. If you cancel at the password / Google prompt, nothing is deleted — no more half-removed accounts.",
-      "IMP: Removed a dead \"resend verification email\" link on the verify-email screen that did nothing when tapped.",
+      "NEW: The \"resend verification email\" link on the verify-email screen now works — it re-sends the link, with a 30-second cooldown to avoid duplicates.",
     ],
   },
   {
