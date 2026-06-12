@@ -2100,9 +2100,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                                   style={{ marginLeft: 10, padding: "1px 8px", fontSize: 10, letterSpacing: "0.06em", background: "rgba(234,179,8,0.15)", border: "1px solid rgba(234,179,8,0.5)", color: "#eab308", borderRadius: 3, cursor: "pointer", fontFamily: "inherit", fontStyle: "normal" }}
                                 >YES</button>
                                 <button
-                                  onClick={() => updateCell(rowIdx, "sta", "")}
+                                  onClick={() => { updateCell(rowIdx, "std", ""); updateCell(rowIdx, "sta", ""); }}
                                   style={{ marginLeft: 5, padding: "1px 8px", fontSize: 10, letterSpacing: "0.06em", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.35)", color: "#ef4444", borderRadius: 3, cursor: "pointer", fontFamily: "inherit", fontStyle: "normal" }}
-                                >CLEAR STA</button>
+                                >NO</button>
                               </td>
                             );
                             continue;
