@@ -153,6 +153,7 @@ function OnboardingFlow({
   onGoogleAuth,
   onGoogleCredential,
   onOnboardingComplete,
+  onForgotPassword,
   signupError,
   isLoading,
   showLogoutConfirm,
@@ -821,7 +822,7 @@ function OnboardingFlow({
               <input type="password" placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} disabled={isLoading} />
             </div>
             <div style={{ textAlign: 'right', marginBottom: '4px' }}>
-              <span style={{ fontSize: '8px', color: 'var(--accent)', cursor: 'pointer', letterSpacing: '0.08em' }}>FORGOT PASSWORD?</span>
+              <span style={{ fontSize: '8px', color: 'var(--accent)', cursor: 'pointer', letterSpacing: '0.08em' }} onClick={() => { onClearError(); goTo('forgotPassword') }}>FORGOT PASSWORD?</span>
             </div>
             <button className="onb-btn onb-btn-p" onClick={handleLoginClick} disabled={isLoading || !loginEmail || !loginPassword}>
               {isLoading ? 'LOGGING IN...' : 'LOG IN →'}
@@ -866,6 +867,64 @@ function OnboardingFlow({
     </div>
   );
 
+
+  // Screen: Forgot Password
+  const ScreenForgotPassword = () => {
+    const [fpEmail, setFpEmail] = useState('')
+    const [fpState, setFpState] = useState('idle') // idle | sending | sent | error
+    const [fpError, setFpError] = useState('')
+
+    const handleSubmit = async () => {
+      setFpState('sending')
+      const result = await onForgotPassword(fpEmail)
+      if (result.success) {
+        setFpState('sent')
+      } else {
+        setFpError(result.error)
+        setFpState('error')
+      }
+    }
+
+    return (
+      <div style={{ maxWidth: '380px', width: '100%' }}>
+        <button className="onb-back" onClick={() => goTo('login')}>← BACK</button>
+        <div className="onb-card">
+          <div className="onb-cbar"></div>
+          <div className="onb-cbody">
+            <div className="onb-slbl">ACCOUNT RECOVERY</div>
+            <div className="onb-stitle">RESET PASSWORD</div>
+            {fpState === 'sent' ? (
+              <>
+                <div className="onb-ssub">Reset link sent. Check your inbox (and spam folder).</div>
+                <div className="onb-email-box" style={{ marginTop: 16 }}>
+                  <div className="onb-email-icon">✉️</div>
+                  <div className="onb-email-addr">{fpEmail}</div>
+                  <div className="onb-email-desc">Click the link in the email to set a new password. The link expires in 1 hour.</div>
+                </div>
+                <button className="onb-btn onb-btn-p" style={{ marginTop: 20 }} onClick={() => goTo('login')}>BACK TO LOGIN →</button>
+              </>
+            ) : (
+              <>
+                <div className="onb-ssub">Enter your account email and we'll send a reset link.</div>
+                {fpState === 'error' && (
+                  <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
+                    {fpError}
+                  </div>
+                )}
+                <div className="onb-field">
+                  <label>EMAIL ADDRESS</label>
+                  <input type="email" placeholder="your@email.com" value={fpEmail} onChange={(e) => setFpEmail(e.target.value)} disabled={fpState === 'sending'} />
+                </div>
+                <button className="onb-btn onb-btn-p" onClick={handleSubmit} disabled={fpState === 'sending' || !fpEmail}>
+                  {fpState === 'sending' ? 'SENDING...' : 'SEND RESET LINK →'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Screen: Logout Confirmation
   const ScreenLogout = () => (
@@ -926,6 +985,7 @@ function OnboardingFlow({
     signup1: <ScreenSignUp1 formData={formData} updateFormData={updateFormData} passwordValidation={passwordValidation} onSignup={onSignup} onGoogleAuth={onGoogleAuth} onGoogleCredential={onGoogleCredential} active={authMode === 'signup1'} signupError={signupError} isLoading={isLoading} goTo={goTo} />,
     emailVerification: <ScreenEmailVerification />,
     signup2: <ScreenSignUp2 formData={formData} updateFormData={updateFormData} isLoading={isLoading} goTo={goTo} />,
+    forgotPassword: <ScreenForgotPassword />,
     logout: <ScreenLogout />,
     accountDeleted: <ScreenAccountDeleted />,
     done: <ScreenDone />

@@ -12,7 +12,8 @@ import {
   reauthenticateWithPopup,
   reauthenticateWithCredential,
   deleteUser,
-  sendEmailVerification
+  sendEmailVerification,
+  sendPasswordResetEmail
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, deleteDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore'
 import ELogbook2026 from './elogbook_2026_v5_1'
@@ -328,6 +329,18 @@ function App() {
     }
   }
 
+  const handleForgotPassword = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email)
+      return { success: true }
+    } catch (error) {
+      let errorMsg = 'Failed to send reset email. Try again.'
+      if (error.code === 'auth/user-not-found') errorMsg = 'No account found with this email.'
+      if (error.code === 'auth/invalid-email') errorMsg = 'Invalid email address.'
+      return { success: false, error: errorMsg }
+    }
+  }
+
   // Google sign-in via Google Identity Services (GIS).
   // GIS returns an ID token in a same-context callback, so it works inside
   // installed PWAs where Firebase's popup/redirect flows fail. This is the
@@ -541,6 +554,7 @@ function App() {
           onGoogleAuth={handleGoogleAuth}
           onGoogleCredential={handleGoogleCredential}
           onOnboardingComplete={handleOnboardingComplete}
+          onForgotPassword={handleForgotPassword}
           signupError={signupError}
           isLoading={isSigningUp}
           showLogoutConfirm={showLogoutConfirm}
