@@ -160,7 +160,9 @@ function OnboardingFlow({
   onClearError
 }) {
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
-  const [authMode, setAuthMode] = useState('landing');
+  const [authMode, setAuthMode] = useState(() =>
+    user?.providerData?.[0]?.providerId === 'google.com' ? 'signup2' : 'landing'
+  );
   const [formData, setFormData] = useState({
     email: '',
     password: '',

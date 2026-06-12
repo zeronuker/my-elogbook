@@ -53,7 +53,9 @@ function App() {
         emailVerified: true,
         createdAt: new Date().toISOString()
       })
+      return { isNew: true }
     }
+    return { isNew: false }
   }
 
   // Clear all localStorage data for a given uid
@@ -337,11 +339,15 @@ function App() {
     try {
       const credential = GoogleAuthProvider.credential(idToken)
       const result = await signInWithCredential(auth, credential)
-      await ensureGoogleProfile(result.user)
+      const { isNew } = await ensureGoogleProfile(result.user)
       onboardingDoneRef.current = true
-      setShowOnboarding(false)
-      setShowLoadingOverlay(true)
-      setTimeout(() => setShowLoadingOverlay(false), 1500)
+      if (isNew) {
+        setShowOnboarding(true)
+      } else {
+        setShowOnboarding(false)
+        setShowLoadingOverlay(true)
+        setTimeout(() => setShowLoadingOverlay(false), 1500)
+      }
       setIsSigningUp(false)
     } catch (error) {
       console.error('Google credential sign-in error:', error)
@@ -358,11 +364,15 @@ function App() {
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider())
       const googleUser = result.user
-      await ensureGoogleProfile(googleUser)
+      const { isNew } = await ensureGoogleProfile(googleUser)
       onboardingDoneRef.current = true
-      setShowOnboarding(false)
-      setShowLoadingOverlay(true)
-      setTimeout(() => setShowLoadingOverlay(false), 1500)
+      if (isNew) {
+        setShowOnboarding(true)
+      } else {
+        setShowOnboarding(false)
+        setShowLoadingOverlay(true)
+        setTimeout(() => setShowLoadingOverlay(false), 1500)
+      }
       setIsSigningUp(false)
     } catch (error) {
       // Silently ignore user-cancelled popup
