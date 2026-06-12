@@ -24,8 +24,25 @@ import LoadingOverlay from './LoadingOverlay'
 // Session key used to prevent infinite reload loops from the auto-recovery safety net
 const AUTH_RECOVERY_KEY = 'elb_auth_recovery_attempted'
 
+// How often to poll for a new service worker while the app stays open.
+const SW_UPDATE_INTERVAL_MS = 30 * 60 * 1000 // 30 minutes
+
 function App() {
-  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW()
+  // Without an explicit poll, the browser only checks for a new SW on a full
+  // navigation (~once/24h) — so an installed PWA resumed from the background
+  // never gets prompted. Poll on an interval AND whenever the app regains focus.
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
+    onRegisteredSW(_swUrl, r) {
+      if (!r) return
+      const check = () => {
+        if (navigator.onLine) r.update().catch(() => {})
+      }
+      setInterval(check, SW_UPDATE_INTERVAL_MS)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') check()
+      })
+    },
+  })
   const [user, setUser] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(true)
   const [authLoading, setAuthLoading] = useState(true)

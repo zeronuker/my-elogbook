@@ -111,6 +111,7 @@ const CHANGELOG = [
       "FIX: Logging in after a password reset no longer gets stuck on \"Setting up your logbook\" — the screen now always clears.",
       "IMP: Deleting your account now confirms your identity before anything is removed. If you cancel at the password / Google prompt, nothing is deleted — no more half-removed accounts.",
       "NEW: The \"resend verification email\" link on the verify-email screen now works — it re-sends the link, with a 30-second cooldown to avoid duplicates.",
+      "FIX: New versions now prompt automatically. The app re-checks for updates every 30 minutes and whenever you reopen it, instead of only when you tapped \"check for updates\" manually.",
     ],
   },
   {
