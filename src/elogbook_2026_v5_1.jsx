@@ -819,6 +819,38 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Midnight cleanup: trim empty rows from the previous month ──
+  useEffect(() => {
+    let dailyTimer;
+    const cleanPrevMonth = () => {
+      if (!dataLoadedRef.current) return;
+      const now = new Date();
+      const m = now.getMonth();
+      const y = now.getFullYear();
+      const prevMonth = m === 0 ? 11 : m - 1;
+      const prevYear  = m === 0 ? y - 1 : y;
+      const prevKey   = `${prevMonth}-${prevYear}`;
+      setData(prev => {
+        const rows = prev[prevKey];
+        if (!rows) return prev;
+        const trimmed = rows.filter(row => !Object.keys(EMPTY_ROW()).every(k => !row[k]));
+        if (trimmed.length === rows.length) return prev;
+        return { ...prev, [prevKey]: trimmed };
+      });
+    };
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+    const msToMidnight = midnight - now.getTime();
+    const timer = setTimeout(() => {
+      cleanPrevMonth();
+      dailyTimer = setInterval(cleanPrevMonth, 86400000);
+    }, msToMidnight);
+    return () => {
+      clearTimeout(timer);
+      if (dailyTimer) clearInterval(dailyTimer);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Save settings to localStorage ──
   const saveSettings = (next) => {
     settingsRef.current = next;

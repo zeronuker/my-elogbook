@@ -51,6 +51,7 @@ function App() {
   })
   const [user, setUser] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(true)
+  const [profileResolved, setProfileResolved] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
   const [signupError, setSignupError] = useState(null)
   const [isSigningUp, setIsSigningUp] = useState(false)
@@ -172,8 +173,11 @@ function App() {
 
   // Check profile and set onboarding state
   useEffect(() => {
+    if (authLoading) return  // wait until auth state is known
+
     if (!user) {
       setShowOnboarding(true)
+      setProfileResolved(true)
       return
     }
 
@@ -231,11 +235,13 @@ function App() {
           setShowOnboarding(true)
         }
         setShowLoadingOverlay(false)
+      } finally {
+        setProfileResolved(true)
       }
     }
 
     checkProfile()
-  }, [user])
+  }, [user, authLoading])
 
   // ── Auto-recovery safety net ───────────────────────────────────────────
   // Detects rare stuck states where Firebase auth succeeded but the React UI
@@ -589,7 +595,7 @@ function App() {
     await deleteUser(user)
   }
 
-  if (authLoading) {
+  if (authLoading || !profileResolved) {
     return <div style={{ background: '#0a0d12', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Courier New' }}>Loading...</div>
   }
 

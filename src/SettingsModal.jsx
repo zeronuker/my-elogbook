@@ -118,6 +118,12 @@ const CHANGELOG = [
       "FIX: Selecting a non-Excel file in the Import screen no longer loads the entire file into memory before rejecting it.",
       "FIX: The \"New version available\" update banner no longer throws if the service worker updater isn't ready yet.",
       "FIX: If you log in twice in quick succession as the same account, the loading overlay can no longer get stuck from a stale timer.",
+      "FIX: Opening the app no longer briefly flashes the pilot-profile setup screen before landing on the logbook.",
+      "IMP: Export window — the Export and Export All buttons are now the same width with a consistent gap between them.",
+      "IMP: Settings → Misc tab no longer shows a Save / Cancel button bar — no settings on that tab need saving.",
+      "IMP: Day/Night method renamed from \"Route (sun)\" to \"Dynamic\"; description shortened.",
+      "IMP: On mobile, section heading hints are hidden so titles never wrap to two lines.",
+      "NEW: Empty rows from the previous month are automatically trimmed at midnight when the calendar month changes.",
     ],
   },
   {
@@ -517,8 +523,8 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
             {TAB_DEFAULTS[tab] && (
               <button className="cb-btn-reset" onClick={handleResetTab}>Reset tab</button>
             )}
-            <button className="cb-btn-ghost" onClick={onClose}>Cancel</button>
-            <button className="cb-btn-primary" onClick={handleSave}>Save</button>
+            {tab !== "misc" && <button className="cb-btn-ghost" onClick={onClose}>Cancel</button>}
+            {tab !== "misc" && <button className="cb-btn-primary" onClick={handleSave}>Save</button>}
           </div>
         </footer>
       </div>
@@ -1100,14 +1106,14 @@ function PreferencesTab({ d, upd }) {
           onChange={(v) => upd({ dayNightMethod: v })}
           options={[
             { value: "fixed",   label: "Fixed bands"  },
-            { value: "sunrise", label: "Route (sun)"  },
+            { value: "sunrise", label: "Dynamic"  },
           ]}
         />
       </SmField>
 
       <SmHint>
         <b>Fixed</b> · Night = 11:30 – 23:30 UTC. Same boundaries everywhere.<br />
-        <b>Route (sun)</b> · Night = sun below civil twilight (−6°), computed along the actual great-circle route minute by minute. Most accurate — accounts for the aircraft moving between time zones. Needs both departure &amp; arrival airports in the database; falls back to Fixed otherwise.
+        <b>Dynamic</b> · Night = civil twilight (−6°) tracked minute by minute along the route. Falls back to Fixed if either airport is unavailable.
       </SmHint>
 
       <SmSectionHead title="Duty buffers" hint="// for FTL cumulative duty calculations" />
@@ -2115,5 +2121,7 @@ const settingsCss = `
     .sm-accent-grid { grid-template-columns: repeat(3, 1fr); }
     .sm-font-grid { grid-template-columns: repeat(3, 1fr); }
     .sm-cl-entry.current { margin: 0 -18px; padding: 16px 18px; }
+    .sm-sh-hint { display: none; }
+    .sm-sh-title { width: 100%; }
   }
 `;

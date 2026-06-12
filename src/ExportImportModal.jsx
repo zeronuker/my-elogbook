@@ -803,14 +803,16 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                 </div>
               )}
 
-              <button className="elb-btn-primary" onClick={handleExport} disabled={isExporting}
-                style={{ opacity: isExporting ? 0.7 : 1, cursor: isExporting ? "wait" : "pointer" }}>
-                {isExporting ? "⏳ GENERATING..." : "⬇ EXPORT"}
-              </button>
-              <button className="elb-btn-ghost" onClick={handleExportAll} disabled={isExporting}
-                style={{ marginTop: 8, opacity: isExporting ? 0.7 : 1, cursor: isExporting ? "wait" : "pointer" }}>
-                {isExporting ? "⏳ GENERATING..." : "⬇ EXPORT ALL"}
-              </button>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+                <button className="elb-btn-primary" onClick={handleExport} disabled={isExporting}
+                  style={{ opacity: isExporting ? 0.7 : 1, cursor: isExporting ? "wait" : "pointer" }}>
+                  {isExporting ? "⏳ GENERATING..." : "⬇ EXPORT"}
+                </button>
+                <button className="elb-btn-ghost" onClick={handleExportAll} disabled={isExporting}
+                  style={{ opacity: isExporting ? 0.7 : 1, cursor: isExporting ? "wait" : "pointer" }}>
+                  {isExporting ? "⏳ GENERATING..." : "⬇ EXPORT ALL"}
+                </button>
+              </div>
             </div>
           )}
 
