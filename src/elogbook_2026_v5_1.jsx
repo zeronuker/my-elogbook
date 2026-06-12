@@ -127,14 +127,14 @@ function isTimeInDay(hhmm) {
   return mins < NIGHT_START || mins > NIGHT_END;
 }
 
-function calcTotal(row, method, year, monthIdx) {
-  const ft = calcFlightTimes(row, method, year, monthIdx);
+function calcTotal(row, method, year, monthIdx, allowLong = false) {
+  const ft = calcFlightTimes(row, method, year, monthIdx, allowLong);
   const sum = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"]
     .reduce((acc, k) => acc + parseHHMM(ft[k]), 0);
   return sum ? toHHMM(sum) : "";
 }
 
-function calcDayNight(std, sta) {
+function calcDayNight(std, sta, allowLong = false) {
   if (!std || !sta) return { day: 0, night: 0 };
   const toMins = t => {
     const [h, m] = t.trim().split(":").map(Number);
@@ -149,7 +149,7 @@ function calcDayNight(std, sta) {
   let staM = toMins(sta);
   if (staM <= stdM) staM += FULL_DAY;
   const totalMins = staM - stdM;
-  if (totalMins > 18 * 60) return { day: 0, night: 0 };
+  if (!allowLong && totalMins > 18 * 60) return { day: 0, night: 0 };
   // Overlap with night window [11:30, 23:30] — handles cross-midnight flights via +FULL_DAY second pass
   let nightMins = 0;
   nightMins += Math.max(0, Math.min(staM, NIGHT_END) - Math.max(stdM, NIGHT_START));
@@ -162,10 +162,10 @@ function calcDayNight(std, sta) {
 }
 
 // Dynamic day/night per CAD-6: Night = sunset+20min → sunrise−20min at departure airport
-function calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx) {
+function calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx, allowLong = false) {
   if (!std || !sta) return { day: 0, night: 0 };
   const coords = getCoords(depIcao);
-  if (!coords) return calcDayNight(std, sta);
+  if (!coords) return calcDayNight(std, sta, allowLong);
   const D    = parseInt(dayStr) || 1;
   const FULL = 1440;
   // Use UTC midnight as reference — avoids local-timezone offset bugs for high-UTC-offset locations
@@ -175,7 +175,7 @@ function calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx) {
   const tC   = SunCalc.getTimes(new Date(Date.UTC(year, monthIdx, D)),     coords.lat, coords.lon);
   const tN   = SunCalc.getTimes(new Date(Date.UTC(year, monthIdx, D + 1)), coords.lat, coords.lon);
   // Guard against polar regions (no sunrise/sunset)
-  if (!isFinite(toRef(tC.sunrise)) || !isFinite(toRef(tC.sunset))) return calcDayNight(std, sta);
+  if (!isFinite(toRef(tC.sunrise)) || !isFinite(toRef(tC.sunset))) return calcDayNight(std, sta, allowLong);
   // Two night windows: [prevSunset+20, currSunrise−20] and [currSunset+20, nextSunrise−20]
   const ns1  = toRef(tP.sunset)  + 20;
   const ne1  = toRef(tC.sunrise) - 20;
@@ -185,7 +185,7 @@ function calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx) {
   let stdM   = toM(std), staM = toM(sta);
   if (staM <= stdM) staM += FULL;
   const totalMins = staM - stdM;
-  if (totalMins > 18 * 60) return { day: 0, night: 0 };
+  if (!allowLong && totalMins > 18 * 60) return { day: 0, night: 0 };
   const ovlp = (s, e, ns, ne) => Math.max(0, Math.min(e, ne) - Math.max(s, ns));
   let nightMins = ovlp(stdM, staM, ns1, ne1) + ovlp(stdM, staM, ns2, ne2);
   nightMins = Math.round(Math.min(Math.max(0, nightMins), totalMins));
@@ -208,15 +208,15 @@ const _routeDayNightCache = new Map();
 // position+time, and counts the minute as night when the sun is below civil
 // twilight (−6°). Requires BOTH departure and arrival coordinates; falls back to
 // the departure-anchored method (or fixed UTC) when coordinates are missing.
-function calcDayNightRoute(std, sta, dayStr, depIcao, arrIcao, year, monthIdx) {
+function calcDayNightRoute(std, sta, dayStr, depIcao, arrIcao, year, monthIdx, allowLong = false) {
   if (!std || !sta) return { day: 0, night: 0 };
   const dep = getCoords(depIcao);
   const arr = getCoords(arrIcao);
   // Need both endpoints to interpolate a route. Degrade gracefully.
   if (!dep || !arr) {
     return dep
-      ? calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx)
-      : calcDayNight(std, sta);
+      ? calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx, allowLong)
+      : calcDayNight(std, sta, allowLong);
   }
 
   const key = `${std}|${sta}|${dayStr}|${depIcao}|${arrIcao}|${year}|${monthIdx}`;
@@ -227,7 +227,7 @@ function calcDayNightRoute(std, sta, dayStr, depIcao, arrIcao, year, monthIdx) {
   let stdM = toM(std), staM = toM(sta);
   if (staM <= stdM) staM += 1440;
   const totalMins = staM - stdM;
-  if (totalMins <= 0 || totalMins > 18 * 60) return { day: 0, night: 0 };
+  if (totalMins <= 0 || (!allowLong && totalMins > 18 * 60)) return { day: 0, night: 0 };
 
   const D     = parseInt(dayStr) || 1;
   const depMs = Date.UTC(year, monthIdx, D) + stdM * 60000;
@@ -268,10 +268,10 @@ function calcDayNightRoute(std, sta, dayStr, depIcao, arrIcao, year, monthIdx) {
   return result;
 }
 
-function calcFlightTimes(row, method, year, monthIdx) {
+function calcFlightTimes(row, method, year, monthIdx, allowLong = false) {
   const { day, night } = method === "sunrise"
-    ? calcDayNightRoute(row.std, row.sta, row.date, row.departure, row.arrival, year, monthIdx)
-    : calcDayNight(row.std, row.sta);
+    ? calcDayNightRoute(row.std, row.sta, row.date, row.departure, row.arrival, year, monthIdx, allowLong)
+    : calcDayNight(row.std, row.sta, allowLong);
   const cap = row.cap;
   const result = { dayP1: "", dayP1US: "", dayP2: "", nightP1: "", nightP1US: "", nightP2: "" };
   if (!cap || (!day && !night)) return result;
@@ -591,6 +591,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
   // Branded confirmation modal (replaces window.confirm)
   const [confirmDialog, setConfirmDialog] = useState(null); // { title, body, resolve }
+  const [confirmedLongFlights, setConfirmedLongFlights] = useState(() => new Set());
   const confirmResolveRef = useRef(null);
 
   // Show a branded confirm dialog; returns Promise<boolean>
@@ -2023,12 +2024,22 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
               <tbody>
                 {rows.map((row, rowIdx) => {
-                  const computedTotal = calcTotal(row, settings.dayNightMethod, selectedYear, selectedMonth);
-                  const computedFT = calcFlightTimes(row, settings.dayNightMethod, selectedYear, selectedMonth);
                   const isEven = rowIdx % 2 === 0;
                   const hasStdSta = row.std && row.sta;
                   const hasCap = row.cap && ["P1","P2","P1 U/S"].includes(row.cap);
                   const needsCapWarning = hasStdSta && !hasCap;
+                  const rawFlightMins = hasStdSta ? (() => {
+                    const toM = t => { const [h,m] = t.trim().split(":").map(Number); return h*60+m; };
+                    let s = toM(row.std), e = toM(row.sta);
+                    if (e <= s) e += 1440;
+                    return e - s;
+                  })() : 0;
+                  const isLongFlight = hasCap && rawFlightMins > 18 * 60;
+                  const longFlightConfirmed = confirmedLongFlights.has(row.id);
+                  const needsLongFlightWarning = isLongFlight && !longFlightConfirmed;
+                  const allowLong = isLongFlight && longFlightConfirmed;
+                  const computedTotal = calcTotal(row, settings.dayNightMethod, selectedYear, selectedMonth, allowLong);
+                  const computedFT = calcFlightTimes(row, settings.dayNightMethod, selectedYear, selectedMonth, allowLong);
                   const capColors = {
                     "P1":    { color: "#22c55e", bg: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.3)" },
                     "P2":    { color: "#eab308", bg: "rgba(234,179,8,0.12)",  border: "rgba(234,179,8,0.3)" },
@@ -2074,6 +2085,24 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                             cells.push(
                               <td key="hoc-warning" colSpan={autoCalcVisibleCount} style={{ ...tdStyle, background: "rgba(249,115,22,0.06)", borderLeft: "2px solid rgba(249,115,22,0.4)", textAlign: "center", color: "#f97316", fontSize: 11, fontStyle: "italic", letterSpacing: "0.05em", padding: "6px 10px", whiteSpace: "nowrap" }}>
                                 ⚠ HOLDER OPERATING CAPACITY required to auto calculate
+                              </td>
+                            );
+                            continue;
+                          }
+
+                          if (needsLongFlightWarning && firstAutoCalcVisible && col.key === firstAutoCalcVisible) {
+                            skipAutoCalc = true;
+                            cells.push(
+                              <td key="long-flight-warning" colSpan={autoCalcVisibleCount} style={{ ...tdStyle, background: "rgba(234,179,8,0.06)", borderLeft: "2px solid rgba(234,179,8,0.4)", textAlign: "center", color: "#eab308", fontSize: 11, letterSpacing: "0.05em", padding: "4px 10px", whiteSpace: "nowrap" }}>
+                                ⚠ {toHHMM(rawFlightMins)} BLOCK TIME — IS THIS CORRECT?
+                                <button
+                                  onClick={() => setConfirmedLongFlights(prev => new Set([...prev, row.id]))}
+                                  style={{ marginLeft: 10, padding: "1px 8px", fontSize: 10, letterSpacing: "0.06em", background: "rgba(234,179,8,0.15)", border: "1px solid rgba(234,179,8,0.5)", color: "#eab308", borderRadius: 3, cursor: "pointer", fontFamily: "inherit", fontStyle: "normal" }}
+                                >YES</button>
+                                <button
+                                  onClick={() => updateCell(rowIdx, "sta", "")}
+                                  style={{ marginLeft: 5, padding: "1px 8px", fontSize: 10, letterSpacing: "0.06em", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.35)", color: "#ef4444", borderRadius: 3, cursor: "pointer", fontFamily: "inherit", fontStyle: "normal" }}
+                                >CLEAR STA</button>
                               </td>
                             );
                             continue;
