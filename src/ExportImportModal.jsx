@@ -163,15 +163,45 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     return `${h}:${String(m).padStart(2, "0")}`;
   };
 
-  const exportToExcel = () => {
-    const rows = getRowsInDateRange().sort((a, b) => {
-      // _fullDate is set by getRowsInDateRange for all rows regardless of date format
-      const aDate = a._fullDate || 0;
-      const bDate = b._fullDate || 0;
-      return aDate - bDate;
+  const getAllRows = () => {
+    if (!monthData || typeof monthData !== 'object') return [];
+    const rows = [];
+    Object.entries(monthData).forEach(([key, monthRows]) => {
+      if (!Array.isArray(monthRows)) return;
+      const [monthIdxStr, yearStr] = key.split('-');
+      const keyMonthIdx = parseInt(monthIdxStr);
+      const keyYear     = parseInt(yearStr);
+      monthRows.forEach(row => {
+        if (!row || !row.date) return;
+        let rowDate;
+        if (typeof row.date === 'string' && row.date.includes('/')) {
+          const parts = row.date.split('/');
+          if (parts.length === 3) {
+            const day   = parts[0].padStart(2, '0');
+            const month = parts[1].padStart(2, '0');
+            rowDate = new Date(`${parts[2]}-${month}-${day}T00:00:00Z`);
+          } else if (parts.length === 2) {
+            const day = parseInt(parts[0]);
+            if (!day || isNaN(day) || day < 1 || day > 31) return;
+            const month = String(keyMonthIdx + 1).padStart(2, '0');
+            rowDate = new Date(`${keyYear}-${month}-${String(day).padStart(2, '0')}T00:00:00Z`);
+          } else return;
+        } else {
+          const day = parseInt(row.date);
+          if (!day || isNaN(day) || day < 1 || day > 31) return;
+          const month = String(keyMonthIdx + 1).padStart(2, '0');
+          rowDate = new Date(`${keyYear}-${month}-${String(day).padStart(2, '0')}T00:00:00Z`);
+        }
+        rows.push({ ...row, _fullDate: rowDate, _monthIdx: keyMonthIdx, _year: keyYear });
+      });
     });
+    return rows;
+  };
+
+  // Core export — accepts a pre-filtered/sorted rows array and a period label for the Profile sheet.
+  const exportToExcel = (rows, periodLabel) => {
     if (rows.length === 0) {
-      setExportStatus({ error: "No flights found in selected date range" });
+      setExportStatus({ error: "No flights found" });
       return;
     }
 
@@ -186,7 +216,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       ["License Type", settings?.licenceType || ""],
       ["Airline", settings?.airline || ""],
       ["Home Base", settings?.homeBase || ""],
-      ["Report Period", `${dateFrom.split('-').reverse().join('-')} to ${dateTo.split('-').reverse().join('-')}`],
+      ["Report Period", periodLabel],
     ];
     const wsProfile = XLSX.utils.aoa_to_sheet(profileData);
     wsProfile['!cols'] = [{ wch: 20 }, { wch: 40 }];
@@ -363,25 +393,44 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
     XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
 
-    const fileName = `ClaudeBorne_${dateFrom}_to_${dateTo}.xlsx`;
+    const fileName = `ClaudeBorne_${periodLabel.replace(/\s+/g, '_').replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, fileName);
 
     setExportStatus({ success: true, count: rows.length });
     setTimeout(() => setExportStatus(null), 3000);
   };
 
-
-
   const handleExport = () => {
     if (!dateFrom || !dateTo) {
       setExportStatus({ error: "Please select a date range" });
       return;
     }
+    const rows = getRowsInDateRange().sort((a, b) => (a._fullDate || 0) - (b._fullDate || 0));
+    if (rows.length === 0) {
+      setExportStatus({ error: "No flights found in selected date range" });
+      return;
+    }
+    const periodLabel = `${dateFrom.split('-').reverse().join('-')} to ${dateTo.split('-').reverse().join('-')}`;
     setIsExporting(true);
-    // Defer synchronous export by one frame so React can render the loading state first
     setTimeout(() => {
       try {
-        exportToExcel();
+        exportToExcel(rows, periodLabel);
+      } finally {
+        setIsExporting(false);
+      }
+    }, 50);
+  };
+
+  const handleExportAll = () => {
+    const rows = getAllRows().sort((a, b) => (a._fullDate || 0) - (b._fullDate || 0));
+    if (rows.length === 0) {
+      setExportStatus({ error: "No flights found" });
+      return;
+    }
+    setIsExporting(true);
+    setTimeout(() => {
+      try {
+        exportToExcel(rows, "All flights");
       } finally {
         setIsExporting(false);
       }
@@ -757,6 +806,10 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
               <button className="elb-btn-primary" onClick={handleExport} disabled={isExporting}
                 style={{ opacity: isExporting ? 0.7 : 1, cursor: isExporting ? "wait" : "pointer" }}>
                 {isExporting ? "⏳ GENERATING..." : "⬇ EXPORT"}
+              </button>
+              <button className="elb-btn-ghost" onClick={handleExportAll} disabled={isExporting}
+                style={{ marginTop: 8, opacity: isExporting ? 0.7 : 1, cursor: isExporting ? "wait" : "pointer" }}>
+                {isExporting ? "⏳ GENERATING..." : "⬇ EXPORT ALL"}
               </button>
             </div>
           )}
