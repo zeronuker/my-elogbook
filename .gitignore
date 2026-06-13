@@ -26,8 +26,12 @@ serviceAccountKey.json
 # Dev scripts and tools
 populate-logbook.js
 generate-icon.html
+icon-preview.html
 test-checklist-v6.4.txt
 design_handoff_elogbook_brand/
+
+# Analysis output (regeneratable)
+graphify-out/
 
 # Editor directories and files
 .vscode/*
