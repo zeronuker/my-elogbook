@@ -406,7 +406,7 @@ const FTL_POPUPS = {
   "logbook-guide": {
     para:  "LOGBOOK GUIDE",
     title: "DATA ENTRY & NAVIGATION",
-    body:  `<strong style="color:#c8d6e5">Clicking any cell</strong> opens it for editing. Press <span style="color:#4fc3f7">Tab</span> or <span style="color:#4fc3f7">Enter</span> to move to the next cell.<br><br><strong style="color:#c8d6e5">Date</strong> — enter the day number only (e.g. <span style="color:#4fc3f7">15</span>).<br><br><strong style="color:#c8d6e5">Time fields</strong> — accept <span style="color:#4fc3f7">HH:MM</span> (e.g. 02:30) or <span style="color:#4fc3f7">HHMM</span> (e.g. 0230) — the colon is added automatically.<br><br><strong style="color:#c8d6e5">TOTAL</strong> — auto-calculated from Day + Night columns. You cannot edit it directly.<br><br><strong style="color:#c8d6e5">Rows</strong> — use the <span style="color:#4fc3f7">✕</span> button on any row to delete it. Use <span style="color:#4fc3f7">+ ADD SECTOR</span> to append a new row. Rows Per Page in Settings controls how many empty rows a new month starts with.`,
+    body:  `<strong style="color:#c8d6e5">Clicking any cell</strong> opens it for editing. Press <span style="color:#4fc3f7">Tab</span> or <span style="color:#4fc3f7">Enter</span> to move to the next cell.<br><br><strong style="color:#c8d6e5">Date</strong> — enter the day number only (e.g. <span style="color:#4fc3f7">15</span>).<br><br><strong style="color:#c8d6e5">Time fields</strong> — accept <span style="color:#4fc3f7">HH:MM</span> (e.g. 02:30) or <span style="color:#4fc3f7">HHMM</span> (e.g. 0230) — the colon is added automatically.<br><br><strong style="color:#c8d6e5">TOTAL</strong> — auto-calculated from Day + Night columns. You cannot edit it directly.<br><br><strong style="color:#c8d6e5">Remarks &amp; Autoland</strong> — tap the <span style="color:#4fc3f7">row number</span> (far left) to open the remarks window for that sector and tick the AUTOLAND checkbox. The dot beside the number shows its state: <span style="color:#3a5a7a">○</span> empty, <span style="color:#f5c542">●</span> remarks, <span style="color:#a855f7">●</span> autoland, <span style="color:#4fc77a">●</span> both.<br><br><strong style="color:#c8d6e5">Rows</strong> — use the <span style="color:#4fc3f7">✕</span> button on any row to delete it. Use <span style="color:#4fc3f7">+ ADD SECTOR</span> to append a new row. Rows Per Page in Settings controls how many empty rows a new month starts with.`,
     note:  null,
   },
 };
@@ -2078,7 +2078,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                       {/* TOTAL */}
                       {isColVisible("total") ? <th ref={totalThRef} key="total" rowSpan={2} style={{ ...thStyle }}>TOTAL</th> : null}
                       {/* Action cols */}
-                      <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none" }}></th>
                       <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
                     </tr>
                     <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
@@ -2138,7 +2137,39 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                       onMouseEnter={e => e.currentTarget.style.background = "var(--elb-rowhover, #122030)"}
                       onMouseLeave={e => e.currentTarget.style.background = isEven ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)"}
                     >
-                      <td style={{ ...tdStyle, color: "#2a4a6a", textAlign: "center", fontSize: 11 }}>{rowIdx + 1}</td>
+                      {/* ── ROW # + REMARKS TRIGGER ── single tap opens remarks (touch-friendly) */}
+                      <td style={{ ...tdStyle, padding: 0, textAlign: "center" }}>
+                        {(() => {
+                          const hasRemarks = row.remarks && row.remarks.trim().length > 0;
+                          const hasAutoland = row.autoland;
+                          let dotColor = null;
+                          if (hasRemarks && !hasAutoland)      dotColor = "#f5c542"; // remarks only
+                          else if (!hasRemarks && hasAutoland) dotColor = "#a855f7"; // autoland only
+                          else if (hasRemarks && hasAutoland)  dotColor = "#4fc77a"; // both
+                          return (
+                            <button
+                              onClick={() => setRemarksModal({ rowIdx, draft: row.remarks || "", autoland: row.autoland || false })}
+                              title={hasRemarks || hasAutoland ? "View / edit remarks" : "Add remarks"}
+                              style={{
+                                width: "100%", minHeight: 30, background: "transparent", border: "none",
+                                cursor: "pointer", color: "#2a4a6a", fontSize: 11,
+                                fontFamily: "'Courier New',monospace",
+                                display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+                                padding: "4px 2px",
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.color = "#4fc3f7"}
+                              onMouseLeave={e => e.currentTarget.style.color = "#2a4a6a"}
+                            >
+                              {rowIdx + 1}
+                              <span style={{
+                                width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                                background: dotColor || "transparent",
+                                border: dotColor ? "none" : "1px solid #2a4a6a",
+                              }} />
+                            </button>
+                          );
+                        })()}
+                      </td>
                       {(() => {
                         const cells = [];
                         let skipAutoCalc = false;
@@ -2337,54 +2368,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         }
                         return cells;
                       })()}
-                      {/* ── REMARKS BUTTON ── */}
-                      <td style={{ background: "var(--elb-bg, #0a0d12)", border: "none", borderRight: "none", textAlign: "center", padding: "3px 4px" }}>
-                        {(() => {
-                          const hasRemarks = row.remarks && row.remarks.trim().length > 0;
-                          const hasAutoland = row.autoland;
-                          let stateColor, stateAltColor, stateBg;
-                          if (!hasRemarks && !hasAutoland) {
-                            stateColor = "#3a5a7a"; stateAltColor = "#4fc3f7"; stateBg = "rgba(79,195,247,0.08)";
-                          } else if (hasRemarks && !hasAutoland) {
-                            stateColor = "#b8860b"; stateAltColor = "#f5c542"; stateBg = "rgba(245,197,66,0.08)";
-                          } else if (!hasRemarks && hasAutoland) {
-                            stateColor = "#6d28d9"; stateAltColor = "#a855f7"; stateBg = "rgba(168,85,247,0.08)";
-                          } else {
-                            stateColor = "#1b6b2f"; stateAltColor = "#4fc77a"; stateBg = "rgba(79,199,122,0.08)";
-                          }
-                          return (
-                            <button
-                              onClick={() => setRemarksModal({ rowIdx, draft: row.remarks || "", autoland: row.autoland || false })}
-                              title={row.remarks ? "View / edit remarks" : "Add remarks"}
-                              style={{
-                                background: stateColor === "#3a5a7a" ? "transparent" : stateBg,
-                                border: `1px solid ${stateColor}`,
-                                borderRadius: 3,
-                                color: stateColor,
-                                cursor: "pointer",
-                                padding: "3px 6px",
-                                fontFamily: "'Courier New',monospace",
-                                letterSpacing: "0.05em",
-                                lineHeight: 1.3,
-                                display: "flex", flexDirection: "column", alignItems: "center",
-                              }}
-                              onMouseEnter={e => {
-                                e.currentTarget.style.borderColor = stateAltColor;
-                                e.currentTarget.style.color = stateAltColor;
-                                e.currentTarget.style.background = stateBg;
-                              }}
-                              onMouseLeave={e => {
-                                e.currentTarget.style.borderColor = stateColor;
-                                e.currentTarget.style.color = stateColor;
-                                e.currentTarget.style.background = stateColor === "#3a5a7a" ? "transparent" : stateBg;
-                              }}
-                            >
-                              <span style={{ fontSize: 7, display: "block" }}>{row.remarks ? "VIEW" : "ADD"}</span>
-                              <span style={{ fontSize: 7, display: "block" }}>REMARKS</span>
-                            </button>
-                          );
-                        })()}
-                      </td>
                       {/* ── DELETE BUTTON — all rows (min 1 row enforced in deleteRow) ── */}
                       <td style={{ background: "var(--elb-bg, #0a0d12)", border: "none", borderRight: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
                         {rows.length > 1 && (
@@ -2424,7 +2407,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         {totalsRow[k]}
                       </td>
                     ))}
-                  <td style={{ ...tdStyle }} />
                   <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px" }}>
                     <button
                       onClick={addSector}

@@ -111,6 +111,7 @@ const CHANGELOG = [
       "IMP: Empty space on either side of the app adjusts automatically — wider screens get more margin, narrower screens get less. Column widths never change unless you pick Narrow / Default / Wide in Settings.",
       "FIX: Added HTTP security headers (CSP, X-Frame-Options, X-Content-Type-Options) to prevent clickjacking and MIME sniffing.",
       "IMP: You can now delete any row — including unused empty ones. The Rows Per Page setting is a visual default for new months only, not a hard minimum.",
+      "IMP: Remarks moved off a per-row button onto the row number itself — tap any row number to open its remarks / autoland window. A coloured dot beside the number shows its state (gold = remarks, purple = autoland, green = both). Frees up a column and works the same on phone, tablet and desktop.",
     ],
   },
   {
@@ -375,6 +376,18 @@ const CHANGELOG = [
     ],
   },
 ];
+
+// Render a changelog note: pull a leading NEW/IMP/FIX/DEP tag into a styled badge.
+function renderNote(n) {
+  const m = /^(NEW|IMP|FIX|DEP):\s*/.exec(n);
+  if (!m) return n;
+  return (
+    <>
+      <span className={`sm-cl-tag sm-cl-tag-${m[1]}`}>{m[1]}</span>
+      {n.slice(m[0].length)}
+    </>
+  );
+}
 
 // ── Per-tab reset defaults ────────────────────────────────────────────
 const TAB_DEFAULTS = {
@@ -1243,7 +1256,7 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
             </div>
             <h4 className="sm-cl-title">{currentEntry.title}</h4>
             <ul className="sm-cl-notes">
-              {currentEntry.notes.map((n, j) => <li key={j}>{n}</li>)}
+              {currentEntry.notes.map((n, j) => <li key={j}>{renderNote(n)}</li>)}
             </ul>
           </article>
         )}
@@ -1268,7 +1281,7 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
             </div>
             <h4 className="sm-cl-title">{e.title}</h4>
             <ul className="sm-cl-notes">
-              {e.notes.map((n, j) => <li key={j}>{n}</li>)}
+              {e.notes.map((n, j) => <li key={j}>{renderNote(n)}</li>)}
             </ul>
           </article>
         ))}
@@ -2046,6 +2059,22 @@ const settingsCss = `
     padding: 3px 0;
   }
   .sm-cl-notes li::marker { color: var(--cb-mint); }
+  .sm-cl-tag {
+    display: inline-block;
+    font-weight: 700;
+    font-size: calc(10px * var(--fs));
+    letter-spacing: 0.08em;
+    padding: 0 5px;
+    margin-right: 6px;
+    border: 1px solid;
+    border-radius: 3px;
+    line-height: 1.5;
+    vertical-align: 1px;
+  }
+  .sm-cl-tag-NEW { color: #4fc77a; border-color: #1b6b2f; background: rgba(79,199,122,0.1); }
+  .sm-cl-tag-IMP { color: #4fc3f7; border-color: #1e5a7a; background: rgba(79,195,247,0.1); }
+  .sm-cl-tag-FIX { color: #f5c542; border-color: #b8860b; background: rgba(245,197,66,0.1); }
+  .sm-cl-tag-DEP { color: #ff6b6b; border-color: #a33; background: rgba(239,68,68,0.1); }
   .sm-cl-history-toggle {
     display: flex; align-items: center; gap: 8px;
     width: 100%; padding: 10px 0;
