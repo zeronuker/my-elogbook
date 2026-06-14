@@ -1932,7 +1932,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             onClick={() => setActivePopup("logbook-guide")}
             title="Logbook guide"
             style={{
-              marginLeft: "auto", marginRight: 24,
+              marginLeft: "auto", marginRight: 72,
               width: 16, height: 16, borderRadius: "50%",
               background: "transparent", border: "1px solid var(--elb-border, #1e3a55)",
               color: "var(--elb-txt-muted, #2d5070)", fontFamily: "Georgia,serif",
