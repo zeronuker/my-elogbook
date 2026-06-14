@@ -109,6 +109,7 @@ const CHANGELOG = [
     notes: [
       "IMP: The logbook now sizes itself to fit all columns exactly on any desktop screen — no more horizontal scrolling. The app measures the table's actual rendered width after layout and sets its own container to match.",
       "IMP: Empty space on either side of the app adjusts automatically — wider screens get more margin, narrower screens get less. Column widths never change unless you pick Narrow / Default / Wide in Settings.",
+      "FIX: Added HTTP security headers (CSP, X-Frame-Options, X-Content-Type-Options) to prevent clickjacking and MIME sniffing.",
     ],
   },
   {
