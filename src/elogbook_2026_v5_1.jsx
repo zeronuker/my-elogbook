@@ -848,7 +848,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     const raf = requestAnimationFrame(measure);
     window.addEventListener("resize", measure);
     const ro = new ResizeObserver(measure);
+    // Observe the TOTAL th too — the table box stays width:100% while only the
+    // inner columns settle, so watching the th catches that final reflow.
     if (logTableRef.current) ro.observe(logTableRef.current);
+    if (totalThRef.current) ro.observe(totalThRef.current);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", measure);
@@ -1956,6 +1959,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               marginBottom: activeTab === tab.id ? "-1px" : 0,
             }}>{tab.label}</button>
           ))}
+          {activeTab === "logbook" && (
           <button
             onClick={() => setActivePopup("logbook-guide")}
             title="Logbook guide"
@@ -1973,6 +1977,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-border, #1e3a55)"; e.currentTarget.style.color = "var(--elb-txt-muted, #2d5070)"; }}
           >i</button>
+          )}
         </div>
 
       {/* ── CONTENT ── */}
