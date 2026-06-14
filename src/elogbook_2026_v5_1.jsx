@@ -1321,7 +1321,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   useEffect(() => {
     const w = columns
       .filter(col => isColVisible(col.key))
-      .reduce((sum, col) => sum + col.minWidth + 16, 0) + 100;
+      .reduce((sum, col) => sum + col.minWidth + 16, 0) + 150;
     document.documentElement.style.setProperty('--logbook-root-w', `${w}px`);
   }, [colScale, settings.hiddenColumns]);
 
