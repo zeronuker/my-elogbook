@@ -566,6 +566,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   };
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
+  const totalThRef = useRef(null);
+  const tabBarRef  = useRef(null);
+  const [infoRightOffset, setInfoRightOffset] = useState(null);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef(initialData()); // initialised to match data state — prevents {} being written if a save fires before first effect run
@@ -826,6 +829,20 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Align the logbook guide i button above the TOTAL column ──
+  useEffect(() => {
+    if (activeTab !== "logbook") return;
+    const measure = () => {
+      if (!totalThRef.current || !tabBarRef.current) return;
+      const thRect  = totalThRef.current.getBoundingClientRect();
+      const barRect = tabBarRef.current.getBoundingClientRect();
+      setInfoRightOffset(barRect.right - (thRect.left + thRect.width / 2) - 8);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── On-load cleanup: trim previous month's empty rows once data is ready ──
   useEffect(() => {
@@ -1904,7 +1921,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
 
         {/* ── TABS ── */}
-        <div style={{ display: "flex", gap: 0, alignItems: "center", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
+        <div ref={tabBarRef} style={{ display: "flex", gap: 0, alignItems: "center", borderBottom: "1px solid var(--elb-border, #1e3a5f)", position: "relative" }}>
           {[
             { id: "logbook",  label: "📋 LOGBOOK" },
             { id: "summary",  label: "📊 FLIGHT SUMMARY" },
@@ -1930,7 +1947,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             onClick={() => setActivePopup("logbook-guide")}
             title="Logbook guide"
             style={{
-              marginLeft: "auto", marginRight: 10,
+              ...(infoRightOffset !== null
+                ? { position: "absolute", right: infoRightOffset }
+                : { marginLeft: "auto", marginRight: 10 }),
               width: 16, height: 16, borderRadius: "50%",
               background: "transparent", border: "1px solid var(--elb-border, #1e3a55)",
               color: "var(--elb-txt-muted, #2d5070)", fontFamily: "Georgia,serif",
@@ -2056,7 +2075,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         <th colSpan={nightSpan} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                       )}
                       {/* TOTAL */}
-                      {soloTh("total", "TOTAL")}
+                      {isColVisible("total") ? <th ref={totalThRef} key="total" rowSpan={2} style={{ ...thStyle }}>TOTAL</th> : null}
                       {/* Action cols */}
                       <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none" }}></th>
                       <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
