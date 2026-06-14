@@ -63,7 +63,7 @@ export const DEFAULT_SETTINGS = {
   fontType: "courier",
   brightness: 100,
   accentPreset: "gradient",
-  columnDensity: "default",
+  columnDensity: "auto",
   hiddenColumns: [],
   // Preferences
   dateFormat: "D",
@@ -104,7 +104,17 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.13", date: "June 2026", current: true,
+    v: "v6.14", date: "June 2026", current: true,
+    title: "Adaptive column width",
+    notes: [
+      "NEW: Auto column density — columns scale to fill the available screen width automatically. Works on desktop, iPad, and any device. Enable in Settings → Appearance → Columns → Auto.",
+      "NEW: Auto is now the default for new users.",
+      "IMP: App no longer has a fixed maximum width — it fills the full browser or PWA window on any screen size.",
+      "IMP: On iPad, rotating between portrait and landscape immediately adjusts column widths to fit.",
+    ],
+  },
+  {
+    v: "v6.13", date: "June 2026", current: false,
     title: "Sign-in & account deletion reliability",
     notes: [
       "FIX: Typing your email or password on the login and forgot-password screens no longer gets wiped mid-entry. The screens were quietly resetting on each redraw.",
@@ -372,7 +382,7 @@ const TAB_DEFAULTS = {
     theme: "dark",
     fontSize: 14,
     tableDensity: "default",
-    columnDensity: "default",
+    columnDensity: "auto",
     fontType: "courier",
     brightness: 100,
     accentPreset: "gradient",
@@ -1014,6 +1024,7 @@ function AppearanceTab({ d, upd }) {
               value={d.columnDensity || "default"}
               onChange={(v) => upd({ columnDensity: v })}
               options={[
+                { value: "auto",    label: "Auto"    },
                 { value: "narrow",  label: "Narrow"  },
                 { value: "default", label: "Default" },
                 { value: "wide",    label: "Wide"    },

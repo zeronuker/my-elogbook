@@ -429,6 +429,14 @@ const COLUMN_SCALE = {
   wide:    1.35,
 };
 
+const COL_BASE_WIDTHS = {
+  date: 36, type: 36, markings: 58, captain: 60, cap: 58, pilotFlying: 46,
+  departure: 30, arrival: 30, std: 38, sta: 38,
+  dayP1: 30, dayP1US: 42, dayP2: 30, nightP1: 30, nightP1US: 42, nightP2: 30, total: 42,
+};
+const CELL_PAD_H = 16;    // 8px left + 8px right per cell
+const FIXED_TABLE_PX = 100; // row#, action cols, borders, scrollbar
+
 // Resolve accent preset → single color value
 function resolveAccent(settings) {
   const presetId = settings.accentPreset
@@ -585,6 +593,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // Branded confirmation modal (replaces window.confirm)
   const [confirmDialog, setConfirmDialog] = useState(null); // { title, body, resolve }
   const [confirmedLongFlights, setConfirmedLongFlights] = useState(() => new Set());
+  const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
   const confirmResolveRef = useRef(null);
 
   // Show a branded confirm dialog; returns Promise<boolean>
@@ -600,6 +609,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     setConfirmDialog(null);
     confirmResolveRef.current?.(false);
   };
+
+  // ── Window resize → update windowWidth for auto column density ──
+  useEffect(() => {
+    const onResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   // ── Data loading — triggered by user prop from App.jsx ──
   // useEffect on user prop replaces onAuthStateChanged listener — App.jsx owns auth state.
@@ -1254,7 +1270,16 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     setEditingCell(null);
   };
 
-  const colScale = COLUMN_SCALE[settings.columnDensity] ?? COLUMN_SCALE.default;
+  const colScale = (() => {
+    if (settings.columnDensity !== "auto") {
+      return COLUMN_SCALE[settings.columnDensity] ?? COLUMN_SCALE.default;
+    }
+    const hidden = new Set(settings.hiddenColumns || []);
+    const visible = Object.entries(COL_BASE_WIDTHS).filter(([k]) => !hidden.has(k));
+    const baseSum = visible.reduce((s, [, w]) => s + w, 0);
+    const raw = (windowWidth - visible.length * CELL_PAD_H - FIXED_TABLE_PX) / baseSum;
+    return Math.min(Math.max(raw, 0.75), 1.35);
+  })();
   const cw = (base) => Math.round(base * colScale);
 
   const columns = [
@@ -1649,7 +1674,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             <span style={{
               fontFamily: "'JetBrains Mono','Courier New',monospace",
               fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.30)", lineHeight: 1, textAlign: "left",
-            }}>ELOGBOOK · V6.13</span>
+            }}>ELOGBOOK · V6.14</span>
           </div>
           <span className="elb-topbar-caam" style={{
             marginLeft: 6,
@@ -3182,7 +3207,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
-        version="v6.13"
+        version="v6.14"
       />
 
       {/* ── CLOUD NEWER BANNER ── */}
@@ -3345,7 +3370,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.13 · CAAM</span>
+        <span>eLOGBOOK v6.14 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
