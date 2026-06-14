@@ -2125,30 +2125,26 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         {(() => {
                           const hasRemarks = row.remarks && row.remarks.trim().length > 0;
                           const hasAutoland = row.autoland;
-                          let dotColor = null;
-                          if (hasRemarks && !hasAutoland)      dotColor = "#f5c542"; // remarks only
-                          else if (!hasRemarks && hasAutoland) dotColor = "#a855f7"; // autoland only
-                          else if (hasRemarks && hasAutoland)  dotColor = "#4fc77a"; // both
+                          // The row number itself carries the remark/autoland state via colour.
+                          let stateColor = "#6f93b8"; // none
+                          if (hasRemarks && !hasAutoland)      stateColor = "#f5c542"; // remarks only
+                          else if (!hasRemarks && hasAutoland) stateColor = "#a855f7"; // autoland only
+                          else if (hasRemarks && hasAutoland)  stateColor = "#4fc77a"; // both
                           return (
                             <button
                               onClick={() => setRemarksModal({ rowIdx, draft: row.remarks || "", autoland: row.autoland || false })}
                               title={hasRemarks || hasAutoland ? "View / edit remarks" : "Add remarks"}
                               style={{
                                 width: "100%", minHeight: 30, background: "transparent", border: "none",
-                                cursor: "pointer", color: "#6f93b8", fontSize: 20, fontWeight: 700,
+                                cursor: "pointer", color: stateColor, fontSize: 18, fontWeight: 700,
                                 fontFamily: "'Courier New',monospace",
-                                display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+                                display: "flex", alignItems: "center", justifyContent: "center",
                                 padding: "4px 2px",
                               }}
                               onMouseEnter={e => e.currentTarget.style.color = "#4fc3f7"}
-                              onMouseLeave={e => e.currentTarget.style.color = "#2a4a6a"}
+                              onMouseLeave={e => e.currentTarget.style.color = stateColor}
                             >
                               {rowIdx + 1}
-                              <span style={{
-                                width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-                                background: dotColor || "transparent",
-                                border: dotColor ? "none" : "1px solid #2a4a6a",
-                              }} />
                             </button>
                           );
                         })()}
