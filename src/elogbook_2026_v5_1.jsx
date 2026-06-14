@@ -1317,13 +1317,18 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       if (hiddenColsToastTimerRef.current) clearTimeout(hiddenColsToastTimerRef.current);
     };
   }, [hiddenColsCount]);
-  // ── Sync #root width to table's natural column width ──────────────
+  // ── Sync #root width to logbook table's actual rendered width ─────
   useEffect(() => {
-    const w = columns
-      .filter(col => isColVisible(col.key))
-      .reduce((sum, col) => sum + col.minWidth + 16, 0) + 150;
-    document.documentElement.style.setProperty('--logbook-root-w', `${w}px`);
-  }, [colScale, settings.hiddenColumns]);
+    if (activeTab !== "logbook") return;
+    // Reset first so table can overflow freely and give true scrollWidth
+    document.documentElement.style.removeProperty('--logbook-root-w');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const table = document.querySelector('#root table');
+      if (!table) return;
+      // +50 = content wrapper padding (24px×2) + root border (1px×2)
+      document.documentElement.style.setProperty('--logbook-root-w', `${table.scrollWidth + 50}px`);
+    }));
+  }, [colScale, settings.hiddenColumns, activeTab]);
 
   // Number of visible auto-calc columns (for HOC warning colSpan)
   const autoCalcVisibleCount = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].filter(isColVisible).length;
