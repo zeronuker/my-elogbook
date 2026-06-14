@@ -564,6 +564,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef(initialData()); // initialised to match data state — prevents {} being written if a save fires before first effect run
   const dataLoadedRef = useRef(false); // true only after a successful loadData — prevents saving initialData() over real data
+  const [dataLoaded, setDataLoaded] = useState(false);
   const localDirtyRef = useRef(false); // true if local data changed since last cloud sync — used for conflict detection
   const saveChipDebounceRef = useRef(null); // debounce: saving → saved (1 s after last keystroke)
   const saveChipFadeRef     = useRef(null); // saved → fading (after 2 s display)
@@ -686,6 +687,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           settings: localSettings ? JSON.parse(localSettings) : null,
         });
         dataLoadedRef.current = true;
+        setDataLoaded(true);
 
         // Restore last sync display timestamp so toolbar shows it even offline
         const storedSyncDisplay = localStorage.getItem(lsSyncDisplayKey(uid));
@@ -701,6 +703,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       const ref  = doc(db, "users", uid, "logbook", "data");
       const snap = await getDoc(ref);
       dataLoadedRef.current = true;
+      setDataLoaded(true);
       if (snap.exists()) {
         const docData = snap.data();
         applyDocData(docData);
@@ -721,6 +724,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     } catch (err) {
       console.error("Load error:", err);
       dataLoadedRef.current = true;
+      setDataLoaded(true);
       setMigrating(false);
     }
   };
@@ -816,6 +820,22 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── On-load cleanup: trim previous month's empty rows once data is ready ──
+  useEffect(() => {
+    if (!dataLoaded) return;
+    const now = new Date();
+    const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+    const prevYear  = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const prevKey   = `${prevMonth}-${prevYear}`;
+    setData(prev => {
+      const rows = prev[prevKey];
+      if (!rows) return prev;
+      const trimmed = rows.filter(row => !Object.keys(EMPTY_ROW()).every(k => !row[k]));
+      if (trimmed.length === rows.length) return prev;
+      return { ...prev, [prevKey]: trimmed };
+    });
+  }, [dataLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Midnight cleanup: trim empty rows from the previous month ──
   useEffect(() => {
