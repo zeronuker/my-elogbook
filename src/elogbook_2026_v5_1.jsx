@@ -1932,7 +1932,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
               borderLeft: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid #0e1f2f",
               borderRight: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid #0e1f2f",
-              borderBottom: activeTab === tab.id ? "1px solid rgba(79,195,247,0.10)" : "1px solid #0e1f2f",
+              borderBottom: activeTab === tab.id ? "none" : "1px solid #0e1f2f",
               borderRadius: "5px 5px 0 0",
               color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #5a7a9a)",
               padding: "7px 18px",
