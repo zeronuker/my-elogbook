@@ -1235,7 +1235,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     });
   };
 
-  const deleteRow = (rowIdx) => {
+  const deleteRow = async (rowIdx) => {
+    const row = (data[monthKey] || [])[rowIdx];
+    const hasData = row && Object.keys(EMPTY_ROW()).some(k => !!row[k]);
+    if (hasData) {
+      const confirmed = await showConfirm("Delete row?", "This row has data and will be permanently removed.");
+      if (!confirmed) return;
+    }
     setData(prev => {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
       const newRows = current.filter((_, i) => i !== rowIdx);
