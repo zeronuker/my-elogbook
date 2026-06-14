@@ -406,7 +406,7 @@ const FTL_POPUPS = {
   "logbook-guide": {
     para:  "LOGBOOK GUIDE",
     title: "DATA ENTRY & NAVIGATION",
-    body:  `<strong style="color:#c8d6e5">Clicking any cell</strong> opens it for editing. Press <span style="color:#4fc3f7">Tab</span> or <span style="color:#4fc3f7">Enter</span> to move to the next cell.<br><br><strong style="color:#c8d6e5">Date</strong> — enter the day number only (e.g. <span style="color:#4fc3f7">15</span>).<br><br><strong style="color:#c8d6e5">Time fields</strong> — accept <span style="color:#4fc3f7">HH:MM</span> (e.g. 02:30) or <span style="color:#4fc3f7">HHMM</span> (e.g. 0230) — the colon is added automatically.<br><br><strong style="color:#c8d6e5">TOTAL</strong> — auto-calculated from Day + Night columns. You cannot edit it directly.<br><br><strong style="color:#c8d6e5">Remarks &amp; Autoland</strong> — tap the <span style="color:#4fc3f7">row number</span> (far left) to open the remarks window for that sector and tick the AUTOLAND checkbox. The row number is colour-coded by state: <span style="color:#6f93b8">grey</span> none, <span style="color:#f5c542">gold</span> remarks, <span style="color:#a855f7">purple</span> autoland, <span style="color:#4fc77a">green</span> both.<br><br><strong style="color:#c8d6e5">Rows</strong> — use the <span style="color:#4fc3f7">✕</span> button on any row to delete it. Use <span style="color:#4fc3f7">+ ADD SECTOR</span> to append a new row. Rows Per Page in Settings controls how many empty rows a new month starts with.`,
+    body:  `<strong style="color:#c8d6e5">Clicking any cell</strong> opens it for editing. Press <span style="color:#4fc3f7">Tab</span> or <span style="color:#4fc3f7">Enter</span> to move to the next cell.<br><br><strong style="color:#c8d6e5">Date</strong> — enter the day number only (e.g. <span style="color:#4fc3f7">15</span>).<br><br><strong style="color:#c8d6e5">Time fields</strong> — accept <span style="color:#4fc3f7">HH:MM</span> (e.g. 02:30) or <span style="color:#4fc3f7">HHMM</span> (e.g. 0230) — the colon is added automatically.<br><br><strong style="color:#c8d6e5">TOTAL</strong> — auto-calculated from Day + Night columns. You cannot edit it directly.<br><br><strong style="color:#c8d6e5">Remarks &amp; Autoland</strong> — tap the <span style="color:#4fc3f7">row number</span> (far left) to open the remarks window for that sector and tick the AUTOLAND checkbox. The row number is colour-coded by state: <span style="color:#6f93b8">grey</span> none, <span style="color:#f5c542">gold</span> remarks, <span style="color:#a855f7">purple</span> autoland, <span style="color:#ec4899">magenta</span> both.<br><br><strong style="color:#c8d6e5">Rows</strong> — use the <span style="color:#4fc3f7">✕</span> button on any row to delete it. Use <span style="color:#4fc3f7">+ ADD SECTOR</span> to append a new row. Rows Per Page in Settings controls how many empty rows a new month starts with.`,
     note:  null,
   },
 };
@@ -2129,7 +2129,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                           let stateColor = "#6f93b8"; // none
                           if (hasRemarks && !hasAutoland)      stateColor = "#f5c542"; // remarks only
                           else if (!hasRemarks && hasAutoland) stateColor = "#a855f7"; // autoland only
-                          else if (hasRemarks && hasAutoland)  stateColor = "#4fc77a"; // both
+                          else if (hasRemarks && hasAutoland)  stateColor = "#ec4899"; // both
+                          const hasState = hasRemarks || hasAutoland;
                           return (
                             <button
                               onClick={() => setRemarksModal({ rowIdx, draft: row.remarks || "", autoland: row.autoland || false })}
@@ -2138,6 +2139,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                                 width: "100%", minHeight: 30, background: "transparent", border: "none",
                                 cursor: "pointer", color: stateColor, fontSize: 18, fontWeight: 700,
                                 fontFamily: "'Courier New',monospace",
+                                textDecoration: hasState ? "underline" : "none", textUnderlineOffset: 3,
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 padding: "4px 2px",
                               }}
