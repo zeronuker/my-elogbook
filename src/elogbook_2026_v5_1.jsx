@@ -2346,13 +2346,15 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                       </td>
                       {/* ── DELETE BUTTON ── */}
                       <td style={{ background: "var(--elb-bg, #0a0d12)", border: "none", borderRight: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
-                        <button
-                          onClick={() => deleteRow(rowIdx)}
-                          title="Delete row"
-                          style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 13, padding: "2px 4px", borderRadius: 3, lineHeight: 1 }}
-                          onMouseEnter={e => e.currentTarget.style.color = "#ff6b6b"}
-                          onMouseLeave={e => e.currentTarget.style.color = "#ef4444"}
-                        >✕</button>
+                        {rowIdx < storedRows.length && (
+                          <button
+                            onClick={() => deleteRow(rowIdx)}
+                            title="Delete row"
+                            style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 13, padding: "2px 4px", borderRadius: 3, lineHeight: 1 }}
+                            onMouseEnter={e => e.currentTarget.style.color = "#ff6b6b"}
+                            onMouseLeave={e => e.currentTarget.style.color = "#ef4444"}
+                          >✕</button>
+                        )}
                       </td>
                     </tr>
                   );
