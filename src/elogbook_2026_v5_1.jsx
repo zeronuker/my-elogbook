@@ -403,6 +403,12 @@ const FTL_POPUPS = {
     body:  `A pilot qualified for <strong style="color:#c8d6e5">CAT III autoland operations</strong> shall maintain currency by performing <span style="color:#4fc3f7">at least 3 autoland approaches and landings within the preceding 6 months</span>.<br><br>Autoland operations may be performed on any approved aircraft type or in an approved Full Flight Simulator (FFS). Simulator autolands count toward currency if conducted in an approved FFS with a valid approval letter.`,
     note:  `Check the <span style="color:#4fc3f7">AUTOLAND checkbox</span> in the remarks window to mark sectors where a coupled autoland to touchdown was performed. Track autoland recency for all aircraft types combined — a 6-month rolling window with minimum 3 entries required.`,
   },
+  "logbook-guide": {
+    para:  "LOGBOOK GUIDE",
+    title: "DATA ENTRY & NAVIGATION",
+    body:  `<strong style="color:#c8d6e5">Clicking any cell</strong> opens it for editing. Press <span style="color:#4fc3f7">Tab</span> or <span style="color:#4fc3f7">Enter</span> to move to the next cell.<br><br><strong style="color:#c8d6e5">Date</strong> — enter the day number only (e.g. <span style="color:#4fc3f7">15</span>).<br><br><strong style="color:#c8d6e5">Time fields</strong> — accept <span style="color:#4fc3f7">HH:MM</span> (e.g. 02:30) or <span style="color:#4fc3f7">HHMM</span> (e.g. 0230) — the colon is added automatically.<br><br><strong style="color:#c8d6e5">TOTAL</strong> — auto-calculated from Day + Night columns. You cannot edit it directly.<br><br><strong style="color:#c8d6e5">Rows</strong> — use the <span style="color:#4fc3f7">✕</span> button on any row to delete it. Use <span style="color:#4fc3f7">+ ADD SECTOR</span> to append a new row. Rows Per Page in Settings controls how many empty rows a new month starts with.`,
+    note:  null,
+  },
 };
 
 // ─── Theme CSS variable injection (v6 — aliases --elb-* to --cb-* tokens) ─────
@@ -1928,26 +1934,21 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         {/* ── LOGBOOK TAB ── */}
         {activeTab === "logbook" && (
           <div style={{ overflowX: "auto" }}>
-            <div style={{
-              background: "rgba(79,195,247,0.06)",
-              border: "1px solid rgba(79,195,247,0.18)",
-              borderLeft: "3px solid #4fc3f7",
-              borderRadius: "0 4px 4px 0",
-              padding: "7px 14px",
-              marginBottom: 14,
-              fontSize: 12,
-              color: "#7ab8d4",
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 10,
-              textAlign: "left",
-            }}>
-              <div style={{ lineHeight: 1.6 }}>
-                <span style={{ color: "#4fc3f7", fontWeight: 700 }}>
-                  {MONTHS[selectedMonth].toUpperCase()} {selectedYear} —
-                </span>
-                {" "}Click any cell to enter data. Date field accepts day number only (e.g. 15). Time fields accept HH:MM (e.g. 02:30) or HHMM (e.g. 0230) format. TOTAL auto-calculates from Day + Night columns. ({rows.length} rows)
-              </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+              <button
+                onClick={() => setActivePopup("logbook-guide")}
+                title="Logbook guide"
+                style={{
+                  width: 16, height: 16, borderRadius: "50%",
+                  background: "transparent", border: "1px solid var(--elb-border, #1e3a55)",
+                  color: "var(--elb-txt-muted, #2d5070)", fontFamily: "Georgia,serif",
+                  fontStyle: "italic", fontWeight: 700, fontSize: 12,
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                  padding: 0, lineHeight: 1, flexShrink: 0,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-border, #1e3a55)"; e.currentTarget.style.color = "var(--elb-txt-muted, #2d5070)"; }}
+              >i</button>
             </div>
 
             {/* Hidden-columns reminder toast — appears transiently when a column is hidden
