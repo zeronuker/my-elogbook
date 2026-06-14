@@ -7,6 +7,8 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 // ════════════════════════════════════════════════════════════════════
 
 const APP_VERSION = "v6.14";
+const RATE_LIMIT_MS = 60_000;
+let _lastFeedbackAt = 0;
 
 // ── Google Form dual-write (fire-and-forget) ─────────────────────────────────
 const GF_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdUR2dmIbFXxalz29VkWfHZbIJlJq7sHHjZwZvm1741OCsgzA/formResponse";
@@ -222,6 +224,11 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
 
   const handleSubmit = async () => {
     if (!description.trim()) return;
+    const cooldownRemaining = RATE_LIMIT_MS - (Date.now() - _lastFeedbackAt);
+    if (cooldownRemaining > 0) {
+      setError(`Please wait ${Math.ceil(cooldownRemaining / 1000)}s before submitting again.`);
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
@@ -250,6 +257,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
         email:   user?.email || "",
       });
 
+      _lastFeedbackAt = Date.now();
       setSubmitted(true);
     } catch (err) {
       console.error("Feedback submit error:", err);
