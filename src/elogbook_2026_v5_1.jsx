@@ -2344,9 +2344,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                           );
                         })()}
                       </td>
-                      {/* ── DELETE BUTTON ── */}
+                      {/* ── DELETE BUTTON — only on rows with data ── */}
                       <td style={{ background: "var(--elb-bg, #0a0d12)", border: "none", borderRight: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
-                        {rowIdx < storedRows.length && (
+                        {Object.keys(EMPTY_ROW()).some(k => !!row[k]) && (
                           <button
                             onClick={() => deleteRow(rowIdx)}
                             title="Delete row"
