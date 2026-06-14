@@ -1926,6 +1926,21 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               marginBottom: activeTab === tab.id ? "-1px" : 0,
             }}>{tab.label}</button>
           ))}
+          <button
+            onClick={() => setActivePopup("logbook-guide")}
+            title="Logbook guide"
+            style={{
+              marginLeft: "auto", marginRight: 10,
+              width: 16, height: 16, borderRadius: "50%",
+              background: "transparent", border: "1px solid var(--elb-border, #1e3a55)",
+              color: "var(--elb-txt-muted, #2d5070)", fontFamily: "Georgia,serif",
+              fontStyle: "italic", fontWeight: 700, fontSize: 12,
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 0, lineHeight: 1, flexShrink: 0,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-border, #1e3a55)"; e.currentTarget.style.color = "var(--elb-txt-muted, #2d5070)"; }}
+          >i</button>
         </div>
 
       {/* ── CONTENT ── */}
@@ -1934,22 +1949,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         {/* ── LOGBOOK TAB ── */}
         {activeTab === "logbook" && (
           <div style={{ overflowX: "auto" }}>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-              <button
-                onClick={() => setActivePopup("logbook-guide")}
-                title="Logbook guide"
-                style={{
-                  width: 16, height: 16, borderRadius: "50%",
-                  background: "transparent", border: "1px solid var(--elb-border, #1e3a55)",
-                  color: "var(--elb-txt-muted, #2d5070)", fontFamily: "Georgia,serif",
-                  fontStyle: "italic", fontWeight: 700, fontSize: 12,
-                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                  padding: 0, lineHeight: 1, flexShrink: 0,
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-border, #1e3a55)"; e.currentTarget.style.color = "var(--elb-txt-muted, #2d5070)"; }}
-              >i</button>
-            </div>
 
             {/* Hidden-columns reminder toast — appears transiently when a column is hidden
                 (or on page load if any are hidden), auto-fades after 5s. Click the strip
