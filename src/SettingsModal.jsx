@@ -104,7 +104,15 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.13", date: "June 2026", current: true,
+    v: "v6.14", date: "June 2026", current: true,
+    title: "Adaptive logbook width",
+    notes: [
+      "IMP: The logbook now sizes itself to fit all columns exactly on any desktop screen — no more horizontal scrolling. The app measures the table's actual rendered width after layout and sets its own container to match.",
+      "IMP: Empty space on either side of the app adjusts automatically — wider screens get more margin, narrower screens get less. Column widths never change unless you pick Narrow / Default / Wide in Settings.",
+    ],
+  },
+  {
+    v: "v6.13", date: "June 2026", current: false,
     title: "Sign-in & account deletion reliability",
     notes: [
       "FIX: Typing your email or password on the login and forgot-password screens no longer gets wiped mid-entry. The screens were quietly resetting on each redraw.",
