@@ -2135,7 +2135,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                               title={hasRemarks || hasAutoland ? "View / edit remarks" : "Add remarks"}
                               style={{
                                 width: "100%", minHeight: 30, background: "transparent", border: "none",
-                                cursor: "pointer", color: "#2a4a6a", fontSize: 11,
+                                cursor: "pointer", color: "#6f93b8", fontSize: 20, fontWeight: 700,
                                 fontFamily: "'Courier New',monospace",
                                 display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
                                 padding: "4px 2px",
