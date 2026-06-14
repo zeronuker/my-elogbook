@@ -568,6 +568,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
   const totalThRef = useRef(null);
   const tabBarRef  = useRef(null);
+  const logTableRef = useRef(null);
   const [infoRightOffset, setInfoRightOffset] = useState(null);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
@@ -831,6 +832,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   }, []);
 
   // ── Align the logbook guide i button above the TOTAL column ──
+  // Re-measures after layout settles (rAF), on window resize, and whenever the
+  // table reflows (ResizeObserver) — fonts, density, column toggles or data
+  // loading all shift the TOTAL column. Without this the offset is stale on a
+  // fresh refresh until you switch tabs and back.
   useEffect(() => {
     if (activeTab !== "logbook") return;
     const measure = () => {
@@ -839,10 +844,17 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       const barRect = tabBarRef.current.getBoundingClientRect();
       setInfoRightOffset(barRect.right - (thRect.left + thRect.width / 2) - 8);
     };
-    measure();
+    // Measure after the browser has painted the table layout.
+    const raf = requestAnimationFrame(measure);
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+    const ro = new ResizeObserver(measure);
+    if (logTableRef.current) ro.observe(logTableRef.current);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", measure);
+      ro.disconnect();
+    };
+  }, [activeTab, dataLoaded, settings.hiddenColumns]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── On-load cleanup: trim previous month's empty rows once data is ready ──
   useEffect(() => {
@@ -2012,7 +2024,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               </div>
             )}
 
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
+            <table ref={logTableRef} style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
               {(() => {
                 // Solo th helper (rowSpan=2) — hidden columns are not rendered at all.
                 // Hidden columns are also skipped in the body row, keeping alignment intact.
