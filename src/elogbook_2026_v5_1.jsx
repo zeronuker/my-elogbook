@@ -2280,7 +2280,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                               onClick={() => !isAutoCalc && !isAfterSta && setEditingCell({ rowIdx, field: col.key })}
                               style={{
                                 ...tdStyle,
-                                textAlign: isTime ? "center" : "left",
+                                textAlign: "center",
                                 color: isAutoCalc
                                   ? (col.key === "dayP1" || col.key === "nightP1" ? "#22c55e"
                                     : col.key === "dayP2" || col.key === "nightP2" ? "#eab308"
