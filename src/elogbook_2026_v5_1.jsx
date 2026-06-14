@@ -566,10 +566,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   };
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
-  const totalThRef = useRef(null);
-  const tabBarRef  = useRef(null);
-  const logTableRef = useRef(null);
-  const [infoRightOffset, setInfoRightOffset] = useState(null);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef(initialData()); // initialised to match data state — prevents {} being written if a save fires before first effect run
@@ -830,34 +826,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // ── Align the logbook guide i button above the TOTAL column ──
-  // Re-measures after layout settles (rAF), on window resize, and whenever the
-  // table reflows (ResizeObserver) — fonts, density, column toggles or data
-  // loading all shift the TOTAL column. Without this the offset is stale on a
-  // fresh refresh until you switch tabs and back.
-  useEffect(() => {
-    if (activeTab !== "logbook") return;
-    const measure = () => {
-      if (!totalThRef.current || !tabBarRef.current) return;
-      const thRect  = totalThRef.current.getBoundingClientRect();
-      const barRect = tabBarRef.current.getBoundingClientRect();
-      setInfoRightOffset(barRect.right - (thRect.left + thRect.width / 2) - 8);
-    };
-    // Measure after the browser has painted the table layout.
-    const raf = requestAnimationFrame(measure);
-    window.addEventListener("resize", measure);
-    const ro = new ResizeObserver(measure);
-    // Observe the TOTAL th too — the table box stays width:100% while only the
-    // inner columns settle, so watching the th catches that final reflow.
-    if (logTableRef.current) ro.observe(logTableRef.current);
-    if (totalThRef.current) ro.observe(totalThRef.current);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", measure);
-      ro.disconnect();
-    };
-  }, [activeTab, dataLoaded, settings.hiddenColumns]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── On-load cleanup: trim previous month's empty rows once data is ready ──
   useEffect(() => {
@@ -1936,7 +1904,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
 
         {/* ── TABS ── */}
-        <div ref={tabBarRef} style={{ display: "flex", gap: 0, alignItems: "center", borderBottom: "1px solid var(--elb-border, #1e3a5f)", position: "relative" }}>
+        <div style={{ display: "flex", gap: 0, alignItems: "center", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
           {[
             { id: "logbook",  label: "📋 LOGBOOK" },
             { id: "summary",  label: "📊 FLIGHT SUMMARY" },
@@ -1964,9 +1932,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             onClick={() => setActivePopup("logbook-guide")}
             title="Logbook guide"
             style={{
-              ...(infoRightOffset !== null
-                ? { position: "absolute", right: infoRightOffset }
-                : { marginLeft: "auto", marginRight: 10 }),
+              marginLeft: "auto", marginRight: 10,
               width: 16, height: 16, borderRadius: "50%",
               background: "transparent", border: "1px solid var(--elb-border, #1e3a55)",
               color: "var(--elb-txt-muted, #2d5070)", fontFamily: "Georgia,serif",
@@ -2029,7 +1995,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               </div>
             )}
 
-            <table ref={logTableRef} style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
               {(() => {
                 // Solo th helper (rowSpan=2) — hidden columns are not rendered at all.
                 // Hidden columns are also skipped in the body row, keeping alignment intact.
@@ -2093,7 +2059,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         <th colSpan={nightSpan} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                       )}
                       {/* TOTAL */}
-                      {isColVisible("total") ? <th ref={totalThRef} key="total" rowSpan={2} style={{ ...thStyle }}>TOTAL</th> : null}
+                      {isColVisible("total") ? <th key="total" rowSpan={2} style={{ ...thStyle }}>TOTAL</th> : null}
                       {/* Action cols */}
                       <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
                     </tr>
