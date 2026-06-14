@@ -1317,6 +1317,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       if (hiddenColsToastTimerRef.current) clearTimeout(hiddenColsToastTimerRef.current);
     };
   }, [hiddenColsCount]);
+  // ── Sync #root width to table's natural column width ──────────────
+  useEffect(() => {
+    const w = columns
+      .filter(col => isColVisible(col.key))
+      .reduce((sum, col) => sum + col.minWidth + 16, 0) + 100;
+    document.documentElement.style.setProperty('--logbook-root-w', `${w}px`);
+  }, [colScale, settings.hiddenColumns]);
+
   // Number of visible auto-calc columns (for HOC warning colSpan)
   const autoCalcVisibleCount = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].filter(isColVisible).length;
   // Totals-row label colSpan: # + DATE + visible solo/group cols before time cols
