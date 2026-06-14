@@ -566,6 +566,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   };
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
+  const [isMobileTablet, setIsMobileTablet] = useState(() => window.matchMedia("(max-width: 1024px)").matches);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1024px)");
+    const handler = (e) => setIsMobileTablet(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef(initialData()); // initialised to match data state — prevents {} being written if a save fires before first effect run
@@ -1932,7 +1939,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             onClick={() => setActivePopup("logbook-guide")}
             title="Logbook guide"
             style={{
-              marginLeft: "auto", marginRight: 72,
+              marginLeft: "auto", marginRight: isMobileTablet ? 10 : 72,
               width: 16, height: 16, borderRadius: "50%",
               background: "transparent", border: "1px solid var(--elb-border, #1e3a55)",
               color: "var(--elb-txt-muted, #2d5070)", fontFamily: "Georgia,serif",
