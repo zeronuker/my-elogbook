@@ -1921,19 +1921,19 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
 
         {/* ── TABS ── */}
-        <div ref={tabBarRef} style={{ display: "flex", gap: 3, alignItems: "flex-end", borderBottom: "1px solid var(--elb-border, #1e3a5f)", position: "relative" }}>
+        <div ref={tabBarRef} style={{ display: "flex", gap: 0, alignItems: "center", borderBottom: "1px solid var(--elb-border, #1e3a5f)", position: "relative" }}>
           {[
             { id: "logbook",  label: "📋 LOGBOOK" },
             { id: "summary",  label: "📊 FLIGHT SUMMARY" },
             { id: "ftl",      label: "⏱ LIMITS & RECENCY" },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-              background: activeTab === tab.id ? "rgba(79,195,247,0.10)" : "transparent",
+              background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
               borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
-              borderLeft: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid #0e1f2f",
-              borderRight: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid #0e1f2f",
-              borderBottom: activeTab === tab.id ? "1px solid var(--elb-bg, #0a0d12)" : "1px solid #0e1f2f",
-              borderRadius: "5px 5px 0 0",
+              borderLeft: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid transparent",
+              borderRight: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid transparent",
+              borderBottom: activeTab === tab.id ? "1px solid var(--elb-bg, #0a0d12)" : "none",
+              borderRadius: activeTab === tab.id ? "5px 5px 0 0" : 0,
               color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #5a7a9a)",
               padding: "7px 18px",
               fontSize: 13,
@@ -1941,7 +1941,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               textTransform: "uppercase",
               cursor: "pointer",
               fontFamily: "var(--elb-font, 'Courier New', monospace)",
-              marginBottom: "-1px",
+              marginBottom: activeTab === tab.id ? "-1px" : 0,
             }}>{tab.label}</button>
           ))}
           <button
