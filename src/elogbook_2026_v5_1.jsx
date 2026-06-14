@@ -50,16 +50,14 @@ function makeMonthRows(monthIdx, year, count = DEFAULT_ROWS) {
 }
 
 function normalizeMonthRows(rows, monthIdx, year) {
-  if (!Array.isArray(rows)) return makeMonthRows(monthIdx, year);
+  if (!Array.isArray(rows) || rows.length === 0) return makeMonthRows(monthIdx, year);
   let result = [...rows];
+  // Trim trailing empty rows that exceed DEFAULT_ROWS (legacy cleanup only)
   while (result.length > DEFAULT_ROWS) {
     const last = result[result.length - 1];
     const isEmpty = Object.keys(EMPTY_ROW()).every(k => !last[k]);
     if (isEmpty) result.pop();
     else break;
-  }
-  while (result.length < DEFAULT_ROWS) {
-    result.push({ id: result.length + 1, ...EMPTY_ROW() });
   }
   return result;
 }
@@ -1141,13 +1139,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // ── Per-month state ──
   const monthKey = `${selectedMonth}-${selectedYear}`;
   const rowsPerPage = Number(settings.rowsPerPage) || DEFAULT_ROWS;
-  const storedRows = data[monthKey] || makeMonthRows(selectedMonth, selectedYear);
-  // Display at least rowsPerPage rows; virtual extra rows become real on edit via updateCell
-  const rows = storedRows.length >= rowsPerPage
-    ? storedRows
-    : [...storedRows, ...Array.from({ length: rowsPerPage - storedRows.length }, (_, i) => ({
-        id: storedRows.length + i + 1, ...EMPTY_ROW(),
-      }))];
+  // rowsPerPage is a visual default for new/empty months only — not a hard minimum.
+  // Users can delete rows below rowsPerPage; storedRows is always the truth.
+  const storedRows = data[monthKey] || makeMonthRows(selectedMonth, selectedYear, rowsPerPage);
+  const rows = storedRows;
 
   const updateCell = async (rowIdx, field, value) => {
     // Aircraft type: normalise to uppercase and warn if genuinely new type
@@ -2344,9 +2339,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                           );
                         })()}
                       </td>
-                      {/* ── DELETE BUTTON — only on rows with data ── */}
+                      {/* ── DELETE BUTTON — all rows (min 1 row enforced in deleteRow) ── */}
                       <td style={{ background: "var(--elb-bg, #0a0d12)", border: "none", borderRight: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
-                        {Object.keys(EMPTY_ROW()).some(k => !!row[k]) && (
+                        {rows.length > 1 && (
                           <button
                             onClick={() => deleteRow(rowIdx)}
                             title="Delete row"
