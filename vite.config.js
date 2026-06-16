@@ -11,10 +11,10 @@ export default defineConfig({
       registerType: 'prompt',        // show update prompt instead of auto-updating
       includeAssets: [
         'favicon.svg',
-        'brand/icons/apple-touch-icon-180.png',
-        'brand/icons/icon-192.png',
-        'brand/icons/icon-512.png',
-        'brand/icons/icon-maskable-512.png',
+        'brand/icons/elogbook/apple-touch-icon-180.png',
+        'brand/icons/elogbook/icon-192.png',
+        'brand/icons/elogbook/icon-512.png',
+        'brand/icons/elogbook/icon-maskable-512.png',
       ],
       manifest: {
         name: 'ClaudeBorne eLogBook',
@@ -28,19 +28,19 @@ export default defineConfig({
         theme_color: '#0a1020',
         icons: [
           {
-            src: '/brand/icons/icon-192.png',
+            src: '/brand/icons/elogbook/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/brand/icons/icon-512.png',
+            src: '/brand/icons/elogbook/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/brand/icons/icon-maskable-512.png',
+            src: '/brand/icons/elogbook/icon-maskable-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
