@@ -112,6 +112,7 @@ const CHANGELOG = [
       "FIX: Added HTTP security headers (CSP, X-Frame-Options, X-Content-Type-Options) to prevent clickjacking and MIME sniffing.",
       "IMP: You can now delete any row — including unused empty ones. The Rows Per Page setting is a visual default for new months only, not a hard minimum.",
       "IMP: Remarks moved off a per-row button onto the row number itself — tap any row number to open its remarks / autoland window. A coloured dot beside the number shows its state (gold = remarks, purple = autoland, green = both). Frees up a column and works the same on phone, tablet and desktop.",
+      "FIX: The brand logo and month/year headings now always render in the correct font. They previously loaded from Google Fonts, so ad blockers and tracker-blocking browsers (Brave, uBlock Origin, Firefox strict mode) could silently block the request and fall back to a generic system font. All fonts are now bundled with the app itself.",
     ],
   },
   {
