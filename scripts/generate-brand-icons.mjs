@@ -1,5 +1,5 @@
-// One-off generator for standalone PWA icon sets (AirBorne, eLogBook).
-// Rasterizes the hand-authored SVGs in public/brand/icons/<app>/ into the
+// One-off generator for the standalone eLogBook PWA icon set.
+// Rasterizes the hand-authored SVGs in public/brand/icons/elogbook/ into the
 // PNG sizes needed for iOS/Android/favicons. Run with: node scripts/generate-brand-icons.mjs
 import { Resvg } from '@resvg/resvg-js';
 import { readFileSync, writeFileSync, existsSync, mkdtempSync } from 'fs';
@@ -30,7 +30,7 @@ const SIZES = [
   { file: 'icon-512.png', size: 512 },
 ];
 
-const APPS = ['airborne', 'elogbook'];
+const APPS = ['elogbook'];
 
 async function main() {
   const fontPath = await getTourneyFont();
