@@ -507,7 +507,6 @@ function OnboardingFlow({
 
   // CSS
   const styles = `
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Tourney:wght@700&display=swap');
     :root {
       --bg:#0a1020;--surface:#141a2e;--raised:#1b2340;
       --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.07);

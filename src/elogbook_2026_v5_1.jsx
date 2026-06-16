@@ -1156,7 +1156,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   if (!user) {
     return (
       <>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" />
         <style>{themeCss}</style>
         <div style={{ background: "var(--elb-bg, #0a0d12)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--elb-font, 'Courier New', monospace)", color: "var(--elb-acc, #4fc3f7)" }}>
         <div style={{ textAlign: "center" }}>
@@ -1621,7 +1620,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" />
     <div style={{
       background: "var(--elb-bg, #0a0d12)",
       minHeight: "100vh",

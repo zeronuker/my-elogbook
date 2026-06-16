@@ -1441,9 +1441,6 @@ const settingsCss = `
     --cb-font-display: 'Tourney', system-ui, sans-serif;
   }
 
-  /* Google Fonts — load Tourney & JetBrains Mono */
-  @import url('https://fonts.googleapis.com/css2?family=Tourney:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
-
   /* ── Backdrop ───────────────────────────────────────────────────── */
   .sm-backdrop {
     position: fixed; inset: 0;
