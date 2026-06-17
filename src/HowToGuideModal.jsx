@@ -353,7 +353,85 @@ function HOCMockup() {
   );
 }
 
-// ── Section 5 mockups ─────────────────────────────────────────────────────────
+// ── Section 5 mockups — Remarks ──────────────────────────────────────────────
+
+function NumberColumnMockup() {
+  const thS = { background: "#0b1320", color: MUT, fontSize: 9, letterSpacing: "0.12em", fontWeight: 700, padding: "5px 8px", borderBottom: "1px solid #111820", fontFamily: F, textAlign: "center", whiteSpace: "nowrap" };
+  const tdS = { padding: "4px 8px", fontFamily: F, fontSize: 12, color: TXT, textAlign: "center", whiteSpace: "nowrap" };
+  const rows = [
+    { num: 1, color: "#6f93b8", ul: false, date: "12 JUN 26", dep: "DXB", arr: "LHR" },
+    { num: 2, color: "#f5c542", ul: true,  date: "13 JUN 26", dep: "LHR", arr: "DXB" },
+    { num: 3, color: "#a855f7", ul: true,  date: "14 JUN 26", dep: "DXB", arr: "SIN" },
+    { num: 4, color: "#ec4899", ul: true,  date: "15 JUN 26", dep: "SIN", arr: "DXB" },
+  ];
+  return (
+    <div style={{ margin: "14px 0 20px", border: `1px solid ${BDR}`, borderRadius: 6, overflow: "hidden" }}>
+      <table style={{ borderCollapse: "collapse", width: "100%", fontFamily: F }}>
+        <thead>
+          <tr>
+            <th style={{ ...thS, width: 40 }}>#</th>
+            <th style={thS}>DATE</th>
+            <th style={thS}>TYPE</th>
+            <th style={thS}>DEP</th>
+            <th style={thS}>ARR</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={r.num} style={{ background: i % 2 === 0 ? "#0a0d12" : "#0c1018" }}>
+              <td style={{ ...tdS, padding: 0 }}>
+                <button style={{
+                  width: "100%", minHeight: 30, background: "transparent", border: "none",
+                  cursor: "pointer", color: r.color, fontSize: 16, fontWeight: 700, fontFamily: F,
+                  textDecoration: r.ul ? "underline" : "none", textUnderlineOffset: 3,
+                  display: "flex", alignItems: "center", justifyContent: "center", padding: "4px 2px",
+                }}>{r.num}</button>
+              </td>
+              <td style={tdS}>{r.date}</td>
+              <td style={tdS}>B777</td>
+              <td style={tdS}>{r.dep}</td>
+              <td style={tdS}>{r.arr}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div style={{ background: "#080b10", borderTop: "1px solid #0f1820", padding: "8px 14px", display: "flex", gap: 16, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 10, color: "#6f93b8", fontFamily: F }}>● none</span>
+        <span style={{ fontSize: 10, color: "#f5c542", fontFamily: F }}>● remarks</span>
+        <span style={{ fontSize: 10, color: "#a855f7", fontFamily: F }}>● autoland</span>
+        <span style={{ fontSize: 10, color: "#ec4899", fontFamily: F }}>● remarks + autoland</span>
+      </div>
+    </div>
+  );
+}
+
+function RemarksPanelMockup() {
+  return (
+    <div style={{ background: "rgba(0,0,0,0.45)", borderRadius: 6, padding: 20, display: "flex", alignItems: "center", justifyContent: "center", margin: "14px 0 20px", minHeight: 300 }}>
+      <div style={{ background: "#141a2e", border: `1px solid ${BDR}`, borderTop: "2px solid #4fc3f7", borderRadius: 6, padding: "20px 22px 18px", maxWidth: 420, width: "100%", fontFamily: F }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 10, letterSpacing: "0.16em", color: "#4fc3f7", marginBottom: 5 }}>ROW 2 · DATE 13 JUN 26</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#e8ecf5", letterSpacing: "0.07em" }}>REMARKS</div>
+          </div>
+          <div style={{ background: "transparent", border: `1px solid ${BDR}`, borderRadius: 3, color: "#7c87a3", fontSize: 12, width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</div>
+        </div>
+        <div style={{ height: 1, background: BDR, marginBottom: 14 }} />
+        <div style={{ background: "#0a1020", border: `1px solid ${BDR}`, borderRadius: 4, color: MUT, fontFamily: F, fontSize: 12, padding: "10px 12px", lineHeight: 1.6, minHeight: 90, boxSizing: "border-box", fontStyle: "italic" }}>Enter remarks for this sector…</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, marginBottom: 6 }}>
+          <div style={{ width: 14, height: 14, border: `1px solid ${BDR}`, borderRadius: 2, flexShrink: 0 }} />
+          <span style={{ fontSize: 11, color: "#b8c0d4", letterSpacing: "0.08em" }}>AUTOLAND</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
+          <div style={{ background: "transparent", border: `1px solid ${BDR}`, borderRadius: 4, color: "#7c87a3", fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px" }}>CANCEL</div>
+          <div style={{ background: "rgba(79,195,247,0.08)", border: "1px solid #4fc3f7", borderRadius: 4, color: "#4fc3f7", fontSize: 11, letterSpacing: "0.12em", padding: "6px 20px", fontWeight: 700 }}>SAVE REMARKS</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Section 6 mockups ─────────────────────────────────────────────────────────
 
 function DayNightSettingMockup() {
   return (
@@ -405,7 +483,7 @@ function DayNightSplitMockup() {
   );
 }
 
-// ── Section 6 mockups ─────────────────────────────────────────────────────────
+// ── Section 7 mockups ─────────────────────────────────────────────────────────
 
 function SyncStatusMockup() {
   const states = [
@@ -458,7 +536,7 @@ function SyncConflictMockup() {
   );
 }
 
-// ── Section 7 mockups ─────────────────────────────────────────────────────────
+// ── Section 8 mockups ─────────────────────────────────────────────────────────
 
 function ExportModalMockup() {
   return (
@@ -505,7 +583,7 @@ function ExcelSheetsMockup() {
   );
 }
 
-// ── Section 8 mockups ─────────────────────────────────────────────────────────
+// ── Section 9 mockups ─────────────────────────────────────────────────────────
 
 function CarryForwardMockup() {
   return (
@@ -541,7 +619,7 @@ function CarryForwardMockup() {
   );
 }
 
-// ── Section 9 mockups ─────────────────────────────────────────────────────────
+// ── Section 10 mockups ────────────────────────────────────────────────────────
 
 function SettingsMockup() {
   const tabs = [
@@ -709,7 +787,33 @@ const SECTIONS = [
     ),
   },
   {
-    id: 5, icon: "🌙", title: "Day / Night Calculation",
+    id: 5, icon: "💬", title: "Remarks",
+    Content: () => (
+      <div className="htg-content">
+        <p>Each row has a remarks panel for free-text notes and autoland flagging. Tap the row number in the <strong>#</strong> column to open it. The number changes colour and gets underlined when remarks or an autoland flag are recorded.</p>
+        <NumberColumnMockup />
+        <h4>Adding remarks</h4>
+        <ul>
+          <li>Tap the row number in the <strong>#</strong> column for the sector you want to annotate</li>
+          <li>Type your notes in the text area — no length limit</li>
+          <li>Tick <strong>AUTOLAND</strong> if an autoland was performed on this sector</li>
+          <li>Tap <strong>SAVE REMARKS</strong> to confirm, or <strong>CANCEL</strong> to discard changes</li>
+          <li>To delete remarks, open the panel, clear the text, untick AUTOLAND if set, then save</li>
+        </ul>
+        <RemarksPanelMockup />
+        <h4>Row number colour states</h4>
+        <ul>
+          <li><strong style={{ color: "#6f93b8" }}>Slate</strong> — no remarks, no autoland</li>
+          <li><strong style={{ color: "#f5c542" }}>Gold</strong> — remarks entered, no autoland</li>
+          <li><strong style={{ color: "#a855f7" }}>Purple</strong> — autoland flagged, no remarks text</li>
+          <li><strong style={{ color: "#ec4899" }}>Magenta</strong> — both remarks and autoland</li>
+        </ul>
+        <Tip>Tick AUTOLAND when an autoland was performed. This feeds the Limits &amp; Recency tab for autoland currency tracking.</Tip>
+      </div>
+    ),
+  },
+  {
+    id: 6, icon: "🌙", title: "Day / Night Calculation",
     Content: () => (
       <div className="htg-content">
         <p>The app automatically splits your block time into day and night portions based on your STD, STA, and airport codes. No manual calculation needed.</p>
@@ -730,7 +834,7 @@ const SECTIONS = [
     ),
   },
   {
-    id: 6, icon: "☁️", title: "Cloud Sync",
+    id: 7, icon: "☁️", title: "Cloud Sync",
     Content: () => (
       <div className="htg-content">
         <p>Your flights are saved to your device immediately as you type. Use the Sync button to back up to the cloud and keep multiple devices in sync.</p>
@@ -759,7 +863,7 @@ const SECTIONS = [
     ),
   },
   {
-    id: 7, icon: "📤", title: "Export & Import",
+    id: 8, icon: "📤", title: "Export & Import",
     Content: () => (
       <div className="htg-content">
         <p>ClaudeBorne eLogBook exports your logbook to Excel (.xlsx). Export a specific date range or use Export All to download every flight in your logbook at once.</p>
@@ -791,7 +895,7 @@ const SECTIONS = [
     ),
   },
   {
-    id: 8, icon: "📊", title: "Carry Forward Hours",
+    id: 9, icon: "📊", title: "Carry Forward Hours",
     Content: () => (
       <div className="htg-content">
         <p>Carry forward hours are your total flight hours accumulated before you started using ClaudeBorne eLogBook. Adding them ensures your grand totals and lifetime hours are correct.</p>
@@ -809,7 +913,7 @@ const SECTIONS = [
     ),
   },
   {
-    id: 9, icon: "⚙️", title: "Settings",
+    id: 10, icon: "⚙️", title: "Settings",
     Content: () => (
       <div className="htg-content">
         <p>The Settings panel gives you control over your pilot profile, display, and app behaviour. Open it via the <strong>⚙ Settings</strong> icon in the toolbar.</p>
@@ -818,7 +922,7 @@ const SECTIONS = [
         <ul>
           <li>Update your full name, date of birth, staff ID, licence number, licence type, airline, home base, and default rank</li>
           <li>Set defaults for aircraft type, markings, and captain name — these pre-fill new rows automatically</li>
-          <li>Manage <strong>Carry Forward Hours</strong> per aircraft type (see Section 8)</li>
+          <li>Manage <strong>Carry Forward Hours</strong> per aircraft type (see Section 9)</li>
         </ul>
         <h4>Appearance</h4>
         <ul>
@@ -829,7 +933,7 @@ const SECTIONS = [
         </ul>
         <h4>Preferences</h4>
         <ul>
-          <li><strong>Day/Night calculation method</strong> — Fixed bands or Route (sun) (see Section 5)</li>
+          <li><strong>Day/Night calculation method</strong> — Fixed bands or Route (sun) (see Section 6)</li>
           <li><strong>Pre-flight and post-flight buffers</strong> — duty time added around each sector for FTL calculations</li>
           <li><strong>Date format</strong> and <strong>rows per page</strong> defaults</li>
         </ul>
