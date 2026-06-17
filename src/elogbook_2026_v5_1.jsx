@@ -1664,7 +1664,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         }
         @media (max-width: 640px) {
           .elb-topbar-caam { display: none; }
-          .elb-banner-bigc { display: none; }
+          .elb-banner-bigc { font-size: 38px !important; }
           .elb-topbar-brand { padding: 0 12px !important; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
         }
@@ -1674,7 +1674,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <div className="elb-topbar" style={{
         background: "var(--cb-surface-0, #0a1020)",
         borderBottom: "1px solid rgba(255,255,255,0.07)",
-        height: 80,
+        height: 60,
         display: "flex",
         alignItems: "center",
         flexShrink: 0,
