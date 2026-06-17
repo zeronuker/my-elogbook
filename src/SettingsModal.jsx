@@ -110,6 +110,7 @@ const CHANGELOG = [
       "NEW: New topbar brand banner — outlined 'C' in Tourney 900, gradient CLAUDEBORNE wordmark, PILOT eLOGBOOK subtitle with corner chevrons framing the brand section.",
       "IMP: All web fonts are now self-hosted (public/fonts/). Google Fonts CDN is no longer loaded — fonts are served directly from ClaudeBorne's own origin, improving privacy, reliability, and load performance.",
       "IMP: Content Security Policy tightened — fonts.googleapis.com and fonts.gstatic.com removed from the allowlist now that nothing depends on them.",
+      "FIX: Tab bar on mobile — selecting the Logbook tab no longer wraps all tabs to two lines. The selected-tab bottom border is now also correctly hidden on all tabs when selected.",
     ],
   },
   {

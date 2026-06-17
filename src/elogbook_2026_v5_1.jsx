@@ -1922,7 +1922,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
 
         {/* ── TABS ── */}
-        <div style={{ display: "flex", gap: 0, alignItems: "center", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
+        <div style={{ display: "flex", gap: 0, alignItems: "flex-end", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
           {[
             { id: "logbook",  label: "📋 LOGBOOK" },
             { id: "summary",  label: "📊 FLIGHT SUMMARY" },
@@ -1943,6 +1943,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               cursor: "pointer",
               fontFamily: "var(--elb-font, 'Courier New', monospace)",
               marginBottom: activeTab === tab.id ? "-1px" : 0,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}>{tab.label}</button>
           ))}
           {activeTab === "logbook" && (
@@ -1951,6 +1953,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             title="Logbook guide"
             style={{
               marginLeft: "auto", marginRight: isMobileTablet ? 20 : 72,
+              alignSelf: "center",
               width: 16, height: 16, borderRadius: "50%",
               background: "transparent", border: "1px solid var(--elb-border, #1e3a55)",
               color: "var(--elb-txt-muted, #2d5070)", fontFamily: "Georgia,serif",
