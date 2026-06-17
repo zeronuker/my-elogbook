@@ -6,7 +6,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 //  FeedbackModal — in-app bug report / feature request → Firestore
 // ════════════════════════════════════════════════════════════════════
 
-const APP_VERSION = "v6.14";
+const APP_VERSION = "v6.15";
 const RATE_LIMIT_MS = 60_000;
 let _lastFeedbackAt = 0;
 

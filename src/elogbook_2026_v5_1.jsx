@@ -1644,9 +1644,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           overflow: hidden;
         }
         .elb-topbar-brand {
-          flex: 0 1 auto;
+          flex: 0 0 auto;
           min-width: 0;
-          overflow: hidden;
         }
         .elb-topbar-right {
           flex: 0 0 auto;
@@ -1664,8 +1663,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           display: block;
         }
         @media (max-width: 640px) {
-          .elb-topbar { padding: 0 12px !important; }
           .elb-topbar-caam { display: none; }
+          .elb-banner-bigc { display: none; }
+          .elb-topbar-brand { padding: 0 12px !important; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
         }
       `}</style>
@@ -1674,38 +1674,51 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <div className="elb-topbar" style={{
         background: "var(--cb-surface-0, #0a1020)",
         borderBottom: "1px solid rgba(255,255,255,0.07)",
-        padding: "0 24px",
-        height: 52,
+        height: 80,
         display: "flex",
         alignItems: "center",
-        gap: 0,
         flexShrink: 0,
       }}>
-        {/* LEFT: Brand */}
-        <div className="elb-topbar-brand" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="/brand/icons/icon-72.png" alt="ClaudeBorne" width="44" height="44" style={{ flexShrink: 0, display: "block" }} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* LEFT: Brand banner with corner chevrons */}
+        <div className="elb-topbar-brand" style={{
+          position: "relative",
+          alignSelf: "stretch",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "0 24px",
+          flexShrink: 0,
+        }}>
+          <div style={{ position: "absolute", top: 6, left: 6, width: 12, height: 12, borderTop: "1.5px solid #3dd9cc", borderLeft: "1.5px solid #3dd9cc", boxSizing: "border-box" }} />
+          <div style={{ position: "absolute", top: 6, right: 6, width: 12, height: 12, borderTop: "1.5px solid #3dd9cc", borderRight: "1.5px solid #3dd9cc", boxSizing: "border-box" }} />
+          <div style={{ position: "absolute", bottom: 6, left: 6, width: 12, height: 12, borderBottom: "1.5px solid #3dd9cc", borderLeft: "1.5px solid #3dd9cc", boxSizing: "border-box" }} />
+          <div style={{ position: "absolute", bottom: 6, right: 6, width: 12, height: 12, borderBottom: "1.5px solid #3dd9cc", borderRight: "1.5px solid #3dd9cc", boxSizing: "border-box" }} />
+          <span className="elb-banner-bigc" style={{
+            fontFamily: "'Tourney', system-ui, sans-serif",
+            fontWeight: 900, fontSize: 54,
+            color: "transparent", WebkitTextStroke: "1.5px #3dd9cc",
+            lineHeight: 1, flexShrink: 0,
+          }}>C</span>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             <span style={{
               fontFamily: "'Tourney', system-ui, sans-serif",
-              fontWeight: 700, fontSize: 13, letterSpacing: "0.22em", lineHeight: 1,
-              background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)",
+              fontWeight: 700, fontSize: 12, letterSpacing: "0.22em", lineHeight: 1,
+              background: "linear-gradient(135deg, #3FE0C5 0%, #3B8DFF 55%, #5B6BFF 100%)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              whiteSpace: "nowrap",
             }}>CLAUDEBORNE</span>
+            <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.2)", margin: "3px 0" }} />
             <span style={{
-              fontFamily: "'JetBrains Mono','Courier New',monospace",
-              fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.30)", lineHeight: 1, textAlign: "left",
-            }}>ELOGBOOK · V6.14</span>
+              fontFamily: "'Chakra Petch', 'JetBrains Mono', monospace",
+              fontWeight: 500, fontSize: 8, letterSpacing: "0.28em",
+              color: "rgba(255,255,255,0.38)", lineHeight: 1,
+              whiteSpace: "nowrap", textAlign: "center",
+            }}>PILOT eLOGBOOK</span>
           </div>
-          <span className="elb-topbar-caam" style={{
-            marginLeft: 6,
-            fontFamily: "'JetBrains Mono','Courier New',monospace",
-            fontSize: 9, letterSpacing: "0.14em", color: "rgba(255,255,255,0.28)",
-            border: "1px solid rgba(255,255,255,0.10)", padding: "3px 8px", whiteSpace: "nowrap",
-          }}>CAAM · MCAR 2016</span>
         </div>
 
         {/* RIGHT: User info + avatar */}
-        <div className="elb-topbar-right" style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
+        <div className="elb-topbar-right" style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto", paddingRight: 20 }}>
           <div className="elb-topbar-usertext" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
             <span className="elb-topbar-username" style={{
               fontFamily: "'Tourney',system-ui,sans-serif",
@@ -3206,7 +3219,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
-        version="v6.14"
+        version="v6.15"
       />
 
       {/* ── CLOUD NEWER BANNER ── */}
@@ -3369,7 +3382,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.14 · CAAM</span>
+        <span>eLOGBOOK v6.15 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

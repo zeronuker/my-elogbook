@@ -104,7 +104,16 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.14", date: "June 2026", current: true,
+    v: "v6.15", date: "June 2026", current: true,
+    title: "Brand banner & self-hosted fonts",
+    notes: [
+      "NEW: New topbar brand banner — outlined 'C' in Tourney 900, gradient CLAUDEBORNE wordmark, PILOT eLOGBOOK subtitle with corner chevrons framing the brand section.",
+      "IMP: All web fonts are now self-hosted (public/fonts/). Google Fonts CDN is no longer loaded — fonts are served directly from ClaudeBorne's own origin, improving privacy, reliability, and load performance.",
+      "IMP: Content Security Policy tightened — fonts.googleapis.com and fonts.gstatic.com removed from the allowlist now that nothing depends on them.",
+    ],
+  },
+  {
+    v: "v6.14", date: "June 2026", current: false,
     title: "Adaptive logbook width",
     notes: [
       "IMP: The logbook now sizes itself to fit all columns exactly on any desktop screen — no more horizontal scrolling. The app measures the table's actual rendered width after layout and sets its own container to match.",
