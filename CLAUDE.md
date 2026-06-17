@@ -44,7 +44,7 @@
 **Deployment:** Git push → Vercel auto-deploy (no local test wait)
 
 **Key files:**
-- Main UI: `src/elogbook_2026_v5_1.jsx`
+- Main UI: `src/ELogbook.jsx`
 - Settings: `src/SettingsModal.jsx`
 - Export/Import: `src/ExportImportModal.jsx`
 - Firebase: `src/firebase.js`

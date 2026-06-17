@@ -1440,7 +1440,7 @@ const settingsCss = `
   /* ── CB token layer ─────────────────────────────────────────────
      Surface, ink, line, font, and fs tokens are intentionally NOT
      set here — they inherit from :root which is managed by
-     makeThemeCss() in elogbook_2026_v5_1.jsx. This allows the
+     makeThemeCss() in ELogbook.jsx. This allows the
      settings modal to respond to the user's theme, font, and
      font-size settings.
   ── */

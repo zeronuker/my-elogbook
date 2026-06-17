@@ -17,7 +17,7 @@ import {
   sendPasswordResetEmail
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, deleteDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore'
-import ELogbook2026 from './elogbook_2026_v5_1'
+import ELogbook2026 from './ELogbook'
 import OnboardingFlow from './OnboardingFlow'
 import LoadingOverlay from './LoadingOverlay'
 
