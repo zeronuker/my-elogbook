@@ -21,6 +21,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "fontkit": "^2.0.4",
+    "sharp": "^0.33.5",
     "@eslint/js": "^10.0.1",
     "@resvg/resvg-js": "^2.6.2",
     "@types/react": "^19.2.14",
