@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 const DARK_COCKPIT_THEME = {
   bg:        "#0a0d12",
@@ -199,16 +199,18 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   };
 
   // Core export — accepts a pre-filtered/sorted rows array and a period label for the Profile sheet.
-  const exportToExcel = (rows, periodLabel) => {
+  const exportToExcel = async (rows, periodLabel) => {
     if (rows.length === 0) {
       setExportStatus({ error: "No flights found" });
       return;
     }
 
-    const wb = XLSX.utils.book_new();
+    const wb = new ExcelJS.Workbook();
 
     // SHEET 1: PILOT PROFILE
-    const profileData = [
+    const wsProfile = wb.addWorksheet("Profile");
+    wsProfile.columns = [{ width: 20 }, { width: 40 }];
+    wsProfile.addRows([
       ["PILOT PROFILE"],
       [],
       ["Name", settings?.fullName || ""],
@@ -217,43 +219,40 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       ["Airline", settings?.airline || ""],
       ["Home Base", settings?.homeBase || ""],
       ["Report Period", periodLabel],
-    ];
-    const wsProfile = XLSX.utils.aoa_to_sheet(profileData);
-    wsProfile['!cols'] = [{ wch: 20 }, { wch: 40 }];
-    XLSX.utils.book_append_sheet(wb, wsProfile, "Profile");
+    ]);
 
     // SHEET 2: CARRY FORWARD BY AIRCRAFT TYPE
     const cfByType = {};
     (settings?.carryForward || []).forEach(cf => {
       if (cf.type) cfByType[cf.type] = cf;
     });
-    const cfData = [
+    const cfRows = [
       ["CARRY FORWARD HOURS"],
       [],
       ["Aircraft Type", "Day P1", "Day P1 U/S", "Day P2", "Night P1", "Night P1 U/S", "Night P2"],
     ];
     Object.entries(cfByType).forEach(([type, cf]) => {
-      cfData.push([
+      cfRows.push([
         type,
         timeToDecimal(cf.dayP1 || "0:00"),
         timeToDecimal(cf.dayP1US || "0:00"),
         timeToDecimal(cf.dayP2 || "0:00"),
         timeToDecimal(cf.nightP1 || "0:00"),
         timeToDecimal(cf.nightP1US || "0:00"),
-        timeToDecimal(cf.nightP2 || "0:00")
+        timeToDecimal(cf.nightP2 || "0:00"),
       ]);
     });
-    const wsCF = XLSX.utils.aoa_to_sheet(cfData);
-    wsCF['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
-    for (let i = 4; i <= cfData.length; i++) {
-      ['B', 'C', 'D', 'E', 'F', 'G'].forEach(col => {
-        const cell = wsCF[`${col}${i}`];
-        if (cell && cell.v !== null) {
-          cell.z = '[h]:mm:ss';
+    const wsCF = wb.addWorksheet("Carry Forward");
+    wsCF.columns = [{ width: 15 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 12 }];
+    wsCF.addRows(cfRows);
+    for (let i = 4; i <= cfRows.length; i++) {
+      ["B", "C", "D", "E", "F", "G"].forEach(col => {
+        const cell = wsCF.getCell(`${col}${i}`);
+        if (cell.value !== null && cell.value !== undefined && cell.value !== "") {
+          cell.numFmt = "[h]:mm:ss";
         }
       });
     }
-    XLSX.utils.book_append_sheet(wb, wsCF, "Carry Forward");
 
     // SHEET 3: FLIGHT DETAILS with proper date/time formats
     const flightHeaders = COLUMN_ORDER.map(col => {
@@ -270,51 +269,50 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
     const flightData = rows.map(row => {
       const ft = computeFlightTimes ? computeFlightTimes(row, row._year, row._monthIdx) : {};
-      const ftTotalMins = ['dayP1','dayP1US','dayP2','nightP1','nightP1US','nightP2']
+      const ftTotalMins = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"]
         .reduce((acc, k) => acc + parseTimeToMinutes(ft[k] || ""), 0);
       return COLUMN_ORDER.map(col => {
-        if (col === 'date') {
-          // Use _fullDate (Date object set by getRowsInDateRange) for accurate serial
+        if (col === "date") {
           if (row._fullDate) {
             const epoch = new Date(Date.UTC(1900, 0, 1));
             return Math.floor((row._fullDate - epoch) / 86400000) + 2;
           }
           return dateToExcelSerial(row.date);
         }
-        if (['dayP1', 'dayP1US', 'dayP2', 'nightP1', 'nightP1US', 'nightP2'].includes(col)) {
+        if (["dayP1", "dayP1US", "dayP2", "nightP1", "nightP1US", "nightP2"].includes(col)) {
           return timeToDecimal(ft[col] || "");
         }
-        if (col === 'total') {
-          return timeToDecimal(minutesToTime(ftTotalMins));
-        }
-        if (['std', 'sta'].includes(col)) {
-          return timeToDecimal(row[col]);
-        }
+        if (col === "total") return timeToDecimal(minutesToTime(ftTotalMins));
+        if (["std", "sta"].includes(col)) return timeToDecimal(row[col]);
         return row[col] || "";
       });
     });
 
-    const wsFlights = XLSX.utils.aoa_to_sheet([flightHeaders, ...flightData]);
-    wsFlights['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 6 }, { wch: 8 }, { wch: 8 }, { wch: 11 }, { wch: 11 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }];
-
-    // Set date/time formats
+    const wsFlights = wb.addWorksheet("Flights");
+    wsFlights.columns = [
+      { width: 14 }, { width: 10 }, { width: 12 }, { width: 12 }, { width: 6 }, { width: 8 },
+      { width: 8 }, { width: 11 }, { width: 11 }, { width: 8 }, { width: 8 }, { width: 10 },
+      { width: 12 }, { width: 10 }, { width: 10 }, { width: 12 }, { width: 10 }, { width: 10 },
+      { width: 10 }, { width: 10 },
+    ];
+    wsFlights.addRow(flightHeaders);
+    flightData.forEach(row => wsFlights.addRow(row));
     for (let i = 2; i <= flightData.length + 1; i++) {
-      wsFlights[`A${i}`].z = 'dd-mm-yyyy';
-      ['J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q'].forEach(col => {
-        if (wsFlights[`${col}${i}`]) wsFlights[`${col}${i}`].z = '[h]:mm:ss';
+      wsFlights.getCell(`A${i}`).numFmt = "dd-mm-yyyy";
+      ["J", "K", "L", "M", "N", "O", "P", "Q"].forEach(col => {
+        const cell = wsFlights.getCell(`${col}${i}`);
+        if (cell.value !== null && cell.value !== undefined && cell.value !== "") {
+          cell.numFmt = "[h]:mm:ss";
+        }
       });
     }
-
-    XLSX.utils.book_append_sheet(wb, wsFlights, "Flights");
 
     // SHEET 4: MONTHLY SUMMARY
     const monthlySummary = {};
     rows.forEach(row => {
-      // Use _fullDate set by getRowsInDateRange — works for both DD/MM/YYYY and day-number dates
       if (!row._fullDate) return;
-      // Compute flight times dynamically (raw row.dayP1 etc. are always "" — calculated at render time)
       const ft = computeFlightTimes ? computeFlightTimes(row, row._year, row._monthIdx) : {};
-      const m = String(row._fullDate.getUTCMonth() + 1).padStart(2, '0');
+      const m = String(row._fullDate.getUTCMonth() + 1).padStart(2, "0");
       const y = String(row._fullDate.getUTCFullYear());
       const monthKey = `${y}-${m}`;
       if (!monthlySummary[monthKey]) {
@@ -327,7 +325,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       monthlySummary[monthKey].nightP1US += parseTimeToMinutes(ft.nightP1US || "") || 0;
       monthlySummary[monthKey].nightP2 += parseTimeToMinutes(ft.nightP2 || "") || 0;
       monthlySummary[monthKey].flights += 1;
-      const ftTotalMins = ['dayP1','dayP1US','dayP2','nightP1','nightP1US','nightP2']
+      const ftTotalMins = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"]
         .reduce((acc, k) => acc + parseTimeToMinutes(ft[k] || ""), 0);
       monthlySummary[monthKey].total += ftTotalMins;
     });
@@ -335,17 +333,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     const summaryHeaders = ["Month", "Day P1", "Day P1 U/S", "Day P2", "Night P1", "Night P1 U/S", "Night P2", "Flights", "Total"];
     const summaryRows = Object.entries(monthlySummary)
       .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([month, data]) => ({
-        month,
-        dayP1: data.dayP1,
-        dayP1US: data.dayP1US,
-        dayP2: data.dayP2,
-        nightP1: data.nightP1,
-        nightP1US: data.nightP1US,
-        nightP2: data.nightP2,
-        flights: data.flights,
-        total: data.total,
-      }));
+      .map(([month, data]) => ({ month, ...data }));
 
     const cfTotals = { dayP1: 0, dayP1US: 0, dayP2: 0, nightP1: 0, nightP1US: 0, nightP2: 0 };
     Object.values(cfByType).forEach(cf => {
@@ -358,14 +346,14 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     });
 
     const grandTotal = {
-      dayP1: cfTotals.dayP1 + summaryRows.reduce((sum, row) => sum + row.dayP1, 0),
-      dayP1US: cfTotals.dayP1US + summaryRows.reduce((sum, row) => sum + row.dayP1US, 0),
-      dayP2: cfTotals.dayP2 + summaryRows.reduce((sum, row) => sum + row.dayP2, 0),
-      nightP1: cfTotals.nightP1 + summaryRows.reduce((sum, row) => sum + row.nightP1, 0),
-      nightP1US: cfTotals.nightP1US + summaryRows.reduce((sum, row) => sum + row.nightP1US, 0),
-      nightP2: cfTotals.nightP2 + summaryRows.reduce((sum, row) => sum + row.nightP2, 0),
-      flights: summaryRows.reduce((sum, row) => sum + row.flights, 0),
-      total: cfTotals.dayP1 + cfTotals.dayP1US + cfTotals.dayP2 + cfTotals.nightP1 + cfTotals.nightP1US + cfTotals.nightP2 + summaryRows.reduce((sum, row) => sum + row.total, 0),
+      dayP1:   cfTotals.dayP1   + summaryRows.reduce((s, r) => s + r.dayP1, 0),
+      dayP1US: cfTotals.dayP1US + summaryRows.reduce((s, r) => s + r.dayP1US, 0),
+      dayP2:   cfTotals.dayP2   + summaryRows.reduce((s, r) => s + r.dayP2, 0),
+      nightP1: cfTotals.nightP1 + summaryRows.reduce((s, r) => s + r.nightP1, 0),
+      nightP1US: cfTotals.nightP1US + summaryRows.reduce((s, r) => s + r.nightP1US, 0),
+      nightP2: cfTotals.nightP2 + summaryRows.reduce((s, r) => s + r.nightP2, 0),
+      flights: summaryRows.reduce((s, r) => s + r.flights, 0),
+      total:   Object.values(cfTotals).reduce((a, b) => a + b, 0) + summaryRows.reduce((s, r) => s + r.total, 0),
     };
 
     const summaryData = summaryRows.map(row => [
@@ -379,22 +367,43 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       row.flights,
       timeToDecimal(minutesToTime(row.total)),
     ]);
+    summaryData.push([
+      "GRAND TOTAL",
+      timeToDecimal(minutesToTime(grandTotal.dayP1)),
+      timeToDecimal(minutesToTime(grandTotal.dayP1US)),
+      timeToDecimal(minutesToTime(grandTotal.dayP2)),
+      timeToDecimal(minutesToTime(grandTotal.nightP1)),
+      timeToDecimal(minutesToTime(grandTotal.nightP1US)),
+      timeToDecimal(minutesToTime(grandTotal.nightP2)),
+      grandTotal.flights,
+      timeToDecimal(minutesToTime(grandTotal.total)),
+    ]);
 
-    summaryData.push(["GRAND TOTAL", timeToDecimal(minutesToTime(grandTotal.dayP1)), timeToDecimal(minutesToTime(grandTotal.dayP1US)), timeToDecimal(minutesToTime(grandTotal.dayP2)), timeToDecimal(minutesToTime(grandTotal.nightP1)), timeToDecimal(minutesToTime(grandTotal.nightP1US)), timeToDecimal(minutesToTime(grandTotal.nightP2)), grandTotal.flights, timeToDecimal(minutesToTime(grandTotal.total))]);
-
-    const wsSummary = XLSX.utils.aoa_to_sheet([summaryHeaders, ...summaryData]);
-    wsSummary['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
-
+    const wsSummary = wb.addWorksheet("Summary");
+    wsSummary.columns = [{ width: 12 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 10 }, { width: 12 }];
+    wsSummary.addRow(summaryHeaders);
+    summaryData.forEach(row => wsSummary.addRow(row));
     for (let i = 2; i <= summaryData.length + 1; i++) {
-      ['B', 'C', 'D', 'E', 'F', 'G', 'I'].forEach(col => {
-        if (wsSummary[`${col}${i}`]) wsSummary[`${col}${i}`].z = '[h]:mm:ss';
+      ["B", "C", "D", "E", "F", "G", "I"].forEach(col => {
+        const cell = wsSummary.getCell(`${col}${i}`);
+        if (cell.value !== null && cell.value !== undefined && cell.value !== "") {
+          cell.numFmt = "[h]:mm:ss";
+        }
       });
     }
 
-    XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
-
-    const fileName = `ClaudeBorne_${periodLabel.replace(/\s+/g, '_').replace(/\//g, '-')}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    // Trigger browser download
+    const fileName = `ClaudeBorne_${periodLabel.replace(/\s+/g, "_").replace(/\//g, "-")}.xlsx`;
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
     setExportStatus({ success: true, count: rows.length });
     setTimeout(() => setExportStatus(null), 3000);
@@ -412,13 +421,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     }
     const periodLabel = `${dateFrom.split('-').reverse().join('-')} to ${dateTo.split('-').reverse().join('-')}`;
     setIsExporting(true);
-    setTimeout(() => {
-      try {
-        exportToExcel(rows, periodLabel);
-      } finally {
-        setIsExporting(false);
-      }
-    }, 50);
+    exportToExcel(rows, periodLabel).finally(() => setIsExporting(false));
   };
 
   const handleExportAll = () => {
@@ -428,13 +431,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       return;
     }
     setIsExporting(true);
-    setTimeout(() => {
-      try {
-        exportToExcel(rows, "All flights");
-      } finally {
-        setIsExporting(false);
-      }
-    }, 50);
+    exportToExcel(rows, "All flights").finally(() => setIsExporting(false));
   };
 
   // ─────────────────────────────────────────────────────────────────
@@ -454,20 +451,42 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       return;
     }
 
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      setImportStatus({ error: "File too large (max 10 MB). Please select a valid .xlsx export." });
+      return;
+    }
+
     try {
       const buffer = await selectedFile.arrayBuffer();
 
-      const workbook = XLSX.read(buffer, { type: "array" });
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(buffer);
 
       // Auto-detect "Flights" sheet
-      const flightsSheetName = workbook.SheetNames.find(name => name.toLowerCase() === 'flights');
-      if (!flightsSheetName) {
+      const ws = wb.worksheets.find(s => s.name.toLowerCase() === "flights");
+      if (!ws) {
         setImportStatus({ error: 'No "Flights" sheet found in workbook' });
         return;
       }
 
-      const sheet = workbook.Sheets[flightsSheetName];
-      const rawData = XLSX.utils.sheet_to_json(sheet);
+      // Read headers from row 1
+      const headers = [];
+      ws.getRow(1).eachCell((cell, colNumber) => {
+        headers[colNumber - 1] = cell.value?.toString() || "";
+      });
+
+      // Convert rows to array-of-objects matching the format validateImportData expects
+      const rawData = [];
+      ws.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return;
+        const obj = {};
+        headers.forEach((header, idx) => {
+          obj[header] = row.getCell(idx + 1).value ?? "";
+        });
+        if (Object.values(obj).some(v => v !== null && v !== undefined && v !== "")) {
+          rawData.push(obj);
+        }
+      });
 
       if (rawData.length === 0) {
         setImportStatus({ error: 'Flights sheet is empty' });
@@ -644,9 +663,14 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
         if (['std', 'sta', 'dayP1', 'dayP1US', 'dayP2', 'nightP1', 'nightP1US', 'nightP2', 'total'].includes(fieldName) && val !== null && val !== undefined && val !== "") {
           if (typeof val === 'number') {
             // Excel time value: stored as fraction of a day (e.g., 0.10416... = 2.5 hrs)
-            const totalMinutes = Math.round(val * 24 * 60); // Convert to minutes
+            const totalMinutes = Math.round(val * 24 * 60);
             const hours = Math.floor(totalMinutes / 60);
             const minutes = totalMinutes % 60;
+            newRow[fieldName] = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+          } else if (val instanceof Date) {
+            // ExcelJS returns Date objects for time-formatted cells (base date 1899-12-30)
+            const hours = val.getUTCHours();
+            const minutes = val.getUTCMinutes();
             newRow[fieldName] = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
           } else {
             newRow[fieldName] = val?.toString().trim() || "";

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import DOMPurify from "dompurify";
 import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
 import { db, auth } from "./firebase";
@@ -624,6 +625,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       }
     } else {
       dataLoadedRef.current = false;
+      // Cancel any pending confirmation dialog so stale resolve refs don't linger
+      if (confirmResolveRef.current) {
+        confirmResolveRef.current(false);
+        confirmResolveRef.current = null;
+      }
+      setConfirmDialog(null);
     }
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -988,10 +995,42 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     }
   };
 
-  // ── Conflict resolution: Keep Local — push local data over cloud ──
+  // ── Conflict resolution: Keep Local — push local data directly over cloud ──
   const resolveKeepLocal = async () => {
     setSyncConflict(null);
-    await syncData();
+    setSyncStatus("syncing");
+    try {
+      const ref = doc(db, "users", user.uid, "logbook", "data");
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Sync timed out")), 15000)
+      );
+      const cleanData = {};
+      Object.keys(dataRef.current).forEach(monthKey => {
+        const rows = dataRef.current[monthKey];
+        if (!Array.isArray(rows)) return;
+        cleanData[monthKey] = rows.map((row, idx) => ({ ...row, id: idx + 1 }));
+      });
+      const settingsToSave = sanitizeForFirestore(settingsRef.current);
+      await Promise.race([
+        setDoc(ref, { logbookData: cleanData, settings: settingsToSave, updatedAt: new Date().toISOString() }, { merge: true }),
+        timeoutPromise,
+      ]);
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+      const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      const displayStr = `${dateStr} · ${timeStr}`;
+      localStorage.setItem(lsSaveKey(user.uid), now.toISOString());
+      localStorage.setItem(lsSyncDisplayKey(user.uid), displayStr);
+      setLastSyncTime(displayStr);
+      localDirtyRef.current = false;
+      setCloudNewerBanner(false);
+      setSyncStatus("synced");
+      setTimeout(() => setSyncStatus("idle"), 3000);
+    } catch (e) {
+      console.error("resolveKeepLocal error:", e);
+      setSyncStatus("error");
+      setTimeout(() => setSyncStatus("idle"), 5000);
+    }
   };
 
   // ── Conflict resolution: Keep Cloud — pull cloud data into local ──
@@ -3038,7 +3077,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               {/* Body */}
               <div
                 style={{ fontSize: "var(--elb-desc-sz)", color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.9, letterSpacing: "0.03em", textAlign: "left" }}
-                dangerouslySetInnerHTML={{ __html: p.body }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.body) }}
               />
               {/* Note */}
               {p.note && (
@@ -3050,7 +3089,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                     borderRadius: "0 3px 3px 0",
                     fontSize: "var(--elb-hint-sz)", color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.75, letterSpacing: "0.03em", textAlign: "left",
                   }}
-                  dangerouslySetInnerHTML={{ __html: p.note }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.note) }}
                 />
               )}
             </div>
@@ -3222,7 +3261,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
-        version="v6.15"
+        version="v6.16"
       />
 
       {/* ── CLOUD NEWER BANNER ── */}
@@ -3385,7 +3424,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.15 · CAAM</span>
+        <span>eLOGBOOK v6.16 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

@@ -56,6 +56,7 @@ function App() {
   const [signupError, setSignupError] = useState(null)
   const [isSigningUp, setIsSigningUp] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [storageAvailable, setStorageAvailable] = useState(true)
   const [showAccountDeleted, setShowAccountDeleted] = useState(false)
   const accountDeletedRef = useRef(false) // set just before the deleteUser() that removes the account
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
@@ -63,6 +64,17 @@ function App() {
   const onboardingDoneRef = useRef(false)
   const prevIsSigningUpRef = useRef(false)
   const overlayTimeoutRef = useRef(null)
+
+  // Check localStorage availability once on mount (fails in private/incognito on some browsers)
+  useEffect(() => {
+    try {
+      const k = '__elb_storage_test__'
+      localStorage.setItem(k, '1')
+      localStorage.removeItem(k)
+    } catch {
+      setStorageAvailable(false)
+    }
+  }, [])
 
   // Shared helper: create the Firestore profile doc for a Google user if missing.
   // Used by both popup (handleGoogleAuth) and redirect (getRedirectResult) flows.
@@ -522,7 +534,7 @@ function App() {
   // only once identity is confirmed.
   const handleDeleteAccount = async () => {
     if (!user) return
-    const providerId = user.providerData[0]?.providerId
+    const providerId = user.providerData?.[0]?.providerId
     if (providerId === 'google.com') {
       // Settings modal shows a Google re-auth button (GIS — works inside PWAs).
       throw Object.assign(new Error('needs-google-reauth'), { code: 'needs-google-reauth' })
@@ -626,6 +638,19 @@ function App() {
 
   return (
     <>
+      {!storageAvailable && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+          background: '#7c2d12', color: '#fef2f2',
+          padding: '10px 16px', fontSize: 13,
+          fontFamily: "'Courier New', monospace",
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          borderBottom: '1px solid #991b1b',
+        }}>
+          <span>⚠ LOCAL STORAGE UNAVAILABLE — Private/incognito mode detected. Switch to a normal browser tab to ensure your data is saved to device.</span>
+          <button onClick={() => setStorageAvailable(true)} style={{ background: 'none', border: 'none', color: '#fef2f2', cursor: 'pointer', fontSize: 18, padding: '0 0 0 16px', lineHeight: 1 }}>✕</button>
+        </div>
+      )}
       <ELogbook2026
         user={user}
         onLogout={() => signOut(auth)}

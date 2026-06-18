@@ -6,9 +6,11 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 //  FeedbackModal — in-app bug report / feature request → Firestore
 // ════════════════════════════════════════════════════════════════════
 
-const APP_VERSION = "v6.15";
+const APP_VERSION = "v6.16";
 const RATE_LIMIT_MS = 60_000;
-let _lastFeedbackAt = 0;
+const LS_KEY = "elb_last_feedback_at";
+const getLastFeedbackAt = () => parseInt(localStorage.getItem(LS_KEY) || "0", 10);
+const setLastFeedbackAt = () => localStorage.setItem(LS_KEY, String(Date.now()));
 
 // ── Google Form dual-write (fire-and-forget) ─────────────────────────────────
 const GF_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdUR2dmIbFXxalz29VkWfHZbIJlJq7sHHjZwZvm1741OCsgzA/formResponse";
@@ -224,7 +226,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
 
   const handleSubmit = async () => {
     if (!description.trim()) return;
-    const cooldownRemaining = RATE_LIMIT_MS - (Date.now() - _lastFeedbackAt);
+    const cooldownRemaining = RATE_LIMIT_MS - (Date.now() - getLastFeedbackAt());
     if (cooldownRemaining > 0) {
       setError(`Please wait ${Math.ceil(cooldownRemaining / 1000)}s before submitting again.`);
       return;
@@ -257,7 +259,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
         email:   user?.email || "",
       });
 
-      _lastFeedbackAt = Date.now();
+      setLastFeedbackAt();
       setSubmitted(true);
     } catch (err) {
       console.error("Feedback submit error:", err);

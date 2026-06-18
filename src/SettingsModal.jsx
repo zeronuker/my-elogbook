@@ -104,7 +104,23 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.15", date: "June 2026", current: true,
+    v: "v6.16", date: "June 2026", current: true,
+    title: "Security & reliability hardening",
+    notes: [
+      "FIX: Choosing \"Keep Local Data\" after a cloud sync conflict no longer triggers a second conflict popup — local data is now pushed directly to the cloud in a single step.",
+      "FIX: Closing the app or signing out while a confirmation dialog was open could leave it stuck on screen. Now dismissed cleanly.",
+      "NEW: A warning banner now appears when the app cannot save data to your device (e.g. private/incognito browsing). Switch to a normal browser tab to restore device saving.",
+      "IMP: Import now rejects files over 10 MB immediately with a clear error, instead of attempting to load them.",
+      "IMP: Excel import/export library replaced with ExcelJS — actively maintained with no known security issues.",
+      "IMP: The 60-second cooldown between feedback submissions now persists across page refreshes and browser tabs.",
+      "IMP: Pilot notes and remarks are now sanitised before display, preventing any malformed content from affecting the page.",
+      "FIX: Corrected a crash-risk in the auth provider check that could occur on certain sign-in states.",
+      "DEP: Removed unused jsPDF and firebase-admin packages from the app bundle.",
+      "IMP: Airport coordinate data now loads in a separate browser cache chunk — future updates download less data.",
+    ],
+  },
+  {
+    v: "v6.15", date: "June 2026", current: false,
     title: "Brand banner & self-hosted fonts",
     notes: [
       "NEW: New topbar brand banner — outlined 'C' in Tourney 900, gradient CLAUDEBORNE wordmark, PILOT eLOGBOOK subtitle with corner chevrons framing the brand section.",
