@@ -351,6 +351,65 @@ const ScreenForgotPassword = memo(({ onForgotPassword, goTo }) => {
   )
 });
 
+// Screen: Email verification link result (custom action handler)
+const VERIFY_ERROR_MESSAGES = {
+  'auth/invalid-action-code': 'This link is invalid or has already been used.',
+  'auth/expired-action-code': 'This link has expired.',
+  'auth/user-disabled': 'This account has been disabled.',
+  'auth/user-not-found': 'No account matches this link.',
+}
+
+const ScreenVerifyResult = memo(({ verifyAction, email, onResendVerification, goTo }) => {
+  if (!verifyAction || verifyAction.status === 'checking') {
+    return (
+      <div style={{ maxWidth: '480px', width: '100%' }}>
+        <div className="onb-card">
+          <div className="onb-cbar"></div>
+          <div className="onb-cbody">
+            <div className="onb-stitle">VERIFYING YOUR EMAIL…</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (verifyAction.status === 'success') {
+    return (
+      <div className="onb-done">
+        <div className="onb-done-icon" style={{ color: '#3FE0C5' }}>✓</div>
+        <div className="onb-done-ttl" style={{ color: '#3FE0C5' }}>EMAIL VERIFIED</div>
+        <div className="onb-done-sub">Your email is confirmed. Log in to continue.</div>
+        <button className="onb-btn onb-btn-p" style={{ marginTop: 20 }} onClick={() => goTo('login')}>CONTINUE TO LOGIN →</button>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ maxWidth: '480px', width: '100%' }}>
+      <div className="onb-card" style={{ marginBottom: 16 }}>
+        <div className="onb-cbar" style={{ background: '#ef4444' }}></div>
+        <div className="onb-cbody">
+          <div className="onb-stitle">VERIFICATION FAILED</div>
+          <div className="onb-ssub" style={{ color: '#ef4444' }}>
+            {VERIFY_ERROR_MESSAGES[verifyAction.code] || 'Something went wrong verifying your email.'}
+          </div>
+        </div>
+      </div>
+      {email ? (
+        <ScreenEmailVerification email={email} onResendVerification={onResendVerification} />
+      ) : (
+        <div className="onb-card">
+          <div className="onb-cbar"></div>
+          <div className="onb-cbody">
+            <div className="onb-ssub">Log in to resend the verification email.</div>
+            <button className="onb-btn onb-btn-p" style={{ marginTop: 12 }} onClick={() => goTo('login')}>GO TO LOGIN →</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+});
+
 // Screen: Logout Confirmation
 const ScreenLogout = memo(() => (
   <div className="onb-done">
@@ -407,6 +466,7 @@ function OnboardingFlow({
   onOnboardingComplete,
   onForgotPassword,
   onResendVerification,
+  verifyAction,
   signupError,
   isLoading,
   showLogoutConfirm,
@@ -479,6 +539,13 @@ function OnboardingFlow({
       goTo('accountDeleted')
     }
   }, [showAccountDeleted]);
+
+  // Show the verification-link result screen as soon as App.jsx has one
+  useEffect(() => {
+    if (verifyAction && authMode !== 'verifyResult') {
+      goTo('verifyResult')
+    }
+  }, [verifyAction]);
 
   // Auto-navigate to landing after the logout / account-deleted confirmation
   useEffect(() => {
@@ -1024,6 +1091,7 @@ function OnboardingFlow({
     forgotPassword: <ScreenForgotPassword onForgotPassword={onForgotPassword} goTo={goTo} />,
     logout: <ScreenLogout />,
     accountDeleted: <ScreenAccountDeleted />,
+    verifyResult: <ScreenVerifyResult verifyAction={verifyAction} email={user?.email || formData.email} onResendVerification={onResendVerification} goTo={goTo} />,
     done: <ScreenDone onOnboardingComplete={onOnboardingComplete} formData={formData} isLoading={isLoading} />
   };
 

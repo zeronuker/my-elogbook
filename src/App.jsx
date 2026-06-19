@@ -14,9 +14,10 @@ import {
   reauthenticateWithCredential,
   deleteUser,
   sendEmailVerification,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  applyActionCode
 } from 'firebase/auth'
-import { doc, setDoc, getDoc, deleteDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore'
+import { doc, setDoc, getDoc, deleteDoc, collection, addDoc, query, where, getDocs, updateDoc } from 'firebase/firestore'
 import ELogbook2026 from './ELogbook'
 import OnboardingFlow from './OnboardingFlow'
 import LoadingOverlay from './LoadingOverlay'
@@ -57,6 +58,7 @@ function App() {
   const [isSigningUp, setIsSigningUp] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [storageAvailable, setStorageAvailable] = useState(true)
+  const [verifyAction, setVerifyAction] = useState(null) // { status: 'checking'|'success'|'error', code?: string }
   const [showAccountDeleted, setShowAccountDeleted] = useState(false)
   const accountDeletedRef = useRef(false) // set just before the deleteUser() that removes the account
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
@@ -74,6 +76,45 @@ function App() {
     } catch {
       setStorageAvailable(false)
     }
+  }, [])
+
+  // Handle email-verification links ourselves instead of Firebase's default
+  // hosted action page. That page shows a generic "expired or already used"
+  // error with no way forward and no visibility into *why* it failed. Here we
+  // apply the code directly, fall back to checking the live emailVerified flag
+  // (covers the case where the code died but verification actually succeeded),
+  // and log real failures so the next occurrence has a concrete cause instead
+  // of a guess.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const mode = params.get('mode')
+    const oobCode = params.get('oobCode')
+    if (mode !== 'verifyEmail' || !oobCode) return
+
+    // Strip the params so a reload doesn't try to replay the same code
+    window.history.replaceState({}, '', window.location.pathname)
+    setVerifyAction({ status: 'checking' })
+
+    applyActionCode(auth, oobCode)
+      .then(async () => {
+        await auth.currentUser?.reload().catch(() => {})
+        setVerifyAction({ status: 'success' })
+      })
+      .catch(async (err) => {
+        await auth.currentUser?.reload().catch(() => {})
+        if (auth.currentUser?.emailVerified) {
+          setVerifyAction({ status: 'success' })
+          return
+        }
+        console.error('Email verification failed:', err.code)
+        addDoc(collection(db, 'verificationErrors'), {
+          code: err.code || 'unknown',
+          email: auth.currentUser?.email || null,
+          uid: auth.currentUser?.uid || null,
+          at: new Date().toISOString(),
+        }).catch(() => {})
+        setVerifyAction({ status: 'error', code: err.code })
+      })
   }, [])
 
   // Shared helper: create the Firestore profile doc for a Google user if missing.
@@ -338,7 +379,7 @@ function App() {
       })
 
       try {
-        await sendEmailVerification(newUser)
+        await sendEmailVerification(newUser, { url: `${window.location.origin}/`, handleCodeInApp: true })
       } catch (emailError) {
         console.error('Email verification error:', emailError)
       }
@@ -415,7 +456,7 @@ function App() {
   const handleResendVerification = async () => {
     if (!auth.currentUser) return { success: false, error: 'Not signed in.' }
     try {
-      await sendEmailVerification(auth.currentUser)
+      await sendEmailVerification(auth.currentUser, { url: `${window.location.origin}/`, handleCodeInApp: true })
       return { success: true }
     } catch (error) {
       const errorMsg = error.code === 'auth/too-many-requests'
@@ -611,7 +652,7 @@ function App() {
     return <div style={{ background: '#0a0d12', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Courier New' }}>Loading...</div>
   }
 
-  if (showOnboarding || showLogoutConfirm || showAccountDeleted) {
+  if (showOnboarding || showLogoutConfirm || showAccountDeleted || verifyAction) {
     return (
       <>
         <OnboardingFlow
@@ -623,6 +664,7 @@ function App() {
           onOnboardingComplete={handleOnboardingComplete}
           onForgotPassword={handleForgotPassword}
           onResendVerification={handleResendVerification}
+          verifyAction={verifyAction}
           signupError={signupError}
           isLoading={isSigningUp}
           showLogoutConfirm={showLogoutConfirm}

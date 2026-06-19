@@ -36,6 +36,13 @@ service cloud.firestore {
         && request.resource.data.email == '[deleted]';
     }
 
+    // Diagnostic log for failed email-verification links. Write-only — no
+    // client can read these back. Lets us see the real Firebase error code
+    // instead of guessing why a verification link died.
+    match /verificationErrors/{docId} {
+      allow create: if true;
+    }
+
     // Public data (if needed)
     match /public/{document=**} {
       allow read: if true;
