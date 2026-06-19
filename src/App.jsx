@@ -101,11 +101,6 @@ function App() {
         setVerifyAction({ status: 'success' })
       })
       .catch(async (err) => {
-        await auth.currentUser?.reload().catch(() => {})
-        if (auth.currentUser?.emailVerified) {
-          setVerifyAction({ status: 'success' })
-          return
-        }
         console.error('Email verification failed:', err.code)
         addDoc(collection(db, 'verificationErrors'), {
           code: err.code || 'unknown',
