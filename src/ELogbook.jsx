@@ -596,7 +596,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [guideOpen, setGuideOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
   const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
-  const [periodPreset, setPeriodPreset] = useState("month"); // "12m" | "month" | "asof" | "custom"
+  const [periodPreset, setPeriodPreset] = useState("asof"); // "12m" | "month" | "asof" | "custom"
   const [periodCustomFrom, setPeriodCustomFrom] = useState(() => {
     const d = new Date(); d.setDate(1);
     return d.toISOString().split("T")[0];
