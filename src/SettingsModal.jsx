@@ -117,7 +117,6 @@ const CHANGELOG = [
       "FIX: Corrected a crash-risk in the auth provider check that could occur on certain sign-in states.",
       "DEP: Removed unused jsPDF and firebase-admin packages from the app bundle.",
       "IMP: Airport coordinate data now loads in a separate browser cache chunk — future updates download less data.",
-      "FIX: The top bar no longer clips under the status bar on iPad / iPhone when the app is installed to the home screen — the brand banner now reserves space for the device's safe area.",
     ],
   },
   {
