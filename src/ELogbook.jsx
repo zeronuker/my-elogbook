@@ -595,7 +595,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
-  const [grandTotalDate, setGrandTotalDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [periodPreset, setPeriodPreset] = useState("asof"); // "12m" | "month" | "asof" | "custom"
   const [periodCustomFrom, setPeriodCustomFrom] = useState(() => {
     const d = new Date(); d.setDate(1);
@@ -1150,38 +1149,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const allSectors = useMemo(() => getAllSectors(data, dutyBufferMins, settings.dayNightMethod), [data, dutyBufferMins, settings.dayNightMethod]);
 
   const GT_KEYS = ["dayP1", "dayP1US", "dayP2", "nightP1", "nightP1US", "nightP2"];
-  const { grandTotals, gtSum } = useMemo(() => {
-    const gtCutoff = new Date(grandTotalDate + "T23:59:59");
-    const gtByType = {};
-    (settings.carryForward || []).forEach(cf => {
-      const t = (cf.type || "").trim().toUpperCase();
-      if (!t) return;
-      if (!gtByType[t]) gtByType[t] = { dayP1:0, dayP1US:0, dayP2:0, nightP1:0, nightP1US:0, nightP2:0 };
-      GT_KEYS.forEach(k => { gtByType[t][k] += parseHHMM(cf[k] || ""); });
-    });
-    Object.entries(data).forEach(([key, rows]) => {
-      const [monthStr, yearStr] = key.split("-");
-      const month = parseInt(monthStr), year = parseInt(yearStr);
-      rows.forEach(row => {
-        const day = parseInt(row.date?.split('/')[0]);
-        if (!day || !row.type) return;
-        if (new Date(year, month, day) > gtCutoff) return;
-        const t = (row.type || "").trim().toUpperCase();
-        if (!t) return;
-        if (!gtByType[t]) gtByType[t] = { dayP1:0, dayP1US:0, dayP2:0, nightP1:0, nightP1US:0, nightP2:0 };
-        const ft = calcFlightTimes(row, settings.dayNightMethod, year, month);
-        GT_KEYS.forEach(k => { gtByType[t][k] += parseHHMM(ft[k] || ""); });
-      });
-    });
-    const totals = Object.entries(gtByType)
-      .map(([type, t]) => ({ type, ...t }))
-      .sort((a, b) => a.type.localeCompare(b.type));
-    const sum = GT_KEYS.reduce((acc, k) => {
-      acc[k] = totals.reduce((s, r) => s + r[k], 0);
-      return acc;
-    }, {});
-    return { grandTotals: totals, gtSum: sum };
-  }, [data, grandTotalDate, settings.carryForward, settings.dayNightMethod]);
 
   const todayStr = new Date().toISOString().split("T")[0];
   const earliestLogDateStr = useMemo(() => {
@@ -2635,113 +2602,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               <div style={{ fontSize: 12, color: "#3a5a7a", marginTop: 10 }}>
                 Click any month row to jump to its logbook page.
               </div>
-            </div>
-
-            {/* ── GRAND TOTAL HOURS ── */}
-            <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid var(--elb-bdr3, #0f1820)" }}>
-
-              {/* Heading with clickable date + TODAY shortcut */}
-              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 18 }}>
-                <span style={{ fontSize: 13, letterSpacing: "0.15em", color: "#4fc3f7" }}>
-                  GRAND TOTAL HOURS AS OF :
-                </span>
-
-                {/* Visible date input styled to match cockpit theme */}
-                <input
-                  type="date"
-                  value={grandTotalDate}
-                  onChange={e => setGrandTotalDate(e.target.value)}
-                  style={{
-                    background: "transparent", border: "none", borderBottom: "1px dashed #4fc3f7",
-                    color: "#4fc3f7", fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                    fontSize: 13, letterSpacing: "0.15em", fontWeight: 700,
-                    cursor: "pointer", padding: "0 0 2px 0", outline: "none",
-                    colorScheme: "dark",
-                  }}
-                />
-
-                {/* TODAY shortcut */}
-                <button
-                  type="button"
-                  title="Jump to today"
-                  onClick={() => setGrandTotalDate(new Date().toISOString().split("T")[0])}
-                  style={{
-                    background: "rgba(79,195,247,0.08)", border: "1px solid #1e3a5f",
-                    borderRadius: 3, color: "var(--elb-txt-muted, #4a6a8a)",
-                    fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                    fontSize: 10, letterSpacing: "0.12em", padding: "3px 8px",
-                    cursor: "pointer", transition: "all 0.15s", lineHeight: 1.4,
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e3a5f"; e.currentTarget.style.color = "#4a6a8a"; }}
-                >
-                  ⊙ TODAY
-                </button>
-              </div>
-
-              {grandTotals.length === 0 ? (
-                <div style={{ color: "#2a4a6a", fontSize: "var(--elb-desc-sz)", letterSpacing: "0.08em", padding: "16px 0" }}>
-                  No logbook entries or carry-forward hours found up to this date.
-                </div>
-              ) : (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
-                    <thead>
-                      <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
-                        <th rowSpan={2} style={{ ...thStyle, width: "1%", minWidth: 90 }}>AIRCRAFT TYPE</th>
-                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
-                        <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
-                        <th rowSpan={2} style={{ ...thStyle, width: "1%" }}>TOTAL</th>
-                      </tr>
-                      <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
-                        <th style={{ ...thSubStyle, width: "1%", color: "#22c55e" }}>P1</th>
-                        <th style={{ ...thSubStyle, width: "1%", color: "#ef4444" }}>P1 U/S</th>
-                        <th style={{ ...thSubStyle, width: "1%", color: "#eab308" }}>P2</th>
-                        <th style={{ ...thSubStyle, width: "1%", color: "#22c55e" }}>P1</th>
-                        <th style={{ ...thSubStyle, width: "1%", color: "#ef4444" }}>P1 U/S</th>
-                        <th style={{ ...thSubStyle, width: "1%", color: "#eab308" }}>P2</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {grandTotals.map((row, i) => {
-                        const rowTotal = toHHMM(GT_KEYS.reduce((s, k) => s + row[k], 0));
-                        const colMap = { dayP1:"#22c55e", dayP1US:"#ef4444", dayP2:"#eab308", nightP1:"#22c55e", nightP1US:"#ef4444", nightP2:"#eab308" };
-                        return (
-                          <tr key={i} style={{ background: i % 2 === 0 ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)" }}>
-                            <td style={{ ...tdStyle, width: "1%", minWidth: 90, textAlign: "center", color: "#9bbcd4" }}>
-                              {row.type}
-                            </td>
-                            {GT_KEYS.map(k => (
-                              <td key={k} style={{ ...tdStyle, width: "1%", textAlign: "center", color: row[k] ? colMap[k] : "#2a4a6a" }}>
-                                {row[k] ? toHHMM(row[k]) : "—"}
-                              </td>
-                            ))}
-                            <td style={{ ...tdStyle, width: "1%", textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
-                              {rowTotal || "—"}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot>
-                      <tr style={{ background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
-                        <td style={{ ...tdStyle, width: "1%", minWidth: 90, textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>GRAND TOTAL</td>
-                        {GT_KEYS.map(k => {
-                          const colMap = { dayP1:"#22c55e", dayP1US:"#ef4444", dayP2:"#eab308", nightP1:"#22c55e", nightP1US:"#ef4444", nightP2:"#eab308" };
-                          return (
-                            <td key={k} style={{ ...tdStyle, width: "1%", textAlign: "center", color: colMap[k], fontWeight: 700 }}>
-                              {gtSum[k] ? toHHMM(gtSum[k]) : "—"}
-                            </td>
-                          );
-                        })}
-                        <td style={{ ...tdStyle, width: "1%", textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
-                          {toHHMM(GT_KEYS.reduce((s, k) => s + gtSum[k], 0)) || "—"}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              )}
             </div>
 
             {/* ── GRAND TOTAL HOURS IN PERIOD ── */}
