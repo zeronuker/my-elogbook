@@ -9,7 +9,7 @@ import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT
 import ExportImportModal from "./ExportImportModal";
 import HowToGuideModal from "./HowToGuideModal";
 import FeedbackModal from "./FeedbackModal";
-import BrandBanner from "./BrandBanner";
+import BrandBanner from "@brand/BrandBanner";
 
 const MONTHS = [
   "January","February","March","April","May","June",

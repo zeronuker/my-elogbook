@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { auth } from './firebase';
 import GoogleSignInButton from './GoogleSignInButton';
-import BrandBanner from './BrandBanner';
+import BrandBanner from '@brand/BrandBanner';
 
 // Extract ScreenSignUp1 outside component to prevent recreation
 const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSignup, onGoogleAuth, onGoogleCredential, active, signupError, isLoading, goTo }) => {
