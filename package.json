@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "brand:fonts": "node brand-kit/scripts/download-fonts.mjs",
-    "brand:icons": "node brand-kit/scripts/generate-brand-icons.mjs"
+    "brand:icons": "node brand-kit/scripts/generate-brand-icons.mjs",
+    "brand:sync": "git submodule update --remote brand-kit && git add brand-kit && git commit -m \"Bump claudeborne-brand-kit\""
   },
   "dependencies": {
     "dompurify": "^3.2.6",
