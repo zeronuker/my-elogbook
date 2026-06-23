@@ -1790,6 +1790,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         background: "var(--cb-surface-0, #0a1020)",
         borderBottom: "1px solid rgba(255,255,255,0.07)",
         height: 60,
+        paddingTop: "env(safe-area-inset-top, 0px)",
         display: "flex",
         alignItems: "center",
         flexShrink: 0,
