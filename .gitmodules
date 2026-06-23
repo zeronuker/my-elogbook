@@ -1,3 +1,4 @@
 [submodule "brand-kit"]
 	path = brand-kit
 	url = https://github.com/zeronuker/my-brandkit.git
+	branch = main
