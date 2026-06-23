@@ -9,6 +9,7 @@ import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT
 import ExportImportModal from "./ExportImportModal";
 import HowToGuideModal from "./HowToGuideModal";
 import FeedbackModal from "./FeedbackModal";
+import BrandBanner from "./BrandBanner";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -826,8 +827,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Sync data-theme attribute on <html> for brand.css dark/light tokens ──
+  // Also mirrors to a global localStorage key (not user-scoped) so index.html's
+  // pre-paint script can restore the right theme before settings load.
   useEffect(() => {
-    document.documentElement.dataset.theme = settings.theme || "dark";
+    const theme = settings.theme || "dark";
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("cb-theme", theme);
   }, [settings.theme]);
 
   // ── One-time accent migration: legacy hex → preset id ──
@@ -1703,8 +1708,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         }
         @media (max-width: 640px) {
           .elb-topbar-caam { display: none; }
-          .elb-banner-bigc { font-size: 38px !important; }
-          .elb-topbar-brand { padding: 0 12px !important; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
         }
       `}</style>
@@ -1719,41 +1722,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexShrink: 0,
       }}>
         {/* LEFT: Brand banner with corner chevrons */}
-        <div className="elb-topbar-brand" style={{
-          position: "relative",
-          alignSelf: "stretch",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "0 24px",
-          flexShrink: 0,
-        }}>
-          <div style={{ position: "absolute", top: 6, left: 6, width: 12, height: 12, borderTop: "1.5px solid #3dd9cc", borderLeft: "1.5px solid #3dd9cc", boxSizing: "border-box" }} />
-          <div style={{ position: "absolute", top: 6, right: 6, width: 12, height: 12, borderTop: "1.5px solid #3dd9cc", borderRight: "1.5px solid #3dd9cc", boxSizing: "border-box" }} />
-          <div style={{ position: "absolute", bottom: 6, left: 6, width: 12, height: 12, borderBottom: "1.5px solid #3dd9cc", borderLeft: "1.5px solid #3dd9cc", boxSizing: "border-box" }} />
-          <div style={{ position: "absolute", bottom: 6, right: 6, width: 12, height: 12, borderBottom: "1.5px solid #3dd9cc", borderRight: "1.5px solid #3dd9cc", boxSizing: "border-box" }} />
-          <span className="elb-banner-bigc" style={{
-            fontFamily: "'Tourney', system-ui, sans-serif",
-            fontWeight: 900, fontSize: 54,
-            color: "transparent", WebkitTextStroke: "1.5px #3dd9cc",
-            lineHeight: 1, flexShrink: 0,
-          }}>C</span>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <span style={{
-              fontFamily: "'Tourney', system-ui, sans-serif",
-              fontWeight: 700, fontSize: 12, letterSpacing: "0.22em", lineHeight: 1,
-              background: "linear-gradient(135deg, #3FE0C5 0%, #3B8DFF 55%, #5B6BFF 100%)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              whiteSpace: "nowrap",
-            }}>CLAUDEBORNE</span>
-            <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.2)", margin: "3px 0" }} />
-            <span style={{
-              fontFamily: "'Chakra Petch', 'JetBrains Mono', monospace",
-              fontWeight: 500, fontSize: 8, letterSpacing: "0.28em",
-              color: "rgba(255,255,255,0.38)", lineHeight: 1,
-              whiteSpace: "nowrap", textAlign: "center",
-            }}>PILOT eLOGBOOK</span>
-          </div>
+        <div className="elb-topbar-brand" style={{ alignSelf: "stretch", display: "flex", alignItems: "center", flexShrink: 0 }}>
+          <BrandBanner subtitle="PILOT eLOGBOOK" />
         </div>
 
         {/* RIGHT: User info + avatar */}

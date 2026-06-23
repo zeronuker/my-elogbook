@@ -1,23 +1,36 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
   <head>
+    <!-- ClaudeBorne · brand head ---------------------------------------- -->
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ClaudeBorne · eLOGBOOK</title>
-    <meta name="description" content="CAAM-compliant digital pilot logbook. Accessible anywhere. Secure. Always in sync." />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <!-- Theme color: status bar + PWA chrome -->
     <meta name="theme-color" content="#0a1020" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="C·B eLogBook" />
+
     <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="32x32" href="/brand/icons/elogbook/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/brand/icons/elogbook/favicon-16.png" />
-    <!-- Apple touch icons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/brand/icons/elogbook/apple-touch-icon-180.png" />
-    <link rel="apple-touch-icon" sizes="167x167" href="/brand/icons/elogbook/apple-touch-icon-167.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/brand/icons/elogbook/apple-touch-icon-152.png" />
     <link rel="apple-touch-icon" sizes="120x120" href="/brand/icons/elogbook/apple-touch-icon-120.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/brand/icons/elogbook/apple-touch-icon-152.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/brand/icons/elogbook/apple-touch-icon-167.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/brand/icons/elogbook/apple-touch-icon-180.png" />
 
-    <!-- Brand fonts (self-hosted) + tokens -->
+    <!-- Self-hosted fonts + brand stylesheet: tokens, components -->
     <link rel="stylesheet" href="/brand/fonts.css" />
     <link rel="stylesheet" href="/brand/brand.css" />
+
+    <!-- PWA manifest -->
+    <link rel="manifest" href="/brand/manifest.webmanifest" />
+
+    <!-- Restore saved theme before first paint — prevents flash -->
+    <script>(function(){var s=localStorage.getItem('cb-theme');if(s)document.documentElement.setAttribute('data-theme',s);})()</script>
+
+    <meta name="description" content="CAAM-compliant digital pilot logbook. Accessible anywhere. Secure. Always in sync." />
+    <title>ClaudeBorne · eLOGBOOK</title>
   </head>
   <body>
     <div id="root"></div>

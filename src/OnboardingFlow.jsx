@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { auth } from './firebase';
 import GoogleSignInButton from './GoogleSignInButton';
+import BrandBanner from './BrandBanner';
 
 // Extract ScreenSignUp1 outside component to prevent recreation
 const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSignup, onGoogleAuth, onGoogleCredential, active, signupError, isLoading, goTo }) => {
@@ -150,9 +151,8 @@ const ScreenSignUp2 = memo(({ formData, updateFormData, isLoading, goTo }) => {
 const ScreenLanding = memo(({ goTo }) => (
   <div className="onb-land">
     <div className="onb-land-logo-wrap">
-      <img src="/brand/icons/logo-192.png" width="72" height="72" style={{ borderRadius: 16 }} />
+      <BrandBanner subtitle="PILOT eLOGBOOK" />
     </div>
-    <div className="onb-land-title">CLAUDEBORNE</div>
     <div className="onb-land-ver">eLOGBOOK V6.16 · CAAM / MCAR 2016</div>
     <div className="onb-land-tag">Your personal electronic logbook.<br/>Accessible anywhere. Works offline. Sync on demand.</div>
     <div className="onb-badges">
@@ -829,20 +829,9 @@ function OnboardingFlow({
     }
 
     .onb-land-logo-wrap {
+      display: flex;
+      justify-content: center;
       margin-bottom: 16px;
-      filter: drop-shadow(0 0 16px rgba(63,224,197,0.55));
-    }
-
-    .onb-land-title {
-      font-family: 'Tourney', sans-serif;
-      font-size: 32px;
-      font-weight: 700;
-      background: var(--grad);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: 0.2em;
-      margin-bottom: 5px;
     }
 
     .onb-land-ver {
