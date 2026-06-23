@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "brand:fonts": "node brand-kit/scripts/download-fonts.mjs",
+    "brand:icons": "node brand-kit/scripts/generate-brand-icons.mjs"
   },
   "dependencies": {
     "dompurify": "^3.2.6",
