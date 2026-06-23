@@ -2043,7 +2043,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   <thead>
                     <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                       <th rowSpan={2} style={thStyle}>#</th>
-                      <th rowSpan={2} style={thStyle}>DATE</th>
+                      <th rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                        <span style={{ display: "block" }}>DATE</span>
+                        <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
+                      </th>
                       {/* AIRCRAFT group — colSpan reflects visible sub-cols; omitted when both hidden */}
                       {aircraftSpan > 0 && (
                         <th colSpan={aircraftSpan} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>AIRCRAFT</th>
@@ -2450,8 +2453,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 800 }}>
                   <thead>
                     <tr style={{ background: "var(--elb-bg2, #0b1320)" }}>
-                      <th rowSpan={2} style={{ ...thStyle, width: 80, minWidth: 80, maxWidth: 80 }}>MONTH</th>
-                      <th rowSpan={2} style={{ ...thStyle, width: 55, minWidth: 55, maxWidth: 55 }}>SECTORS</th>
+                      <th rowSpan={2} style={{ ...thStyle, minWidth: 80 }}>MONTH</th>
+                      <th rowSpan={2} style={{ ...thStyle, minWidth: 55 }}>SECTORS</th>
                       <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
                       <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                       <th rowSpan={2} style={thStyle}>TOTAL</th>
@@ -2479,8 +2482,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                             borderLeft: isSelected ? "3px solid var(--elb-acc, #4fc3f7)" : "3px solid transparent",
                           }}
                         >
-                          <td style={{ ...tdStyle, width: 80, minWidth: 80, maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", color: isSelected ? "#4fc3f7" : "#9bbcd4", fontWeight: isSelected ? 700 : 400 }}>{m.toUpperCase()}</td>
-                          <td style={{ ...tdStyle, width: 55, minWidth: 55, maxWidth: 55, textAlign: "center", color: "#9bbcd4" }}>{filled || "—"}</td>
+                          <td style={{ ...tdStyle, minWidth: 80, color: isSelected ? "#4fc3f7" : "#9bbcd4", fontWeight: isSelected ? 700 : 400 }}>{m.toUpperCase()}</td>
+                          <td style={{ ...tdStyle, minWidth: 55, textAlign: "center", color: "#9bbcd4" }}>{filled || "—"}</td>
                           <td style={{ ...tdStyle, textAlign: "center", color: "#22c55e" }}>{dp1  === "00:00" ? "—" : dp1}</td>
                           <td style={{ ...tdStyle, textAlign: "center", color: "#ef4444" }}>{dp1u === "00:00" ? "—" : dp1u}</td>
                           <td style={{ ...tdStyle, textAlign: "center", color: "#eab308" }}>{dp2  === "00:00" ? "—" : dp2}</td>
@@ -2494,8 +2497,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   </tbody>
                   <tfoot>
                     <tr style={{ background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
-                      <td style={{ ...tdStyle, width: 80, minWidth: 80, maxWidth: 80, whiteSpace: "normal", wordBreak: "break-word", color: "#4fc3f7", fontWeight: 700 }}>ANNUAL TOTAL</td>
-                      <td style={{ ...tdStyle, width: 55, minWidth: 55, maxWidth: 55, textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
+                      <td style={{ ...tdStyle, minWidth: 80, color: "#4fc3f7", fontWeight: 700 }}>ANNUAL TOTAL</td>
+                      <td style={{ ...tdStyle, minWidth: 55, textAlign: "center", color: "#4fc3f7", fontWeight: 700 }}>
                         {summaryByMonth.reduce((acc, m) => acc + m.filled, 0) || "—"}
                       </td>
                       {[
@@ -2579,7 +2582,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
                     <thead>
                       <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
-                        <th rowSpan={2} style={{ ...thStyle, textAlign: "left", paddingLeft: 10, minWidth: 90 }}>AIRCRAFT<br />TYPE</th>
+                        <th rowSpan={2} style={{ ...thStyle, textAlign: "left", paddingLeft: 10, minWidth: 90 }}>AIRCRAFT TYPE</th>
                         <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
                         <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid var(--elb-bdr2, #1a3050)", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                         <th rowSpan={2} style={thStyle}>TOTAL</th>
