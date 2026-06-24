@@ -104,7 +104,16 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.16", date: "June 2026", current: true,
+    v: "v6.17", date: "June 2026", current: true,
+    title: "Custom icon set replaces emoji",
+    notes: [
+      "NEW: Landing screen Log In / Sign Up Free tiles, the email/verification screens, and the signed-out screen now use custom brand-gradient icons (a paper plane, a boarding pass, an envelope, and a door) instead of emoji.",
+      "NEW: The Logbook, Flight Summary, and Limits & Recency tab icons are now custom illustrations (a stamped page, a climb-profile chart, and a cockpit limits gauge) instead of emoji.",
+      "IMP: All replaced icons render as inline SVG, so they look identical across every browser and OS instead of varying by the platform's emoji font.",
+    ],
+  },
+  {
+    v: "v6.16", date: "June 2026", current: false,
     title: "Security & reliability hardening",
     notes: [
       "FIX: Choosing \"Keep Local Data\" after a cloud sync conflict no longer triggers a second conflict popup — local data is now pushed directly to the cloud in a single step.",

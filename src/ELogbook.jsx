@@ -11,6 +11,43 @@ import HowToGuideModal from "./HowToGuideModal";
 import FeedbackModal from "./FeedbackModal";
 import BrandBanner from "@brand/BrandBanner";
 
+const TabLogbookIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="4" y="2" width="14" height="20" rx="1" fill="#dde6f0" stroke="#8a93a8" strokeWidth="0.6" />
+    <polygon points="14,2 18,2 18,6" fill="#3FE0C5" />
+    <line x1="7" y1="9" x2="15" y2="9" stroke="#8a93a8" strokeWidth="0.8" />
+    <line x1="7" y1="12" x2="15" y2="12" stroke="#8a93a8" strokeWidth="0.8" />
+    <g transform="rotate(-15 14 17)">
+      <circle cx="14" cy="17" r="4.5" fill="none" stroke="#e24b4a" strokeWidth="1.6" />
+      <polyline points="12,17 13.5,18.5 16.5,15" fill="none" stroke="#e24b4a" strokeWidth="1.6" strokeLinejoin="miter" />
+    </g>
+  </svg>
+);
+
+const TabSummaryIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+    <line x1="3" y1="21" x2="21" y2="21" stroke="#5a7a9a" strokeWidth="0.8" />
+    <polygon points="4,19 10,12 15,14 18,9 18,21 4,21" fill="#3B8DFF" opacity="0.28" />
+    <polyline points="4,19 10,12 15,14 18,9" fill="none" stroke="#3FE0C5" strokeWidth="1.8" strokeLinejoin="miter" />
+    <polygon points="18,6.5 20.5,9 18,11.5 15.5,9" fill="#FAC775" />
+  </svg>
+);
+
+const TabLimitsIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" fill="#1a2230" stroke="#4fc3f7" strokeWidth="1.2" />
+    <line x1="6.70" y1="17.30" x2="5.64" y2="18.36" stroke="#22c55e" strokeWidth="1.6" />
+    <line x1="4.5" y1="12" x2="3" y2="12" stroke="#22c55e" strokeWidth="1.6" />
+    <line x1="6.70" y1="6.70" x2="5.64" y2="5.64" stroke="#22c55e" strokeWidth="1.6" />
+    <line x1="12" y1="4.5" x2="12" y2="3" stroke="#22c55e" strokeWidth="1.6" />
+    <line x1="17.30" y1="6.70" x2="18.36" y2="5.64" stroke="#f5c542" strokeWidth="1.6" />
+    <line x1="19.5" y1="12" x2="21" y2="12" stroke="#f5c542" strokeWidth="1.6" />
+    <line x1="17.30" y1="17.30" x2="18.36" y2="18.36" stroke="#ef4444" strokeWidth="1.6" />
+    <line x1="12" y1="12" x2="17.3" y2="6.7" stroke="#ffffff" strokeWidth="1.6" />
+    <circle cx="12" cy="12" r="1.5" fill="#ffffff" />
+  </svg>
+);
+
 const MONTHS = [
   "January","February","March","April","May","June",
   "July","August","September","October","November","December"
@@ -2006,11 +2043,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         {/* ── TABS ── */}
         <div style={{ display: "flex", gap: 0, alignItems: "flex-end", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
           {[
-            { id: "logbook",  label: "📋 LOGBOOK" },
-            { id: "summary",  label: "📊 FLIGHT SUMMARY" },
-            { id: "ftl",      label: "⏱ LIMITS & RECENCY" },
+            { id: "logbook",  icon: <TabLogbookIcon />, label: "LOGBOOK" },
+            { id: "summary",  icon: <TabSummaryIcon />, label: "FLIGHT SUMMARY" },
+            { id: "ftl",      icon: <TabLimitsIcon />,  label: "LIMITS & RECENCY" },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+              display: "flex", alignItems: "center", gap: 6,
               background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
               borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
               borderLeft: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid transparent",
@@ -2027,7 +2065,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               marginBottom: activeTab === tab.id ? "-1px" : 0,
               whiteSpace: "nowrap",
               flexShrink: 0,
-            }}>{tab.label}</button>
+            }}>{tab.icon}{tab.label}</button>
           ))}
           {activeTab === "logbook" && (
           <button
@@ -3366,7 +3404,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
-        version="v6.16"
+        version="v6.17"
       />
 
       {/* ── CLOUD NEWER BANNER ── */}
@@ -3529,7 +3567,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.16 · CAAM</span>
+        <span>eLOGBOOK v6.17 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

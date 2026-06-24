@@ -1,7 +1,80 @@
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef, useId, memo } from 'react';
 import { auth } from './firebase';
 import GoogleSignInButton from './GoogleSignInButton';
 import BrandBanner from '@brand/BrandBanner';
+
+// Brand gradient used across all four onboarding icons below
+const GRAD_STOPS = (
+  <>
+    <stop offset="0%" stopColor="#3FE0C5" />
+    <stop offset="55%" stopColor="#3B8DFF" />
+    <stop offset="100%" stopColor="#5B6BFF" />
+  </>
+);
+
+const LoginIcon = ({ size = 40 }) => {
+  const id = useId();
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="6" y1="6" x2="58" y2="58">{GRAD_STOPS}</linearGradient>
+      </defs>
+      <polygon points="14,6 50,6 58,14 58,50 50,58 14,58 6,50 6,14" fill="none" stroke={`url(#${id})`} strokeWidth="3.2" strokeLinejoin="miter" />
+      <polygon points="17,11 47,11 53,17 53,47 47,53 17,53 11,47 11,17" fill="none" stroke={`url(#${id})`} strokeWidth="2" strokeLinejoin="miter" />
+      <g transform="rotate(-45 32 32)">
+        <polygon points="19.75,43.03 45.48,32 19.75,20.98 19.75,29.55 38.13,32 19.75,34.45" fill={`url(#${id})`} />
+      </g>
+    </svg>
+  );
+};
+
+const SignupIcon = ({ size = 40 }) => {
+  const id = useId();
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="4" y1="18" x2="56" y2="44">{GRAD_STOPS}</linearGradient>
+      </defs>
+      <polygon points="8,18 40,18 42,21 44,18 52,18 56,22 56,40 52,44 44,44 42,41 40,44 8,44 4,40 4,22" fill={`url(#${id})`} />
+      <line x1="42" y1="21" x2="42" y2="41" stroke="#0a1020" strokeWidth="1.6" strokeDasharray="3,3" />
+      <line x1="9" y1="24" x2="30" y2="24" stroke="#000000" strokeWidth="2" strokeLinecap="square" />
+      <line x1="9" y1="30" x2="34" y2="30" stroke="#000000" strokeWidth="2" strokeLinecap="square" />
+      <line x1="9" y1="36" x2="26" y2="36" stroke="#000000" strokeWidth="2" strokeLinecap="square" />
+      <line x1="45" y1="25" x2="53" y2="25" stroke="#000000" strokeWidth="1.6" strokeLinecap="square" />
+      <line x1="45" y1="29" x2="51" y2="29" stroke="#000000" strokeWidth="1.6" strokeLinecap="square" />
+      <line x1="45" y1="33" x2="53" y2="33" stroke="#000000" strokeWidth="1.6" strokeLinecap="square" />
+      <line x1="45" y1="37" x2="49" y2="37" stroke="#000000" strokeWidth="1.6" strokeLinecap="square" />
+    </svg>
+  );
+};
+
+const EnvelopeIcon = ({ size = 40 }) => {
+  const id = useId();
+  return (
+    <svg width={size} height={size * 56 / 64} viewBox="0 0 64 56" aria-hidden="true">
+      <defs>
+        <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="6" y1="8" x2="58" y2="50">{GRAD_STOPS}</linearGradient>
+      </defs>
+      <polygon points="12,8 52,8 58,14 58,44 52,50 12,50 6,44 6,14" fill="none" stroke={`url(#${id})`} strokeWidth="5" strokeLinejoin="miter" />
+      <polyline points="10,16 32,32 54,16" fill="none" stroke={`url(#${id})`} strokeWidth="5" strokeLinejoin="miter" strokeLinecap="square" />
+    </svg>
+  );
+};
+
+const LogoutIcon = ({ size = 64 }) => {
+  const id = useId();
+  return (
+    <svg width={size} height={size} viewBox="66 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="74" y1="8" x2="122" y2="56">{GRAD_STOPS}</linearGradient>
+      </defs>
+      <polyline points="95,16 107,16 107,23" fill="none" stroke={`url(#${id})`} strokeWidth="2" strokeLinejoin="miter" />
+      <polyline points="107,41 107,48 95,48" fill="none" stroke={`url(#${id})`} strokeWidth="2" strokeLinejoin="miter" />
+      <path fillRule="evenodd" d="M92,11 L92,53 Q92,56 89.26,54.78 L76.74,49.22 Q74,48 74,45 L74,19 Q74,16 76.74,14.78 L89.26,9.22 Q92,8 92,11 Z M86,32 A2.2,2.2 0 1 0 86,31.9" fill={`url(#${id})`} />
+      <polygon points="95,29 108,29 108,25 118,32 108,39 108,35 95,35" fill={`url(#${id})`} />
+    </svg>
+  );
+};
 
 // Extract ScreenSignUp1 outside component to prevent recreation
 const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSignup, onGoogleAuth, onGoogleCredential, active, signupError, isLoading, goTo }) => {
@@ -153,7 +226,7 @@ const ScreenLanding = memo(({ goTo }) => (
     <div className="onb-land-logo-wrap">
       <BrandBanner subtitle="PILOT eLOGBOOK" />
     </div>
-    <div className="onb-land-ver">eLOGBOOK V6.16 · CAAM / MCAR 2016</div>
+    <div className="onb-land-ver">eLOGBOOK V6.17 · CAAM / MCAR 2016</div>
     <div className="onb-land-tag">Your personal electronic logbook.<br/>Accessible anywhere. Works offline. Sync on demand.</div>
     <div className="onb-badges">
       <span className="onb-badge onb-badge-blue">✓ CAD 1901</span>
@@ -163,12 +236,12 @@ const ScreenLanding = memo(({ goTo }) => (
     </div>
     <div className="onb-land-btns">
       <div className="onb-lbtn" onClick={() => goTo('login')}>
-        <div className="onb-lbtn-icon">🔑</div>
+        <div className="onb-lbtn-icon"><LoginIcon size={36} /></div>
         <div className="onb-lbtn-title">LOG IN</div>
         <div className="onb-lbtn-sub">Access your existing logbook</div>
       </div>
       <div className="onb-lbtn signup" onClick={() => goTo('signup1')}>
-        <div className="onb-lbtn-icon">✨</div>
+        <div className="onb-lbtn-icon"><SignupIcon size={36} /></div>
         <div className="onb-lbtn-title">SIGN UP FREE</div>
         <div className="onb-lbtn-sub">Create your pilot logbook today</div>
       </div>
@@ -266,7 +339,7 @@ const ScreenEmailVerification = memo(({ email, onResendVerification }) => {
           <div className="onb-stitle">VERIFY YOUR EMAIL</div>
           <div className="onb-ssub">We sent a verification link to your email. Click it to continue.</div>
           <div className="onb-email-box">
-            <div className="onb-email-icon">✉️</div>
+            <div className="onb-email-icon"><EnvelopeIcon size={40} /></div>
             <div className="onb-email-addr">{email || 'check-your-email@example.com'}</div>
             <div className="onb-email-desc">Click the verification link in your email to proceed. The link expires in 24 hours.</div>
           </div>
@@ -322,7 +395,7 @@ const ScreenForgotPassword = memo(({ onForgotPassword, goTo }) => {
             <>
               <div className="onb-ssub">Reset link sent. Check your inbox (and spam folder).</div>
               <div className="onb-email-box" style={{ marginTop: 16 }}>
-                <div className="onb-email-icon">✉️</div>
+                <div className="onb-email-icon"><EnvelopeIcon size={40} /></div>
                 <div className="onb-email-addr">{fpEmail}</div>
                 <div className="onb-email-desc">Click the link in the email to set a new password. The link expires in 1 hour.</div>
               </div>
@@ -413,7 +486,7 @@ const ScreenVerifyResult = memo(({ verifyAction, email, onResendVerification, go
 // Screen: Logout Confirmation
 const ScreenLogout = memo(() => (
   <div className="onb-done">
-    <div className="onb-done-icon" style={{ fontSize: 56 }}>👋</div>
+    <div className="onb-done-icon"><LogoutIcon size={64} /></div>
     <div className="onb-done-ttl" style={{ color: '#b8d6e5' }}>YOU'VE BEEN SIGNED OUT</div>
     <div className="onb-done-sub">See you next time, Captain.</div>
     <div style={{ fontSize: 11, color: '#7a9aaa', marginTop: 20, letterSpacing: '0.08em' }}>Returning to login in 3 seconds...</div>
