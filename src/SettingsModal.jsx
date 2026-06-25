@@ -104,7 +104,14 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.17", date: "June 2026", current: true,
+    v: "v6.18", date: "June 2026", current: true,
+    title: "Animated launch splash",
+    notes: [
+      "NEW: A short animated splash screen now plays on app launch — the C mark fades in, the chamfered double-line frame draws on around it, then the CLAUDEBORNE wordmark fades in, before settling into the app.",
+    ],
+  },
+  {
+    v: "v6.17", date: "June 2026", current: false,
     title: "Custom icon set replaces emoji",
     notes: [
       "NEW: Landing screen Log In / Sign Up Free tiles, the email/verification screens, and the signed-out screen now use custom brand-gradient icons (a paper plane, a boarding pass, an envelope, and a door) instead of emoji.",

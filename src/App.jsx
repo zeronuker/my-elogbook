@@ -21,6 +21,7 @@ import { doc, setDoc, getDoc, deleteDoc, collection, addDoc, query, where, getDo
 import ELogbook2026 from './ELogbook'
 import OnboardingFlow from './OnboardingFlow'
 import LoadingOverlay from './LoadingOverlay'
+import SplashScreen from '@brand/SplashScreen'
 
 // Session key used to prevent infinite reload loops from the auto-recovery safety net
 const AUTH_RECOVERY_KEY = 'elb_auth_recovery_attempted'
@@ -50,6 +51,7 @@ function App() {
       document.addEventListener('visibilitychange', _swVisibilityListener)
     },
   })
+  const [showSplash, setShowSplash] = useState(true)
   const [user, setUser] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(true)
   const [profileResolved, setProfileResolved] = useState(false)
@@ -643,13 +645,21 @@ function App() {
     await deleteUser(user)
   }
 
+  const splash = showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />
+
   if (authLoading || !profileResolved) {
-    return <div style={{ background: '#0a0d12', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Courier New' }}>Loading...</div>
+    return (
+      <>
+        {splash}
+        <div style={{ background: '#0a0d12', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Courier New' }}>Loading...</div>
+      </>
+    )
   }
 
   if (showOnboarding || showLogoutConfirm || showAccountDeleted || verifyAction) {
     return (
       <>
+        {splash}
         <OnboardingFlow
           user={user}
           onSignup={handleSignup}
@@ -675,6 +685,7 @@ function App() {
 
   return (
     <>
+      {splash}
       {!storageAvailable && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
