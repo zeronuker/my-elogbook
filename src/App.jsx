@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { auth, db } from './firebase'
 import {
@@ -52,6 +52,7 @@ function App() {
     },
   })
   const [showSplash, setShowSplash] = useState(true)
+  const onSplashFinish = useCallback(() => setShowSplash(false), [])
   const [user, setUser] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(true)
   const [profileResolved, setProfileResolved] = useState(false)
@@ -645,7 +646,7 @@ function App() {
     await deleteUser(user)
   }
 
-  const splash = showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />
+  const splash = showSplash && <SplashScreen onFinish={onSplashFinish} />
 
   if (authLoading || !profileResolved) {
     return (
