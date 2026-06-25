@@ -7,6 +7,7 @@ import { signOut } from "firebase/auth";
 import { doc, setDoc, getDoc, addDoc, collection } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
+import RouteMapModal from "./RouteMapModal";
 import HowToGuideModal from "./HowToGuideModal";
 import FeedbackModal from "./FeedbackModal";
 import BrandBanner from "@brand/BrandBanner";
@@ -629,6 +630,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const hiddenColsToastTimerRef = useRef(null);
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
+  const [routeMapOpen, setRouteMapOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
@@ -1962,6 +1964,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   <line x1="1" y1="16" x2="8" y2="16"/>
                 </svg>
               </button>
+              {/* Route Map */}
+              <button onClick={() => setRouteMapOpen(true)} title="Route map" style={iconBtnStyle}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/>
+                  <path d="M8 2v16"/>
+                  <path d="M16 6v16"/>
+                </svg>
+              </button>
               {/* Settings */}
               <button
                 onClick={() => { setSettingsInitialTab(null); setSettingsOpen(true); }}
@@ -2558,8 +2568,18 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         {activeTab === "summary" && (
           <div>
             <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 13, color: "#4fc3f7", letterSpacing: "0.15em", marginBottom: 16 }}>
-                {selectedYear} ANNUAL OVERVIEW — ALL MONTHS
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <div style={{ fontSize: 13, color: "#4fc3f7", letterSpacing: "0.15em" }}>
+                  {selectedYear} ANNUAL OVERVIEW — ALL MONTHS
+                </div>
+                <button
+                  onClick={() => setRouteMapOpen(true)}
+                  style={{
+                    background: "transparent", border: "1px solid #1e3a5f", color: "#4fc3f7",
+                    fontSize: 11, letterSpacing: "0.08em", padding: "5px 12px", cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >VIEW ROUTE MAP →</button>
               </div>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 800 }}>
@@ -3392,6 +3412,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         user={user}
         onImport={handleImport}
         computeFlightTimes={(row, year, monthIdx) => calcFlightTimes(row, settings.dayNightMethod, year, monthIdx)}
+      />
+
+      {/* ── ROUTE MAP MODAL ── */}
+      <RouteMapModal
+        open={routeMapOpen}
+        onClose={() => setRouteMapOpen(false)}
+        monthData={data}
       />
 
       {/* ── FEEDBACK MODAL ── */}
