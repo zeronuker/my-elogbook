@@ -3432,7 +3432,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
-        version="v6.18"
+        version="v6.19"
       />
 
       {/* ── CLOUD NEWER BANNER ── */}
@@ -3595,7 +3595,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.18 · CAAM</span>
+        <span>eLOGBOOK v6.19 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

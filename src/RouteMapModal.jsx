@@ -18,8 +18,8 @@ const THEME = {
 const MAP_OCEAN = "#060a10";
 const MAP_LAND_FILL = "#16263b";
 const MAP_LAND_STROKE = "#2a4a6a";
-const ROUTE_COLOR_DEP = [79, 195, 247];  // #4fc3f7 accent blue — departure end
-const ROUTE_COLOR_ARR = [245, 197, 66];  // #f5c542 amber (existing DAY column color) — arrival end
+const ROUTE_COLOR_DEP = [236, 72, 153];  // #ec4899 magenta — departure end
+const ROUTE_COLOR_ARR = [250, 204, 21];  // #facc15 yellow — arrival end
 
 const BASEMAPS = {
   vector: { label: "VECTOR (NO WATERMARK)", type: "vector" },
@@ -33,6 +33,41 @@ const BASEMAPS = {
     url: "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
     maxZoom: 20, attribution: "© Stadia Maps, © OpenMapTiles, © OpenStreetMap" },
 };
+
+// Leaflet draws straight pixel lines between consecutive ring points — it
+// doesn't know a ring crosses the antimeridian. Natural Earth's land-110m
+// has a few rings that do (Russia's Chukotka peninsula, Antarctica's wrap),
+// which otherwise render as a long straight band cutting across the map.
+// Unwrapping keeps each ring's longitudes continuous (e.g. 179 -> 181
+// instead of 179 -> -179) so Leaflet draws the true shape instead of a cut.
+function unwrapAntimeridian(geojson) {
+  const unwrapRing = ring => {
+    let prevLon = ring[0][0];
+    const unwrapped = ring.map(([lon, lat], i) => {
+      if (i === 0) return [lon, lat];
+      let d = lon - prevLon;
+      while (d > 180) d -= 360;
+      while (d < -180) d += 360;
+      prevLon += d;
+      return [prevLon, lat];
+    });
+    // A single crossing shifts the *rest* of the ring by a full 360°, even
+    // though the ring as a whole doesn't need it (e.g. Eurasia's coastline
+    // touches the antimeridian once near Siberia, then the unwrap carries
+    // that -360 offset through the rest of Europe/Asia). Re-center the whole
+    // ring back onto its natural range so it lands where it actually is.
+    const avgLon = unwrapped.reduce((s, p) => s + p[0], 0) / unwrapped.length;
+    const shift = Math.round(avgLon / 360) * 360;
+    return shift ? unwrapped.map(([lon, lat]) => [lon - shift, lat]) : unwrapped;
+  };
+  geojson.features.forEach(f => {
+    const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+    f.geometry.coordinates = f.geometry.type === "Polygon"
+      ? polys[0].map(unwrapRing)
+      : polys.map(rings => rings.map(unwrapRing));
+  });
+  return geojson;
+}
 
 function lerpColor(t) {
   const r = Math.round(ROUTE_COLOR_DEP[0] + (ROUTE_COLOR_ARR[0] - ROUTE_COLOR_DEP[0]) * t);
@@ -113,8 +148,14 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   const [dateTo, setDateTo] = useState("");
   const [basemap, setBasemap] = useState("vector");
   const [exporting, setExporting] = useState(false);
-  const [sectorCount, setSectorCount] = useState(0);
-  const [routeCount, setRouteCount] = useState(0);
+  const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 520px)").matches);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 520px)");
+    const handler = e => setIsNarrow(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -136,8 +177,16 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   // itself (tiles vs. vector outline) is handled by the effect below.
   useEffect(() => {
     if (!open || !mapElRef.current || mapRef.current) return;
-    const map = L.map(mapElRef.current, { worldCopyJump: true, attributionControl: false }).setView([20, 0], 2);
+    // preferCanvas: html2canvas (used for PNG export) can't reliably capture
+    // Leaflet's default SVG-rendered routes/markers — they silently vanish
+    // from the exported image. Canvas-rendered paths are a real bitmap, so
+    // html2canvas captures them correctly.
+    const map = L.map(mapElRef.current, { worldCopyJump: true, attributionControl: false, preferCanvas: true }).setView([20, 0], 2);
     mapRef.current = map;
+    // Dedicated pane below the default overlayPane (where routes/markers
+    // live) so the basemap can never end up drawn on top of them, no
+    // matter what order layers get added/swapped in.
+    map.createPane("basePane").style.zIndex = 200;
 
     return () => {
       if (mapRef.current) {
@@ -161,12 +210,13 @@ export default function RouteMapModal({ open, onClose, monthData }) {
 
     const cfg = BASEMAPS[basemap];
     if (cfg.type === "vector") {
-      const land = feature(landTopology, landTopology.objects.land);
+      const land = unwrapAntimeridian(feature(landTopology, landTopology.objects.land));
       baseLayerRef.current = L.geoJSON(land, {
+        pane: "basePane",
         style: { fillColor: MAP_LAND_FILL, fillOpacity: 1, color: MAP_LAND_STROKE, weight: 0.6 },
       }).addTo(map);
     } else {
-      baseLayerRef.current = L.tileLayer(cfg.url, { subdomains: cfg.subdomains || "abc", maxZoom: cfg.maxZoom }).addTo(map);
+      baseLayerRef.current = L.tileLayer(cfg.url, { pane: "basePane", subdomains: cfg.subdomains || "abc", maxZoom: cfg.maxZoom }).addTo(map);
       attributionRef.current = L.control.attribution({ prefix: false }).addTo(map);
       attributionRef.current.addAttribution(cfg.attribution);
     }
@@ -203,7 +253,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
       const pts = greatCirclePoints(dep.lat, dep.lon, arr.lat, arr.lon);
       for (let i = 0; i < pts.length - 1; i++) {
         L.polyline([pts[i], pts[i + 1]], {
-          color: lerpColor(i / (pts.length - 1)), weight: 2, opacity: 0.85,
+          color: lerpColor(i / (pts.length - 1)), weight: 2, opacity: 1, lineCap: "butt",
         }).addTo(map);
       }
     });
@@ -216,9 +266,6 @@ export default function RouteMapModal({ open, onClose, monthData }) {
 
     const allPts = routes.flatMap(r => [[r.dep.lat, r.dep.lon], [r.arr.lat, r.arr.lon]]);
     if (allPts.length) map.fitBounds(allPts, { padding: [40, 40] });
-
-    setSectorCount(sectors.length);
-    setRouteCount(routes.length);
   }, [open, dateFrom, dateTo, monthData]);
 
   if (!open) return null;
@@ -251,19 +298,27 @@ export default function RouteMapModal({ open, onClose, monthData }) {
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: THEME.textMuted, cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
         </div>
 
-        <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 16px", borderBottom: `1px solid ${THEME.border}`, flexWrap: "wrap" }}>
-          <label style={{ color: THEME.textMuted, fontSize: 11 }}>FROM</label>
-          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={inputStyle} />
-          <label style={{ color: THEME.textMuted, fontSize: 11 }}>TO</label>
-          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={inputStyle} />
-          <label style={{ color: THEME.textMuted, fontSize: 11 }}>MAP</label>
-          <select value={basemap} onChange={e => setBasemap(e.target.value)} style={inputStyle}>
-            {Object.entries(BASEMAPS).map(([key, cfg]) => (
-              <option key={key} value={key}>{cfg.label}</option>
-            ))}
-          </select>
-          <span style={{ color: THEME.textMuted, fontSize: 11 }}>{sectorCount} SECTORS · {routeCount} UNIQUE ROUTES</span>
-          <button onClick={handleExportPng} disabled={exporting} style={{ marginLeft: "auto", ...btnStyle, opacity: exporting ? 0.5 : 1 }}>
+        <div style={{
+          display: "flex", flexDirection: isNarrow ? "column" : "row", alignItems: isNarrow ? "stretch" : "center",
+          gap: isNarrow ? 8 : 12, padding: "10px 16px", borderBottom: `1px solid ${THEME.border}`, flexWrap: isNarrow ? "nowrap" : "wrap",
+        }}>
+          <div style={fieldRowStyle(isNarrow)}>
+            <label style={labelStyle(isNarrow)}>FROM</label>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={isNarrow ? { ...inputStyle, flex: 1 } : inputStyle} />
+          </div>
+          <div style={fieldRowStyle(isNarrow)}>
+            <label style={labelStyle(isNarrow)}>TO</label>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={isNarrow ? { ...inputStyle, flex: 1 } : inputStyle} />
+          </div>
+          <div style={fieldRowStyle(isNarrow)}>
+            <label style={labelStyle(isNarrow)}>MAP</label>
+            <select value={basemap} onChange={e => setBasemap(e.target.value)} style={isNarrow ? { ...inputStyle, flex: 1 } : inputStyle}>
+              {Object.entries(BASEMAPS).map(([key, cfg]) => (
+                <option key={key} value={key}>{cfg.label}</option>
+              ))}
+            </select>
+          </div>
+          <button onClick={handleExportPng} disabled={exporting} style={{ marginLeft: isNarrow ? 0 : "auto", ...btnStyle, opacity: exporting ? 0.5 : 1, whiteSpace: "nowrap" }}>
             {exporting ? "EXPORTING…" : "EXPORT PNG"}
           </button>
         </div>
@@ -273,6 +328,14 @@ export default function RouteMapModal({ open, onClose, monthData }) {
     </div>
   );
 }
+
+const fieldRowStyle = isNarrow => isNarrow
+  ? { display: "flex", alignItems: "center", gap: 8 }
+  : { display: "flex", alignItems: "center", gap: 6 };
+
+const labelStyle = isNarrow => ({
+  color: "#b8d6e5", fontSize: 11, width: isNarrow ? 36 : "auto", flexShrink: 0,
+});
 
 const inputStyle = {
   background: THEME.bgInput, border: `1px solid ${THEME.border}`, color: THEME.text,

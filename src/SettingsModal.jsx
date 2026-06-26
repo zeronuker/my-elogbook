@@ -104,7 +104,16 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.18", date: "June 2026", current: true,
+    v: "v6.19", date: "June 2026", current: true,
+    title: "Route map",
+    notes: [
+      "NEW: Route Map — plot every sector flown in a chosen date range on a world map, with a colour-graded great-circle line (magenta → yellow) for each route and PNG export to share where you've flown. Open it from the toolbar or the Flight Summary tab.",
+      "NEW: Choose your basemap — a watermark-free vector world outline (default), CARTO Dark, Esri Satellite, or Stadia Dark.",
+      "IMP: A route flown more than once in the selected period is drawn once, not duplicated per sector.",
+    ],
+  },
+  {
+    v: "v6.18", date: "June 2026", current: false,
     title: "Animated launch splash",
     notes: [
       "NEW: A short animated splash screen now plays on app launch — the C mark fades in, the chamfered double-line frame draws on around it, then the CLAUDEBORNE wordmark fades in, before settling into the app.",
