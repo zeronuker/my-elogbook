@@ -147,6 +147,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [basemap, setBasemap] = useState("vector");
+  const [exportFormat, setExportFormat] = useState("png");
   const [exporting, setExporting] = useState(false);
   const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 520px)").matches);
 
@@ -273,10 +274,11 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   const handleExportPng = async () => {
     setExporting(true);
     try {
-      const canvas = await html2canvas(mapElRef.current, { useCORS: true });
+      const canvas = await html2canvas(mapElRef.current, { useCORS: true, scale: 2 });
       const link = document.createElement("a");
-      link.download = `route-map-${dateFrom}-to-${dateTo}.png`;
-      link.href = canvas.toDataURL("image/png");
+      const isJpg = exportFormat === "jpg";
+      link.download = `route-map-${dateFrom}-to-${dateTo}.${isJpg ? "jpg" : "png"}`;
+      link.href = isJpg ? canvas.toDataURL("image/jpeg", 0.92) : canvas.toDataURL("image/png");
       link.click();
     } finally {
       setExporting(false);
@@ -318,9 +320,15 @@ export default function RouteMapModal({ open, onClose, monthData }) {
               ))}
             </select>
           </div>
-          <button onClick={handleExportPng} disabled={exporting} style={{ marginLeft: isNarrow ? 0 : "auto", ...btnStyle, opacity: exporting ? 0.5 : 1, whiteSpace: "nowrap" }}>
-            {exporting ? "EXPORTING…" : "EXPORT PNG"}
-          </button>
+          <div style={{ display: "flex", gap: 8, marginLeft: isNarrow ? 0 : "auto" }}>
+            <select value={exportFormat} onChange={e => setExportFormat(e.target.value)} style={isNarrow ? { ...inputStyle, flex: 1 } : inputStyle}>
+              <option value="png">PNG</option>
+              <option value="jpg">JPG</option>
+            </select>
+            <button onClick={handleExportPng} disabled={exporting} style={{ ...btnStyle, opacity: exporting ? 0.5 : 1, whiteSpace: "nowrap" }}>
+              {exporting ? "EXPORTING…" : "EXPORT"}
+            </button>
+          </div>
         </div>
 
         <div ref={mapElRef} style={{ flex: 1, background: MAP_OCEAN }} />
