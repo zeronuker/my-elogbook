@@ -779,6 +779,12 @@ const SECTIONS = [
           <li><strong>☀ Day / ☾ Night columns</strong> — auto-calculated; broken into P1, P1 U/S, and P2</li>
           <li><strong>Total</strong> — auto-calculated sum of all day and night columns</li>
         </ul>
+        <h4>Navigating &amp; managing rows</h4>
+        <ul>
+          <li>Press <strong>Tab</strong> or <strong>Enter</strong> to move to the next cell</li>
+          <li>Tap the <strong>row number</strong> to open remarks &amp; the AUTOLAND checkbox — colour shows state: grey none, gold remarks, purple autoland, magenta both</li>
+          <li>Use <strong>✕</strong> on any row to delete it</li>
+        </ul>
         <h4>Holder Operating Capacity (H.O.C)</h4>
         <p>Your role determines which column receives the flight hours. The badge colour changes with the selection.</p>
         <HOCMockup />

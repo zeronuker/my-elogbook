@@ -34,6 +34,28 @@ const SW_UPDATE_INTERVAL_MS = 30 * 60 * 1000 // 30 minutes
 let _swIntervalId = null
 let _swVisibilityListener = null
 
+// ponytail: dev-only login bypass so `npm run dev` always drops straight into
+// the logbook. import.meta.env.DEV is statically false in production builds,
+// so this branch is dead-code-eliminated and never ships.
+//
+// Append ?reallogin=1 once to switch to the real login/signup/onboarding/
+// forgot-password/delete-account flow against Firebase — the choice sticks
+// (via localStorage) across reloads and new sessions. Append ?devbypass=1
+// to flip back to the instant-bypass logbook view.
+const DEV_REALLOGIN_KEY = 'elb_dev_reallogin'
+if (import.meta.env.DEV) {
+  const params = new URLSearchParams(window.location.search)
+  if (params.has('reallogin')) localStorage.setItem(DEV_REALLOGIN_KEY, '1')
+  if (params.has('devbypass')) localStorage.removeItem(DEV_REALLOGIN_KEY)
+}
+const DEV_BYPASS = import.meta.env.DEV && localStorage.getItem(DEV_REALLOGIN_KEY) !== '1'
+const DEV_MOCK_USER = {
+  uid: 'dev-preview',
+  email: 'dev@preview.local',
+  emailVerified: true,
+  providerData: [{ providerId: 'password' }],
+}
+
 function App() {
   // Without an explicit poll, the browser only checks for a new SW on a full
   // navigation (~once/24h) — so an installed PWA resumed from the background
@@ -160,6 +182,11 @@ function App() {
 
   // Listen to auth state
   useEffect(() => {
+    if (DEV_BYPASS) {
+      setUser(DEV_MOCK_USER)
+      setAuthLoading(false)
+      return
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       // Detect the user→null transition. It's an account deletion if a delete
       // handler set the flag just before deleteUser(); otherwise it's a logout.
@@ -225,6 +252,12 @@ function App() {
   // Check profile and set onboarding state
   useEffect(() => {
     if (authLoading) return  // wait until auth state is known
+
+    if (DEV_BYPASS) {
+      setShowOnboarding(false)
+      setProfileResolved(true)
+      return
+    }
 
     if (!user) {
       setShowOnboarding(true)

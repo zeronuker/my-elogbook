@@ -110,6 +110,10 @@ const CHANGELOG = [
       "NEW: Route Map — plot every sector flown in a chosen date range on a world map, with a colour-graded great-circle line (magenta → yellow) for each route and PNG export to share where you've flown. Open it from the toolbar or the Flight Summary tab.",
       "NEW: Choose your basemap — a watermark-free vector world outline (default), CARTO Dark, Esri Satellite, or Stadia Dark.",
       "IMP: A route flown more than once in the selected period is drawn once, not duplicated per sector.",
+      "IMP: Removed the duplicate \"View Route Map\" button from the Flight Summary tab — open the route map from the toolbar icon.",
+      "IMP: Route map PNG/JPG export now renders at 4x resolution (previously 2x) for a sharper image.",
+      "FIX: Stadia Dark basemap now loads correctly — no API key required.",
+      "IMP: Removed the Logbook tab's info button — its data-entry tips now live in the How-To Guide (Settings → Misc → How-To Guide → The Logbook).",
     ],
   },
   {

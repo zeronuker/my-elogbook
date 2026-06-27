@@ -443,12 +443,6 @@ const FTL_POPUPS = {
     body:  `A pilot qualified for <strong style="color:#c8d6e5">CAT III autoland operations</strong> shall maintain currency by performing <span style="color:#4fc3f7">at least 3 autoland approaches and landings within the preceding 6 months</span>.<br><br>Autoland operations may be performed on any approved aircraft type or in an approved Full Flight Simulator (FFS). Simulator autolands count toward currency if conducted in an approved FFS with a valid approval letter.`,
     note:  `Check the <span style="color:#4fc3f7">AUTOLAND checkbox</span> in the remarks window to mark sectors where a coupled autoland to touchdown was performed. Track autoland recency for all aircraft types combined — a 6-month rolling window with minimum 3 entries required.`,
   },
-  "logbook-guide": {
-    para:  "LOGBOOK GUIDE",
-    title: "DATA ENTRY & NAVIGATION",
-    body:  `<strong style="color:#c8d6e5">Clicking any cell</strong> opens it for editing. Press <span style="color:#4fc3f7">Tab</span> or <span style="color:#4fc3f7">Enter</span> to move to the next cell.<br><br><strong style="color:#c8d6e5">Date</strong> — enter the day number only (e.g. <span style="color:#4fc3f7">15</span>).<br><br><strong style="color:#c8d6e5">Time fields</strong> — accept <span style="color:#4fc3f7">HH:MM</span> (e.g. 02:30) or <span style="color:#4fc3f7">HHMM</span> (e.g. 0230) — the colon is added automatically.<br><br><strong style="color:#c8d6e5">TOTAL</strong> — auto-calculated from Day + Night columns. You cannot edit it directly.<br><br><strong style="color:#c8d6e5">Remarks &amp; Autoland</strong> — tap the <span style="color:#4fc3f7">row number</span> (far left) to open the remarks window for that sector and tick the AUTOLAND checkbox. The row number is colour-coded by state: <span style="color:#6f93b8">grey</span> none, <span style="color:#f5c542">gold</span> remarks, <span style="color:#a855f7">purple</span> autoland, <span style="color:#ec4899">magenta</span> both.<br><br><strong style="color:#c8d6e5">Rows</strong> — use the <span style="color:#4fc3f7">✕</span> button on any row to delete it. Use <span style="color:#4fc3f7">+ ADD SECTOR</span> to append a new row. Rows Per Page in Settings controls how many empty rows a new month starts with.`,
-    note:  null,
-  },
 };
 
 // ─── Theme CSS variable injection (v6 — aliases --elb-* to --cb-* tokens) ─────
@@ -606,13 +600,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   };
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
-  const [isMobileTablet, setIsMobileTablet] = useState(() => window.matchMedia("(max-width: 1024px)").matches);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 1024px)");
-    const handler = (e) => setIsMobileTablet(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const settingsRef = useRef(DEFAULT_SETTINGS); // always mirrors latest settings for use in async closures
   const dataRef = useRef(initialData()); // initialised to match data state — prevents {} being written if a save fires before first effect run
@@ -2078,24 +2065,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               flexShrink: 0,
             }}>{tab.icon}{tab.label}</button>
           ))}
-          {activeTab === "logbook" && (
-          <button
-            onClick={() => setActivePopup("logbook-guide")}
-            title="Logbook guide"
-            style={{
-              marginLeft: "auto", marginRight: isMobileTablet ? 20 : 72,
-              alignSelf: "center",
-              width: 16, height: 16, borderRadius: "50%",
-              background: "transparent", border: "1px solid var(--elb-border, #1e3a55)",
-              color: "var(--elb-txt-muted, #2d5070)", fontFamily: "Georgia,serif",
-              fontStyle: "italic", fontWeight: 700, fontSize: 12,
-              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-              padding: 0, lineHeight: 1, flexShrink: 0,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-border, #1e3a55)"; e.currentTarget.style.color = "var(--elb-txt-muted, #2d5070)"; }}
-          >i</button>
-          )}
         </div>
 
       {/* ── CONTENT ── */}
@@ -2568,18 +2537,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         {activeTab === "summary" && (
           <div>
             <div style={{ marginBottom: 24 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 13, color: "#4fc3f7", letterSpacing: "0.15em" }}>
                   {selectedYear} ANNUAL OVERVIEW — ALL MONTHS
                 </div>
-                <button
-                  onClick={() => setRouteMapOpen(true)}
-                  style={{
-                    background: "transparent", border: "1px solid #1e3a5f", color: "#4fc3f7",
-                    fontSize: 11, letterSpacing: "0.08em", padding: "5px 12px", cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >VIEW ROUTE MAP →</button>
               </div>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 800 }}>

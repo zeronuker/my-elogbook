@@ -29,7 +29,7 @@ const BASEMAPS = {
   esri:   { label: "SATELLITE (ESRI)", type: "tile",
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     maxZoom: 19, attribution: "© Esri" },
-  stadia: { label: "STADIA DARK (needs API key)", type: "tile",
+  stadia: { label: "STADIA DARK", type: "tile",
     url: "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
     maxZoom: 20, attribution: "© Stadia Maps, © OpenMapTiles, © OpenStreetMap" },
 };
@@ -274,7 +274,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   const handleExportPng = async () => {
     setExporting(true);
     try {
-      const canvas = await html2canvas(mapElRef.current, { useCORS: true, scale: 2 });
+      const canvas = await html2canvas(mapElRef.current, { useCORS: true, scale: 4 });
       const link = document.createElement("a");
       const isJpg = exportFormat === "jpg";
       link.download = `route-map-${dateFrom}-to-${dateTo}.${isJpg ? "jpg" : "png"}`;
