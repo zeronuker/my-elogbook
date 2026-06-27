@@ -36,6 +36,7 @@ graphify-out/
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+.claude/
 .idea
 .DS_Store
 *.suo
