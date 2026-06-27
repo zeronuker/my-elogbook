@@ -22,16 +22,16 @@ const ROUTE_COLOR_DEP = [236, 72, 153];  // #ec4899 magenta — departure end
 const ROUTE_COLOR_ARR = [250, 204, 21];  // #facc15 yellow — arrival end
 
 const BASEMAPS = {
-  vector: { label: "VECTOR (NO WATERMARK)", type: "vector" },
   carto:  { label: "CARTO DARK", type: "tile",
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
     subdomains: "abcd", maxZoom: 19, attribution: "© OpenStreetMap, © CARTO" },
-  esri:   { label: "SATELLITE (ESRI)", type: "tile",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    maxZoom: 19, attribution: "© Esri" },
   stadia: { label: "STADIA DARK", type: "tile",
     url: "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
     maxZoom: 20, attribution: "© Stadia Maps, © OpenMapTiles, © OpenStreetMap" },
+  esri:   { label: "SATELLITE (ESRI)", type: "tile",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    maxZoom: 19, attribution: "© Esri" },
+  vector: { label: "VECTOR (NO WATERMARK)", type: "vector" },
 };
 
 // Leaflet draws straight pixel lines between consecutive ring points — it
@@ -146,7 +146,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   const attributionRef = useRef(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [basemap, setBasemap] = useState("vector");
+  const [basemap, setBasemap] = useState("carto");
   const [exportFormat, setExportFormat] = useState("png");
   const [exporting, setExporting] = useState(false);
   const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 520px)").matches);
