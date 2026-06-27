@@ -581,6 +581,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // ── PWA update prompt + manual check ──
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateChecked, setUpdateChecked] = useState(false);
+  const [updateDismissed, setUpdateDismissed] = useState(false);
 
   const checkForUpdate = async () => {
     setCheckingUpdate(true);
@@ -3492,38 +3493,67 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
       {/* ── PWA UPDATE PROMPT ── */}
       {/* Only shown when a new service worker is waiting AND saves are not pending */}
-      {needRefresh && saveStatus !== "saving" && (
-        <div style={{
-          position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)",
-          background: "var(--cb-surface-1, #141a2e)",
-          border: "1px solid var(--elb-acc, #3FE0C5)", borderRadius: 6,
-          padding: "12px 18px", zIndex: 5000,
-          display: "flex", alignItems: "center", gap: 14,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
-          fontFamily: "var(--elb-font, 'Courier New', monospace)",
-          maxWidth: "calc(100vw - 40px)",
-        }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "var(--elb-acc, #3FE0C5)", marginBottom: 2 }}>
-              UPDATE AVAILABLE
+      {needRefresh && saveStatus !== "saving" && !updateDismissed && (
+        <>
+          <div style={{
+            position: "fixed", inset: 0,
+            background: "rgba(0,0,0,0.55)",
+            backdropFilter: "blur(3px)",
+            zIndex: 5000,
+          }} />
+          <div style={{
+            position: "fixed",
+            top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 5001,
+            width: "min(320px, calc(100vw - 48px))",
+            background: "var(--cb-surface-1, #141a2e)",
+            border: "1px solid rgba(63,224,197,0.3)",
+            borderRadius: 10,
+            boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
+            padding: "24px 22px 20px",
+            fontFamily: "var(--elb-font, 'Courier New', monospace)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              <span style={{ fontSize: 26, lineHeight: 1 }}>⬆</span>
+              <div>
+                <div style={{ fontSize: 10, letterSpacing: "0.18em", color: "var(--elb-acc, #3FE0C5)", marginBottom: 2 }}>
+                  UPDATE AVAILABLE
+                </div>
+                <div style={{ fontSize: 8, letterSpacing: "0.12em", color: "var(--cb-ink-dim, #7c87a3)" }}>
+                  C·B ELOGBOOK
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: 11, color: "var(--cb-ink-dim, #7c87a3)", letterSpacing: "0.04em" }}>
-              A new version of C·B eLogBook is ready
+            <div style={{ fontSize: 13, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.6, marginBottom: 20 }}>
+              A new version is ready to install. Update now for the latest features and fixes, or continue and update later.
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => setUpdateDismissed(true)}
+                style={{
+                  flex: 1, background: "transparent",
+                  border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 6,
+                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 10, letterSpacing: "0.14em", padding: "10px 0", cursor: "pointer",
+                }}
+              >
+                LATER
+              </button>
+              <button
+                onClick={() => updateServiceWorker(true)}
+                style={{
+                  flex: 2, background: "rgba(63,224,197,0.15)",
+                  border: "1px solid rgba(63,224,197,0.5)", borderRadius: 6,
+                  color: "var(--elb-acc, #3FE0C5)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", padding: "10px 0", cursor: "pointer",
+                }}
+              >
+                UPDATE NOW
+              </button>
             </div>
           </div>
-          <button
-            onClick={() => updateServiceWorker(true)}
-            style={{
-              background: "var(--elb-acc, #3FE0C5)", color: "#0a0f1e",
-              border: "none", borderRadius: 4,
-              fontFamily: "var(--elb-font, 'Courier New', monospace)",
-              fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
-              padding: "6px 14px", cursor: "pointer", whiteSpace: "nowrap",
-            }}
-          >
-            UPDATE
-          </button>
-        </div>
+        </>
       )}
 
       {/* ── MIGRATION OVERLAY ── */}
