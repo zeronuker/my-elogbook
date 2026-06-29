@@ -15,6 +15,9 @@ const THEME = {
   textMuted: "#b8d6e5",
 };
 
+const MINT = "#3FE0C5";
+const FONT_DISPLAY = "'Tourney', system-ui, sans-serif";
+
 const MAP_OCEAN = "#060a10";
 const MAP_LAND_FILL = "#16263b";
 const MAP_LAND_STROKE = "#2a4a6a";
@@ -288,16 +291,27 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}
     >
       <div style={{
-        background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8,
+        background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 0, boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
         width: "min(920px, 92vw)", height: "min(660px, 88vh)",
         display: "flex", flexDirection: "column", fontFamily: "'Courier New', monospace", overflow: "hidden",
       }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: `1px solid ${THEME.border}` }}>
-          <span style={{ color: THEME.accent, fontSize: 13, letterSpacing: "0.12em" }}>ROUTE MAP</span>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", color: THEME.textMuted, cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
+        <div style={{
+          display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "14px 16px",
+          borderBottom: `1px solid ${THEME.border}`, background: "linear-gradient(180deg, rgba(63,224,197,0.04), transparent)",
+        }}>
+          <div>
+            <div style={{ color: MINT, fontSize: 10, letterSpacing: "0.2em", marginBottom: 4, textTransform: "uppercase" }}>// route map</div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 17, letterSpacing: "0.03em", color: THEME.text }}>Route map</div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{ background: "transparent", border: `1px solid ${THEME.border}`, color: THEME.textMuted, cursor: "pointer", width: 28, height: 28, fontSize: 16, lineHeight: 1, transition: "color 0.12s, border-color 0.12s" }}
+            onMouseEnter={e => { e.currentTarget.style.color = MINT; e.currentTarget.style.borderColor = MINT; }}
+            onMouseLeave={e => { e.currentTarget.style.color = THEME.textMuted; e.currentTarget.style.borderColor = THEME.border; }}
+          >×</button>
         </div>
 
         <div style={{
@@ -346,11 +360,11 @@ const labelStyle = isNarrow => ({
 });
 
 const inputStyle = {
-  background: THEME.bgInput, border: `1px solid ${THEME.border}`, color: THEME.text,
+  background: THEME.bgInput, border: `1px solid ${THEME.border}`, color: THEME.text, borderRadius: 0,
   fontSize: 12, padding: "4px 8px", fontFamily: "inherit",
 };
 
 const btnStyle = {
-  background: "transparent", border: `1px solid ${THEME.accent}`, color: THEME.accent,
-  fontSize: 11, letterSpacing: "0.08em", padding: "5px 12px", cursor: "pointer",
+  backgroundImage: `linear-gradient(135deg, ${MINT}, #3B8DFF)`, border: 0, borderRadius: 0, color: "#0a0d12",
+  fontSize: 11, letterSpacing: "0.08em", padding: "5px 12px", cursor: "pointer", fontWeight: 700, textTransform: "uppercase",
 };

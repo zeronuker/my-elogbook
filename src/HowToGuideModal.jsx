@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const A   = "var(--elb-accent, #3FE0C5)";
+const MINT = "#3FE0C5"; // fixed brand mint for the modal shell — matches Settings modal, not the user-customizable accent
+const FONT_DISPLAY = "'Tourney', system-ui, sans-serif";
 const BG  = "#060b14";
 const BG2 = "#0a0f1a";
 const BDR = "#1e3a5f";
@@ -983,20 +985,28 @@ export default function HowToGuideModal({ open, onClose, version }) {
 
   return (
     <div
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 2200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)", zIndex: 2200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{ background: "#0a0d12", border: `1px solid ${BDR}`, borderRadius: 8, width: "100%", maxWidth: 860, height: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ background: "#0a0d12", border: `1px solid ${BDR}`, borderRadius: 0, boxShadow: "0 30px 80px rgba(0,0,0,0.5)", width: "100%", maxWidth: 860, height: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: `1px solid ${BDR}`, flexShrink: 0 }}>
+        <div style={{
+          display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "14px 20px",
+          borderBottom: `1px solid ${BDR}`, background: "linear-gradient(180deg, rgba(63,224,197,0.04), transparent)", flexShrink: 0,
+        }}>
           <div>
-            <div style={{ fontSize: 11, letterSpacing: "0.16em", color: A, fontWeight: 700, marginBottom: 2, fontFamily: F }}>HOW-TO GUIDE</div>
-            <div style={{ fontSize: 10, color: DIM, letterSpacing: "0.08em", fontFamily: F }}>
-              ClaudeBorne eLogBook{vLabel ? ` · ${vLabel}` : ""}
+            <div style={{ fontSize: 10, letterSpacing: "0.2em", color: MINT, marginBottom: 4, fontFamily: F, textTransform: "uppercase" }}>
+              // guide{vLabel ? ` · ${vLabel}` : ""}
             </div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 17, letterSpacing: "0.03em", color: "#e2eef5" }}>How-to guide</div>
           </div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", color: DIM, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: 4 }}>✕</button>
+          <button
+            onClick={onClose}
+            style={{ background: "transparent", border: `1px solid ${BDR}`, color: DIM, cursor: "pointer", width: 28, height: 28, fontSize: 16, lineHeight: 1, transition: "color 0.12s, border-color 0.12s" }}
+            onMouseEnter={e => { e.currentTarget.style.color = MINT; e.currentTarget.style.borderColor = MINT; }}
+            onMouseLeave={e => { e.currentTarget.style.color = DIM; e.currentTarget.style.borderColor = BDR; }}
+          >✕</button>
         </div>
 
         {/* Body */}
@@ -1040,12 +1050,12 @@ export default function HowToGuideModal({ open, onClose, version }) {
           <button
             onClick={() => setActive(p => Math.max(0, p - 1))}
             disabled={active === 0}
-            style={{ background: "transparent", border: `1px solid ${BDR}`, borderRadius: 4, color: active === 0 ? BDR : DIM, padding: "5px 14px", cursor: active === 0 ? "default" : "pointer", fontSize: 11, letterSpacing: "0.08em", fontFamily: F }}
+            style={{ background: "transparent", border: `1px solid ${BDR}`, borderRadius: 0, color: active === 0 ? BDR : DIM, padding: "5px 14px", cursor: active === 0 ? "default" : "pointer", fontSize: 11, letterSpacing: "0.08em", fontFamily: F }}
           >← PREV</button>
           <span style={{ fontSize: 10, color: DIM, letterSpacing: "0.1em", fontFamily: F }}>{active + 1} / {SECTIONS.length}</span>
           <button
             onClick={() => active === SECTIONS.length - 1 ? onClose() : setActive(p => p + 1)}
-            style={{ background: active === SECTIONS.length - 1 ? "rgba(63,224,197,0.10)" : "transparent", border: `1px solid ${active === SECTIONS.length - 1 ? A : BDR}`, borderRadius: 4, color: active === SECTIONS.length - 1 ? A : DIM, padding: "5px 14px", cursor: "pointer", fontSize: 11, letterSpacing: "0.08em", fontFamily: F }}
+            style={{ background: active === SECTIONS.length - 1 ? "rgba(63,224,197,0.10)" : "transparent", border: `1px solid ${active === SECTIONS.length - 1 ? A : BDR}`, borderRadius: 0, color: active === SECTIONS.length - 1 ? A : DIM, padding: "5px 14px", cursor: "pointer", fontSize: 11, letterSpacing: "0.08em", fontFamily: F }}
           >{active === SECTIONS.length - 1 ? "FINISH ✓" : "NEXT →"}</button>
         </div>
       </div>
