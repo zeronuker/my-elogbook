@@ -30,6 +30,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   const [isExporting, setIsExporting] = useState(false);
   const [persisted, setPersisted] = useState(null);
   const [backupStatus, setBackupStatus] = useState(null);
+  const [restoreFileName, setRestoreFileName] = useState(null);
 
   useEffect(() => {
     if (open) {
@@ -43,6 +44,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       setImportStatus(null);
       setExportStatus(null);
       setBackupStatus(null);
+      setRestoreFileName(null);
       navigator.storage?.persisted?.().then(setPersisted);
     }
   }, [open]);
@@ -66,6 +68,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   const handleBackupRestore = async (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
+    setRestoreFileName(f.name);
     try {
       const backup = JSON.parse(await f.text());
       if (!backup.data) throw new Error("File missing logbook data");
@@ -796,365 +799,335 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
   if (!open) return null;
 
-  return (
-    <div className="elb-export-overlay" onClick={handleBackdrop}>
-      <style>{exportImportCss}</style>
-      <div className="elb-export-modal" role="dialog" aria-modal="true" aria-label="Export/Import">
+  const TABS = [
+    { id: "export", label: "Export", hint: "date range · xlsx" },
+    { id: "import", label: "Import", hint: "xlsx · preview" },
+    { id: "backup", label: "Backup", hint: "json · restore" },
+  ];
 
-        {/* ── HEADER ── */}
-        <div className="elb-modal-header">
+  return (
+    <>
+      <style>{exportImportCss}</style>
+      <div className="eim-backdrop" onClick={handleBackdrop} />
+      <div className="eim-modal" role="dialog" aria-modal="true" aria-label="Export/Import">
+
+        {/* ── HEAD ── */}
+        <header className="eim-head">
           <div>
-            <div className="elb-modal-label">DATA MANAGEMENT</div>
-            <div className="elb-modal-title">🌐 EXPORT / IMPORT</div>
+            <div className="eim-eyebrow">// data</div>
+            <h2 className="eim-title">Export / Import</h2>
           </div>
-          <button className="elb-modal-close" onClick={onClose} title="Close">✕</button>
-        </div>
+          <button className="eim-close" onClick={onClose} aria-label="Close">✕</button>
+        </header>
 
         {/* ── TABS ── */}
-        <div className="elb-export-tabs">
-          <button
-            className={"elb-etab" + (tab === "export" ? " active" : "")}
-            onClick={() => setTab("export")}
-          >
-            ⬇ EXPORT
-          </button>
-          <button
-            className={"elb-etab" + (tab === "import" ? " active" : "")}
-            onClick={() => setTab("import")}
-          >
-            ⬆ IMPORT
-          </button>
-          <button
-            className={"elb-etab" + (tab === "backup" ? " active" : "")}
-            onClick={() => setTab("backup")}
-          >
-            💾 BACKUP
-          </button>
-        </div>
+        <nav className="eim-tabs">
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              className={"eim-tab" + (tab === t.id ? " on" : "")}
+              onClick={() => setTab(t.id)}
+            >
+              <span className="eim-tab-label">{t.label}</span>
+              <span className="eim-tab-hint">{t.hint}</span>
+            </button>
+          ))}
+        </nav>
 
-        {/* ── CONTENT ── */}
-        <div className="elb-export-content">
+        {/* ── BODY ── */}
+        <div className="eim-body">
           {tab === "export" && (
-            <div>
-              <div className="elb-form-field">
-                <label className="elb-form-label">FROM</label>
-                <input
-                  type="date"
-                  className="elb-form-input"
-                  value={dateFrom}
-                  onChange={e => setDateFrom(e.target.value)}
-                />
+            <div className="eim-pane">
+              <div className="eim-sh"><h3 className="eim-sh-title">Date range</h3><span className="eim-sh-hint">flights · xlsx</span></div>
+
+              <div className="eim-daterow">
+                <div className="eim-datefield">
+                  <label>From</label>
+                  <input type="date" className="eim-input" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+                </div>
+                <div className="eim-datefield">
+                  <label>To</label>
+                  <input type="date" className="eim-input" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                </div>
               </div>
 
-              <div className="elb-form-field">
-                <label className="elb-form-label">TO</label>
-                <input
-                  type="date"
-                  className="elb-form-input"
-                  value={dateTo}
-                  onChange={e => setDateTo(e.target.value)}
-                />
-              </div>
+              {exportStatus?.error && <div className="eim-note error">✗ {exportStatus.error}</div>}
+              {exportStatus?.success && <div className="eim-note ok">✓ {exportStatus.count} flights exported</div>}
 
-
-              {exportStatus?.error && (
-                <div className="elb-status-error">
-                  ✗ {exportStatus.error}
-                </div>
-              )}
-              {exportStatus?.success && (
-                <div className="elb-status-success">
-                  ✓ {exportStatus.count} flights exported
-                </div>
-              )}
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
-                <button className="elb-btn-primary" onClick={handleExport} disabled={isExporting}
+              <div className="eim-actions">
+                <button className="eim-btn-primary" onClick={handleExport} disabled={isExporting}
                   style={{ opacity: isExporting ? 0.7 : 1, cursor: isExporting ? "wait" : "pointer" }}>
-                  {isExporting ? "⏳ GENERATING..." : "⬇ EXPORT"}
+                  {isExporting ? "Generating…" : "Export"}
                 </button>
-                <button className="elb-btn-ghost" onClick={handleExportAll} disabled={isExporting}
+                <button className="eim-btn-ghost" onClick={handleExportAll} disabled={isExporting}
                   style={{ opacity: isExporting ? 0.7 : 1, cursor: isExporting ? "wait" : "pointer" }}>
-                  {isExporting ? "⏳ GENERATING..." : "⬇ EXPORT ALL"}
+                  {isExporting ? "Generating…" : "Export all"}
                 </button>
               </div>
             </div>
           )}
 
           {tab === "import" && (
-            <div>
-              <div className="elb-form-field">
-                <label className="elb-form-label">SELECT FILE</label>
-                <input
-                  type="file"
-                  accept=".xlsx"
-                  className="elb-form-input"
-                  onChange={handleFileSelect}
-                />
-                <p className="elb-help-text">.xlsx files only</p>
-              </div>
+            <div className="eim-pane">
+              <div className="eim-sh"><h3 className="eim-sh-title">Select file</h3><span className="eim-sh-hint">xlsx only</span></div>
 
-              {file && (
-                <div className="elb-file-info">
-                  <p className="elb-file-name">{file.name}</p>
+              <div className="eim-field">
+                <div className="eim-field-meta">
+                  <span className="eim-field-label">Flights export</span>
+                  <div className="eim-field-hint">Reads the "Flights" sheet from a previously exported workbook.</div>
                 </div>
-              )}
+                <div className="eim-field-control">
+                  <input type="file" id="eim-import-file" accept=".xlsx" className="eim-fileinput" onChange={handleFileSelect} />
+                  <label htmlFor="eim-import-file" className="eim-filebtn">Choose file</label>
+                </div>
+              </div>
+              {file && <div className="eim-filename">{file.name}</div>}
 
               {importPreview && (
-                <div className="elb-preview-box">
-                  <p className="elb-preview-title">PREVIEW</p>
-                  {importPreview.errors.length > 0 && (
-                    <div className="elb-errors">
-                      <p className="elb-error-label">⚠ {importPreview.errors.length} ERRORS:</p>
-                      {importPreview.errors.map((err, i) => (
-                        <p key={i} className="elb-error-item">
-                          Row {err.row}: {err.reason}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                  <table className="elb-preview-table">
-                    <tbody>
-                      <tr>
-                        <td>Valid flights:</td>
-                        <td className="elb-count-success">{importPreview.validRows.length}</td>
-                      </tr>
-                      <tr>
-                        <td>Existing (skipped):</td>
-                        <td className="elb-count-warning">{importPreview.duplicateCount}</td>
-                      </tr>
-                      <tr>
-                        <td>Errors (skipped):</td>
-                        <td className="elb-count-error">{importPreview.errors.length}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                <>
+                  <div className="eim-sh"><h3 className="eim-sh-title">Preview</h3></div>
+                  <div className="eim-preview">
+                    {importPreview.errors.length > 0 && (
+                      <div className="eim-errors">
+                        <p className="eim-error-label">⚠ {importPreview.errors.length} errors:</p>
+                        {importPreview.errors.map((err, i) => (
+                          <p key={i} className="eim-error-item">Row {err.row}: {err.reason}</p>
+                        ))}
+                      </div>
+                    )}
+                    <table className="eim-ptable">
+                      <tbody>
+                        <tr><td>Valid flights</td><td style={{ color: "#22c55e" }}>{importPreview.validRows.length}</td></tr>
+                        <tr><td>Existing (skipped)</td><td style={{ color: "#f5c542" }}>{importPreview.duplicateCount}</td></tr>
+                        <tr><td>Errors (skipped)</td><td style={{ color: "#ef4444" }}>{importPreview.errors.length}</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
 
-              {importStatus?.error && (
-                <div className="elb-status-error">
-                  ✗ {importStatus.error}
-                </div>
-              )}
+              {importStatus?.error && <div className="eim-note error">✗ {importStatus.error}</div>}
+              {importStatus?.warning && <div className="eim-note warn">⚠ {importStatus.warning}</div>}
+              {importStatus?.saving && <div className="eim-note warn">⏳ Saving to cloud...</div>}
+              {importStatus?.success && <div className="eim-note ok">✓ {importStatus.added} flights added, {importStatus.skipped} skipped</div>}
 
-              {importStatus?.warning && (
-                <div className="elb-status-warning">
-                  ⚠ {importStatus.warning}
-                </div>
-              )}
-
-              {importStatus?.saving && (
-                <div className="elb-status-warning">
-                  ⏳ Saving to cloud...
-                </div>
-              )}
-
-              {importStatus?.success && (
-                <div className="elb-status-success">
-                  ✓ {importStatus.added} flights added, {importStatus.skipped} skipped
-                </div>
-              )}
-
-              <div className="elb-import-actions">
+              <div className="eim-actions">
                 <button
-                  className="elb-btn-primary"
+                  className="eim-btn-primary"
                   onClick={handleImport}
                   disabled={!importPreview || importPreview.validRows.length === 0}
                 >
-                  📤 IMPORT ({importPreview?.validRows.length || 0} valid)
+                  Import ({importPreview?.validRows.length || 0} valid)
                 </button>
-                <button className="elb-btn-ghost" onClick={() => {
+                <button className="eim-btn-ghost" onClick={() => {
                   setFile(null);
                   setImportPreview(null);
                   setImportStatus(null);
                 }}>
-                  CLEAR
+                  Clear
                 </button>
               </div>
             </div>
           )}
 
           {tab === "backup" && (
-            <div>
+            <div className="eim-pane">
               {persisted !== null && (
-                <div className={persisted ? "elb-status-success" : "elb-status-warning"}>
-                  {persisted ? "✓ Persistent storage granted — data protected from browser cleanup" : "⚠ Persistent storage not granted — data may be cleared under storage pressure"}
+                <div className={"eim-note " + (persisted ? "ok" : "warn")}>
+                  {persisted ? "Persistent storage granted — data protected from browser cleanup." : "Persistent storage not granted — data may be cleared under storage pressure."}
                 </div>
               )}
 
-              <div className="elb-form-field">
-                <label className="elb-form-label">FULL APP BACKUP</label>
-                <p className="elb-help-text">Saves everything — flight data, settings and profile — to one file you keep yourself.</p>
+              <div className="eim-sh"><h3 className="eim-sh-title">Full app backup</h3><span className="eim-sh-hint">json</span></div>
+              <div className="eim-field">
+                <div className="eim-field-meta">
+                  <span className="eim-field-label">Download backup</span>
+                  <div className="eim-field-hint">Saves flight data, settings and profile to one file you keep yourself.</div>
+                </div>
+                <div className="eim-field-control">
+                  <button className="eim-btn-primary" style={{ width: "100%" }} onClick={handleBackupDownload}>Download .json</button>
+                </div>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
-                <button className="elb-btn-primary" onClick={handleBackupDownload}>
-                  ⬇ DOWNLOAD BACKUP (.json)
-                </button>
+              <div className="eim-sh"><h3 className="eim-sh-title">Restore</h3></div>
+              <div className="eim-field">
+                <div className="eim-field-meta">
+                  <span className="eim-field-label">Restore from backup</span>
+                  <div className="eim-field-hint">Overwrites current local data and reloads the app.</div>
+                </div>
+                <div className="eim-field-control">
+                  <input type="file" id="eim-backup-file" accept=".json" className="eim-fileinput" onChange={handleBackupRestore} />
+                  <label htmlFor="eim-backup-file" className="eim-filebtn">Choose file</label>
+                </div>
               </div>
+              {restoreFileName && <div className="eim-filename">{restoreFileName}</div>}
 
-              <div className="elb-form-field" style={{ marginTop: 20 }}>
-                <label className="elb-form-label">RESTORE FROM BACKUP</label>
-                <input
-                  type="file"
-                  accept=".json"
-                  className="elb-form-input"
-                  onChange={handleBackupRestore}
-                />
-                <p className="elb-help-text">.json backup files only — overwrites current local data and reloads the app</p>
-              </div>
-
-              {backupStatus?.error && (
-                <div className="elb-status-error">✗ {backupStatus.error}</div>
-              )}
-              {backupStatus?.success && (
-                <div className="elb-status-success">✓ Restored — reloading...</div>
-              )}
+              {backupStatus?.error && <div className="eim-note error">✗ {backupStatus.error}</div>}
+              {backupStatus?.success && <div className="eim-note ok">✓ Restored — reloading...</div>}
             </div>
           )}
         </div>
 
-        {/* ── FOOTER ── */}
-        <div className="elb-modal-footer">
-          <button className="elb-btn-ghost" onClick={onClose}>CLOSE</button>
-        </div>
+        {/* ── FOOT ── */}
+        <footer className="eim-foot">
+          <div className="eim-foot-note">// changes apply immediately · no save needed</div>
+          <div className="eim-foot-btns">
+            <button className="eim-btn-ghost" onClick={onClose}>Close</button>
+          </div>
+        </footer>
       </div>
-    </div>
+    </>
   );
 }
 
 const exportImportCss = `
-  .elb-export-overlay, .elb-export-modal{
+  .eim-backdrop, .eim-modal{
     --cb-mint: #3FE0C5;
+    --cb-grad: linear-gradient(135deg, #3FE0C5, #3B8DFF);
     --cb-font-display: 'Tourney', system-ui, sans-serif;
   }
 
-  .elb-export-overlay{
-    position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(3px);z-index:2000;
-    display:flex;align-items:center;justify-content:center;padding:20px;
-    font-family:'Courier New',monospace;
+  .eim-backdrop{
+    position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(3px);z-index:2090;
   }
 
-  .elb-export-modal{
-    background:var(--elb-bg2,#0d1520);border:1px solid var(--elb-border2,#1a3050);
-    border-radius:0;width:100%;max-width:520px;max-height:85vh;
+  .eim-modal{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:480px;max-width:92vw;max-height:88vh;
+    background:var(--cb-surface-1);border:1px solid var(--cb-line-2);
     display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.5);
-    animation:elbPopIn 0.18s ease;
+    z-index:2100;animation:eimPopIn 0.18s ease;
+    font-family:var(--cb-font-body);color:var(--cb-ink);font-size:14px;text-align:left;
   }
 
-  @keyframes elbPopIn{from{opacity:0;transform:scale(0.96) translateY(6px);}to{opacity:1;transform:scale(1) translateY(0);}}
+  @keyframes eimPopIn{from{opacity:0;transform:translate(-50%,-50%) scale(0.96) translateY(6px);}to{opacity:1;transform:translate(-50%,-50%) scale(1) translateY(0);}}
 
-  .elb-modal-header{
-    display:flex;align-items:flex-start;justify-content:space-between;
-    padding:14px 20px;border-bottom:1px solid var(--elb-border,#1e3a5f);flex-shrink:0;
+  /* ── Header ── */
+  .eim-head{
+    padding:20px 24px 16px;border-bottom:1px solid var(--cb-line);
+    display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0;
     background:linear-gradient(180deg, rgba(63,224,197,0.04), transparent);
   }
-  .elb-modal-label{font-family:'Courier New',monospace;font-size:0.85em;letter-spacing:0.2em;color:var(--cb-mint);margin-bottom:4px;text-transform:uppercase;}
-  .elb-modal-title{font-family:var(--cb-font-display);font-size:1.27em;font-weight:700;color:var(--elb-txt,#e8f4fd);letter-spacing:0.03em;}
-  .elb-modal-close{
-    background:transparent;border:1px solid var(--elb-border2,#1a3050);color:var(--elb-txt-muted,#4a6a8a);
-    font-family:inherit;font-size:1em;width:28px;height:28px;border-radius:0;
-    cursor:pointer;transition:all 0.12s;
+  .eim-eyebrow{
+    font-family:var(--cb-font-mono);font-size:calc(10px * var(--fs));letter-spacing:0.26em;
+    text-transform:uppercase;color:var(--cb-mint);margin-bottom:6px;
   }
-  .elb-modal-close:hover{color:var(--cb-mint);border-color:var(--cb-mint);}
-  .elb-modal-close:active{transform:scale(0.94);}
+  .eim-title{
+    font-family:var(--cb-font-display);font-weight:700;font-size:calc(24px * var(--fs));
+    letter-spacing:0.03em;margin:0;line-height:1;color:var(--cb-ink);
+  }
+  .eim-close{
+    width:30px;height:30px;background:transparent;border:1px solid var(--cb-line-2);
+    color:var(--cb-ink-2);cursor:pointer;display:grid;place-items:center;flex-shrink:0;
+    transition:color 120ms, border-color 120ms;
+  }
+  .eim-close:hover{color:var(--cb-mint);border-color:var(--cb-mint);}
 
-  .elb-export-tabs{
-    display:flex;gap:0;border-bottom:1px solid var(--elb-border,#1e3a5f);background:var(--elb-bg,#0a0d12);
+  /* ── Tabs ── */
+  .eim-tabs{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    background:var(--cb-surface-0);border-bottom:1px solid var(--cb-line);flex-shrink:0;
   }
-  .elb-etab{
-    flex:1;padding:10px;background:var(--elb-bg,#0a0d12);border:none;border-bottom:2px solid transparent;
-    color:var(--elb-txt-muted,#b8d6e5);font-family:inherit;font-size:0.9em;letter-spacing:0.1em;cursor:pointer;
-    transition:all 0.14s;
+  .eim-tab{
+    background:transparent;border:0;color:var(--cb-ink-2);padding:13px 16px;cursor:pointer;
+    border-bottom:2px solid transparent;text-align:left;transition:all 140ms;
+    display:flex;flex-direction:column;gap:3px;font-family:inherit;
   }
-  .elb-etab:hover{color:var(--cb-mint);}
-  .elb-etab.active{
-    background:rgba(63,224,197,0.04);border-bottom:2px solid var(--cb-mint);color:var(--cb-mint);
-  }
+  .eim-tab + .eim-tab{border-left:1px solid var(--cb-line);}
+  .eim-tab:hover{color:var(--cb-ink);}
+  .eim-tab.on{color:var(--cb-mint);border-bottom-color:var(--cb-mint);background:rgba(63,224,197,0.04);}
+  .eim-tab-label{font-family:var(--cb-font-display);font-weight:700;font-size:calc(13px * var(--fs));letter-spacing:0.04em;}
+  .eim-tab-hint{font-family:var(--cb-font-mono);font-size:calc(9px * var(--fs));letter-spacing:0.14em;color:var(--cb-ink-dim);text-transform:uppercase;}
 
-  .elb-export-content{
-    flex:1;overflow-y:auto;padding:16px 20px;
-  }
+  /* ── Body ── */
+  .eim-body{flex:1 1 auto;overflow-y:auto;padding:20px 24px;min-height:0;}
+  .eim-body::-webkit-scrollbar{width:4px;}
+  .eim-body::-webkit-scrollbar-track{background:transparent;}
+  .eim-body::-webkit-scrollbar-thumb{background:var(--cb-line-2);border-radius:2px;}
+  .eim-pane{display:flex;flex-direction:column;gap:4px;}
 
-  .elb-form-field{margin-bottom:14px;}
-  .elb-form-label{
-    display:block;font-size:0.75em;letter-spacing:0.1em;color:var(--elb-txt,#e8f4fd);margin-bottom:6px;
-  }
-  .elb-form-input{
-    width:100%;padding:8px;background:var(--elb-bg2,#0b1828);border:1px solid var(--elb-border2,#1a3050);border-radius:0;
-    color:var(--elb-txt-muted,#9bbcd4);font-family:inherit;font-size:0.9em;box-sizing:border-box;
-    transition:border 0.15s;
-  }
-  .elb-form-input:focus{outline:none;border-color:var(--cb-mint);}
+  .eim-sh{margin-top:16px;margin-bottom:10px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;}
+  .eim-sh:first-child{margin-top:0;}
+  .eim-sh-title{font-family:var(--cb-font-display);font-weight:700;font-size:calc(15px * var(--fs));margin:0;letter-spacing:0.03em;color:var(--cb-ink);}
+  .eim-sh-hint{font-family:var(--cb-font-mono);font-size:calc(9px * var(--fs));letter-spacing:0.14em;text-transform:uppercase;color:var(--cb-ink-dim);white-space:nowrap;}
 
-  .elb-help-text{
-    font-size:0.75em;color:var(--elb-txt-muted,#7ab8d4);margin:4px 0 0;opacity:0.8;
-  }
+  .eim-field{display:flex;align-items:center;gap:16px;padding:9px 0;border-bottom:1px dashed var(--cb-line);}
+  .eim-field:last-child{border-bottom:0;}
+  .eim-field-meta{flex:1;min-width:0;}
+  .eim-field-label{font-size:calc(12.5px * var(--fs));color:var(--cb-ink);display:block;}
+  .eim-field-hint{font-size:calc(11px * var(--fs));color:var(--cb-ink-dim);line-height:1.5;margin-top:3px;}
+  .eim-field-control{flex-shrink:0;width:190px;}
 
-  .elb-file-info{
-    padding:10px;background:var(--elb-bg2,#0b1320);border:1px solid var(--elb-border2,#1a3050);border-radius:0;margin-bottom:12px;
+  .eim-input{
+    background:var(--cb-surface-0);border:1px solid var(--cb-line-2);color:var(--cb-ink);
+    font-family:var(--cb-font-body);font-size:calc(12.5px * var(--fs));padding:7px 10px;
+    width:100%;outline:none;box-sizing:border-box;transition:border-color 120ms;
   }
-  .elb-file-name{margin:0;font-size:0.85em;color:var(--elb-txt-muted,#9bbcd4);}
+  .eim-input:focus{border-color:var(--cb-mint);}
 
-  .elb-preview-box{
-    padding:12px;background:var(--elb-bg2,#0b1320);border:1px solid var(--elb-border2,#1a3050);border-radius:0;margin-bottom:12px;
+  .eim-fileinput{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;}
+  .eim-filebtn{
+    display:inline-block;width:100%;text-align:center;box-sizing:border-box;
+    background:transparent;border:1px solid var(--cb-line-2);color:var(--cb-ink-2);
+    font-family:var(--cb-font-mono);font-size:calc(10px * var(--fs));letter-spacing:0.14em;
+    text-transform:uppercase;padding:7px 10px;cursor:pointer;transition:all 120ms;
   }
-  .elb-preview-title{
-    margin:0 0 8px;font-size:0.75em;letter-spacing:0.1em;color:var(--elb-txt-muted,#7ab8d4);
-  }
-
-  .elb-errors{
-    margin-bottom:10px;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
-    border-radius:0;
-  }
-  .elb-error-label{margin:0;font-size:0.85em;color:#ef4444;font-weight:600;}
-  .elb-error-item{margin:4px 0;font-size:0.8em;color:var(--elb-txt-muted,#9bbcd4);}
-
-  .elb-preview-table{
-    width:100%;font-size:0.8em;border-collapse:collapse;
-  }
-  .elb-preview-table tr{border-bottom:1px solid var(--elb-border2,#1a3050);}
-  .elb-preview-table td{padding:6px 0;color:var(--elb-txt-muted,#9bbcd4);}
-  .elb-preview-table td:last-child{text-align:right;font-weight:600;}
-
-  .elb-count-success{color:#22c55e;}
-  .elb-count-warning{color:#f5c542;}
-  .elb-count-error{color:#ef4444;}
-
-  .elb-status-success{
-    padding:10px;background:rgba(34,197,94,0.1);border:1px solid #22c55e;border-radius:0;
-    margin-bottom:12px;color:#22c55e;font-size:0.9em;font-weight:600;
-  }
-  .elb-status-error{
-    padding:10px;background:rgba(239,68,68,0.1);border:1px solid #ef4444;border-radius:0;
-    margin-bottom:12px;color:#ef4444;font-size:0.9em;font-weight:600;
-  }
-  .elb-status-warning{
-    padding:10px;background:rgba(245,197,66,0.1);border:1px solid #f5c542;border-radius:0;
-    margin-bottom:12px;color:#f5c542;font-size:0.9em;font-weight:600;
+  .eim-filebtn:hover{color:var(--cb-mint);border-color:var(--cb-mint);}
+  .eim-filename{
+    margin-top:8px;padding:8px 10px;background:var(--cb-surface-0);border:1px solid var(--cb-line-2);
+    font-size:calc(11.5px * var(--fs));color:var(--cb-mint);word-break:break-all;
   }
 
-  .elb-import-actions{display:flex;gap:8px;}
-  .elb-btn-primary{
-    flex:1;padding:10px;background-image:linear-gradient(135deg, #3FE0C5, #3B8DFF);border:0;border-radius:0;
-    color:#0a0d12;font-family:'Courier New',monospace;font-size:0.9em;cursor:pointer;font-weight:700;
-    letter-spacing:0.05em;text-transform:uppercase;transition:filter 0.15s;
+  .eim-daterow{display:flex;gap:12px;padding:9px 0;border-bottom:1px dashed var(--cb-line);}
+  .eim-datefield{flex:1;min-width:0;}
+  .eim-datefield label{
+    font-family:var(--cb-font-mono);font-size:calc(10px * var(--fs));letter-spacing:0.12em;
+    text-transform:uppercase;color:var(--cb-ink-dim);display:block;margin-bottom:5px;
   }
-  .elb-btn-primary:hover:not(:disabled){filter:brightness(1.1);}
-  .elb-btn-primary:active:not(:disabled){transform:scale(0.98);}
-  .elb-btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
 
-  .elb-btn-ghost{
-    flex:1;padding:10px;background:transparent;border:1px solid var(--elb-border2,#1a3050);border-radius:0;
-    color:var(--elb-txt-muted,#b8d6e5);font-family:inherit;font-size:0.9em;cursor:pointer;
-    letter-spacing:0.05em;transition:all 0.15s;
+  .eim-preview{padding:12px;background:var(--cb-surface-0);border:1px solid var(--cb-line-2);margin-bottom:10px;}
+  .eim-ptable{width:100%;font-size:calc(12px * var(--fs));border-collapse:collapse;}
+  .eim-ptable tr{border-bottom:1px dashed var(--cb-line);}
+  .eim-ptable td{padding:5px 0;color:var(--cb-ink-2);}
+  .eim-ptable td:last-child{text-align:right;font-weight:700;}
+
+  .eim-errors{margin-bottom:10px;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);}
+  .eim-error-label{margin:0;font-size:calc(12px * var(--fs));color:#ef4444;font-weight:600;}
+  .eim-error-item{margin:4px 0;font-size:calc(11px * var(--fs));color:var(--cb-ink-2);}
+
+  .eim-note{padding:9px 10px;font-size:calc(11.5px * var(--fs));margin-bottom:10px;border:1px solid;font-weight:600;}
+  .eim-note.ok{background:rgba(34,197,94,0.08);border-color:#22c55e;color:#22c55e;}
+  .eim-note.error{background:rgba(239,68,68,0.08);border-color:#ef4444;color:#ef4444;}
+  .eim-note.warn{background:rgba(245,197,66,0.08);border-color:#f5c542;color:#f5c542;}
+
+  .eim-actions{display:flex;gap:8px;margin-top:14px;}
+
+  /* ── Footer ── */
+  .eim-foot{
+    padding:14px 24px;border-top:1px solid var(--cb-line);flex-shrink:0;
+    display:flex;justify-content:space-between;align-items:center;
   }
-  .elb-btn-ghost:hover{border-color:var(--cb-mint);color:var(--cb-mint);}
-  .elb-btn-ghost:active{transform:scale(0.98);}
+  .eim-foot-note{font-family:var(--cb-font-mono);font-size:calc(9.5px * var(--fs));color:var(--cb-ink-dim);letter-spacing:0.14em;}
+  .eim-foot-btns{display:flex;gap:8px;}
 
-  .elb-modal-footer{
-    padding:12px 20px;border-top:1px solid var(--elb-border,#1e3a5f);background:var(--elb-bg,#0a0d12);flex-shrink:0;
-    display:flex;gap:8px;justify-content:flex-end;
+  /* ── Buttons ── */
+  .eim-btn-ghost{
+    flex:1;background:transparent;border:1px solid var(--cb-line-2);color:var(--cb-ink-2);
+    font-family:var(--cb-font-mono);font-size:calc(10px * var(--fs));letter-spacing:0.16em;
+    text-transform:uppercase;padding:8px 14px;cursor:pointer;transition:color 120ms, border-color 120ms;
+  }
+  .eim-btn-ghost:hover{color:var(--cb-mint);border-color:var(--cb-mint);}
+  .eim-btn-primary{
+    flex:1;background-image:var(--cb-grad);border:0;color:var(--cb-surface-0);
+    font-family:var(--cb-font-mono);font-size:calc(10px * var(--fs));letter-spacing:0.16em;
+    text-transform:uppercase;font-weight:600;padding:8px 14px;cursor:pointer;transition:filter 120ms;
+  }
+  .eim-btn-primary:hover:not(:disabled){filter:brightness(1.1);}
+  .eim-btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
+
+  @media (max-width: 560px){
+    .eim-modal{width:94vw;}
+    .eim-field{flex-direction:column;align-items:stretch;gap:8px;}
+    .eim-field-control{width:100%;}
   }
 `;
