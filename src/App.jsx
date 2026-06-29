@@ -75,6 +75,7 @@ function App() {
   })
   const [showSplash, setShowSplash] = useState(true)
   const onSplashFinish = useCallback(() => setShowSplash(false), [])
+  const gatedNeedRefresh = needRefresh && !showSplash
   const [user, setUser] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(true)
   const [profileResolved, setProfileResolved] = useState(false)
@@ -720,7 +721,7 @@ function App() {
           showLogoutConfirm={showLogoutConfirm}
           showAccountDeleted={showAccountDeleted}
           onClearError={() => setSignupError(null)}
-          needRefresh={needRefresh}
+          needRefresh={gatedNeedRefresh}
           updateServiceWorker={updateServiceWorker}
         />
         {showLoadingOverlay && <LoadingOverlay />}
@@ -752,7 +753,7 @@ function App() {
         onReauthAndDeleteGoogle={handleReauthAndDeleteGoogle}
         onReauthAndDeleteGooglePopup={handleReauthAndDeleteGooglePopup}
         userProvider={user?.providerData[0]?.providerId || 'password'}
-        needRefresh={needRefresh}
+        needRefresh={gatedNeedRefresh}
         updateServiceWorker={updateServiceWorker}
       />
       {showLoadingOverlay && <LoadingOverlay />}
