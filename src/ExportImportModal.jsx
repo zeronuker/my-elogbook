@@ -28,6 +28,8 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   const [importStatus, setImportStatus] = useState(null);
   const [exportStatus, setExportStatus] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [persisted, setPersisted] = useState(null);
+  const [backupStatus, setBackupStatus] = useState(null);
 
   useEffect(() => {
     if (open) {
@@ -40,8 +42,41 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
       setImportPreview(null);
       setImportStatus(null);
       setExportStatus(null);
+      setBackupStatus(null);
+      navigator.storage?.persisted?.().then(setPersisted);
     }
   }, [open]);
+
+  // ── Full app backup (raw localStorage data + settings) — separate from the
+  // XLSX flight export above, which is for filing/sharing, not disaster recovery.
+  const handleBackupDownload = () => {
+    const backup = {
+      data: JSON.parse(localStorage.getItem(`elb_data_${user.uid}`) || "null"),
+      settings: JSON.parse(localStorage.getItem(`elb_settings_${user.uid}`) || "null"),
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `elogbook-backup-${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBackupRestore = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      const backup = JSON.parse(await f.text());
+      if (!backup.data) throw new Error("File missing logbook data");
+      localStorage.setItem(`elb_data_${user.uid}`, JSON.stringify(backup.data));
+      if (backup.settings) localStorage.setItem(`elb_settings_${user.uid}`, JSON.stringify(backup.settings));
+      setBackupStatus({ success: true });
+      setTimeout(() => window.location.reload(), 1200);
+    } catch (err) {
+      setBackupStatus({ error: err.message || "Invalid backup file" });
+    }
+  };
 
   // ESC closes
   useEffect(() => {
@@ -789,6 +824,12 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
           >
             ⬆ IMPORT
           </button>
+          <button
+            className={"elb-etab" + (tab === "backup" ? " active" : "")}
+            onClick={() => setTab("backup")}
+          >
+            💾 BACKUP
+          </button>
         </div>
 
         {/* ── CONTENT ── */}
@@ -931,6 +972,45 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                   CLEAR
                 </button>
               </div>
+            </div>
+          )}
+
+          {tab === "backup" && (
+            <div>
+              {persisted !== null && (
+                <div className={persisted ? "elb-status-success" : "elb-status-warning"}>
+                  {persisted ? "✓ Persistent storage granted — data protected from browser cleanup" : "⚠ Persistent storage not granted — data may be cleared under storage pressure"}
+                </div>
+              )}
+
+              <div className="elb-form-field">
+                <label className="elb-form-label">FULL APP BACKUP</label>
+                <p className="elb-help-text">Saves everything — flight data, settings and profile — to one file you keep yourself.</p>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+                <button className="elb-btn-primary" onClick={handleBackupDownload}>
+                  ⬇ DOWNLOAD BACKUP (.json)
+                </button>
+              </div>
+
+              <div className="elb-form-field" style={{ marginTop: 20 }}>
+                <label className="elb-form-label">RESTORE FROM BACKUP</label>
+                <input
+                  type="file"
+                  accept=".json"
+                  className="elb-form-input"
+                  onChange={handleBackupRestore}
+                />
+                <p className="elb-help-text">.json backup files only — overwrites current local data and reloads the app</p>
+              </div>
+
+              {backupStatus?.error && (
+                <div className="elb-status-error">✗ {backupStatus.error}</div>
+              )}
+              {backupStatus?.success && (
+                <div className="elb-status-success">✓ Restored — reloading...</div>
+              )}
             </div>
           )}
         </div>

@@ -103,6 +103,17 @@ function App() {
     }
   }, [])
 
+  // Ask the browser to exempt our storage from quota-pressure eviction —
+  // without this, localStorage can be silently cleared (e.g. after installing
+  // another PWA pushes the origin's storage over its quota).
+  useEffect(() => {
+    if (navigator.storage?.persist) {
+      navigator.storage.persist().then(granted => {
+        console.log(`Persistent storage ${granted ? 'granted' : 'denied'}`)
+      })
+    }
+  }, [])
+
   // Handle email-verification links ourselves instead of Firebase's default
   // hosted action page. That page shows a generic "expired or already used"
   // error with no way forward and no visibility into *why* it failed. Here we
