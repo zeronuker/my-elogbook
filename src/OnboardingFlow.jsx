@@ -545,8 +545,8 @@ function OnboardingFlow({
   showLogoutConfirm,
   showAccountDeleted,
   onClearError,
-  needRefresh,
-  updateServiceWorker,
+  update,
+  updateReady,
 }) {
   const [authMode, setAuthMode] = useState(() =>
     user?.providerData?.[0]?.providerId === 'google.com' ? 'signup2' : 'landing'
@@ -1184,7 +1184,7 @@ function OnboardingFlow({
       </div>
 
       {/* ── PWA update banner — shown when a new version is available ── */}
-      {needRefresh && (
+      {updateReady && update.needRefresh && (
         <div style={{
           position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
           background: '#0d1a2e', border: '1px solid #3FE0C5', borderRadius: 6,
@@ -1195,7 +1195,7 @@ function OnboardingFlow({
           <span style={{ color: '#3FE0C5' }}>↑</span>
           <span>New version available</span>
           <button
-            onClick={() => updateServiceWorker?.(true)}
+            onClick={() => update.updateServiceWorker?.(true)}
             style={{
               background: '#3FE0C5', color: '#0a0d12', border: 'none', borderRadius: 4,
               padding: '4px 12px', fontFamily: 'inherit', fontSize: 11,

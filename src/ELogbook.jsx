@@ -11,6 +11,7 @@ import RouteMapModal from "./RouteMapModal";
 import HowToGuideModal from "./HowToGuideModal";
 import FeedbackModal from "./FeedbackModal";
 import BrandBanner from "@brand/BrandBanner";
+import UpdatePrompt from "@brand/UpdatePrompt";
 
 const TabLogbookIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
@@ -531,6 +532,8 @@ function makeThemeCss(settings = {}) {
       --elb-bginput:var(--cb-surface-2);
       --elb-rowhover:var(--cb-surface-3);
       --elb-acc:var(--cb-accent);
+      /* Update-modal contract (see brand-kit/component/UpdatePrompt.jsx) */
+      --cb-update-accent:var(--cb-accent);
       --elb-acc2:#3B8DFF;
       --elb-accdim:${dim};
       --elb-accent:var(--cb-accent);
@@ -562,7 +565,7 @@ function makeThemeCss(settings = {}) {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider, needRefresh, updateServiceWorker }) {
+export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider, update, updateReady }) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [data, setData] = useState(initialData);
@@ -578,27 +581,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [cloudNewerBanner, setCloudNewerBanner] = useState(false);
 
-  // ── PWA update prompt + manual check ──
-  const [checkingUpdate, setCheckingUpdate] = useState(false);
-  const [updateChecked, setUpdateChecked] = useState(false);
-  const [updateDismissed, setUpdateDismissed] = useState(false);
-
-  const checkForUpdate = async () => {
-    setCheckingUpdate(true);
-    setUpdateChecked(false);
-    try {
-      const reg = await navigator.serviceWorker?.ready;
-      await reg?.update();
-    } catch (e) {
-      console.error('SW update check failed:', e);
-    }
-    // Give needRefresh state a moment to propagate before showing result
-    setTimeout(() => {
-      setCheckingUpdate(false);
-      setUpdateChecked(true);
-      setTimeout(() => setUpdateChecked(false), 4000);
-    }, 1000);
-  };
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -1463,6 +1445,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // forced-visible; users can now hide any of them.)
   const hiddenCols    = new Set(settings.hiddenColumns || []);
   const hiddenColsCount = hiddenCols.size;
+  const settingsButtonNotes = [
+    update.needRefresh ? "update available" : null,
+    hiddenColsCount > 0 ? `${hiddenColsCount} hidden column${hiddenColsCount > 1 ? "s" : ""}` : null,
+  ].filter(Boolean).join(", ");
+  const settingsButtonTitle = settingsButtonNotes ? `Settings · ${settingsButtonNotes}` : "Settings";
   const isColVisible  = (key) => !hiddenCols.has(key);
   const unhideColumn  = (key) => {
     const next = { ...settings, hiddenColumns: (settings.hiddenColumns || []).filter(k => k !== key) };
@@ -1963,7 +1950,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               {/* Settings */}
               <button
                 onClick={() => { setSettingsInitialTab(null); setSettingsOpen(true); }}
-                title={hiddenColsCount > 0 ? `Settings · ${hiddenColsCount} hidden column${hiddenColsCount > 1 ? "s" : ""}` : "Settings"}
+                title={settingsButtonTitle}
                 style={{
                   ...iconBtnStyle,
                   color: settingsOpen ? "#4fc3f7" : "#3FE0C5",
@@ -1986,6 +1973,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                     border: "1px solid var(--elb-bg, #0a0d12)",
                     fontFamily: "'JetBrains Mono','Courier New',monospace",
                   }}>{hiddenColsCount}</span>
+                )}
+                {update.needRefresh && (
+                  <span style={{
+                    position: "absolute", top: -3, left: -3,
+                    width: 9, height: 9, borderRadius: "50%",
+                    background: "#3FE0C5",
+                    border: "1px solid var(--elb-bg, #0a0d12)",
+                  }} />
                 )}
               </button>
               {/* Sign Out */}
@@ -3318,11 +3313,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         userProvider={userProvider}
         onFeedback={() => setFeedbackOpen(true)}
         onGuide={() => setGuideOpen(true)}
-        needRefresh={needRefresh}
-        updateServiceWorker={updateServiceWorker}
-        checkForUpdate={checkForUpdate}
-        checkingUpdate={checkingUpdate}
-        updateChecked={updateChecked}
+        needRefresh={update.needRefresh}
+        updateServiceWorker={update.updateServiceWorker}
+        checkForUpdate={update.checkForUpdate}
+        checkingUpdate={update.checkingUpdate}
+        updateChecked={update.updateChecked}
+        currentBuildVersion={update.current.version}
       />
 
       {/* ── BRANDED CONFIRM DIALOG (replaces window.confirm) ── */}
@@ -3493,68 +3489,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
       {/* ── PWA UPDATE PROMPT ── */}
       {/* Only shown when a new service worker is waiting AND saves are not pending */}
-      {needRefresh && saveStatus !== "saving" && !updateDismissed && (
-        <>
-          <div style={{
-            position: "fixed", inset: 0,
-            background: "rgba(0,0,0,0.55)",
-            backdropFilter: "blur(3px)",
-            zIndex: 5000,
-          }} />
-          <div style={{
-            position: "fixed",
-            top: "50%", left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 5001,
-            width: "min(320px, calc(100vw - 48px))",
-            background: "var(--cb-surface-1, #141a2e)",
-            border: "1px solid rgba(63,224,197,0.3)",
-            borderRadius: 10,
-            boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
-            padding: "24px 22px 20px",
-            fontFamily: "var(--elb-font, 'Courier New', monospace)",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-              <span style={{ fontSize: 26, lineHeight: 1 }}>⬆</span>
-              <div>
-                <div style={{ fontSize: 10, letterSpacing: "0.18em", color: "var(--elb-acc, #3FE0C5)", marginBottom: 2 }}>
-                  UPDATE AVAILABLE
-                </div>
-                <div style={{ fontSize: 8, letterSpacing: "0.12em", color: "var(--cb-ink-dim, #7c87a3)" }}>
-                  C·B ELOGBOOK
-                </div>
-              </div>
-            </div>
-            <div style={{ fontSize: 13, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.6, marginBottom: 20 }}>
-              A new version is ready to install. Update now for the latest features and fixes, or continue and update later.
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={() => setUpdateDismissed(true)}
-                style={{
-                  flex: 1, background: "transparent",
-                  border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 6,
-                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                  fontSize: 10, letterSpacing: "0.14em", padding: "10px 0", cursor: "pointer",
-                }}
-              >
-                LATER
-              </button>
-              <button
-                onClick={() => updateServiceWorker(true)}
-                style={{
-                  flex: 2, background: "rgba(63,224,197,0.15)",
-                  border: "1px solid rgba(63,224,197,0.5)", borderRadius: 6,
-                  color: "var(--elb-acc, #3FE0C5)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                  fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", padding: "10px 0", cursor: "pointer",
-                }}
-              >
-                UPDATE NOW
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <UpdatePrompt
+        ready={updateReady && saveStatus !== "saving"}
+        update={update}
+        appLabel="C·B ELOGBOOK"
+      />
 
       {/* ── MIGRATION OVERLAY ── */}
       {/* Shown once on first load when pulling existing data from Firestore into localStorage */}

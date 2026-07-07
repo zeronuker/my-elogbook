@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useRegisterSW } from 'virtual:pwa-register/react'
+import { useUpdate } from '@brand/useUpdate'
 import { auth, db } from './firebase'
 import {
   createUserWithEmailAndPassword,
@@ -29,11 +29,6 @@ const AUTH_RECOVERY_KEY = 'elb_auth_recovery_attempted'
 // How often to poll for a new service worker while the app stays open.
 const SW_UPDATE_INTERVAL_MS = 30 * 60 * 1000 // 30 minutes
 
-// Module-level refs so onRegisteredSW can clear the previous interval/listener
-// if the SW re-registers (e.g. after an update), preventing accumulation.
-let _swIntervalId = null
-let _swVisibilityListener = null
-
 // ponytail: dev-only login bypass so `npm run dev` always drops straight into
 // the logbook. import.meta.env.DEV is statically false in production builds,
 // so this branch is dead-code-eliminated and never ships.
@@ -57,25 +52,10 @@ const DEV_MOCK_USER = {
 }
 
 function App() {
-  // Without an explicit poll, the browser only checks for a new SW on a full
-  // navigation (~once/24h) — so an installed PWA resumed from the background
-  // never gets prompted. Poll on an interval AND whenever the app regains focus.
-  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
-    onRegisteredSW(_swUrl, r) {
-      if (!r) return
-      const check = () => {
-        if (navigator.onLine) r.update().catch(() => {})
-      }
-      if (_swIntervalId) clearInterval(_swIntervalId)
-      if (_swVisibilityListener) document.removeEventListener('visibilitychange', _swVisibilityListener)
-      _swVisibilityListener = () => { if (document.visibilityState === 'visible') check() }
-      _swIntervalId = setInterval(check, SW_UPDATE_INTERVAL_MS)
-      document.addEventListener('visibilitychange', _swVisibilityListener)
-    },
-  })
+  const update = useUpdate('elogbook', SW_UPDATE_INTERVAL_MS)
   const [showSplash, setShowSplash] = useState(true)
   const onSplashFinish = useCallback(() => setShowSplash(false), [])
-  const gatedNeedRefresh = needRefresh && !showSplash
+  const updateReady = !showSplash
   const [user, setUser] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(true)
   const [profileResolved, setProfileResolved] = useState(false)
@@ -721,8 +701,8 @@ function App() {
           showLogoutConfirm={showLogoutConfirm}
           showAccountDeleted={showAccountDeleted}
           onClearError={() => setSignupError(null)}
-          needRefresh={gatedNeedRefresh}
-          updateServiceWorker={updateServiceWorker}
+          update={update}
+          updateReady={updateReady}
         />
         {showLoadingOverlay && <LoadingOverlay />}
       </>
@@ -753,8 +733,8 @@ function App() {
         onReauthAndDeleteGoogle={handleReauthAndDeleteGoogle}
         onReauthAndDeleteGooglePopup={handleReauthAndDeleteGooglePopup}
         userProvider={user?.providerData[0]?.providerId || 'password'}
-        needRefresh={gatedNeedRefresh}
-        updateServiceWorker={updateServiceWorker}
+        update={update}
+        updateReady={updateReady}
       />
       {showLoadingOverlay && <LoadingOverlay />}
     </>

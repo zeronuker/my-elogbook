@@ -471,7 +471,7 @@ const TAB_DEFAULTS = {
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, initialTab }) {
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion, initialTab }) {
   const [tab, setTab]               = useState(initialTab || "profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -590,7 +590,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} onReauthAndDeleteGoogle={onReauthAndDeleteGoogle} onReauthAndDeleteGooglePopup={onReauthAndDeleteGooglePopup} userProvider={userProvider} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
-          {tab === "misc"        && <MiscTab onFeedback={onFeedback} onGuide={onGuide} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} />}
+          {tab === "misc"        && <MiscTab onFeedback={onFeedback} onGuide={onGuide} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} currentBuildVersion={currentBuildVersion} />}
         </div>
 
         {/* ── FOOT ── */}
@@ -1239,7 +1239,7 @@ const MISC_CARDS = [
   },
 ];
 
-function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked }) {
+function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion }) {
   const [showHistory, setShowHistory] = useState(false);
   const currentEntry = CHANGELOG.find(e => e.current);
   const pastEntries  = CHANGELOG.filter(e => !e.current);
@@ -1275,6 +1275,9 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
       </div>
 
       <SmSectionHead title="App Update" hint="// check for new version" />
+      <div style={{ fontSize: 11, color: 'var(--elb-txt-muted, #7c87a3)', padding: '6px 0 0' }}>
+        Current build: {currentBuildVersion}
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 0 16px' }}>
         {needRefresh ? (
           <button

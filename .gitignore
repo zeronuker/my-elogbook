@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Regenerated per-build by scripts/write-build-info.mjs
+public/build-info.json
+
 # Icon studio (dev tool, not part of main app)
 icon-studio.html
 src/icon-studio-main.jsx
