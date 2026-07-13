@@ -24,6 +24,26 @@ service cloud.firestore {
         );
     }
 
+    // Per-year logbook shards — sibling docs in the same `logbook` collection,
+    // keyed by year (e.g. "2026"), alongside the legacy "data" doc above. Same
+    // anti-data-loss guard: a single year's flight rows can't be wiped by an
+    // incoming write that would replace non-empty months with none. Exists so no
+    // single document approaches Firestore's 1 MiB limit over a multi-decade career.
+    match /users/{uid}/logbook/{year} {
+      allow read: if request.auth.uid == uid;
+
+      allow write: if request.auth.uid == uid
+        && !(
+          // Document already exists with non-empty months...
+          resource != null
+          && 'months' in resource.data
+          && resource.data.months.size() > 0
+          // ...and the incoming write would make months empty
+          && 'months' in request.resource.data
+          && request.resource.data.months.size() == 0
+        );
+    }
+
     // Feedback submissions — any signed-in user can create.
     // A user may read and anonymise (GDPR erasure) ONLY their own submissions:
     // update is limited to blanking uid + email to '[deleted]'.

@@ -4,7 +4,7 @@ import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
 import { db, auth } from "./firebase";
 import { signOut } from "firebase/auth";
-import { doc, setDoc, getDoc, addDoc, collection } from "firebase/firestore";
+import { doc, setDoc, getDoc, getDocs, addDoc, collection } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
 import RouteMapModal from "./RouteMapModal";
@@ -235,6 +235,17 @@ function calcDayNightDynamic(std, sta, dayStr, depIcao, year, monthIdx, allowLon
 // start of morning civil twilight) and is the physical basis of the CAD-6
 // sunset+20 / sunrise−20 heuristic the older method approximated.
 const CIVIL_TWILIGHT_RAD = -6 * Math.PI / 180;
+
+// Point-in-time day/night check at a single airport, using the same civil-twilight
+// threshold as calcDayNightRoute. Used to classify takeoff/landing recency so it
+// agrees with the Route-Integrated flight-time totals instead of a separate
+// whole-flight heuristic. Returns null if the airport's coordinates are unknown,
+// so callers can fall back to the fixed-band classification.
+function isPointDay(icao, dateMs) {
+  const coords = getCoords(icao);
+  if (!coords) return null;
+  return SunCalc.getPosition(new Date(dateMs), coords.lat, coords.lon).altitude >= CIVIL_TWILIGHT_RAD;
+}
 
 // Module-level memo so identical (std/sta/date/dep/arr) inputs aren't recomputed
 // across the many calcFlightTimes calls per render. Bounded; cleared when large.
@@ -661,9 +672,49 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     if (!ok) throw new Error("Local save failed — data is loaded in app. Use SAVE NOW to retry.");
   };
 
+  // ── Per-year logbook storage ──────────────────────────────────────────────
+  // Flight rows live in one Firestore doc per year (users/{uid}/logbook/{year})
+  // instead of embedded in the single logbook/data doc, so no document can grow
+  // unbounded over a multi-decade career. The logbook/data doc keeps only
+  // settings + updatedAt and still gates sync/conflict detection with one
+  // timestamp — the per-year split is a storage-layer change only, the existing
+  // whole-logbook sync/conflict control flow is unchanged.
+
+  // Fetch every year doc and merge into a flat `data`-shaped object (monthIdx-year keys).
+  const fetchAllYearsData = async (uid) => {
+    const snap = await getDocs(collection(db, "users", uid, "logbook"));
+    const merged = {};
+    snap.forEach(docSnap => {
+      if (docSnap.id === "data") return; // the settings/pointer doc, not a year
+      const months = docSnap.data().months || {};
+      Object.entries(months).forEach(([monthIdx, rows]) => {
+        merged[`${monthIdx}-${docSnap.id}`] = rows;
+      });
+    });
+    return merged;
+  };
+
+  // Write a `data`-shaped object out to its per-year docs. Only touches years
+  // present in dataToSave — other years already in Firestore are left alone.
+  const pushYearsData = async (uid, dataToSave) => {
+    const byYear = {};
+    Object.keys(dataToSave).forEach(monthKey => {
+      const rows = dataToSave[monthKey];
+      if (!Array.isArray(rows)) return;
+      const [monthIdx, year] = monthKey.split("-");
+      if (!byYear[year]) byYear[year] = {};
+      byYear[year][monthIdx] = rows;
+    });
+    await Promise.all(Object.entries(byYear).map(([year, months]) =>
+      setDoc(doc(db, "users", uid, "logbook", year), { months }, { merge: true })
+    ));
+  };
+
   // ── Helper: apply a Firestore docData snapshot to React state ──
-  const applyDocData = (docData) => {
-    const raw = docData.logbookData;
+  // `yearsData`, when provided, is the already-fetched per-year merge and takes
+  // priority. Falls back to docData.logbookData for not-yet-migrated legacy docs.
+  const applyDocData = (docData, yearsData) => {
+    const raw = (yearsData && Object.keys(yearsData).length > 0) ? yearsData : docData.logbookData;
     // Guard: {} is truthy in JS — never overwrite local state with an empty map
     if (raw && Object.keys(raw).length > 0) {
       const normalized = {};
@@ -743,9 +794,17 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       setDataLoaded(true);
       if (snap.exists()) {
         const docData = snap.data();
-        applyDocData(docData);
+        let yearsData = await fetchAllYearsData(uid);
+        if (Object.keys(yearsData).length === 0 && docData.logbookData && Object.keys(docData.logbookData).length > 0) {
+          // Legacy doc, never split into per-year docs yet — one-time additive
+          // migration. The legacy logbookData field is left untouched either way,
+          // so this is safe to retry if it fails partway.
+          await pushYearsData(uid, docData.logbookData).catch(err => console.error("Year-split migration failed:", err));
+          yearsData = docData.logbookData;
+        }
+        applyDocData(docData, yearsData);
         // Persist to localStorage so future loads are instant
-        if (docData.logbookData) localStorage.setItem(lsKey(uid), JSON.stringify(docData.logbookData));
+        if (Object.keys(yearsData).length > 0) localStorage.setItem(lsKey(uid), JSON.stringify(yearsData));
         if (docData.settings)    localStorage.setItem(lsSettingsKey(uid), JSON.stringify(docData.settings));
         const now = new Date();
         const syncIso = now.toISOString();
@@ -780,6 +839,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           airline: settingsRef.current.airline || profileData.airline || profileData.organization || "",
           licenceNumber: settingsRef.current.licenceNumber || profileData.licenceNumber || "",
           licenceType: settingsRef.current.licenceType || profileData.licenceType || "ATPL(A)",
+          homeBase: settingsRef.current.homeBase || profileData.homeBase || "",
         };
         settingsRef.current = updated;
         setSettings(updated);
@@ -959,14 +1019,17 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
         if (cloudUpdatedAt > lastSyncedMs && cloudUpdatedAt > 0 && lastSyncedMs > 0) {
           if (localDirtyRef.current) {
-            // Cloud is newer AND local has unsaved changes — genuine conflict, let user decide
+            // Cloud is newer AND local has unsaved changes — genuine conflict, let user decide.
+            // Fetch the per-year data now so the Keep Cloud button has it ready.
+            const cloudYearsData = await fetchAllYearsData(user.uid);
             setSyncStatus("idle");
-            setSyncConflict({ cloudData });
+            setSyncConflict({ cloudData: { ...cloudData, logbookData: cloudYearsData } });
             return;
           } else {
             // Cloud is newer but local has no changes since last sync — silent pull
-            applyDocData(cloudData);
-            if (cloudData.logbookData) localStorage.setItem(lsKey(user.uid), JSON.stringify(cloudData.logbookData));
+            const cloudYearsData = await fetchAllYearsData(user.uid);
+            applyDocData(cloudData, cloudYearsData);
+            if (Object.keys(cloudYearsData).length > 0) localStorage.setItem(lsKey(user.uid), JSON.stringify(cloudYearsData));
             if (cloudData.settings)    localStorage.setItem(lsSettingsKey(user.uid), JSON.stringify(cloudData.settings));
             const now = new Date();
             const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -991,9 +1054,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         if (!Array.isArray(rows)) return;
         cleanData[monthKey] = rows.map((row, idx) => ({ ...row, id: idx + 1 }));
       });
+      await pushYearsData(user.uid, cleanData);
       const settingsToSave = sanitizeForFirestore(settingsRef.current);
       await Promise.race([
-        setDoc(ref, { logbookData: cleanData, settings: settingsToSave, updatedAt: new Date().toISOString() }, { merge: true }),
+        setDoc(ref, { settings: settingsToSave, updatedAt: new Date().toISOString() }, { merge: true }),
         timeoutPromise,
       ]);
 
@@ -1031,9 +1095,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         if (!Array.isArray(rows)) return;
         cleanData[monthKey] = rows.map((row, idx) => ({ ...row, id: idx + 1 }));
       });
+      await pushYearsData(user.uid, cleanData);
       const settingsToSave = sanitizeForFirestore(settingsRef.current);
       await Promise.race([
-        setDoc(ref, { logbookData: cleanData, settings: settingsToSave, updatedAt: new Date().toISOString() }, { merge: true }),
+        setDoc(ref, { settings: settingsToSave, updatedAt: new Date().toISOString() }, { merge: true }),
         timeoutPromise,
       ]);
       const now = new Date();
@@ -1261,16 +1326,25 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     MONTHS.map((_, i) => {
       const mRows = data[`${i}-${selectedYear}`] || makeMonthRows(i, selectedYear);
       const filled = mRows.filter(r => r.date || r.type || r.sectors).length;
-      const sum = (key) => mRows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, i)[key]), 0);
+      const mins = mRows.reduce((acc, r) => {
+        const ft = calcFlightTimes(r, settings.dayNightMethod, selectedYear, i);
+        acc.dayP1     += parseHHMM(ft.dayP1);
+        acc.dayP1US   += parseHHMM(ft.dayP1US);
+        acc.dayP2     += parseHHMM(ft.dayP2);
+        acc.nightP1   += parseHHMM(ft.nightP1);
+        acc.nightP1US += parseHHMM(ft.nightP1US);
+        acc.nightP2   += parseHHMM(ft.nightP2);
+        return acc;
+      }, { dayP1: 0, dayP1US: 0, dayP2: 0, nightP1: 0, nightP1US: 0, nightP2: 0 });
       return {
         filled,
-        dp1:  toHHMM(sum("dayP1"))     || "00:00",
-        dp1u: toHHMM(sum("dayP1US"))   || "00:00",
-        dp2:  toHHMM(sum("dayP2"))     || "00:00",
-        np1:  toHHMM(sum("nightP1"))   || "00:00",
-        np1u: toHHMM(sum("nightP1US")) || "00:00",
-        np2:  toHHMM(sum("nightP2"))   || "00:00",
-        tot:  toHHMM(mRows.reduce((acc, r) => acc + parseHHMM(calcTotal(r, settings.dayNightMethod, selectedYear, i)), 0)) || "00:00",
+        dp1:  toHHMM(mins.dayP1)     || "00:00",
+        dp1u: toHHMM(mins.dayP1US)   || "00:00",
+        dp2:  toHHMM(mins.dayP2)     || "00:00",
+        np1:  toHHMM(mins.nightP1)   || "00:00",
+        np1u: toHHMM(mins.nightP1US) || "00:00",
+        np2:  toHHMM(mins.nightP2)   || "00:00",
+        tot:  toHHMM(mins.dayP1 + mins.dayP1US + mins.dayP2 + mins.nightP1 + mins.nightP1US + mins.nightP2) || "00:00",
       };
     }),
   [data, selectedYear, settings.dayNightMethod]);
@@ -1362,6 +1436,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           // "15/05" → "15",  "15/05/2026" → "15"
           normalizedValue = parts[0].replace(/^0+/, "") || parts[0]; // strip leading zeros except "0"
         }
+        // Reject days that don't exist in the currently selected month (e.g. "31" in February)
+        const dayNum = parseInt(normalizedValue, 10);
+        const maxDay = getDaysInMonth(selectedMonth, selectedYear);
+        if (!dayNum || dayNum < 1 || dayNum > maxDay) normalizedValue = "";
       }
       const AUTO_CAPTAIN_RANKS = ["Flight Examiner", "Flight Instructor", "Captain"];
       const updatedRow = { ...current[rowIdx], [field]: normalizedValue };
@@ -1499,14 +1577,24 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // Totals-row label colSpan: # + DATE + visible solo/group cols before time cols
   const totalsLabelColSpan = 2 + ["type","markings","captain","cap","pilotFlying","departure","arrival","std","sta"].filter(isColVisible).length;
 
+  const totalsRowMins = rows.reduce((acc, r) => {
+    const ft = calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth);
+    acc.dayP1     += parseHHMM(ft.dayP1);
+    acc.dayP1US   += parseHHMM(ft.dayP1US);
+    acc.dayP2     += parseHHMM(ft.dayP2);
+    acc.nightP1   += parseHHMM(ft.nightP1);
+    acc.nightP1US += parseHHMM(ft.nightP1US);
+    acc.nightP2   += parseHHMM(ft.nightP2);
+    return acc;
+  }, { dayP1: 0, dayP1US: 0, dayP2: 0, nightP1: 0, nightP1US: 0, nightP2: 0 });
   const totalsRow = {
-    dayP1:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).dayP1), 0)) || "00:00",
-    dayP1US:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).dayP1US), 0)) || "00:00",
-    dayP2:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).dayP2), 0)) || "00:00",
-    nightP1:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).nightP1), 0)) || "00:00",
-    nightP1US: toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).nightP1US), 0)) || "00:00",
-    nightP2:   toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth).nightP2), 0)) || "00:00",
-    total:     toHHMM(rows.reduce((acc, r) => acc + parseHHMM(calcTotal(r, settings.dayNightMethod, selectedYear, selectedMonth)), 0)) || "00:00",
+    dayP1:     toHHMM(totalsRowMins.dayP1)     || "00:00",
+    dayP1US:   toHHMM(totalsRowMins.dayP1US)   || "00:00",
+    dayP2:     toHHMM(totalsRowMins.dayP2)     || "00:00",
+    nightP1:   toHHMM(totalsRowMins.nightP1)   || "00:00",
+    nightP1US: toHHMM(totalsRowMins.nightP1US) || "00:00",
+    nightP2:   toHHMM(totalsRowMins.nightP2)   || "00:00",
+    total:     toHHMM(totalsRowMins.dayP1 + totalsRowMins.dayP1US + totalsRowMins.dayP2 + totalsRowMins.nightP1 + totalsRowMins.nightP1US + totalsRowMins.nightP2) || "00:00",
   };
 
   // ── FTL computations (live from logbook data) ──────────────────────────────
@@ -1561,8 +1649,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // Helper: determine if takeoff/landing is day or night based on settings
   const isDayTakeoffDynamic = (sector) => {
     if (settings.dayNightMethod === "sunrise") {
-      const { day, night } = calcDayNightDynamic(sector.std, sector.sta, String(sector.date.getDate()), sector.departure, sector.date.getFullYear(), sector.date.getMonth());
-      return day > night; // More day time = day takeoff
+      const stdM = parseHHMM(sector.std);
+      const depMs = Date.UTC(sector.date.getFullYear(), sector.date.getMonth(), sector.date.getDate()) + stdM * 60000;
+      const isDay = isPointDay(sector.departure, depMs);
+      if (isDay !== null) return isDay;
     }
     return sector.isDayTakeoff;
   };
@@ -1571,8 +1661,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     if (settings.dayNightMethod === "sunrise") {
       // Use arrival airport coords for landing classification; fall back to departure if arrival unknown
       const landingIcao = (sector.arrival && getCoords(sector.arrival)) ? sector.arrival : sector.departure;
-      const { day, night } = calcDayNightDynamic(sector.std, sector.sta, String(sector.date.getDate()), landingIcao, sector.date.getFullYear(), sector.date.getMonth());
-      return day > night;
+      let stdM = parseHHMM(sector.std), staM = parseHHMM(sector.sta);
+      if (staM <= stdM) staM += 1440;
+      const arrMs = Date.UTC(sector.date.getFullYear(), sector.date.getMonth(), sector.date.getDate()) + staM * 60000;
+      const isDay = isPointDay(landingIcao, arrMs);
+      if (isDay !== null) return isDay;
     }
     return sector.isDayLanding;
   };
@@ -2219,8 +2312,18 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   const longFlightConfirmed = confirmedLongFlights.has(row.id);
                   const needsLongFlightWarning = isLongFlight && !longFlightConfirmed;
                   const allowLong = isLongFlight && longFlightConfirmed;
-                  const computedTotal = calcTotal(row, settings.dayNightMethod, selectedYear, selectedMonth, allowLong);
+                  // Non-blocking overlap check: same date, overlapping STD–STA window as another row this month
+                  const hasOverlap = hasStdSta && row.date && rows.some((other, oIdx) => {
+                    if (oIdx === rowIdx || String(other.date) !== String(row.date) || !other.std || !other.sta) return false;
+                    let s1 = parseHHMM(row.std), e1 = parseHHMM(row.sta);
+                    if (e1 <= s1) e1 += 1440;
+                    let s2 = parseHHMM(other.std), e2 = parseHHMM(other.sta);
+                    if (e2 <= s2) e2 += 1440;
+                    return s1 < e2 && s2 < e1;
+                  });
                   const computedFT = calcFlightTimes(row, settings.dayNightMethod, selectedYear, selectedMonth, allowLong);
+                  const computedTotalMins = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"].reduce((s, k) => s + parseHHMM(computedFT[k] || ""), 0);
+                  const computedTotal = computedTotalMins ? toHHMM(computedTotalMins) : "";
                   const capColors = {
                     "P1":    { color: "#22c55e", bg: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.3)" },
                     "P2":    { color: "#eab308", bg: "rgba(234,179,8,0.12)",  border: "rgba(234,179,8,0.3)" },
@@ -2462,6 +2565,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                               ) : (
                                 ((col.key === "departure" && isDepUnknown) || (col.key === "arrival" && isArrUnknown))
                                   ? <span title="Airport not in coordinates database — Route (sun) day/night falls back for this sector" style={{ color: "rgba(155,188,212,0.6)", background: "rgba(155,188,212,0.1)", border: "1px solid rgba(155,188,212,0.35)", borderRadius: 3, padding: "2px 6px" }}>{displayVal}</span>
+                                  : ((col.key === "std" || col.key === "sta") && hasOverlap)
+                                  ? <span title="Overlaps another flight logged on this date — check for a duty conflict" style={{ color: "#eab308", background: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.35)", borderRadius: 3, padding: "2px 6px" }}>{displayVal}</span>
                                   : <span style={{ opacity: displayVal ? 1 : 0.2 }}>{displayVal || "—"}</span>
                               )}
                             </td>
@@ -3390,7 +3495,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
-        version="v6.19"
+        version="v6.20"
       />
 
       {/* ── CLOUD NEWER BANNER ── */}
@@ -3525,7 +3630,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.19 · CAAM</span>
+        <span>eLOGBOOK v6.20 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
