@@ -206,8 +206,12 @@ const ScreenSignUp2 = memo(({ formData, updateFormData, isLoading, goTo }) => {
             <input type="text" autoComplete="off" placeholder="e.g. FCB-1234567" value={formData.licenseNumber} onChange={(e) => updateFormData('licenseNumber', e.target.value)} disabled={isLoading} />
           </div>
           <div className="onb-field">
-            <label>ORGANIZATION (OPTIONAL)</label>
-            <input type="text" autoComplete="off" placeholder="e.g. MALAYSIA AIRLINES" value={formData.organization} onChange={(e) => updateFormData('organization', e.target.value)} disabled={isLoading} />
+            <label>AIRLINE (OPTIONAL)</label>
+            <input type="text" autoComplete="off" placeholder="e.g. MALAYSIA AIRLINES" value={formData.airline} onChange={(e) => updateFormData('airline', e.target.value)} disabled={isLoading} />
+          </div>
+          <div className="onb-field">
+            <label>HOME BASE (OPTIONAL)</label>
+            <input type="text" autoComplete="off" placeholder="e.g. WMKK · Kuala Lumpur" value={formData.homeBase} onChange={(e) => updateFormData('homeBase', e.target.value)} disabled={isLoading} />
           </div>
           <div className="onb-hint">💡 All fields optional. You can update anytime in Settings.</div>
           <button className="onb-btn onb-btn-p" onClick={() => goTo('done')} disabled={isLoading}>
@@ -509,7 +513,8 @@ const ScreenDone = memo(({ onOnboardingComplete, formData, isLoading }) => {
     await onOnboardingComplete({
       licenceType: formData.licenseType,
       licenceNumber: formData.licenseNumber,
-      organization: formData.organization
+      airline: formData.airline,
+      homeBase: formData.homeBase
     })
   }
 
@@ -558,7 +563,8 @@ function OnboardingFlow({
     fullName: '',
     licenseType: 'ATPL(A)',
     licenseNumber: '',
-    organization: ''
+    airline: '',
+    homeBase: ''
   });
 
   // Password validator

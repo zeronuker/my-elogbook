@@ -141,7 +141,7 @@ function App() {
         staffId: '',
         licenceNumber: '',
         licenceType: 'ATPL(A)',
-        organization: '',
+        airline: '',
         onboardingComplete: false,
         emailVerified: true,
         createdAt: new Date().toISOString()
@@ -395,7 +395,7 @@ function App() {
         staffId: '',
         licenceNumber: '',
         licenceType: 'ATPL(A)',
-        organization: '',
+        airline: '',
         onboardingComplete: false,
         emailVerified: false,
         createdAt: new Date().toISOString()
@@ -571,7 +571,7 @@ function App() {
           doc(db, 'users', user.uid, 'profile', 'data'),
           {
             ...profileData,
-            airline: profileData.organization || profileData.airline || '',
+            airline: profileData.airline || '',
             onboardingComplete: true,
             emailVerified: true
           },
