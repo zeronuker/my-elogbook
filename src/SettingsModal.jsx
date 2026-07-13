@@ -114,6 +114,7 @@ const CHANGELOG = [
       "IMP: Flight-time totals (monthly totals row, annual summary) now compute faster, with no change to the numbers themselves.",
       "IMP: Flight log data now syncs to the cloud as one document per year instead of one document for your whole career, removing a long-term storage ceiling. Existing data migrates automatically and non-destructively the next time you sync or sign in on a new device.",
       "FIX: Duty-hour totals (7/14/28-day) no longer overcount multi-sector duty days — the pre/post-flight buffer now applies once per duty day instead of once per sector.",
+      "IMP: Removed an unused internal \"sectors\" data field that had no on-screen input and was never populated — no functional change.",
     ],
   },
   {

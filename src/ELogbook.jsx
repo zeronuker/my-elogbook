@@ -62,7 +62,6 @@ const EMPTY_ROW = () => ({
   captain: "",
   cap: "",
   pilotFlying: "",
-  sectors: "",
   departure: "",
   arrival: "",
   std: "",
@@ -1336,7 +1335,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const summaryByMonth = useMemo(() =>
     MONTHS.map((_, i) => {
       const mRows = data[`${i}-${selectedYear}`] || makeMonthRows(i, selectedYear);
-      const filled = mRows.filter(r => r.date || r.type || r.sectors).length;
+      const filled = mRows.filter(r => r.date || r.type).length;
       const mins = mRows.reduce((acc, r) => {
         const ft = calcFlightTimes(r, settings.dayNightMethod, selectedYear, i);
         acc.dayP1     += parseHHMM(ft.dayP1);

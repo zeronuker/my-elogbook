@@ -14,7 +14,7 @@ const DARK_COCKPIT_THEME = {
 };
 
 const COLUMN_ORDER = [
-  "date", "type", "markings", "captain", "cap", "pilotFlying", "sectors",
+  "date", "type", "markings", "captain", "cap", "pilotFlying",
   "departure", "arrival", "std", "sta", "dayP1", "dayP1US", "dayP2",
   "nightP1", "nightP1US", "nightP2", "total", "remarks", "autoland"
 ];
@@ -296,7 +296,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     const flightHeaders = COLUMN_ORDER.map(col => {
       const headerMap = {
         date: "DATE", type: "TYPE", markings: "MARKINGS", captain: "CAPTAIN",
-        cap: "CAP", pilotFlying: "FLYING", sectors: "SECTORS",
+        cap: "CAP", pilotFlying: "FLYING",
         departure: "DEPARTURE", arrival: "ARRIVAL", std: "STD", sta: "STA",
         dayP1: "DAY P1", dayP1US: "DAY P1 U/S", dayP2: "DAY P2",
         nightP1: "NIGHT P1", nightP1US: "NIGHT P1 U/S", nightP2: "NIGHT P2",
@@ -329,7 +329,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     const wsFlights = wb.addWorksheet("Flights");
     wsFlights.columns = [
       { width: 14 }, { width: 10 }, { width: 12 }, { width: 12 }, { width: 6 }, { width: 8 },
-      { width: 8 }, { width: 11 }, { width: 11 }, { width: 8 }, { width: 8 }, { width: 10 },
+      { width: 11 }, { width: 11 }, { width: 8 }, { width: 8 }, { width: 10 },
       { width: 12 }, { width: 10 }, { width: 10 }, { width: 12 }, { width: 10 }, { width: 10 },
       { width: 10 }, { width: 10 },
     ];
@@ -337,7 +337,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     flightData.forEach(row => wsFlights.addRow(row));
     for (let i = 2; i <= flightData.length + 1; i++) {
       wsFlights.getCell(`A${i}`).numFmt = "dd-mm-yyyy";
-      ["J", "K", "L", "M", "N", "O", "P", "Q"].forEach(col => {
+      ["I", "J", "K", "L", "M", "N", "O", "P"].forEach(col => {
         const cell = wsFlights.getCell(`${col}${i}`);
         if (cell.value !== null && cell.value !== undefined && cell.value !== "") {
           cell.numFmt = "[h]:mm:ss";
@@ -542,7 +542,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
       const expectedHeaderMap = {
         date: "DATE", type: "TYPE", markings: "MARKINGS", captain: "CAPTAIN",
-        cap: "CAP", pilotFlying: "FLYING", sectors: "SECTORS",
+        cap: "CAP", pilotFlying: "FLYING",
         departure: "DEPARTURE", arrival: "ARRIVAL", std: "STD", sta: "STA",
         dayP1: "DAY P1", dayP1US: "DAY P1 U/S", dayP2: "DAY P2",
         nightP1: "NIGHT P1", nightP1US: "NIGHT P1 U/S", nightP2: "NIGHT P2",
