@@ -366,7 +366,6 @@ function getAllSectors(data, dutyBufferMins = 90, dayNightMethod = "fixed") {
       sectors.push({
         date,
         flightMins,
-        dutyMins: flightMins + dutyBufferMins,
         type: (row.type || "").trim().toUpperCase(),
         pilotFlying:  row.pilotFlying === "YES",
         isDayTakeoff: isTimeInDay(row.std),
@@ -377,6 +376,18 @@ function getAllSectors(data, dutyBufferMins = 90, dayNightMethod = "fixed") {
         arrival: row.arrival,
       });
     });
+  });
+  // Duty buffer applies once per calendar day, not once per sector — a pilot who
+  // flies multiple sectors in one duty day only reports and releases once.
+  const dutyBufferGiven = new Set();
+  sectors.forEach(s => {
+    const dayKey = s.date.toDateString();
+    if (!dutyBufferGiven.has(dayKey)) {
+      s.dutyMins = s.flightMins + dutyBufferMins;
+      dutyBufferGiven.add(dayKey);
+    } else {
+      s.dutyMins = s.flightMins;
+    }
   });
   return sectors;
 }
