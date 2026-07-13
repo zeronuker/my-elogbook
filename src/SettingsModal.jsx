@@ -104,7 +104,19 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.19", date: "June 2026", current: true,
+    v: "v6.20", date: "July 2026", current: true,
+    title: "Day/night accuracy, sync scaling, and fixes",
+    notes: [
+      "FIX: Takeoff/landing recency (Dynamic day/night mode) now checks the actual sun position at the moment of departure/arrival, instead of which had more total daylight across the whole flight — these could previously disagree on long-haul sectors.",
+      "FIX: Entering a day that doesn't exist in the selected month (e.g. \"31\" in February) is now rejected instead of silently accepted.",
+      "NEW: A non-blocking warning now appears when two flights on the same date have overlapping STD–STA times, flagging a possible duty conflict.",
+      "IMP: Onboarding now asks for your airline and home base up front (previously \"organization\" vs \"airline\" were inconsistently labelled across screens).",
+      "IMP: Flight-time totals (monthly totals row, annual summary) now compute faster, with no change to the numbers themselves.",
+      "IMP: Flight log data now syncs to the cloud as one document per year instead of one document for your whole career, removing a long-term storage ceiling. Existing data migrates automatically and non-destructively the next time you sync or sign in on a new device.",
+    ],
+  },
+  {
+    v: "v6.19", date: "June 2026", current: false,
     title: "Route map",
     notes: [
       "NEW: Route Map — plot every sector flown in a chosen date range on a world map, with a colour-graded great-circle line (magenta → yellow) for each route and PNG export to share where you've flown. Open it from the toolbar or the Flight Summary tab.",
