@@ -1453,6 +1453,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       }
       const AUTO_CAPTAIN_RANKS = ["Flight Examiner", "Flight Instructor", "Captain"];
       const updatedRow = { ...current[rowIdx], [field]: normalizedValue };
+      // Multi-sector same day: copy type/markings/captain from the row directly above
+      // when its date matches, but never clobber values the user already entered.
+      if (field === "date" && normalizedValue && current[rowIdx - 1]?.date === normalizedValue) {
+        const prevRow = current[rowIdx - 1];
+        ["type", "markings", "captain"].forEach(f => {
+          if (!updatedRow[f] && prevRow[f]) updatedRow[f] = prevRow[f];
+        });
+      }
       if (field === "date" && normalizedValue && AUTO_CAPTAIN_RANKS.includes(settingsRef.current.defaultRank) && !updatedRow.captain) {
         updatedRow.captain = "SELF";
       }
@@ -3505,7 +3513,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
-        version="v6.20"
+        version="v6.21"
       />
 
       {/* ── CLOUD NEWER BANNER ── */}
@@ -3640,7 +3648,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.20 · CAAM</span>
+        <span>eLOGBOOK v6.21 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

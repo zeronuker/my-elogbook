@@ -104,7 +104,15 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.20", date: "July 2026", current: true,
+    v: "v6.21", date: "July 2026", current: true,
+    title: "Multi-sector auto-fill",
+    notes: [
+      "NEW: When you add a row with the same date as the row above (multi-sector duty day), aircraft type, markings, and captain auto-fill from the previous row — only into empty fields, never overwriting what you've already typed.",
+      "IMP: Route Map now defaults to the watermark-free VECTOR basemap (previously CARTO Dark), since it's the only basemap that renders fully offline.",
+    ],
+  },
+  {
+    v: "v6.20", date: "July 2026", current: false,
     title: "Day/night accuracy, sync scaling, and fixes",
     notes: [
       "FIX: Takeoff/landing recency (Dynamic day/night mode) now checks the actual sun position at the moment of departure/arrival, instead of which had more total daylight across the whole flight — these could previously disagree on long-haul sectors.",

@@ -149,7 +149,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   const attributionRef = useRef(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [basemap, setBasemap] = useState("carto");
+  const [basemap, setBasemap] = useState("vector");
   const [exportFormat, setExportFormat] = useState("png");
   const [exporting, setExporting] = useState(false);
   const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 520px)").matches);
