@@ -64,7 +64,6 @@ export const DEFAULT_SETTINGS = {
   brightness: 100,
   accentPreset: "gradient",
   columnDensity: "default",
-  hiddenColumns: [],
   // Preferences
   dateFormat: "D",
   rowsPerPage: 15,
@@ -477,7 +476,6 @@ const TAB_DEFAULTS = {
     fontType: "courier",
     brightness: 100,
     accentPreset: "gradient",
-    hiddenColumns: [],
   },
   preferences: {
     dateFormat: "D",
@@ -569,42 +567,17 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
 
         {/* ── TABS ── */}
         <nav className="sm-tabs">
-          {SETTINGS_TABS.map((st) => {
-            // Hidden-columns badge on the Appearance tab (matches the gear-icon badge
-            // shown in the toolbar). Only renders when at least one toggleable column
-            // is currently hidden in the user's settings.
-            const showHiddenBadge =
-              st.id === "appearance" &&
-              (draft.hiddenColumns || []).filter(k => !ALWAYS_VISIBLE.includes(k)).length > 0;
-            const hiddenCount = showHiddenBadge
-              ? (draft.hiddenColumns || []).filter(k => !ALWAYS_VISIBLE.includes(k)).length
-              : 0;
-            return (
-              <button
-                key={st.id}
-                className={`sm-tab${tab === st.id ? " on" : ""}`}
-                onClick={() => setTab(st.id)}
-                style={{ position: "relative" }}
-              >
-                <span className="sm-tab-label">{st.label}</span>
-                <span className="sm-tab-hint">{st.hint}</span>
-                {showHiddenBadge && (
-                  <span
-                    title={`${hiddenCount} hidden column${hiddenCount > 1 ? "s" : ""}`}
-                    style={{
-                      position: "absolute", top: 6, right: 8,
-                      background: "#3FE0C5", color: "#0a0d12",
-                      borderRadius: "50%", minWidth: 14, height: 14,
-                      fontSize: 9, fontWeight: 700, lineHeight: "14px",
-                      textAlign: "center", padding: "0 3px",
-                      border: "1px solid var(--cb-surface-1, #141a2e)",
-                      fontFamily: "'JetBrains Mono','Courier New',monospace",
-                    }}
-                  >{hiddenCount}</span>
-                )}
-              </button>
-            );
-          })}
+          {SETTINGS_TABS.map((st) => (
+            <button
+              key={st.id}
+              className={`sm-tab${tab === st.id ? " on" : ""}`}
+              onClick={() => setTab(st.id)}
+              style={{ position: "relative" }}
+            >
+              <span className="sm-tab-label">{st.label}</span>
+              <span className="sm-tab-hint">{st.hint}</span>
+            </button>
+          ))}
         </nav>
 
         {/* ── BODY ── */}
@@ -964,33 +937,6 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
   );
 }
 
-// ── Column visibility definitions ──────────────────────────────────────────────
-// Every logbook column is user-toggleable, including the DAY/NIGHT time cols and
-// the TOTAL column. (Previously dayP1, dayP1US, dayP2, nightP1, nightP1US, nightP2
-// and total were forced-visible.)
-const COL_TOGGLE_DEFS = [
-  { key: "type",        label: "TYPE",         group: "AIRCRAFT" },
-  { key: "markings",    label: "MARKINGS",     group: "AIRCRAFT" },
-  { key: "captain",     label: "CAPTAIN",      group: null       },
-  { key: "cap",         label: "HOC",          group: null       },
-  { key: "pilotFlying", label: "PILOT FLYING", group: null       },
-  { key: "departure",   label: "DEP",          group: "SECTORS"  },
-  { key: "arrival",     label: "ARR",          group: "SECTORS"  },
-  { key: "std",         label: "STD",          group: null       },
-  { key: "sta",         label: "STA",          group: null       },
-  { key: "dayP1",       label: "DAY P1",       group: "DAY"      },
-  { key: "dayP1US",     label: "DAY P1 U/S",   group: "DAY"      },
-  { key: "dayP2",       label: "DAY P2",       group: "DAY"      },
-  { key: "nightP1",     label: "NIGHT P1",     group: "NIGHT"    },
-  { key: "nightP1US",   label: "NIGHT P1 U/S", group: "NIGHT"    },
-  { key: "nightP2",     label: "NIGHT P2",     group: "NIGHT"    },
-  { key: "total",       label: "TOTAL",        group: null       },
-];
-
-// Kept for backwards-compatible filtering logic (migration of legacy state).
-// Empty array because all columns are now toggleable.
-const ALWAYS_VISIBLE = [];
-
 // ════════════════════════════════════════════════════════════════════
 //  APPEARANCE TAB
 // ════════════════════════════════════════════════════════════════════
@@ -1123,47 +1069,6 @@ function AppearanceTab({ d, upd }) {
           </div>
         </div>
       </SmRow>
-
-      {(() => {
-        const hidden = new Set(d.hiddenColumns || []);
-
-        const toggle = (key) => {
-          if (hidden.has(key)) {
-            upd({ hiddenColumns: (d.hiddenColumns || []).filter(k => k !== key) });
-          } else {
-            upd({ hiddenColumns: [...(d.hiddenColumns || []), key] });
-          }
-        };
-
-        return (
-          <>
-            <SmSectionHead title="Column visibility" hint="// click any chip to hide or restore" />
-            <SmRow>
-              <div className="sm-col-vis-grid">
-                {COL_TOGGLE_DEFS.map(def => {
-                  const isHidden = hidden.has(def.key);
-                  return (
-                    <button
-                      key={def.key}
-                      className={`sm-col-chip${isHidden ? "" : " on"}`}
-                      onClick={() => toggle(def.key)}
-                      title={isHidden ? `Show ${def.label}` : `Hide ${def.label}`}
-                    >
-                      {def.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </SmRow>
-            {(d.hiddenColumns || []).length > 0 && (
-              <div className="sm-col-vis-hint">
-                {(d.hiddenColumns || []).length} column{(d.hiddenColumns || []).length > 1 ? "s" : ""} hidden · click any chip above to restore individually, or{" "}
-                <button className="sm-col-vis-reset" onClick={() => upd({ hiddenColumns: [] })}>show all</button>
-              </div>
-            )}
-          </>
-        );
-      })()}
 
     </div>
   );
@@ -2163,70 +2068,6 @@ const settingsCss = `
     transition: color 120ms;
   }
   .sm-cl-history-toggle:hover { color: var(--cb-mint); }
-
-  /* ── Column visibility chips ─────────────────────────────────────── */
-  .sm-col-vis-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 2px 0;
-  }
-  .sm-col-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border: 1px solid var(--cb-line-2);
-    background: transparent;
-    color: var(--cb-ink-dim);
-    font-family: var(--cb-font-mono, 'JetBrains Mono', monospace);
-    font-size: calc(10px * var(--fs));
-    letter-spacing: 0.07em;
-    cursor: pointer;
-    opacity: 0.45;
-    transition: all 0.15s;
-    border-radius: 2px;
-  }
-  .sm-col-chip.on {
-    border-color: var(--cb-accent, #3FE0C5);
-    color: var(--cb-ink);
-    opacity: 1;
-  }
-  .sm-col-chip.locked {
-    cursor: not-allowed;
-    opacity: 0.25;
-  }
-  .sm-col-chip:hover:not(.locked) {
-    border-color: var(--cb-accent, #3FE0C5);
-    opacity: 0.75;
-  }
-  .sm-col-chip-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    display: inline-block;
-    flex-shrink: 0;
-  }
-  .sm-col-vis-hint {
-    margin-top: 8px;
-    font-family: var(--cb-font-mono);
-    font-size: calc(10px * var(--fs));
-    color: var(--cb-ink-dim);
-    letter-spacing: 0.05em;
-  }
-  .sm-col-vis-reset {
-    background: transparent;
-    border: none;
-    color: var(--cb-mint);
-    font-family: var(--cb-font-mono);
-    font-size: calc(10px * var(--fs));
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    padding: 0;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-  .sm-col-vis-reset:hover { opacity: 0.7; }
 
   /* ── Responsive ─────────────────────────────────────────────────── */
   @media (max-width: 600px) {
