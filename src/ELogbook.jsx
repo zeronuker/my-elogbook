@@ -616,9 +616,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [migrating, setMigrating] = useState(false); // true while pulling existing data from Firestore on first load
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState(null); // null → SettingsModal defaults to "profile"
-  const [hiddenColsToastVisible, setHiddenColsToastVisible] = useState(false); // toast above table (transient, 5s auto-fade)
-  const prevHiddenColsCountRef = useRef(null); // tracks hidden-col count to detect "just hid a column"
-  const hiddenColsToastTimerRef = useRef(null);
+  const [revealedAutoCols, setRevealedAutoCols] = useState(() => new Set()); // session-only "peek" reveals for auto-hidden empty columns, keyed "monthKey:colKey" — resets on reload
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [routeMapOpen, setRouteMapOpen] = useState(false);
@@ -1535,48 +1533,32 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const timeCols = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total","std","sta"];
   const autoCalcCols = ["total","dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"];
 
-  // ── Column visibility helpers ────────────────────────────────────────
-  // All columns are now toggleable — including DAY/NIGHT time cols and TOTAL.
-  // (Previously dayP1, dayP1US, dayP2, nightP1, nightP1US, nightP2 and total were
-  // forced-visible; users can now hide any of them.)
-  const hiddenCols    = new Set(settings.hiddenColumns || []);
-  const hiddenColsCount = hiddenCols.size;
-  const settingsButtonNotes = [
-    update.needRefresh ? "update available" : null,
-    hiddenColsCount > 0 ? `${hiddenColsCount} hidden column${hiddenColsCount > 1 ? "s" : ""}` : null,
-  ].filter(Boolean).join(", ");
-  const settingsButtonTitle = settingsButtonNotes ? `Settings · ${settingsButtonNotes}` : "Settings";
-  const isColVisible  = (key) => !hiddenCols.has(key);
-  const unhideColumn  = (key) => {
-    const next = { ...settings, hiddenColumns: (settings.hiddenColumns || []).filter(k => k !== key) };
-    setSettings(next);
-    saveSettings(next);
+  // ── Auto-hide empty auto-calculated columns (per month) ────────────────
+  // Only DAY/NIGHT × P1, P1 U/S, P2 are ever auto-hidden — TOTAL and every
+  // manually-entered column are always visible. A column collapses to a stub
+  // only once the viewed month is fully in the past (never the active month)
+  // and every row that month is blank in that field. Revealing a stub is a
+  // session-only peek (not persisted) — it resets back to hidden on reload.
+  const STUBABLE_AUTO_CALC_COLS = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2"];
+  const nowRealDate = new Date();
+  const isPastMonth = selectedYear < nowRealDate.getFullYear()
+    || (selectedYear === nowRealDate.getFullYear() && selectedMonth < nowRealDate.getMonth());
+  const isAutoCalcStub = (key) => {
+    if (!STUBABLE_AUTO_CALC_COLS.includes(key)) return false;
+    if (!isPastMonth) return false;
+    if (revealedAutoCols.has(`${monthKey}:${key}`)) return false;
+    return rows.every(r => !r[key]);
   };
-  // Open Settings on the Appearance tab — used by the hidden-columns badge & toast
-  const openSettingsOnAppearance = () => {
-    setSettingsInitialTab("appearance");
-    setSettingsOpen(true);
+  const toggleAutoCalcReveal = (key) => {
+    const tag = `${monthKey}:${key}`;
+    setRevealedAutoCols(prev => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag); else next.add(tag);
+      return next;
+    });
   };
+  const settingsButtonTitle = update.needRefresh ? "Settings · update available" : "Settings";
 
-  // Hidden-columns toast: shows when (a) the page mounts with hidden columns,
-  // or (b) the user just hid a new column. Auto-fades after 5s; user can also dismiss.
-  useEffect(() => {
-    const prev = prevHiddenColsCountRef.current;
-    prevHiddenColsCountRef.current = hiddenColsCount;
-    // Show on first run if any hidden, or whenever count increases
-    const shouldShow = (prev === null && hiddenColsCount > 0) || (prev !== null && hiddenColsCount > prev);
-    if (!shouldShow) {
-      // If everything is unhidden, immediately hide the toast as well
-      if (hiddenColsCount === 0) setHiddenColsToastVisible(false);
-      return;
-    }
-    setHiddenColsToastVisible(true);
-    if (hiddenColsToastTimerRef.current) clearTimeout(hiddenColsToastTimerRef.current);
-    hiddenColsToastTimerRef.current = setTimeout(() => setHiddenColsToastVisible(false), 5000);
-    return () => {
-      if (hiddenColsToastTimerRef.current) clearTimeout(hiddenColsToastTimerRef.current);
-    };
-  }, [hiddenColsCount]);
   // ── Sync #root width to logbook table's actual rendered width ─────
   useEffect(() => {
     if (activeTab !== "logbook") return;
@@ -1588,12 +1570,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       // +50 = content wrapper padding (24px×2) + root border (1px×2)
       document.documentElement.style.setProperty('--logbook-root-w', `${table.scrollWidth + 50}px`);
     }));
-  }, [colScale, settings.hiddenColumns, activeTab]);
+  }, [colScale, revealedAutoCols, activeTab, monthKey]);
 
-  // Number of visible auto-calc columns (for HOC warning colSpan)
-  const autoCalcVisibleCount = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].filter(isColVisible).length;
-  // Totals-row label colSpan: # + DATE + visible solo/group cols before time cols
-  const totalsLabelColSpan = 2 + ["type","markings","captain","cap","pilotFlying","departure","arrival","std","sta"].filter(isColVisible).length;
+  // HOC/long-flight warning banner spans the whole auto-calc region (6 stubable cols + TOTAL) —
+  // none of these are ever omitted (only visually narrowed), so this is always 7.
+  const autoCalcVisibleCount = autoCalcCols.length;
+  // Totals-row label colSpan: # + DATE + solo/group cols before time cols (none of these are ever hidden)
+  const totalsLabelColSpan = 2 + ["type","markings","captain","cap","pilotFlying","departure","arrival","std","sta"].length;
 
   const totalsRowMins = rows.reduce((acc, r) => {
     const ft = calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth);
@@ -2074,17 +2057,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   <circle cx="12" cy="12" r="3"/>
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
-                {hiddenColsCount > 0 && (
-                  <span style={{
-                    position: "absolute", top: -4, right: -4,
-                    background: "#3FE0C5", color: "#0a0d12",
-                    borderRadius: "50%", minWidth: 14, height: 14,
-                    fontSize: 9, fontWeight: 700, lineHeight: "14px",
-                    textAlign: "center", padding: "0 3px",
-                    border: "1px solid var(--elb-bg, #0a0d12)",
-                    fontFamily: "'JetBrains Mono','Courier New',monospace",
-                  }}>{hiddenColsCount}</span>
-                )}
                 {update.needRefresh && (
                   <span style={{
                     position: "absolute", top: -3, left: -3,
@@ -2181,61 +2153,48 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         {activeTab === "logbook" && (
           <div style={{ overflowX: "auto" }}>
 
-            {/* Hidden-columns reminder toast — appears transiently when a column is hidden
-                (or on page load if any are hidden), auto-fades after 5s. Click the strip
-                to manage visibility in Settings → Appearance. The gear icon also carries a
-                persistent count badge while hidden cols > 0. */}
-            {hiddenColsToastVisible && hiddenColsCount > 0 && (
-              <div
-                onClick={openSettingsOnAppearance}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  gap: 10, margin: "0 0 10px 0", padding: "6px 12px",
-                  background: "rgba(63,224,197,0.06)",
-                  border: "1px solid rgba(63,224,197,0.22)",
-                  borderRadius: 4, cursor: "pointer",
-                  fontFamily: "'JetBrains Mono','Courier New',monospace",
-                  fontSize: 11, color: "#3FE0C5", letterSpacing: "0.08em",
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(63,224,197,0.12)"}
-                onMouseLeave={e => e.currentTarget.style.background = "rgba(63,224,197,0.06)"}
-                title="Open Settings → Appearance to manage column visibility"
-              >
-                <span>
-                  👁 {hiddenColsCount} column{hiddenColsCount > 1 ? "s" : ""} hidden — click to manage in Settings
-                </span>
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    if (hiddenColsToastTimerRef.current) clearTimeout(hiddenColsToastTimerRef.current);
-                    setHiddenColsToastVisible(false);
-                  }}
-                  title="Dismiss"
-                  style={{
-                    background: "transparent", border: "none", color: "#3FE0C5",
-                    cursor: "pointer", fontSize: 14, padding: "0 4px", lineHeight: 1,
-                    opacity: 0.6,
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = "1"}
-                  onMouseLeave={e => e.currentTarget.style.opacity = "0.6"}
-                >✕</button>
-              </div>
-            )}
-
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "auto" }}>
               {(() => {
-                // Solo th helper (rowSpan=2) — hidden columns are not rendered at all.
-                // Hidden columns are also skipped in the body row, keeping alignment intact.
-                const soloTh = (key, content, extraStyle = {}) => isColVisible(key)
-                  ? <th key={key} rowSpan={2} style={{ ...thStyle, ...extraStyle }}>{content}</th>
-                  : null;
-
-                // Dynamic colSpan for sub-grouped headers — skip group entirely if all subs hidden
-                const aircraftSpan = (isColVisible("type") ? 1 : 0) + (isColVisible("markings") ? 1 : 0);
-                const sectorsSpan  = (isColVisible("departure") ? 1 : 0) + (isColVisible("arrival") ? 1 : 0);
-                const daySpan      = (isColVisible("dayP1") ? 1 : 0) + (isColVisible("dayP1US") ? 1 : 0) + (isColVisible("dayP2") ? 1 : 0);
-                const nightSpan    = (isColVisible("nightP1") ? 1 : 0) + (isColVisible("nightP1US") ? 1 : 0) + (isColVisible("nightP2") ? 1 : 0);
+                // The 6 DAY/NIGHT × P1 / P1 U/S / P2 columns collapse to a narrow,
+                // clickable stub once their month has closed out and every row is
+                // blank in that field (see isAutoCalcStub). Every other column, and
+                // both group headers, always render at full size — nothing is ever
+                // omitted from the table, so header/body/totals stay aligned.
+                const autoCalcSubTh = (key, label, color) => {
+                  if (isAutoCalcStub(key)) {
+                    return (
+                      <th
+                        key={key}
+                        onClick={() => toggleAutoCalcReveal(key)}
+                        title="Empty this month — click to reveal"
+                        style={{
+                          ...thSubStyle,
+                          width: 18, minWidth: 18, maxWidth: 18, padding: "6px 0",
+                          cursor: "pointer",
+                          background: "rgba(234,179,8,0.06)",
+                          borderRight: "1px solid rgba(234,179,8,0.3)",
+                        }}
+                      >
+                        <span style={{ writingMode: "vertical-rl", textOrientation: "mixed", fontSize: 9, letterSpacing: "0.04em", whiteSpace: "nowrap", color: "#eab308" }}>{label}</span>
+                      </th>
+                    );
+                  }
+                  const isRevealed = revealedAutoCols.has(`${monthKey}:${key}`)
+                    && STUBABLE_AUTO_CALC_COLS.includes(key) && isPastMonth && rows.every(r => !r[key]);
+                  return (
+                    <th
+                      key={key}
+                      onClick={isRevealed ? () => toggleAutoCalcReveal(key) : undefined}
+                      title={isRevealed ? "Empty this month — click to hide again" : undefined}
+                      style={{
+                        ...thSubStyle,
+                        color,
+                        cursor: isRevealed ? "pointer" : "default",
+                        borderBottom: isRevealed ? "1px dashed rgba(234,179,8,0.6)" : thSubStyle.borderBottom,
+                      }}
+                    >{label}</th>
+                  );
+                };
 
                 return (
                   <thead>
@@ -2245,70 +2204,45 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         <span style={{ display: "block" }}>DATE</span>
                         <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
                       </th>
-                      {/* AIRCRAFT group — colSpan reflects visible sub-cols; omitted when both hidden */}
-                      {aircraftSpan > 0 && (
-                        <th colSpan={aircraftSpan} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>AIRCRAFT</th>
-                      )}
-                      {/* Solo columns */}
-                      {soloTh("captain", "CAPTAIN")}
-                      {isColVisible("cap") && (
-                        <th key="cap" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                          <span style={{ display: "block" }}>HOLDER</span>
-                          <span style={{ display: "block" }}>OPERATING</span>
-                          <span style={{ display: "block" }}>CAPACITY</span>
-                        </th>
-                      )}
-                      {isColVisible("pilotFlying") && (
-                        <th key="pilotFlying" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                          <span style={{ display: "block" }}>PILOT</span>
-                          <span style={{ display: "block" }}>FLYING</span>
-                        </th>
-                      )}
-                      {/* SECTORS group — colSpan reflects visible sub-cols; omitted when both hidden */}
-                      {sectorsSpan > 0 && (
-                        <th colSpan={sectorsSpan} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>SECTORS</th>
-                      )}
-                      {/* STD / STA */}
-                      {isColVisible("std") && (
-                        <th key="std" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                          <span style={{ display: "block" }}>STD</span>
-                          <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
-                        </th>
-                      )}
-                      {isColVisible("sta") && (
-                        <th key="sta" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
-                          <span style={{ display: "block" }}>STA</span>
-                          <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
-                        </th>
-                      )}
-                      {/* DAY group — colSpan reflects visible sub-cols; omitted when all hidden */}
-                      {daySpan > 0 && (
-                        <th colSpan={daySpan} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
-                      )}
-                      {/* NIGHT group — colSpan reflects visible sub-cols; omitted when all hidden */}
-                      {nightSpan > 0 && (
-                        <th colSpan={nightSpan} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
-                      )}
-                      {/* TOTAL */}
-                      {isColVisible("total") ? <th key="total" rowSpan={2} style={{ ...thStyle }}>TOTAL</th> : null}
-                      {/* Action cols */}
+                      <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>AIRCRAFT</th>
+                      <th key="captain" rowSpan={2} style={thStyle}>CAPTAIN</th>
+                      <th key="cap" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                        <span style={{ display: "block" }}>HOLDER</span>
+                        <span style={{ display: "block" }}>OPERATING</span>
+                        <span style={{ display: "block" }}>CAPACITY</span>
+                      </th>
+                      <th key="pilotFlying" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                        <span style={{ display: "block" }}>PILOT</span>
+                        <span style={{ display: "block" }}>FLYING</span>
+                      </th>
+                      <th colSpan={2} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>SECTORS</th>
+                      <th key="std" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                        <span style={{ display: "block" }}>STD</span>
+                        <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
+                      </th>
+                      <th key="sta" rowSpan={2} style={{ ...thStyle, lineHeight: 1.4 }}>
+                        <span style={{ display: "block" }}>STA</span>
+                        <span style={{ display: "block", fontSize: "var(--elb-hint-sz)", color: "#2a5a7a" }}>(UTC)</span>
+                      </th>
+                      {/* Group headers always stay full-size and horizontal — never shrink,
+                          rotate, or reduce colSpan — regardless of how many of their 3
+                          sub-columns are currently stubbed. */}
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
+                      <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
+                      <th key="total" rowSpan={2} style={{ ...thStyle }}>TOTAL</th>
                       <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
                     </tr>
                     <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
-                      {/* AIRCRAFT sub-headers */}
-                      {isColVisible("type")     && <th style={thSubStyle}>TYPE</th>}
-                      {isColVisible("markings") && <th style={thSubStyle}>MARKINGS</th>}
-                      {/* SECTORS sub-headers */}
-                      {isColVisible("departure")&& <th style={thSubStyle}>DEP</th>}
-                      {isColVisible("arrival")  && <th style={thSubStyle}>ARR</th>}
-                      {/* DAY sub-headers */}
-                      {isColVisible("dayP1")    && <th style={{ ...thSubStyle, color: "#22c55e" }}>P1</th>}
-                      {isColVisible("dayP1US")  && <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>}
-                      {isColVisible("dayP2")    && <th style={{ ...thSubStyle, color: "#eab308" }}>P2</th>}
-                      {/* NIGHT sub-headers */}
-                      {isColVisible("nightP1")  && <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P1</th>}
-                      {isColVisible("nightP1US")&& <th style={{ ...thSubStyle, color: "#ef4444" }}>P1 U/S</th>}
-                      {isColVisible("nightP2")  && <th style={{ ...thSubStyle, color: "#4fc3f7" }}>P2</th>}
+                      <th style={thSubStyle}>TYPE</th>
+                      <th style={thSubStyle}>MARKINGS</th>
+                      <th style={thSubStyle}>DEP</th>
+                      <th style={thSubStyle}>ARR</th>
+                      {autoCalcSubTh("dayP1",     "P1",     "#22c55e")}
+                      {autoCalcSubTh("dayP1US",   "P1 U/S", "#ef4444")}
+                      {autoCalcSubTh("dayP2",     "P2",     "#eab308")}
+                      {autoCalcSubTh("nightP1",   "P1",     "#4fc3f7")}
+                      {autoCalcSubTh("nightP1US", "P1 U/S", "#ef4444")}
+                      {autoCalcSubTh("nightP2",   "P2",     "#4fc3f7")}
                     </tr>
                   </thead>
                 );
@@ -2395,18 +2329,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                       {(() => {
                         const cells = [];
                         let skipAutoCalc = false;
-                        // Anchor the HOC warning banner to the FIRST visible auto-calc column
-                        // in DISPLAY order (dayP1 → … → total). Must walk `columns` (table
+                        // Anchor the HOC warning banner to the FIRST auto-calc column in
+                        // DISPLAY order (dayP1 → … → total). Must walk `columns` (table
                         // order), not `autoCalcCols` (which lists "total" first) — otherwise
                         // the banner anchors at TOTAL and its colSpan spills past the table.
-                        const firstAutoCalcVisible = columns.find(c => autoCalcCols.includes(c.key) && !hiddenCols.has(c.key))?.key;
+                        const firstAutoCalcVisible = columns.find(c => autoCalcCols.includes(c.key))?.key;
                         for (let ci = 0; ci < columns.length; ci++) {
                           const col = columns[ci];
-
-                          // Hidden column: skip rendering entirely. Header rows above skip
-                          // the matching <th> with the same condition, so column alignment
-                          // is preserved without any placeholder cell.
-                          if (hiddenCols.has(col.key)) continue;
 
                           const isEditing = editingCell?.rowIdx === rowIdx && editingCell?.field === col.key;
                           const isTime = timeCols.includes(col.key);
@@ -2441,6 +2370,23 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                           }
 
                           if (skipAutoCalc && ["dayP1US","dayP2","nightP1","nightP1US","nightP2","total"].includes(col.key)) {
+                            continue;
+                          }
+
+                          // Auto-hidden empty column: render a narrow collapsed cell instead
+                          // of the value — matches the stub width in the header above.
+                          if (isAutoCalcStub(col.key)) {
+                            cells.push(
+                              <td
+                                key={col.key}
+                                style={{
+                                  ...tdStyle,
+                                  width: 18, minWidth: 18, maxWidth: 18, padding: 0,
+                                  background: "repeating-linear-gradient(-45deg, rgba(234,179,8,0.05), rgba(234,179,8,0.05) 3px, transparent 3px, transparent 7px)",
+                                  borderRight: "1px solid rgba(234,179,8,0.25)",
+                                }}
+                              />
+                            );
                             continue;
                           }
 
@@ -2613,10 +2559,16 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   <td colSpan={totalsLabelColSpan} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
                     MONTHLY TOTALS →
                   </td>
-                  {/* DAY/NIGHT/TOTAL totals — filter to visible columns only */}
+                  {/* DAY/NIGHT/TOTAL totals — narrow stub cells match the header/body columns above */}
                   {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"]
-                    .filter(k => !hiddenCols.has(k))
-                    .map(k => (
+                    .map(k => isAutoCalcStub(k) ? (
+                      <td key={k} style={{
+                        ...tdStyle,
+                        width: 18, minWidth: 18, maxWidth: 18, padding: 0,
+                        background: "repeating-linear-gradient(-45deg, rgba(234,179,8,0.05), rgba(234,179,8,0.05) 3px, transparent 3px, transparent 7px)",
+                        borderRight: "1px solid rgba(234,179,8,0.25)",
+                      }} />
+                    ) : (
                       <td key={k} style={{
                         ...tdStyle,
                         textAlign: "center",
