@@ -1543,11 +1543,15 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const nowRealDate = new Date();
   const isPastMonth = selectedYear < nowRealDate.getFullYear()
     || (selectedYear === nowRealDate.getFullYear() && selectedMonth < nowRealDate.getMonth());
+  // DAY/NIGHT P1/P1 U/S/P2 are never written to the row itself — they're always
+  // computed live from STD/STA/HOC, same as the table displays. Computed once per
+  // month here (rather than per column/row/call-site) and reused by every check below.
+  const monthComputedFT = rows.map(r => calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth));
   const isAutoCalcStub = (key) => {
     if (!STUBABLE_AUTO_CALC_COLS.includes(key)) return false;
     if (!isPastMonth) return false;
     if (revealedAutoCols.has(`${monthKey}:${key}`)) return false;
-    return rows.every(r => !r[key]);
+    return monthComputedFT.every(ft => !ft[key]);
   };
   const toggleAutoCalcReveal = (key) => {
     const tag = `${monthKey}:${key}`;
@@ -2180,7 +2184,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                     );
                   }
                   const isRevealed = revealedAutoCols.has(`${monthKey}:${key}`)
-                    && STUBABLE_AUTO_CALC_COLS.includes(key) && isPastMonth && rows.every(r => !r[key]);
+                    && STUBABLE_AUTO_CALC_COLS.includes(key) && isPastMonth && monthComputedFT.every(ft => !ft[key]);
                   return (
                     <th
                       key={key}
