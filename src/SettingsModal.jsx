@@ -103,7 +103,15 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.21", date: "July 2026", current: true,
+    v: "v6.22", date: "July 2026", current: true,
+    title: "Auto-hide empty flight-time columns",
+    notes: [
+      "NEW: DAY and NIGHT columns (P1, P1 U/S, P2) that are completely empty for a month now collapse into a slim marker instead of a row of dashes — tap it to reveal the column again. Only ever applies to past, closed-out months, never the one you're actively logging, and a column with even one real entry is never touched. Runs automatically across your whole history — nothing to turn on.",
+      "DEP: Removed the manual per-column \"hide column\" setting from Settings → Appearance — superseded by the automatic behaviour above for DAY/NIGHT columns; every other column is now simply always shown.",
+    ],
+  },
+  {
+    v: "v6.21", date: "July 2026", current: false,
     title: "Multi-sector auto-fill",
     notes: [
       "NEW: When you add a row with the same date as the row above (multi-sector duty day), aircraft type, markings, and captain auto-fill from the previous row — only into empty fields, never overwriting what you've already typed.",

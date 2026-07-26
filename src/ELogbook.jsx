@@ -2378,7 +2378,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                           }
 
                           // Auto-hidden empty column: render a narrow collapsed cell instead
-                          // of the value — matches the stub width in the header above.
+                          // of the value — matches the stub width in the header above. Dark
+                          // wash, not amber — amber means "warning" elsewhere (P2, HOC missing,
+                          // overlap conflicts); empty isn't a warning, so it just reads as dimmer.
                           if (isAutoCalcStub(col.key)) {
                             cells.push(
                               <td
@@ -2386,7 +2388,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                                 style={{
                                   ...tdStyle,
                                   width: 18, minWidth: 18, maxWidth: 18, padding: 0,
-                                  background: "repeating-linear-gradient(-45deg, rgba(234,179,8,0.05), rgba(234,179,8,0.05) 3px, transparent 3px, transparent 7px)",
+                                  background: "repeating-linear-gradient(-45deg, rgba(0,0,0,0.32), rgba(0,0,0,0.32) 3px, transparent 3px, transparent 7px)",
                                   borderRight: "1px solid rgba(234,179,8,0.25)",
                                 }}
                               />
@@ -2569,7 +2571,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                       <td key={k} style={{
                         ...tdStyle,
                         width: 18, minWidth: 18, maxWidth: 18, padding: 0,
-                        background: "repeating-linear-gradient(-45deg, rgba(234,179,8,0.05), rgba(234,179,8,0.05) 3px, transparent 3px, transparent 7px)",
+                        background: "repeating-linear-gradient(-45deg, rgba(0,0,0,0.32), rgba(0,0,0,0.32) 3px, transparent 3px, transparent 7px)",
                         borderRight: "1px solid rgba(234,179,8,0.25)",
                       }} />
                     ) : (
@@ -3469,7 +3471,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
-        version="v6.21"
+        version="v6.22"
       />
 
       {/* ── CLOUD NEWER BANNER ── */}
@@ -3604,7 +3606,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.21 · CAAM</span>
+        <span>eLOGBOOK v6.22 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
