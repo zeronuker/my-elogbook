@@ -64,6 +64,7 @@ export const DEFAULT_SETTINGS = {
   brightness: 100,
   accentPreset: "gradient",
   columnDensity: "default",
+  autoHideEmptyCols: true,
   // Preferences
   dateFormat: "D",
   rowsPerPage: 15,
@@ -106,7 +107,7 @@ const CHANGELOG = [
     v: "v6.22", date: "July 2026", current: true,
     title: "Auto-hide empty flight-time columns",
     notes: [
-      "NEW: DAY and NIGHT columns (P1, P1 U/S, P2) that are completely empty for a month now collapse into a slim marker instead of a row of dashes — tap it to reveal the column again. Only ever applies to past, closed-out months, never the one you're actively logging, and a column with even one real entry is never touched. Runs automatically across your whole history — nothing to turn on.",
+      "NEW: DAY and NIGHT columns (P1, P1 U/S, P2) that are completely empty for a month now collapse into a slim marker instead of a row of dashes — tap it to reveal the column again. Only ever applies to past, closed-out months, never the one you're actively logging, and a column with even one real entry is never touched. Toggle it off in Settings → Appearance if you'd rather always see every column.",
       "DEP: Removed the manual per-column \"hide column\" setting from Settings → Appearance — superseded by the automatic behaviour above for DAY/NIGHT columns; every other column is now simply always shown.",
     ],
   },
@@ -481,6 +482,7 @@ const TAB_DEFAULTS = {
     fontSize: 14,
     tableDensity: "default",
     columnDensity: "default",
+    autoHideEmptyCols: true,
     fontType: "courier",
     brightness: 100,
     accentPreset: "gradient",
@@ -1077,6 +1079,13 @@ function AppearanceTab({ d, upd }) {
           </div>
         </div>
       </SmRow>
+
+      <SmField label="Auto-hide empty DAY/NIGHT columns" hint="Collapses a DAY/NIGHT column to a slim marker for past months where it's completely empty. Turn off to always show every column.">
+        <SmToggle
+          checked={d.autoHideEmptyCols !== false}
+          onChange={(v) => upd({ autoHideEmptyCols: v })}
+        />
+      </SmField>
 
     </div>
   );

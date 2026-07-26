@@ -1548,6 +1548,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // month here (rather than per column/row/call-site) and reused by every check below.
   const monthComputedFT = rows.map(r => calcFlightTimes(r, settings.dayNightMethod, selectedYear, selectedMonth));
   const isAutoCalcStub = (key) => {
+    if (settings.autoHideEmptyCols === false) return false;
     if (!STUBABLE_AUTO_CALC_COLS.includes(key)) return false;
     if (!isPastMonth) return false;
     if (revealedAutoCols.has(`${monthKey}:${key}`)) return false;
