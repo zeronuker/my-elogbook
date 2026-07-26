@@ -2175,11 +2175,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                           ...thSubStyle,
                           width: 18, minWidth: 18, maxWidth: 18, padding: "6px 0",
                           cursor: "pointer",
-                          background: "rgba(234,179,8,0.06)",
-                          borderRight: "1px solid rgba(234,179,8,0.3)",
                         }}
                       >
-                        <span style={{ writingMode: "vertical-rl", textOrientation: "mixed", fontSize: 9, letterSpacing: "0.04em", whiteSpace: "nowrap", color: "#eab308" }}>{label}</span>
+                        <span style={{ writingMode: "vertical-rl", textOrientation: "mixed", fontSize: 9, letterSpacing: "0.04em", whiteSpace: "nowrap", color: "var(--elb-txt-muted, #4a6a8a)" }}>{label}</span>
                       </th>
                     );
                   }
@@ -2389,7 +2387,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                                   ...tdStyle,
                                   width: 18, minWidth: 18, maxWidth: 18, padding: 0,
                                   background: "repeating-linear-gradient(-45deg, rgba(0,0,0,0.32), rgba(0,0,0,0.32) 3px, transparent 3px, transparent 7px)",
-                                  borderRight: "1px solid rgba(234,179,8,0.25)",
                                 }}
                               />
                             );
@@ -2572,7 +2569,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         ...tdStyle,
                         width: 18, minWidth: 18, maxWidth: 18, padding: 0,
                         background: "repeating-linear-gradient(-45deg, rgba(0,0,0,0.32), rgba(0,0,0,0.32) 3px, transparent 3px, transparent 7px)",
-                        borderRight: "1px solid rgba(234,179,8,0.25)",
                       }} />
                     ) : (
                       <td key={k} style={{
