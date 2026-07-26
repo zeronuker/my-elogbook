@@ -992,7 +992,7 @@ function AppearanceTab({ d, upd }) {
         </div>
       )}
 
-      <SmSectionHead title="Accent" hint="// 5 curated brand presets" />
+      <SmSectionHead title="Accent" hint="// 10 curated brand presets" />
       <SmRow>
         <div className="sm-accent-grid">
           {ACCENT_PRESETS.map((p) => (
@@ -1154,6 +1154,7 @@ function PreferencesTab({ d, upd }) {
           options={["60", "75", "90", "120"]}
           labels={["60 min", "75 min (default)", "90 min", "120 min"]}
           onChange={(v) => upd({ preFlightBuffer: Number(v) })}
+          disabled={!d.useStandardFormula}
         />
       </SmField>
 
@@ -1163,6 +1164,7 @@ function PreferencesTab({ d, upd }) {
           options={["10", "15", "30", "45"]}
           labels={["10 min", "15 min (default)", "30 min", "45 min"]}
           onChange={(v) => upd({ postFlightBuffer: Number(v) })}
+          disabled={!d.useStandardFormula}
         />
       </SmField>
 
@@ -1346,11 +1348,12 @@ function SmInputDate({ value, onChange }) {
   );
 }
 
-function SmSelect({ value, options, labels, onChange }) {
+function SmSelect({ value, options, labels, onChange, disabled }) {
   return (
     <select
       className="sm-select"
       value={value}
+      disabled={disabled}
       onChange={onChange ? (e) => onChange(e.target.value) : undefined}
     >
       {options.map((o, i) => (
@@ -1633,6 +1636,7 @@ const settingsCss = `
   .sm-input:focus, .sm-select:focus { border-color: var(--cb-mint); }
   .sm-input[readonly] { color: var(--cb-ink-2); opacity: 0.65; }
   .sm-select { cursor: pointer; }
+  .sm-select:disabled { opacity: 0.45; cursor: not-allowed; }
 
   /* ── Segmented control ──────────────────────────────────────────── */
   .sm-seg {

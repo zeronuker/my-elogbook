@@ -1855,8 +1855,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       minHeight: "100vh",
       fontFamily: "var(--elb-font, 'Courier New', Courier, monospace)",
       color: "var(--elb-txt, #c8d6e5)",
-      filter: (settings.theme === "dark" && Number(settings.brightness) > 0 && Number(settings.brightness) < 100)
-        ? `brightness(${settings.brightness}%)`
+      filter: ((previewSettings || settings).theme === "dark" && Number((previewSettings || settings).brightness) > 0 && Number((previewSettings || settings).brightness) < 100)
+        ? `brightness(${(previewSettings || settings).brightness}%)`
         : undefined,
     }}>
       <style>{`
