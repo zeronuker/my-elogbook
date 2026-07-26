@@ -230,7 +230,7 @@ const ScreenLanding = memo(({ goTo }) => (
     <div className="onb-land-logo-wrap">
       <BrandBanner subtitle="PILOT eLOGBOOK" />
     </div>
-    <div className="onb-land-ver">eLOGBOOK V6.19 · CAAM / MCAR 2016</div>
+    <div className="onb-land-ver">eLOGBOOK V6.22 · CAAM / MCAR 2016</div>
     <div className="onb-land-tag">Your personal electronic logbook.<br/>Accessible anywhere. Works offline. Sync on demand.</div>
     <div className="onb-badges">
       <span className="onb-badge onb-badge-blue">✓ CAD 1901</span>
