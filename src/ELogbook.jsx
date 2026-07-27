@@ -600,7 +600,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [lastSyncTime, setLastSyncTime] = useState("");
   const [syncConflict, setSyncConflict] = useState(null); // { cloudData } when conflict detected
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [cloudNewerBanner, setCloudNewerBanner] = useState(false);
 
   // ── NEW ──
   const [activePopup, setActivePopup] = useState(null); // popup id string or null
@@ -748,27 +747,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const lsSaveKey        = (uid) => `elb_last_local_save_${uid}`;
   const lsSyncDisplayKey = (uid) => `elb_last_sync_display_${uid}`;
 
-  // ── Background cloud timestamp check ──
-  // Silently fetches Firestore updatedAt and compares to local lastSyncedAt.
-  // Shows cloud-newer banner if cloud is ahead. Never modifies local data.
-  const runCloudCheck = async (uid) => {
-    if (!navigator.onLine) return;
-    try {
-      const ref  = doc(db, "users", uid, "logbook", "data");
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const cloudUpdatedAt = snap.data().updatedAt ? new Date(snap.data().updatedAt).getTime() : 0;
-        const lastSyncedAt   = localStorage.getItem(lsSaveKey(uid));
-        const lastSyncedMs   = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
-        if (cloudUpdatedAt > lastSyncedMs && cloudUpdatedAt > 0 && lastSyncedMs > 0) {
-          setCloudNewerBanner(true);
-        }
-      }
-    } catch (err) {
-      console.warn("Background cloud check failed:", err);
-    }
-  };
-
   // ── Load data — localStorage first, Firestore fallback (migration) ──
   const loadData = async (uid) => {
     try {
@@ -789,8 +767,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         const storedSyncDisplay = localStorage.getItem(lsSyncDisplayKey(uid));
         if (storedSyncDisplay) setLastSyncTime(storedSyncDisplay);
 
-        // Background cloud check — runs silently, shows banner if cloud is newer
-        runCloudCheck(uid);
         return;
       }
 
@@ -869,13 +845,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     return () => window.removeEventListener("beforeunload", handler);
   }, [saveStatus]);
 
-  // ── Track online/offline status + cloud check on reconnect ──
+  // ── Track online/offline status ──
   useEffect(() => {
-    const goOnline = () => {
-      setIsOnline(true);
-      // Run cloud check when connection is restored — banner appears if cloud is ahead
-      if (user?.uid) runCloudCheck(user.uid);
-    };
+    const goOnline = () => setIsOnline(true);
     const goOffline = () => setIsOnline(false);
     window.addEventListener("online",  goOnline);
     window.addEventListener("offline", goOffline);
@@ -883,18 +855,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       window.removeEventListener("online",  goOnline);
       window.removeEventListener("offline", goOffline);
     };
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Cloud check on app resume (tab/PWA comes back to foreground) ──
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible" && user?.uid && navigator.onLine) {
-        runCloudCheck(user.uid);
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Keep settingsRef in sync so saveData never reads a stale closure ──
   useEffect(() => { settingsRef.current = settings; }, [settings]);
@@ -1046,7 +1007,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             localStorage.setItem(lsSaveKey(user.uid), now.toISOString());
             localStorage.setItem(lsSyncDisplayKey(user.uid), displayStr);
             setLastSyncTime(displayStr);
-            setCloudNewerBanner(false);
             localDirtyRef.current = false;
             setSyncStatus("synced");
             setTimeout(() => setSyncStatus("idle"), 3000);
@@ -1078,7 +1038,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       localStorage.setItem(lsSyncDisplayKey(user.uid), displayStr);
       setLastSyncTime(displayStr);
       localDirtyRef.current = false;
-      setCloudNewerBanner(false);
       setSyncStatus("synced");
       setTimeout(() => setSyncStatus("idle"), 3000);
     } catch (e) {
@@ -1117,7 +1076,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       localStorage.setItem(lsSyncDisplayKey(user.uid), displayStr);
       setLastSyncTime(displayStr);
       localDirtyRef.current = false;
-      setCloudNewerBanner(false);
       setSyncStatus("synced");
       setTimeout(() => setSyncStatus("idle"), 3000);
     } catch (e) {
@@ -1142,7 +1100,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     localStorage.setItem(lsSyncDisplayKey(user.uid), displayStr);
     setLastSyncTime(displayStr);
     localDirtyRef.current = false;
-    setCloudNewerBanner(false);
     setSyncConflict(null);
     setSyncStatus("synced");
     setTimeout(() => setSyncStatus("idle"), 3000);
@@ -3497,95 +3454,71 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         version="v6.22"
       />
 
-      {/* ── CLOUD NEWER BANNER ── */}
-      {/* Shown on app open when cloud has newer data than last sync on this device */}
-      {cloudNewerBanner && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 3500,
-          background: "linear-gradient(135deg, rgba(59,141,255,0.15), rgba(63,224,197,0.10))",
-          borderBottom: "1px solid rgba(63,224,197,0.3)",
-          padding: "10px 20px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          gap: 12, flexWrap: "wrap",
-          fontFamily: "var(--elb-font, 'Courier New', monospace)",
-          backdropFilter: "blur(8px)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 14 }}>☁</span>
-            <div>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "var(--elb-acc, #3FE0C5)" }}>
-                CLOUD HAS NEWER DATA
-              </span>
-              <span style={{ fontSize: 11, color: "var(--cb-ink-dim, #7c87a3)", letterSpacing: "0.04em", marginLeft: 10 }}>
-                Another device synced after your last sync on this device
-              </span>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <button
-              onClick={syncData}
-              style={{
-                background: "var(--elb-acc, #3FE0C5)", color: "#0a0f1e",
-                border: "none", borderRadius: 4,
-                fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
-                padding: "5px 14px", cursor: "pointer",
-              }}
-            >SYNC NOW</button>
-            <button
-              onClick={() => setCloudNewerBanner(false)}
-              style={{
-                background: "transparent", border: "1px solid rgba(63,224,197,0.3)", borderRadius: 4,
-                color: "var(--cb-ink-dim, #7c87a3)",
-                fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                fontSize: 11, letterSpacing: "0.08em",
-                padding: "5px 12px", cursor: "pointer",
-              }}
-            >DISMISS</button>
-          </div>
-        </div>
-      )}
 
       {/* ── SYNC CONFLICT MODAL ── */}
-      {/* Shown when Firestore has newer data than this device's last sync */}
+      {/* Shown when Firestore has newer data than this device's last sync. Fully blocking by
+          design — no dismiss, no click-outside, no Escape — a wrong guess here loses real data,
+          so unlike the update toast there's no safe default/countdown; the user must choose. */}
       {syncConflict && (
         <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 4000,
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(3px)", zIndex: 4000,
           display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
-          fontFamily: "var(--elb-font, 'Courier New', monospace)",
         }}>
           <div style={{
+            width: "min(360px, 100%)",
             background: "var(--cb-surface-1, #141a2e)",
-            border: "1px solid rgba(245,197,66,0.3)", borderTop: "2px solid #f5c542",
-            borderRadius: 6, padding: "20px 22px 18px",
-            maxWidth: 420, width: "100%",
-            boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
+            border: "1px solid rgba(245,197,66,0.3)",
+            borderRadius: 10, padding: "18px 18px 16px",
+            boxShadow: "0 20px 56px rgba(0,0,0,0.55)",
           }}>
-            <div style={{ fontSize: 10, letterSpacing: "0.16em", color: "#f5c542", marginBottom: 5 }}>SYNC CONFLICT</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em", marginBottom: 12 }}>
-              CLOUD HAS NEWER DATA
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <span style={{
+                width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                background: "#f5c542", boxShadow: "0 0 0 3px rgba(245,197,66,0.2)",
+              }} />
+              <span style={{
+                fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 10,
+                letterSpacing: "0.14em", color: "#f5c542", textTransform: "uppercase",
+              }}>
+                Sync conflict
+              </span>
             </div>
-            <div style={{ height: 1, background: "rgba(245,197,66,0.2)", marginBottom: 14 }} />
-            <div style={{ fontSize: 13, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.7, marginBottom: 18 }}>
-              Another device synced to the cloud after your last sync. Choose which version to keep.
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.02em", marginBottom: 10 }}>
+              Cloud has newer data
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button
-                onClick={resolveKeepCloud}
-                style={{
-                  background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
-                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px", cursor: "pointer",
-                }}
-              >☁ KEEP CLOUD</button>
+            <div style={{ fontSize: 12.5, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.6, marginBottom: 16 }}>
+              Another device synced after your last sync here. Pick which version to keep — the other will be overwritten.
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
               <button
                 onClick={resolveKeepLocal}
                 style={{
-                  background: "rgba(245,197,66,0.10)", border: "1px solid #f5c542", borderRadius: 4,
-                  color: "#f5c542", fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                  fontSize: 11, letterSpacing: "0.12em", padding: "6px 20px", cursor: "pointer", fontWeight: 700,
+                  flex: 1, background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 6,
+                  color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
+                  padding: "10px 0", cursor: "pointer", opacity: 0.7,
                 }}
-              >💾 KEEP LOCAL</button>
+              >Keep local</button>
+              <button
+                onClick={resolveKeepCloud}
+                style={{
+                  flex: 1, background: "#f5c542", border: "none", borderRadius: 6,
+                  color: "#241a03", fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                  fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
+                  padding: "10px 0", cursor: "pointer",
+                }}
+              >Keep cloud</button>
+            </div>
+            <div style={{
+              display: "flex", justifyContent: "space-between",
+              fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 9.5,
+              color: "var(--cb-ink-dim, #7c87a3)", marginTop: 12, paddingTop: 10,
+              borderTop: "1px solid rgba(255,255,255,0.07)",
+            }}>
+              <span>LOCAL SYNCED · {lastSyncTime || "—"}</span>
+              <span>CLOUD UPDATED · {syncConflict.cloudData?.updatedAt
+                ? new Date(syncConflict.cloudData.updatedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + " · " + new Date(syncConflict.cloudData.updatedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+                : "—"}</span>
             </div>
           </div>
         </div>
