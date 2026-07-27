@@ -3592,11 +3592,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       )}
 
       {/* ── PWA UPDATE PROMPT ── */}
-      {/* Only shown when a new service worker is waiting AND saves are not pending */}
+      {/* Toast is non-blocking so it can show any time; isBusy only defers the automatic countdown-fire, not a manual click */}
       <UpdatePrompt
-        ready={updateReady && saveStatus !== "saving"}
+        ready={updateReady}
         update={update}
-        appLabel="C·B ELOGBOOK"
+        isBusy={saveStatus === "saving"}
       />
 
       {/* ── MIGRATION OVERLAY ── */}
