@@ -2,10 +2,12 @@
 
 ## CRITICAL REQUIREMENTS
 
-### 🔴 Changelog is MANDATORY Before Deploy
-**Every deployment MUST include changelog update.** No exceptions.
+### Changelog — Major Changes Only
+**Only add a changelog entry for major fixes or feature implementations.** Small tweaks, minor fixes, copy changes, etc. don't need one.
 
-**Process:**
+**If unsure whether a change counts as major, ask the user before deciding.**
+
+**Process (when a changelog entry is warranted):**
 1. Ask Claude to mockup the changelog entry first
 2. Review mockup visually
 3. Update `src/SettingsModal.jsx` (MiscTab → changelog section)
@@ -55,9 +57,9 @@
 
 - [ ] Features/fixes implemented
 - [ ] Code tested locally (if needed)
-- [ ] Changelog mockup reviewed
+- [ ] If change is major: changelog mockup reviewed
 - [ ] Version numbers updated (if releasing new version)
-- [ ] Changelog entry added to SettingsModal.jsx
+- [ ] If change is major: changelog entry added to SettingsModal.jsx
 - [ ] If UI changed, review HowToGuideModal.jsx mockups for accuracy
 - [ ] Commit message descriptive
 - [ ] Ready to `git push origin main`
@@ -66,7 +68,7 @@
 
 ## Common Tasks
 
-**Add new feature:**
+**Add new feature (major):**
 1. Code the feature
 2. Test locally
 3. Ask Claude to mockup changelog entry
@@ -78,7 +80,7 @@
 **Bug fix:**
 1. Fix the bug
 2. Test
-3. Add "FIX" entry to current version in changelog
+3. If the fix is major, add a "FIX" entry to current version in changelog (skip for minor fixes)
 4. Commit + push (no version bump needed)
 
 ---
