@@ -110,6 +110,7 @@ const CHANGELOG = [
       "NEW: DAY and NIGHT columns (P1, P1 U/S, P2) that are completely empty for a month now collapse into a slim marker instead of a row of dashes — tap it to reveal the column again. Only ever applies to past, closed-out months, never the one you're actively logging, and a column with even one real entry is never touched. Toggle it off in Settings → Appearance if you'd rather always see every column.",
       "DEP: Removed the manual per-column \"hide column\" setting from Settings → Appearance — superseded by the automatic behaviour above for DAY/NIGHT columns; every other column is now simply always shown.",
       "NEW: Added a \"Go to today\" button next to the period selector on the Logbook tab — jumps straight back to the current month. Greys out when you're already viewing it.",
+      "FIX: Opening the app on a device that already has locally cached data no longer skips checking the cloud entirely — it now silently pulls newer cloud data in the background, or opens the sync conflict dialog if this device also has unsynced local changes. Previously this only happened when manually tapping Sync.",
     ],
   },
   {
