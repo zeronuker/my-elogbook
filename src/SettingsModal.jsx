@@ -113,7 +113,7 @@ const CHANGELOG = [
       "IMP: Remarks and the AUTOLAND checkbox now commit immediately — no more separate \"Save remarks\" button.",
       "IMP: Delete moved from a bare \"✕\" column into the panel as a labelled button, with a two-step confirm for rows that have data.",
       "NEW: Settings → Appearance → toggle to animate the row panel opening and closing (on by default).",
-      "FIX: Add-sector button moved back into the MONTHLY TOTALS row, left of the label — visible without scrolling on load, instead of buried off to the right.",
+      "FIX: Add-sector button now sits inside the MONTHLY TOTALS row on desktop, and floats over the table on touch devices or a narrow window — visible without scrolling either way, instead of buried off to the right.",
     ],
   },
   {

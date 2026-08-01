@@ -1945,6 +1945,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-topbar-caam { display: none; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
         }
+        /* Add-sector button: floating on touch devices (any orientation) or a
+           narrow window, otherwise sitting in the totals row on desktop. */
+        .elb-add-sector-floating { display: none; }
+        .elb-add-sector-inline { display: flex; }
+        @media (pointer: coarse), (max-width: 640px) {
+          .elb-add-sector-floating { display: flex; }
+          .elb-add-sector-inline { display: none; }
+        }
       `}</style>
 
       {/* ── TOPBAR ── */}
@@ -2743,7 +2751,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 {/* ── TOTALS ROW ── */}
                 <tr style={{ background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
                   <td colSpan={totalsLabelColSpan} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                    <div className="elb-add-sector-inline" style={{ alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                       <button
                         onClick={addSector}
                         title="Add sector row"
@@ -3294,6 +3302,30 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           </div>
         )}
       </div>
+
+      {/* ── FLOATING ADD-SECTOR BUTTON ── rendered outside the brightness-filtered
+          wrapper above: a CSS `filter` on an ancestor creates a new containing
+          block for `position:fixed` descendants, which would otherwise pin this
+          button to that wrapper instead of the viewport once brightness < 100.
+          Only actually visible on touch devices / narrow windows — see the
+          .elb-add-sector-floating / .elb-add-sector-inline media query above. */}
+      {activeTab === "logbook" && (
+        <button
+          className="elb-add-sector-floating"
+          onClick={addSector}
+          title="Add sector row"
+          style={{
+            position: "fixed", left: 20, bottom: 20, zIndex: 500,
+            width: 44, height: 44, borderRadius: 12,
+            background: "rgba(39,174,96,0.9)", border: "1px solid #27ae60",
+            color: "#fff", cursor: "pointer", fontSize: 22, fontWeight: 700,
+            alignItems: "center", justifyContent: "center",
+            padding: 0, boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = "#27ae60"}
+          onMouseLeave={e => e.currentTarget.style.background = "rgba(39,174,96,0.9)"}
+        >+</button>
+      )}
 
       {/* ── REGULATORY REFERENCE POPUP ── */}
       {activePopup && (() => {
