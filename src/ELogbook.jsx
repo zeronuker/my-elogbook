@@ -2742,8 +2742,23 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
                 {/* ── TOTALS ROW ── */}
                 <tr style={{ background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
-                  <td colSpan={totalsLabelColSpan} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, textAlign: "right" }}>
-                    MONTHLY TOTALS →
+                  <td colSpan={totalsLabelColSpan} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                      <button
+                        onClick={addSector}
+                        title="Add sector row"
+                        style={{
+                          width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+                          background: "rgba(39,174,96,0.9)", border: "1px solid #27ae60",
+                          color: "#fff", cursor: "pointer", fontSize: 16, fontWeight: 900,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          padding: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = "#27ae60"}
+                        onMouseLeave={e => e.currentTarget.style.background = "rgba(39,174,96,0.9)"}
+                      >+</button>
+                      <span style={{ flex: 1, textAlign: "right" }}>MONTHLY TOTALS →</span>
+                    </div>
                   </td>
                   {/* DAY/NIGHT/TOTAL totals — narrow stub cells match the header/body columns above */}
                   {["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total"]
@@ -2772,28 +2787,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
               </tbody>
             </table>
-
-            {/* ── ADD-SECTOR BUTTON ── this table is often wider than the viewport
-                (STD/STA/DAY/NIGHT/TOTAL push it past the visible area), so the
-                button sticks to the left edge of the CURRENT horizontal scroll
-                position rather than a fixed offset — stays reachable without
-                ever requiring a scroll to find it, at any scroll position. */}
-            <div style={{ padding: "8px 0" }}>
-              <button
-                onClick={addSector}
-                title="Add sector row"
-                style={{
-                  position: "sticky", left: 8, zIndex: 5,
-                  width: 40, height: 40, borderRadius: "50%",
-                  background: "rgba(39,174,96,0.9)", border: "1px solid #27ae60",
-                  color: "#fff", cursor: "pointer", fontSize: 20, fontWeight: 700,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  padding: 0, boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = "#27ae60"}
-                onMouseLeave={e => e.currentTarget.style.background = "rgba(39,174,96,0.9)"}
-              >+</button>
-            </div>
           </div>
         )}
 
