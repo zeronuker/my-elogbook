@@ -752,6 +752,50 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const lsSaveKey        = (uid) => `elb_last_local_save_${uid}`;
   const lsSyncDisplayKey = (uid) => `elb_last_sync_display_${uid}`;
 
+  // ── Background cloud check ──
+  // Silently fetches Firestore updatedAt and compares to local lastSyncedAt.
+  // If cloud is newer and this device has unsynced local edits, opens the sync
+  // conflict modal so the user can choose. If local has no unsynced edits, pulls
+  // the cloud data in automatically — nothing to lose, nothing to ask about.
+  const checkCloudSync = async (uid) => {
+    if (!navigator.onLine) return;
+    try {
+      const ref  = doc(db, "users", uid, "logbook", "data");
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return;
+      const cloudData      = snap.data();
+      const cloudUpdatedAt = cloudData.updatedAt ? new Date(cloudData.updatedAt).getTime() : 0;
+      const lastSyncedAt   = localStorage.getItem(lsSaveKey(uid));
+      const lastSyncedMs   = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
+      if (!(cloudUpdatedAt > lastSyncedMs && cloudUpdatedAt > 0 && lastSyncedMs > 0)) return;
+
+      if (localDirtyRef.current) {
+        // Cloud is newer AND local has unsaved changes — genuine conflict, let user decide.
+        const cloudYearsData = await fetchAllYearsData(uid);
+        setSyncConflict({ cloudData: { ...cloudData, logbookData: cloudYearsData } });
+        return;
+      }
+
+      // Cloud is newer but local has no changes since last sync — silent pull
+      const cloudYearsData = await fetchAllYearsData(uid);
+      applyDocData(cloudData, cloudYearsData);
+      if (Object.keys(cloudYearsData).length > 0) localStorage.setItem(lsKey(uid), JSON.stringify(cloudYearsData));
+      if (cloudData.settings)    localStorage.setItem(lsSettingsKey(uid), JSON.stringify(cloudData.settings));
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+      const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      const displayStr = `${dateStr} · ${timeStr}`;
+      localStorage.setItem(lsSaveKey(uid), now.toISOString());
+      localStorage.setItem(lsSyncDisplayKey(uid), displayStr);
+      setLastSyncTime(displayStr);
+      localDirtyRef.current = false;
+      setSyncStatus("synced");
+      setTimeout(() => setSyncStatus("idle"), 3000);
+    } catch (err) {
+      console.warn("Background cloud check failed:", err);
+    }
+  };
+
   // ── Load data — localStorage first, Firestore fallback (migration) ──
   const loadData = async (uid) => {
     try {
@@ -772,6 +816,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         const storedSyncDisplay = localStorage.getItem(lsSyncDisplayKey(uid));
         if (storedSyncDisplay) setLastSyncTime(storedSyncDisplay);
 
+        // Background cloud check — runs silently, opens conflict modal if cloud is newer
+        checkCloudSync(uid);
         return;
       }
 
@@ -850,9 +896,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     return () => window.removeEventListener("beforeunload", handler);
   }, [saveStatus]);
 
-  // ── Track online/offline status ──
+  // ── Track online/offline status + cloud check on reconnect ──
   useEffect(() => {
-    const goOnline = () => setIsOnline(true);
+    const goOnline = () => {
+      setIsOnline(true);
+      // Run cloud check when connection is restored — conflict modal opens if cloud is ahead
+      if (user?.uid) checkCloudSync(user.uid);
+    };
     const goOffline = () => setIsOnline(false);
     window.addEventListener("online",  goOnline);
     window.addEventListener("offline", goOffline);
@@ -860,7 +910,18 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       window.removeEventListener("online",  goOnline);
       window.removeEventListener("offline", goOffline);
     };
-  }, []);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Cloud check on app resume (tab/PWA comes back to foreground) ──
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && user?.uid && navigator.onLine) {
+        checkCloudSync(user.uid);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Keep settingsRef in sync so saveData never reads a stale closure ──
   useEffect(() => { settingsRef.current = settings; }, [settings]);
