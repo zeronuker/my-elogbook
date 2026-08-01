@@ -113,6 +113,7 @@ const CHANGELOG = [
       "IMP: Remarks and the AUTOLAND checkbox now commit immediately — no more separate \"Save remarks\" button.",
       "IMP: Delete moved from a bare \"✕\" column into the panel as a labelled button, with a two-step confirm for rows that have data.",
       "NEW: Settings → Appearance → toggle to animate the row panel opening and closing (on by default).",
+      "FIX: Add-sector button no longer requires scrolling the table sideways to reach — it now sticks to the left edge of whatever's currently in view, at any scroll position.",
     ],
   },
   {

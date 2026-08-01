@@ -2300,7 +2300,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                       <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#f5c542", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☀ DAY</th>
                       <th colSpan={3} style={{ ...thStyle, borderBottom: "1px solid #1a3050", textAlign: "center", color: "#7ab8d4", fontSize: "var(--elb-th-sz)", letterSpacing: "0.15em" }}>☾ NIGHT</th>
                       <th key="total" rowSpan={2} style={{ ...thStyle }}>TOTAL</th>
-                      <th rowSpan={2} style={{ ...thStyle, background: "var(--elb-bg, #0a0d12)", border: "none", width: 28, minWidth: 28 }}></th>
                     </tr>
                     <tr style={{ background: "var(--elb-thead, #0b1320)" }}>
                       <th style={thSubStyle}>TYPE</th>
@@ -2616,11 +2615,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         }
                         return cells;
                       })()}
-                      {/* ── trailing stub column — shared with the totals-row "+" add-sector button below ── */}
-                      <td style={{ background: "var(--elb-bg, #0a0d12)", border: "none", borderRight: "none", padding: "3px 2px", width: 28, minWidth: 28 }} />
                     </tr>
                     <tr>
-                      <td colSpan={columns.length + 2} style={{ padding: 0, border: "none" }}>
+                      <td colSpan={columns.length + 1} style={{ padding: 0, border: "none" }}>
                         <div style={{
                           display: "grid",
                           gridTemplateRows: isExpanded ? "1fr" : "0fr",
@@ -2771,24 +2768,32 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         {totalsRow[k]}
                       </td>
                     ))}
-                  <td style={{ ...tdStyle, textAlign: "center", padding: "3px 4px" }}>
-                    <button
-                      onClick={addSector}
-                      title="Add sector row"
-                      style={{
-                        background: "rgba(39,174,96,0.15)", border: "1px solid #27ae60", borderRadius: "50%",
-                        color: "#27ae60", cursor: "pointer", fontSize: 16, width: 22, height: 22,
-                        display: "inline-flex", alignItems: "center", justifyContent: "center",
-                        padding: 0, fontWeight: 700,
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = "rgba(39,174,96,0.3)"}
-                      onMouseLeave={e => e.currentTarget.style.background = "rgba(39,174,96,0.15)"}
-                    >+</button>
-                  </td>
                 </tr>
 
               </tbody>
             </table>
+
+            {/* ── ADD-SECTOR BUTTON ── this table is often wider than the viewport
+                (STD/STA/DAY/NIGHT/TOTAL push it past the visible area), so the
+                button sticks to the left edge of the CURRENT horizontal scroll
+                position rather than a fixed offset — stays reachable without
+                ever requiring a scroll to find it, at any scroll position. */}
+            <div style={{ padding: "8px 0" }}>
+              <button
+                onClick={addSector}
+                title="Add sector row"
+                style={{
+                  position: "sticky", left: 8, zIndex: 5,
+                  width: 40, height: 40, borderRadius: "50%",
+                  background: "rgba(39,174,96,0.9)", border: "1px solid #27ae60",
+                  color: "#fff", cursor: "pointer", fontSize: 20, fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  padding: 0, boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "#27ae60"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(39,174,96,0.9)"}
+              >+</button>
+            </div>
           </div>
         )}
 
