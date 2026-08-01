@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, Fragment } from "react";
 import DOMPurify from "dompurify";
 import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
@@ -54,6 +54,9 @@ const MONTHS = [
   "January","February","March","April","May","June",
   "July","August","September","October","November","December"
 ];
+
+const isEmptyStaticRow = row => !row.type && !row.markings && !row.captain && !row.cap;
+const rowHasData = row => row && Object.keys(EMPTY_ROW()).some(k => !!row[k]);
 
 const EMPTY_ROW = () => ({
   date: "",
@@ -621,7 +624,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [routeMapOpen, setRouteMapOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const [remarksModal, setRemarksModal] = useState(null); // { rowIdx, draft }
+  const [expandedRowIdx, setExpandedRowIdx] = useState(null); // accordion — one row's detail panel open at a time
+  const [confirmDeleteRowIdx, setConfirmDeleteRowIdx] = useState(null); // inline two-step delete confirm
+  const [openedRowIds, setOpenedRowIds] = useState(() => new Set()); // rows whose panel has been opened at least once — keeps it mounted so later collapse/expand can animate
   const [periodPreset, setPeriodPreset] = useState("asof"); // "12m" | "month" | "asof" | "custom"
   const [periodCustomFrom, setPeriodCustomFrom] = useState(() => {
     const d = new Date(); d.setDate(1);
@@ -1424,13 +1429,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     });
   };
 
-  const deleteRow = async (rowIdx) => {
-    const row = (data[monthKey] || [])[rowIdx];
-    const hasData = row && Object.keys(EMPTY_ROW()).some(k => !!row[k]);
-    if (hasData) {
-      const confirmed = await showConfirm("Delete row?", "This row has data and will be permanently removed.");
-      if (!confirmed) return;
-    }
+  const deleteRow = (rowIdx) => {
     setData(prev => {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
       const newRows = current.filter((_, i) => i !== rowIdx);
@@ -1439,11 +1438,29 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     });
   };
 
+  // Copies only reusable static facts from the row above — never date, times,
+  // remarks, or autoland, since those are per-landing facts that must stay
+  // something the pilot enters deliberately (recency tracking depends on it).
+  const duplicatePreviousRow = (rowIdx) => {
+    const prevRow = rows[rowIdx - 1];
+    if (!prevRow) return;
+    updateCell(rowIdx, "type", prevRow.type);
+    updateCell(rowIdx, "markings", prevRow.markings);
+    updateCell(rowIdx, "captain", prevRow.captain);
+    updateCell(rowIdx, "cap", prevRow.cap);
+    // Never overwrite a date/departure already typed in by hand — same rule
+    // the multi-sector auto-fill above already follows.
+    const row = rows[rowIdx];
+    if (!row.date) updateCell(rowIdx, "date", prevRow.date);
+    if (!row.departure) updateCell(rowIdx, "departure", prevRow.arrival);
+  };
+
   const addSector = () => {
     setData(prev => {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
-      // Next ID should be length + 1, ensuring no gaps
-      const newId = current.length + 1;
+      // Always strictly higher than any existing id — current.length + 1 alone
+      // can collide once a row's been deleted (ids aren't renumbered on delete).
+      const newId = Math.max(0, ...current.map(r => r.id)) + 1;
       const seeded = {
         ...EMPTY_ROW(),
         type:     settings.defaultAircraftType || "",
@@ -1457,11 +1474,15 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const handleMonthChange = (newMonthIdx) => {
     setSelectedMonth(newMonthIdx);
     setEditingCell(null);
+    setExpandedRowIdx(null);
+    setConfirmDeleteRowIdx(null);
   };
 
   const handleYearChange = (newYear) => {
     setSelectedYear(newYear);
     setEditingCell(null);
+    setExpandedRowIdx(null);
+    setConfirmDeleteRowIdx(null);
   };
 
   const goToToday = () => {
@@ -1469,6 +1490,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     setSelectedMonth(now.getMonth());
     setSelectedYear(now.getFullYear());
     setEditingCell(null);
+    setExpandedRowIdx(null);
+    setConfirmDeleteRowIdx(null);
   };
   const isCurrentPeriod = selectedMonth === new Date().getMonth() && selectedYear === new Date().getFullYear();
 
@@ -2274,43 +2297,50 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   const isDepUnknown = dynMode && row.departure && !getCoords(row.departure);
                   const isArrUnknown = dynMode && row.arrival   && !getCoords(row.arrival);
 
+                  const hasRemarks = row.remarks && row.remarks.trim().length > 0;
+                  const hasSignal = hasRemarks || row.autoland;
+                  const baseRowBg = isEven ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)";
+                  const rowBg = hasSignal ? "rgba(168,85,247,0.07)" : baseRowBg;
+                  const rowTitle = hasRemarks && row.autoland ? "Has remarks · Autoland logged"
+                    : hasRemarks ? "Has remarks"
+                    : row.autoland ? "Autoland logged"
+                    : undefined;
+                  const isExpanded = expandedRowIdx === rowIdx;
+
                   return (
+                    <Fragment key={`${monthKey}-${row.id}`}>
                     <tr
-                      key={row.id}
-                      style={{ background: isEven ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)", transition: "background 0.15s" }}
+                      title={rowTitle}
+                      style={{
+                        background: rowBg,
+                        borderLeft: hasSignal ? "3px solid #a855f7" : "3px solid transparent",
+                        transition: "background 0.15s, border-color 0.15s",
+                      }}
                       onMouseEnter={e => e.currentTarget.style.background = "var(--elb-rowhover, #122030)"}
-                      onMouseLeave={e => e.currentTarget.style.background = isEven ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)"}
+                      onMouseLeave={e => e.currentTarget.style.background = rowBg}
                     >
-                      {/* ── ROW # + REMARKS TRIGGER ── single tap opens remarks (touch-friendly) */}
+                      {/* ── ROW # + PANEL TRIGGER ── single tap expands the inline detail panel below */}
                       <td style={{ ...tdStyle, padding: 0, textAlign: "center" }}>
-                        {(() => {
-                          const hasRemarks = row.remarks && row.remarks.trim().length > 0;
-                          const hasAutoland = row.autoland;
-                          // The row number itself carries the remark/autoland state via colour.
-                          let stateColor = "#6f93b8"; // none
-                          if (hasRemarks && !hasAutoland)      stateColor = "#f5c542"; // remarks only
-                          else if (!hasRemarks && hasAutoland) stateColor = "#a855f7"; // autoland only
-                          else if (hasRemarks && hasAutoland)  stateColor = "#ec4899"; // both
-                          const hasState = hasRemarks || hasAutoland;
-                          return (
-                            <button
-                              onClick={() => setRemarksModal({ rowIdx, draft: row.remarks || "", autoland: row.autoland || false })}
-                              title={hasRemarks || hasAutoland ? "View / edit remarks" : "Add remarks"}
-                              style={{
-                                width: "100%", minHeight: 30, background: "transparent", border: "none",
-                                cursor: "pointer", color: stateColor, fontSize: 18, fontWeight: 700,
-                                fontFamily: "'Courier New',monospace",
-                                textDecoration: hasState ? "underline" : "none", textUnderlineOffset: 3,
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                padding: "4px 2px",
-                              }}
-                              onMouseEnter={e => e.currentTarget.style.color = "#4fc3f7"}
-                              onMouseLeave={e => e.currentTarget.style.color = stateColor}
-                            >
-                              {rowIdx + 1}
-                            </button>
-                          );
-                        })()}
+                        <button
+                          onClick={() => {
+                            setOpenedRowIds(ids => ids.has(row.id) ? ids : new Set(ids).add(row.id));
+                            setExpandedRowIdx(prev => prev === rowIdx ? null : rowIdx);
+                            setConfirmDeleteRowIdx(null);
+                          }}
+                          title={isExpanded ? "Close" : "Remarks / autoland / delete"}
+                          style={{
+                            width: "100%", minHeight: 30, background: "transparent", border: "none",
+                            cursor: "pointer", color: "#6f93b8", fontSize: 18, fontWeight: 700,
+                            fontFamily: "'Courier New',monospace",
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: 3,
+                            padding: "4px 2px",
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.color = "#4fc3f7"}
+                          onMouseLeave={e => e.currentTarget.style.color = "#6f93b8"}
+                        >
+                          {rowIdx + 1}
+                          <span style={{ fontSize: 9, transition: "transform 0.18s ease", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}>▾</span>
+                        </button>
                       </td>
                       {(() => {
                         const cells = [];
@@ -2525,19 +2555,130 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         }
                         return cells;
                       })()}
-                      {/* ── DELETE BUTTON — all rows (min 1 row enforced in deleteRow) ── */}
-                      <td style={{ background: "var(--elb-bg, #0a0d12)", border: "none", borderRight: "none", textAlign: "center", padding: "3px 2px", width: 28, minWidth: 28 }}>
-                        {rows.length > 1 && (
-                          <button
-                            onClick={() => deleteRow(rowIdx)}
-                            title="Delete row"
-                            style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 13, padding: "2px 4px", borderRadius: 3, lineHeight: 1 }}
-                            onMouseEnter={e => e.currentTarget.style.color = "#ff6b6b"}
-                            onMouseLeave={e => e.currentTarget.style.color = "#ef4444"}
-                          >✕</button>
-                        )}
+                      {/* ── trailing stub column — shared with the totals-row "+" add-sector button below ── */}
+                      <td style={{ background: "var(--elb-bg, #0a0d12)", border: "none", borderRight: "none", padding: "3px 2px", width: 28, minWidth: 28 }} />
+                    </tr>
+                    <tr>
+                      <td colSpan={columns.length + 2} style={{ padding: 0, border: "none" }}>
+                        <div style={{
+                          display: "grid",
+                          gridTemplateRows: isExpanded ? "1fr" : "0fr",
+                          transition: settings.panelExpandAnimation !== false ? "grid-template-rows 0.22s ease" : "none",
+                        }}>
+                          <div style={{ overflow: "hidden" }}>
+                            {(isExpanded || openedRowIds.has(row.id)) && (() => {
+                              const prevRow = rowIdx > 0 ? rows[rowIdx - 1] : null;
+                              const canDuplicate = !!prevRow && isEmptyStaticRow(row);
+                              const canDelete = rows.length > 1;
+                              const isConfirmingDelete = confirmDeleteRowIdx === rowIdx;
+                              return (
+                                <div style={{
+                                  padding: "12px 16px 16px 44px", background: "var(--elb-bg, #0a0d12)", borderBottom: "1px solid var(--elb-bdr, #1e3a5f)",
+                                  textAlign: "left", display: "grid", gridTemplateColumns: "1fr 200px", gap: "0 24px", alignItems: "start",
+                                  maxWidth: 680,
+                                }}>
+                                  <div>
+                                    {canDuplicate && (
+                                      <>
+                                        <button
+                                          onClick={() => duplicatePreviousRow(rowIdx)}
+                                          style={{
+                                            display: "inline-flex", alignItems: "center", gap: 6,
+                                            background: "rgba(79,195,247,0.08)", border: "1px solid rgba(79,195,247,0.4)",
+                                            color: "#4fc3f7", fontFamily: "'Courier New',monospace", fontSize: 11,
+                                            letterSpacing: "0.06em", padding: "7px 12px", borderRadius: 4, cursor: "pointer",
+                                            marginBottom: 4,
+                                          }}
+                                        >⧉ DUPLICATE PREVIOUS ROW</button>
+                                        <div style={{ fontSize: 10.5, color: "#4a6a8a", margin: "0 0 12px" }}>
+                                          Pulls date, type, registration, captain &amp; cap from the row above; departure = its arrival.
+                                        </div>
+                                      </>
+                                    )}
+                                    <textarea
+                                      key={`remarks-${row.id}`}
+                                      defaultValue={row.remarks}
+                                      onBlur={e => { e.target.style.borderColor = "var(--elb-bdr, #1e3a5f)"; updateCell(rowIdx, "remarks", e.target.value.trim()); }}
+                                      onFocus={e => { e.target.style.borderColor = "#4fc3f7"; e.target.style.minHeight = "66px"; }}
+                                      placeholder="Enter remarks for this sector..."
+                                      rows={hasRemarks ? 3 : 1}
+                                      style={{
+                                        width: "100%", maxWidth: 420, background: "var(--cb-surface-1, #141a2e)", border: "1px solid var(--elb-bdr, #1e3a5f)",
+                                        borderRadius: 4, color: "var(--cb-ink, #e8ecf5)", fontFamily: "'Courier New',monospace",
+                                        fontSize: 12.5, padding: "9px 10px", resize: "vertical", outline: "none",
+                                        boxSizing: "border-box", lineHeight: 1.6, minHeight: hasRemarks ? 66 : 30,
+                                        transition: "min-height 0.15s ease",
+                                      }}
+                                    />
+                                  </div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={row.autoland || false}
+                                      onChange={e => updateCell(rowIdx, "autoland", e.target.checked)}
+                                      style={{ width: 14, height: 14, cursor: "pointer", accentColor: "#a855f7" }}
+                                    />
+                                    <label style={{ fontSize: 10.5, color: "#c8d6e5", letterSpacing: "0.08em", cursor: "pointer" }}>AUTOLAND</label>
+                                    <button
+                                      onClick={() => setActivePopup("rec-autoland")}
+                                      title="View regulatory reference"
+                                      style={{
+                                        width: 14, height: 14, borderRadius: "50%",
+                                        background: "transparent", border: "1px solid var(--elb-bdr, #1e3a5f)",
+                                        color: "#4a6a8a", fontFamily: "Georgia,serif",
+                                        fontStyle: "italic", fontWeight: 700, fontSize: 10,
+                                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                                        padding: 0, lineHeight: 1, flexShrink: 0,
+                                      }}
+                                      onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
+                                      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-bdr, #1e3a5f)"; e.currentTarget.style.color = "#4a6a8a"; }}
+                                    >i</button>
+                                  </div>
+                                  {canDelete && (
+                                    <div style={{ gridColumn: "1 / -1", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--elb-bdr, #1e3a5f)" }}>
+                                      {isConfirmingDelete ? (
+                                        <div style={{
+                                          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+                                          background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.4)",
+                                          borderRadius: 4, padding: "8px 11px", fontSize: 11, color: "#c8d6e5",
+                                        }}>
+                                          <span>Delete this row? Can't be undone.</span>
+                                          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                                            <button
+                                              onClick={() => setConfirmDeleteRowIdx(null)}
+                                              style={{ fontFamily: "'Courier New',monospace", fontSize: 10.5, padding: "5px 9px", borderRadius: 3, cursor: "pointer", background: "transparent", border: "1px solid var(--elb-bdr, #1e3a5f)", color: "#7c87a3" }}
+                                            >Cancel</button>
+                                            <button
+                                              onClick={() => { deleteRow(rowIdx); setConfirmDeleteRowIdx(null); setExpandedRowIdx(null); }}
+                                              style={{ fontFamily: "'Courier New',monospace", fontSize: 10.5, padding: "5px 9px", borderRadius: 3, cursor: "pointer", background: "#ef4444", border: "1px solid #ef4444", color: "#fff", fontWeight: 700 }}
+                                            >Delete</button>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                                          <button
+                                            onClick={() => {
+                                              if (rowHasData(row)) setConfirmDeleteRowIdx(rowIdx);
+                                              else { deleteRow(rowIdx); setExpandedRowIdx(null); }
+                                            }}
+                                            style={{
+                                              background: "transparent", border: "1px solid rgba(239,68,68,0.4)", color: "#ef4444",
+                                              fontFamily: "'Courier New',monospace", fontSize: 10.5, letterSpacing: "0.08em",
+                                              padding: "7px 12px", borderRadius: 4, cursor: "pointer",
+                                            }}
+                                          >🗑 DELETE ROW</button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
                       </td>
                     </tr>
+                    </Fragment>
                   );
                 })}
 
@@ -3095,122 +3236,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         )}
       </div>
 
-      {/* ── REMARKS POPUP ── */}
-      {remarksModal !== null && (() => {
-        const targetRow = rows[remarksModal.rowIdx];
-        const rowLabel = `ROW ${remarksModal.rowIdx + 1}${targetRow?.date ? ` · DATE ${targetRow.date}` : ""}`;
-        return (
-          <div
-            onClick={e => { if (e.target === e.currentTarget) setRemarksModal(null); }}
-            style={{
-              position: "fixed", inset: 0,
-              background: "rgba(0,0,0,0.72)",
-              zIndex: 2000,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              padding: 20,
-            }}
-          >
-            <div style={{
-              background: "var(--cb-surface-1, #141a2e)",
-              border: "1px solid var(--cb-line-2, #1e3a5f)",
-              borderTop: "2px solid var(--cb-accent, #4fc3f7)",
-              borderRadius: 6,
-              padding: "20px 22px 18px",
-              maxWidth: 520, width: "100%",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
-              animation: "popIn 0.15s ease",
-              fontFamily: "var(--elb-font, 'Courier New', monospace)",
-              textAlign: "left",
-            }}>
-              {/* Header */}
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
-                <div>
-                  <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "var(--cb-accent, #4fc3f7)", marginBottom: 5 }}>{rowLabel}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>REMARKS</div>
-                </div>
-                <button
-                  onClick={() => setRemarksModal(null)}
-                  style={{
-                    background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
-                    color: "var(--cb-ink-2, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 12,
-                    width: 22, height: 22, cursor: "pointer", flexShrink: 0,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-2, #7c87a3)"; }}
-                >✕</button>
-              </div>
-              <div style={{ height: 1, background: "var(--cb-line-2, #1e3a5f)", marginBottom: 14 }} />
-              {/* Textarea */}
-              <textarea
-                value={remarksModal.draft}
-                onChange={e => setRemarksModal(prev => ({ ...prev, draft: e.target.value }))}
-                placeholder="Enter remarks for this sector..."
-                rows={6}
-                autoFocus
-                style={{
-                  width: "100%",
-                  background: "var(--cb-surface-0, #0a1020)",
-                  border: "1px solid var(--cb-line-2, #1e3a5f)",
-                  borderRadius: 4,
-                  color: "var(--cb-ink, #e8ecf5)",
-                  fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                  fontSize: 13,
-                  padding: "10px 12px",
-                  resize: "vertical",
-                  outline: "none",
-                  boxSizing: "border-box",
-                  lineHeight: 1.6,
-                }}
-                onFocus={e => e.target.style.borderColor = "var(--cb-accent, #4fc3f7)"}
-                onBlur={e => e.target.style.borderColor = "var(--cb-line-2, #1e3a5f)"}
-              />
-              {/* Autoland Checkbox */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, marginBottom: 6 }}>
-                <input
-                  type="checkbox"
-                  checked={remarksModal.autoland || false}
-                  onChange={e => setRemarksModal(prev => ({ ...prev, autoland: e.target.checked }))}
-                  style={{
-                    width: 14, height: 14, cursor: "pointer", accentColor: "var(--cb-accent, #4fc3f7)",
-                  }}
-                />
-                <label style={{ fontSize: 11, color: "var(--cb-ink-2, #b8c0d4)", letterSpacing: "0.08em", cursor: "pointer", userSelect: "none" }}>AUTOLAND</label>
-              </div>
-              {/* Action buttons */}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
-                <button
-                  onClick={() => setRemarksModal(null)}
-                  style={{
-                    background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
-                    color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                    fontSize: 11, letterSpacing: "0.12em", padding: "6px 16px", cursor: "pointer",
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--cb-accent, #4fc3f7)"; e.currentTarget.style.color = "var(--cb-accent, #4fc3f7)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
-                >CANCEL</button>
-                <button
-                  onClick={() => {
-                    updateCell(remarksModal.rowIdx, "remarks", remarksModal.draft.trim());
-                    updateCell(remarksModal.rowIdx, "autoland", remarksModal.autoland);
-                    setRemarksModal(null);
-                  }}
-                  style={{
-                    background: "rgba(var(--cb-accent-rgb, 79,195,247), 0.08)",
-                    border: "1px solid var(--cb-accent, #4fc3f7)", borderRadius: 4,
-                    color: "var(--cb-accent, #4fc3f7)", fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                    fontSize: 11, letterSpacing: "0.12em", padding: "6px 20px", cursor: "pointer",
-                    boxShadow: "0 0 8px rgba(79,195,247,0.15)",
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = "rgba(79,195,247,0.15)"}
-                  onMouseLeave={e => e.currentTarget.style.background = "rgba(79,195,247,0.08)"}
-                >SAVE REMARKS</button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
       {/* ── REGULATORY REFERENCE POPUP ── */}
       {activePopup && (() => {
         const p = FTL_POPUPS[activePopup];
@@ -3451,7 +3476,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
-        version="v6.22"
+        version="v6.23"
       />
 
 
@@ -3562,7 +3587,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.22 · CAAM</span>
+        <span>eLOGBOOK v6.23 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

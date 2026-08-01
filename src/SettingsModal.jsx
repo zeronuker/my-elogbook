@@ -65,6 +65,7 @@ export const DEFAULT_SETTINGS = {
   accentPreset: "gradient",
   columnDensity: "default",
   autoHideEmptyCols: true,
+  panelExpandAnimation: true,
   // Preferences
   dateFormat: "D",
   rowsPerPage: 15,
@@ -104,7 +105,18 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.22", date: "July 2026", current: true,
+    v: "v6.23", date: "August 2026", current: true,
+    title: "Autoland panel redesign",
+    notes: [
+      "NEW: Row-number tap now expands an inline panel instead of a popup — no dimmed backdrop, accordion-style (one row open at a time).",
+      "NEW: \"Duplicate previous row\" action on empty rows — copies date, type, registration, captain, and cap role from the row above, and sets departure to its arrival. Never copies times, remarks, or autoland, so recency tracking is never affected.",
+      "IMP: Remarks and the AUTOLAND checkbox now commit immediately — no more separate \"Save remarks\" button.",
+      "IMP: Delete moved from a bare \"✕\" column into the panel as a labelled button, with a two-step confirm for rows that have data.",
+      "NEW: Settings → Appearance → toggle to animate the row panel opening and closing (on by default).",
+    ],
+  },
+  {
+    v: "v6.22", date: "July 2026", current: false,
     title: "Auto-hide empty flight-time columns",
     notes: [
       "NEW: DAY and NIGHT columns (P1, P1 U/S, P2) that are completely empty for a month now collapse into a slim marker instead of a row of dashes — tap it to reveal the column again. Only ever applies to past, closed-out months, never the one you're actively logging, and a column with even one real entry is never touched. Toggle it off in Settings → Appearance if you'd rather always see every column.",
@@ -1085,6 +1097,13 @@ function AppearanceTab({ d, upd }) {
         <SmToggle
           checked={d.autoHideEmptyCols !== false}
           onChange={(v) => upd({ autoHideEmptyCols: v })}
+        />
+      </SmField>
+
+      <SmField label="Animate row detail panel" hint="Smooth expand/collapse when opening a row's remarks & autoland panel. Turn off for instant open/close.">
+        <SmToggle
+          checked={d.panelExpandAnimation !== false}
+          onChange={(v) => upd({ panelExpandAnimation: v })}
         />
       </SmField>
 
