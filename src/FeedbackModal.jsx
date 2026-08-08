@@ -6,7 +6,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 //  FeedbackModal — in-app bug report / feature request → Firestore
 // ════════════════════════════════════════════════════════════════════
 
-const APP_VERSION = "v6.23";
+const APP_VERSION = "v6.24";
 const RATE_LIMIT_MS = 60_000;
 const LS_KEY = "elb_last_feedback_at";
 const getLastFeedbackAt = () => parseInt(localStorage.getItem(LS_KEY) || "0", 10);

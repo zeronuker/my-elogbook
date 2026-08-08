@@ -13,6 +13,10 @@ import FeedbackModal from "./FeedbackModal";
 import BrandBanner from "@brand/BrandBanner";
 import UpdatePrompt from "@brand/UpdatePrompt";
 
+// Duty Log link — read-only fetch from the superapp's duty-log sync endpoint (see my-superapp/api/dutylog-sync.js)
+const DUTY_LOG_SYNC_URL = "https://claudeborne-superapp.vercel.app/api/dutylog-sync";
+const dlNorm = (s) => (s || "").trim().toUpperCase();
+
 const TabLogbookIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
     <rect x="4" y="2" width="14" height="20" rx="1" fill="#dde6f0" stroke="#8a93a8" strokeWidth="0.6" />
@@ -624,6 +628,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [routeMapOpen, setRouteMapOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [dutyLogEntries, setDutyLogEntries] = useState([]); // flat [{ isoDate, sector, log }] fetched from linked Duty Log
+  const dutyLogRemarkAppliedRef = useRef(new Set()); // row ids already auto-filled/appended this session — avoids re-appending on every render
   const [expandedRowIdx, setExpandedRowIdx] = useState(null); // accordion — one row's detail panel open at a time
   const [confirmDeleteRowIdx, setConfirmDeleteRowIdx] = useState(null); // inline two-step delete confirm
   const [openedRowIds, setOpenedRowIds] = useState(() => new Set()); // rows whose panel has been opened at least once — keeps it mounted so later collapse/expand can animate
@@ -1016,6 +1022,66 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       console.error("Settings save error:", e);
     }
   };
+
+  // ── Duty Log link — fetch linked entries when the sync code changes ──
+  useEffect(() => {
+    const code = settings.dutyLogSyncCode;
+    if (!code) { setDutyLogEntries([]); return; }
+    let cancelled = false;
+    fetch(`${DUTY_LOG_SYNC_URL}?code=${encodeURIComponent(code)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(payload => {
+        if (cancelled || !payload?.logs) return;
+        const flat = [];
+        for (const log of payload.logs) {
+          for (const sector of (log.sectors || [])) {
+            flat.push({ isoDate: log.date, sector, log });
+          }
+        }
+        setDutyLogEntries(flat);
+        dutyLogRemarkAppliedRef.current = new Set(); // new data — allow re-checking prefill/append
+      })
+      .catch(() => { if (!cancelled) setDutyLogEntries([]); });
+    return () => { cancelled = true; };
+  }, [settings.dutyLogSyncCode]);
+
+  // Finds the Duty Log sector matching a logbook row, by date + departure/arrival.
+  // row.date is a bare day-of-month string in this component; combine with the
+  // currently selected month/year to get an ISO date comparable to Duty Log's.
+  const findDutyLogMatch = (row) => {
+    if (!dutyLogEntries.length || !row.date || !row.departure || !row.arrival) return null;
+    const day = parseInt(row.date, 10);
+    if (!day) return null;
+    const isoDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return dutyLogEntries.find(e =>
+      e.isoDate === isoDate &&
+      dlNorm(e.sector.from) === dlNorm(row.departure) &&
+      dlNorm(e.sector.dest) === dlNorm(row.arrival)
+    ) || null;
+  };
+
+  // Merge a matched Duty Log sector's remark into the row's Remarks field —
+  // fills it if blank, appends with a "[Duty Log]" tag if not, skips if already appended.
+  // Guarded on dataLoaded so this never touches `updateCell`/`data` before the app has
+  // finished its initial load (this effect is declared above that gate for stable hook order).
+  useEffect(() => {
+    if (!dataLoaded || !dutyLogEntries.length) return;
+    const mk = `${selectedMonth}-${selectedYear}`;
+    const monthRows = data[mk] || [];
+    monthRows.forEach((row, idx) => {
+      if (dutyLogRemarkAppliedRef.current.has(row.id)) return;
+      const match = findDutyLogMatch(row);
+      if (!match) return;
+      dutyLogRemarkAppliedRef.current.add(row.id);
+      const dlRemark = (match.sector.remark || "").trim();
+      if (!dlRemark) return;
+      const existing = row.remarks || "";
+      if (existing.includes(dlRemark)) return;
+      const merged = existing.trim() ? `${existing}\n\n[Duty Log] ${dlRemark}` : dlRemark;
+      updateCell(idx, "remarks", merged);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataLoaded, dutyLogEntries, data, selectedMonth, selectedYear]);
 
   // ── Refresh with animation ──
   // Re-fetches data from Firestore (one-time getDoc).
@@ -2637,13 +2703,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                               const canDuplicate = !!prevRow && isEmptyStaticRow(row);
                               const canDelete = rows.length > 1;
                               const isConfirmingDelete = confirmDeleteRowIdx === rowIdx;
+                              const dutyLogMatch = settings.dutyLogSyncCode ? findDutyLogMatch(row) : null;
                               return (
                                 <div style={{
                                   padding: "12px 16px 16px 44px", background: "var(--elb-bg, #0a0d12)", borderBottom: "1px solid var(--elb-bdr, #1e3a5f)",
-                                  textAlign: "left", display: "grid", gridTemplateColumns: "1fr 200px", gap: "0 24px", alignItems: "start",
-                                  maxWidth: 680,
+                                  textAlign: "left", display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "14px 32px",
+                                  maxWidth: 820,
                                 }}>
-                                  <div>
+                                  <div style={{ flex: "1 1 340px", maxWidth: 420 }}>
                                     {canDuplicate && (
                                       <>
                                         <button
@@ -2669,39 +2736,81 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                                       placeholder="Enter remarks for this sector..."
                                       rows={hasRemarks ? 3 : 1}
                                       style={{
-                                        width: "100%", maxWidth: 420, background: "var(--cb-surface-1, #141a2e)", border: "1px solid var(--elb-bdr, #1e3a5f)",
+                                        width: "100%", background: "var(--cb-surface-1, #141a2e)", border: "1px solid var(--elb-bdr, #1e3a5f)",
                                         borderRadius: 4, color: "var(--cb-ink, #e8ecf5)", fontFamily: "'Courier New',monospace",
                                         fontSize: 12.5, padding: "9px 10px", resize: "vertical", outline: "none",
                                         boxSizing: "border-box", lineHeight: 1.6, minHeight: hasRemarks ? 66 : 30,
-                                        transition: "min-height 0.15s ease",
+                                        transition: "min-height 0.15s ease", marginBottom: 14,
                                       }}
                                     />
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={row.autoland || false}
+                                        onChange={e => updateCell(rowIdx, "autoland", e.target.checked)}
+                                        style={{ width: 14, height: 14, cursor: "pointer", accentColor: "#a855f7" }}
+                                      />
+                                      <label style={{ fontSize: 10.5, color: "#c8d6e5", letterSpacing: "0.08em", cursor: "pointer" }}>AUTOLAND</label>
+                                      <button
+                                        onClick={() => setActivePopup("rec-autoland")}
+                                        title="View regulatory reference"
+                                        style={{
+                                          width: 14, height: 14, borderRadius: "50%",
+                                          background: "transparent", border: "1px solid var(--elb-bdr, #1e3a5f)",
+                                          color: "#4a6a8a", fontFamily: "Georgia,serif",
+                                          fontStyle: "italic", fontWeight: 700, fontSize: 10,
+                                          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                                          padding: 0, lineHeight: 1, flexShrink: 0,
+                                        }}
+                                        onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
+                                        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-bdr, #1e3a5f)"; e.currentTarget.style.color = "#4a6a8a"; }}
+                                      >i</button>
+                                    </div>
                                   </div>
-                                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                    <input
-                                      type="checkbox"
-                                      checked={row.autoland || false}
-                                      onChange={e => updateCell(rowIdx, "autoland", e.target.checked)}
-                                      style={{ width: 14, height: 14, cursor: "pointer", accentColor: "#a855f7" }}
-                                    />
-                                    <label style={{ fontSize: 10.5, color: "#c8d6e5", letterSpacing: "0.08em", cursor: "pointer" }}>AUTOLAND</label>
-                                    <button
-                                      onClick={() => setActivePopup("rec-autoland")}
-                                      title="View regulatory reference"
-                                      style={{
-                                        width: 14, height: 14, borderRadius: "50%",
-                                        background: "transparent", border: "1px solid var(--elb-bdr, #1e3a5f)",
-                                        color: "#4a6a8a", fontFamily: "Georgia,serif",
-                                        fontStyle: "italic", fontWeight: 700, fontSize: 10,
-                                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                                        padding: 0, lineHeight: 1, flexShrink: 0,
-                                      }}
-                                      onMouseEnter={e => { e.currentTarget.style.borderColor = "#4fc3f7"; e.currentTarget.style.color = "#4fc3f7"; }}
-                                      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-bdr, #1e3a5f)"; e.currentTarget.style.color = "#4a6a8a"; }}
-                                    >i</button>
-                                  </div>
+
+                                  {settings.dutyLogSyncCode && (
+                                    <div style={{ flex: "1 1 280px", maxWidth: 340, paddingLeft: 28, borderLeft: "1px solid var(--elb-bdr, #1e3a5f)" }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                                        <span style={{ fontSize: 10.5, letterSpacing: "0.1em", color: "#7c87a3", textTransform: "uppercase" }}>Duty Log</span>
+                                        {dutyLogMatch ? (
+                                          <span style={{ fontSize: 9.5, letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 20, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.35)", color: "#34d399" }}>
+                                            <span style={{ width: 5, height: 5, borderRadius: "50%", background: "currentColor" }} />
+                                            Linked{dutyLogMatch.sector.fltNo ? ` · FLT ${dutyLogMatch.sector.fltNo}` : ""}
+                                          </span>
+                                        ) : (
+                                          <span style={{ fontSize: 9.5, letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 20, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(124,135,163,0.08)", border: "1px solid var(--elb-bdr, #1e3a5f)", color: "#7c87a3" }}>
+                                            <span style={{ width: 5, height: 5, borderRadius: "50%", background: "currentColor" }} />
+                                            No match
+                                          </span>
+                                        )}
+                                      </div>
+                                      {dutyLogMatch ? (
+                                        <>
+                                          <div style={{ fontSize: 9, letterSpacing: "0.08em", color: "#4a6a8a", textTransform: "uppercase", marginBottom: 8 }}>Crew</div>
+                                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                            {(dutyLogMatch.log.crew || []).length > 0 ? dutyLogMatch.log.crew.map((c, ci) => (
+                                              <div key={ci} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12 }}>
+                                                <span style={{ color: "var(--cb-ink, #e8ecf5)" }}>{c.name}</span>
+                                                <span style={{ color: "#7c87a3", fontSize: 9.5, letterSpacing: "0.06em", whiteSpace: "nowrap" }}>{(c.position || "").toUpperCase()}</span>
+                                              </div>
+                                            )) : (
+                                              <div style={{ fontSize: 11, color: "#4a6a8a" }}>No crew listed</div>
+                                            )}
+                                          </div>
+                                          <div style={{ marginTop: 12, fontSize: 10, color: "#4a6a8a" }}>
+                                            Sourced from Duty Log entry · {dutyLogMatch.isoDate} · sector remark merges into Remarks, rest is read-only display
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(124,135,163,0.05)", border: "1px dashed var(--elb-bdr, #1e3a5f)", borderRadius: 4, fontSize: 11, color: "#7c87a3" }}>
+                                          No duty log entry found for this date/route. Check it was logged the same way in Duty Log.
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
                                   {canDelete && (
-                                    <div style={{ gridColumn: "1 / -1", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--elb-bdr, #1e3a5f)" }}>
+                                    <div style={{ flex: "1 1 100%", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--elb-bdr, #1e3a5f)" }}>
                                       {isConfirmingDelete ? (
                                         <div style={{
                                           display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
@@ -3567,7 +3676,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
-        version="v6.23"
+        version="v6.24"
       />
 
 
@@ -3678,7 +3787,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.23 · CAAM</span>
+        <span>eLOGBOOK v6.24 · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

@@ -73,6 +73,7 @@ export const DEFAULT_SETTINGS = {
   useStandardFormula: true,
   preFlightBuffer: 75,
   postFlightBuffer: 15,
+  dutyLogSyncCode: "",
 };
 
 // ── Carry-forward helpers ────────────────────────────────────────────
@@ -105,7 +106,15 @@ const SETTINGS_TABS = [
 // ── Changelog data ────────────────────────────────────────────────────
 const CHANGELOG = [
   {
-    v: "v6.23", date: "August 2026", current: true,
+    v: "v6.24", date: "August 2026", current: true,
+    title: "Duty Log Link",
+    notes: [
+      "NEW: Link your Duty Log app via a sync code (Settings → Preferences → Duty Log Link) — matches sectors by date + departure/arrival and shows crew (name + position) alongside Remarks in the sector panel.",
+      "NEW: Duty Log's sector remark auto-merges into your own Remarks — fills it if blank, appends with a \"[Duty Log]\" tag if you'd already written something. Never overwrites, never duplicates on re-sync.",
+    ],
+  },
+  {
+    v: "v6.23", date: "August 2026", current: false,
     title: "Autoland panel redesign",
     notes: [
       "NEW: Row-number tap now expands an inline panel instead of a popup — no dimmed backdrop, accordion-style (one row open at a time).",
@@ -1187,6 +1196,16 @@ function PreferencesTab({ d, upd }) {
           labels={["10 min", "15 min (default)", "30 min", "45 min"]}
           onChange={(v) => upd({ postFlightBuffer: Number(v) })}
           disabled={!d.useStandardFormula}
+        />
+      </SmField>
+
+      <SmSectionHead title="Duty Log Link" hint="// pull crew & remark from Duty Log" />
+
+      <SmField label="Sync code" hint="From Duty Log app → Backup. Matches sectors by date + departure/arrival, read-only.">
+        <SmInput
+          value={d.dutyLogSyncCode || ""}
+          onChange={(v) => upd({ dutyLogSyncCode: v.trim().toUpperCase() })}
+          placeholder="e.g. 7K2Q-9XPL-4M1V"
         />
       </SmField>
 
