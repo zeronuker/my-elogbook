@@ -1075,8 +1075,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     ) || null;
   };
 
-  // Merge a matched Duty Log sector's remark into the row's Remarks field —
-  // fills it if blank, appends with a "[Duty Log]" tag if not, skips if already appended.
+  // Merge a matched Duty Log sector's remark AND the duty's log-level notes into the
+  // row's Remarks field — each appended with its own tag if not already present.
   // Guarded on dataLoaded so this never touches `updateCell`/`data` before the app has
   // finished its initial load (this effect is declared above that gate for stable hook order).
   useEffect(() => {
@@ -1089,12 +1089,17 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       const match = findDutyLogMatch(row);
       if (!match) return;
       dutyLogRemarkAppliedRef.current.add(appliedKey);
-      const dlRemark = (match.sector.remark || "").trim();
-      if (!dlRemark) return;
-      const existing = row.remarks || "";
-      if (existing.includes(dlRemark)) return;
-      const merged = existing.trim() ? `${existing}\n\n[Duty Log] ${dlRemark}` : dlRemark;
-      updateCell(idx, "remarks", merged);
+
+      let merged = row.remarks || "";
+      const append = (tag, text) => {
+        const trimmed = (text || "").trim();
+        if (!trimmed || merged.includes(trimmed)) return;
+        merged = merged.trim() ? `${merged}\n\n[${tag}] ${trimmed}` : `[${tag}] ${trimmed}`;
+      };
+      append("Duty Log - Sector", match.sector.remark);
+      append("Duty Log - Notes", match.log.notes);
+
+      if (merged !== (row.remarks || "")) updateCell(idx, "remarks", merged);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataLoaded, dutyLogEntries, data, selectedMonth, selectedYear]);
@@ -2814,7 +2819,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                                             )}
                                           </div>
                                           <div style={{ marginTop: 12, fontSize: 10, color: "#4a6a8a" }}>
-                                            Sourced from Duty Log entry · {dutyLogMatch.isoDate} · sector remark merges into Remarks, rest is read-only display
+                                            Sourced from Duty Log entry · {dutyLogMatch.isoDate} · sector remark + duty notes merge into Remarks, crew list is read-only display
                                           </div>
                                         </>
                                       ) : (
