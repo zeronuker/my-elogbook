@@ -1210,15 +1210,22 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
 
       <SmSectionHead title="Duty Log Link" hint="// pull crew & remark from Duty Log" />
 
-      <SmField label="Sync code" hint="From Duty Log app → Backup. Matches sectors by date + departure/arrival, read-only.">
-        <SmInput
-          value={d.dutyLogSyncCode || ""}
-          onChange={(v) => upd({ dutyLogSyncCode: v.trim().toUpperCase() })}
-          placeholder="e.g. 7K2Q-9XPL-4M1V"
-        />
-        {dlStatusText && (
-          <div style={{ fontSize: 11, marginTop: 6, color: dlStatusText.color }}>{dlStatusText.text}</div>
-        )}
+      <SmField label="Sync code" hint="From Duty Log app → Backup. Matches sectors by date + departure/arrival, read-only." controlWidth={320}>
+        <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: 6 }}>
+          <SmInput
+            value={d.dutyLogSyncCode || ""}
+            onChange={(v) => upd({ dutyLogSyncCode: v.trim().toUpperCase() })}
+            placeholder="e.g. 7K2Q-9XPL-4M1V"
+          />
+          {dlStatusText && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: dlStatusText.color }}>
+              {dlStatus.state === "loading" && (
+                <span style={{ display: "inline-block", animation: "sm-spin 0.7s linear infinite", fontSize: 12, lineHeight: 1 }}>↻</span>
+              )}
+              <span>{dlStatusText.text}</span>
+            </div>
+          )}
+        </div>
       </SmField>
 
     </div>
@@ -1362,14 +1369,14 @@ function SmSectionHead({ title, hint }) {
   );
 }
 
-function SmField({ label, hint, children }) {
+function SmField({ label, hint, children, controlWidth }) {
   return (
     <div className="sm-field">
       <div className="sm-field-meta">
         <label className="sm-field-label">{label}</label>
         {hint && <div className="sm-field-hint">{hint}</div>}
       </div>
-      <div className="sm-field-control">{children}</div>
+      <div className="sm-field-control" style={controlWidth ? { width: controlWidth } : undefined}>{children}</div>
     </div>
   );
 }
@@ -1530,6 +1537,7 @@ const settingsCss = `
     from { opacity:0; transform: translate(-50%,-50%) scale(0.96) translateY(6px); }
     to   { opacity:1; transform: translate(-50%,-50%) scale(1) translateY(0); }
   }
+  @keyframes sm-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
   /* ── Header ─────────────────────────────────────────────────────── */
   .sm-head {
