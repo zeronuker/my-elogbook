@@ -15,6 +15,7 @@ import UpdatePrompt from "@brand/UpdatePrompt";
 
 // Duty Log link — read-only fetch from the superapp's duty-log sync endpoint (see my-superapp/api/dutylog-sync.js)
 const DUTY_LOG_SYNC_URL = "https://claudeborne-superapp.vercel.app/api/dutylog-sync";
+const DUTY_LOG_CODE_RE = /^[A-Z0-9]{4,8}(-[A-Z0-9]{4,8}){1,3}$/;
 const dlNorm = (s) => (s || "").trim().toUpperCase();
 
 const TabLogbookIcon = () => (
@@ -629,6 +630,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [dutyLogEntries, setDutyLogEntries] = useState([]); // flat [{ isoDate, sector, log }] fetched from linked Duty Log
+  const [dutyLogStatus, setDutyLogStatus] = useState({ state: "idle" }); // idle | loading | connected | invalid | not-found | error
   const dutyLogRemarkAppliedRef = useRef(new Set()); // row ids already auto-filled/appended this session — avoids re-appending on every render
   const [expandedRowIdx, setExpandedRowIdx] = useState(null); // accordion — one row's detail panel open at a time
   const [confirmDeleteRowIdx, setConfirmDeleteRowIdx] = useState(null); // inline two-step delete confirm
@@ -1026,22 +1028,35 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // ── Duty Log link — fetch linked entries when the sync code changes ──
   useEffect(() => {
     const code = settings.dutyLogSyncCode;
-    if (!code) { setDutyLogEntries([]); return; }
+    if (!code) { setDutyLogEntries([]); setDutyLogStatus({ state: "idle" }); return; }
+    if (!DUTY_LOG_CODE_RE.test(code)) {
+      setDutyLogEntries([]);
+      setDutyLogStatus({ state: "invalid" });
+      return;
+    }
     let cancelled = false;
+    setDutyLogStatus({ state: "loading" });
     fetch(`${DUTY_LOG_SYNC_URL}?code=${encodeURIComponent(code)}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(payload => {
-        if (cancelled || !payload?.logs) return;
+      .then(async r => ({ ok: r.ok, status: r.status, body: await r.json().catch(() => null) }))
+      .then(({ ok, status, body }) => {
+        if (cancelled) return;
+        if (!ok) {
+          setDutyLogEntries([]);
+          setDutyLogStatus({ state: status === 404 ? "not-found" : "invalid" });
+          return;
+        }
+        const logs = body?.logs || [];
         const flat = [];
-        for (const log of payload.logs) {
+        for (const log of logs) {
           for (const sector of (log.sectors || [])) {
             flat.push({ isoDate: log.date, sector, log });
           }
         }
         setDutyLogEntries(flat);
+        setDutyLogStatus({ state: "connected", count: logs.length });
         dutyLogRemarkAppliedRef.current = new Set(); // new data — allow re-checking prefill/append
       })
-      .catch(() => { if (!cancelled) setDutyLogEntries([]); });
+      .catch(() => { if (!cancelled) { setDutyLogEntries([]); setDutyLogStatus({ state: "error" }); } });
     return () => { cancelled = true; };
   }, [settings.dutyLogSyncCode]);
 
@@ -1069,10 +1084,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     const mk = `${selectedMonth}-${selectedYear}`;
     const monthRows = data[mk] || [];
     monthRows.forEach((row, idx) => {
-      if (dutyLogRemarkAppliedRef.current.has(row.id)) return;
+      const appliedKey = `${mk}:${row.id}`; // row.id resets per month, so scope the key to the month too
+      if (dutyLogRemarkAppliedRef.current.has(appliedKey)) return;
       const match = findDutyLogMatch(row);
       if (!match) return;
-      dutyLogRemarkAppliedRef.current.add(row.id);
+      dutyLogRemarkAppliedRef.current.add(appliedKey);
       const dlRemark = (match.sector.remark || "").trim();
       if (!dlRemark) return;
       const existing = row.remarks || "";
@@ -3590,6 +3606,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         onClose={() => { setSettingsOpen(false); setPreviewSettings(null); setSettingsInitialTab(null); }}
         settings={settings}
         onSave={saveSettings}
+        dutyLogStatus={dutyLogStatus}
         onPreview={setPreviewSettings}
         userEmail={user?.email}
         onDeleteAccount={onDeleteAccount}

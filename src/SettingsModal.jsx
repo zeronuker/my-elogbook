@@ -525,7 +525,7 @@ const TAB_DEFAULTS = {
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion, initialTab }) {
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion, initialTab, dutyLogStatus }) {
   const [tab, setTab]               = useState(initialTab || "profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -618,7 +618,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
         <div className="sm-body">
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} onReauthAndDeleteGoogle={onReauthAndDeleteGoogle} onReauthAndDeleteGooglePopup={onReauthAndDeleteGooglePopup} userProvider={userProvider} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
-          {tab === "preferences" && <PreferencesTab d={draft} upd={upd} />}
+          {tab === "preferences" && <PreferencesTab d={draft} upd={upd} dutyLogStatus={dutyLogStatus} />}
           {tab === "misc"        && <MiscTab onFeedback={onFeedback} onGuide={onGuide} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} currentBuildVersion={currentBuildVersion} />}
         </div>
 
@@ -1125,7 +1125,16 @@ function AppearanceTab({ d, upd }) {
 // ════════════════════════════════════════════════════════════════════
 //  PREFERENCES TAB
 // ════════════════════════════════════════════════════════════════════
-function PreferencesTab({ d, upd }) {
+function PreferencesTab({ d, upd, dutyLogStatus }) {
+  const dlStatus = dutyLogStatus || { state: "idle" };
+  const dlStatusText = {
+    loading:   { text: "Checking…", color: "var(--elb-txt-muted, #7c87a3)" },
+    connected: { text: `✓ Connected — ${dlStatus.count ?? 0} log${dlStatus.count === 1 ? "" : "s"} found`, color: "#3FE0C5" },
+    invalid:   { text: "Invalid code — check it matches the format from Duty Log", color: "#ef4444" },
+    "not-found": { text: "No backup found for this code", color: "#ef4444" },
+    error:     { text: "Couldn't reach Duty Log — check your connection", color: "#ef4444" },
+  }[dlStatus.state];
+
   return (
     <div className="sm-tab-content">
 
@@ -1207,6 +1216,9 @@ function PreferencesTab({ d, upd }) {
           onChange={(v) => upd({ dutyLogSyncCode: v.trim().toUpperCase() })}
           placeholder="e.g. 7K2Q-9XPL-4M1V"
         />
+        {dlStatusText && (
+          <div style={{ fontSize: 11, marginTop: 6, color: dlStatusText.color }}>{dlStatusText.text}</div>
+        )}
       </SmField>
 
     </div>
