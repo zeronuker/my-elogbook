@@ -18,6 +18,31 @@ const DUTY_LOG_SYNC_URL = "https://claudeborne-superapp.vercel.app/api/dutylog-s
 const DUTY_LOG_CODE_RE = /^[A-Z0-9]{4,8}(-[A-Z0-9]{4,8}){1,3}$/;
 const dlNorm = (s) => (s || "").trim().toUpperCase();
 
+// Extracts just the "HH:MM" portion from a "DD Mon YYYY · HH:MM" display string.
+const timeOnly = (full) => (full ? full.split(" · ").pop() : "—");
+
+// Toolbar sync-status chip — tap/click morphs between compact (time only) and
+// full (date + time, or failure reason) in place. No dropdown/popover/toast —
+// hover tooltips don't work on iPad, so tap is the only reveal mechanism.
+function ToolbarSyncChip({ icon, compact, full, state }) {
+  const [expanded, setExpanded] = useState(false);
+  const color = state === "bad" ? "#ef4444" : state === "busy" ? "#7c87a3" : "#3a6a8a";
+  return (
+    <button
+      onClick={() => setExpanded(e => !e)}
+      style={{
+        display: "flex", alignItems: "center", gap: 4, fontSize: 10, letterSpacing: "0.06em",
+        color, fontStyle: state === "bad" ? "normal" : "italic", whiteSpace: "nowrap",
+        background: "none", border: "none", padding: "4px 2px", fontFamily: "inherit", cursor: "pointer",
+        animation: state === "busy" ? "blink 1.3s ease-in-out infinite" : "none",
+      }}
+    >
+      {icon}
+      {expanded ? full : compact}
+    </button>
+  );
+}
+
 const TabLogbookIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
     <rect x="4" y="2" width="14" height="20" rx="1" fill="#dde6f0" stroke="#8a93a8" strokeWidth="0.6" />
@@ -632,6 +657,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [dutyLogEntries, setDutyLogEntries] = useState([]); // flat [{ isoDate, sector, log }] fetched from linked Duty Log
   const [dutyLogStatus, setDutyLogStatus] = useState({ state: "idle" }); // idle | loading | connected | invalid | not-found | error
   const dutyLogRemarkAppliedRef = useRef(new Set()); // row ids already auto-filled/appended this session — avoids re-appending on every render
+  const [lastDutyLogCheckTime, setLastDutyLogCheckTime] = useState(""); // "DD Mon YYYY · HH:MM" of last successful Duty Log check
+  const dutyLogFetchingRef = useRef(false); // guards against overlapping fetches when refocus/reconnect fire close together
   const [expandedRowIdx, setExpandedRowIdx] = useState(null); // accordion — one row's detail panel open at a time
   const [confirmDeleteRowIdx, setConfirmDeleteRowIdx] = useState(null); // inline two-step delete confirm
   const [openedRowIds, setOpenedRowIds] = useState(() => new Set()); // rows whose panel has been opened at least once — keeps it mounted so later collapse/expand can animate
@@ -759,6 +786,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const lsSettingsKey    = (uid) => `elb_settings_${uid}`;
   const lsSaveKey        = (uid) => `elb_last_local_save_${uid}`;
   const lsSyncDisplayKey = (uid) => `elb_last_sync_display_${uid}`;
+  const lsDutyLogCheckKey = (uid) => `elb_last_dutylog_check_${uid}`;
 
   // ── Background cloud check ──
   // Silently fetches Firestore updatedAt and compares to local lastSyncedAt.
@@ -823,6 +851,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         // Restore last sync display timestamp so toolbar shows it even offline
         const storedSyncDisplay = localStorage.getItem(lsSyncDisplayKey(uid));
         if (storedSyncDisplay) setLastSyncTime(storedSyncDisplay);
+
+        // Restore last Duty Log check timestamp so its toolbar chip isn't blank on load
+        const storedDutyLogCheck = localStorage.getItem(lsDutyLogCheckKey(uid));
+        if (storedDutyLogCheck) setLastDutyLogCheckTime(storedDutyLogCheck);
 
         // Background cloud check — runs silently, opens conflict modal if cloud is newer
         checkCloudSync(uid);
@@ -910,6 +942,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       setIsOnline(true);
       // Run cloud check when connection is restored — conflict modal opens if cloud is ahead
       if (user?.uid) checkCloudSync(user.uid);
+      fetchDutyLog();
     };
     const goOffline = () => setIsOnline(false);
     window.addEventListener("online",  goOnline);
@@ -925,6 +958,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     const handleVisibility = () => {
       if (document.visibilityState === "visible" && user?.uid && navigator.onLine) {
         checkCloudSync(user.uid);
+        fetchDutyLog();
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
@@ -1025,21 +1059,17 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     }
   };
 
-  // ── Duty Log link — fetch linked entries when the sync code changes ──
-  useEffect(() => {
-    const code = settings.dutyLogSyncCode;
-    if (!code) { setDutyLogEntries([]); setDutyLogStatus({ state: "idle" }); return; }
-    if (!DUTY_LOG_CODE_RE.test(code)) {
-      setDutyLogEntries([]);
-      setDutyLogStatus({ state: "invalid" });
-      return;
-    }
-    let cancelled = false;
+  // ── Duty Log link — reusable fetch, called on mount/code-change, refocus, and reconnect ──
+  const fetchDutyLog = () => {
+    const code = settingsRef.current.dutyLogSyncCode;
+    if (!code || !DUTY_LOG_CODE_RE.test(code)) return; // idle/invalid reset is handled by the effect below
+    if (dutyLogFetchingRef.current) return; // refocus/reconnect firing close together — avoid duplicate requests
+    dutyLogFetchingRef.current = true;
     setDutyLogStatus({ state: "loading" });
     fetch(`${DUTY_LOG_SYNC_URL}?code=${encodeURIComponent(code)}`)
       .then(async r => ({ ok: r.ok, status: r.status, body: await r.json().catch(() => null) }))
       .then(({ ok, status, body }) => {
-        if (cancelled) return;
+        if (settingsRef.current.dutyLogSyncCode !== code) return; // code changed mid-flight — stale result
         if (!ok) {
           setDutyLogEntries([]);
           setDutyLogStatus({ state: status === 404 ? "not-found" : "invalid" });
@@ -1055,9 +1085,27 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         setDutyLogEntries(flat);
         setDutyLogStatus({ state: "connected", count: logs.length });
         dutyLogRemarkAppliedRef.current = new Set(); // new data — allow re-checking prefill/append
+        const now = new Date();
+        const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+        const displayStr = `${dateStr} · ${timeStr}`;
+        setLastDutyLogCheckTime(displayStr);
+        if (user?.uid) localStorage.setItem(lsDutyLogCheckKey(user.uid), displayStr);
       })
-      .catch(() => { if (!cancelled) { setDutyLogEntries([]); setDutyLogStatus({ state: "error" }); } });
-    return () => { cancelled = true; };
+      .catch(() => { if (settingsRef.current.dutyLogSyncCode === code) setDutyLogStatus({ state: "error" }); })
+      .finally(() => { dutyLogFetchingRef.current = false; });
+  };
+
+  useEffect(() => {
+    const code = settings.dutyLogSyncCode;
+    if (!code) { setDutyLogEntries([]); setDutyLogStatus({ state: "idle" }); return; }
+    if (!DUTY_LOG_CODE_RE.test(code)) {
+      setDutyLogEntries([]);
+      setDutyLogStatus({ state: "invalid" });
+      return;
+    }
+    fetchDutyLog();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.dutyLogSyncCode]);
 
   // Finds the Duty Log sector matching a logbook row, by date + departure/arrival.
@@ -1983,6 +2031,28 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     </div>
   );
 
+  // ── Toolbar sync chips — Cloud + Duty Log, computed fresh each render ──
+  const cloudChipState = syncStatus === "syncing" ? "busy" : syncStatus === "error" ? "bad" : "ok";
+  const cloudChipCompact = cloudChipState === "busy" ? "…" : timeOnly(lastSyncTime);
+  const cloudChipFull = cloudChipState === "bad"
+    ? `Sync failed${lastSyncTime ? ` — last OK ${lastSyncTime}` : ""}`
+    : lastSyncTime ? `Cloud sync — ${lastSyncTime}` : "Not synced yet";
+
+  const dutyLogChipState = dutyLogStatus.state === "loading" ? "busy"
+    : ["invalid", "not-found", "error"].includes(dutyLogStatus.state) ? "bad"
+    : "ok";
+  const dutyLogChipCompact = dutyLogChipState === "busy" ? "…" : timeOnly(lastDutyLogCheckTime);
+  const dutyLogReasonText = {
+    invalid: "Invalid code",
+    "not-found": "No backup found",
+    error: "Couldn't reach server",
+  }[dutyLogStatus.state];
+  const dutyLogChipFull = dutyLogChipState === "bad"
+    ? `Duty Log — ${dutyLogReasonText}${lastDutyLogCheckTime ? ` · last OK ${lastDutyLogCheckTime}` : ""}`
+    : lastDutyLogCheckTime
+      ? `Duty Log — ${lastDutyLogCheckTime}${dutyLogStatus.count != null ? ` · ${dutyLogStatus.count} log${dutyLogStatus.count === 1 ? "" : "s"} found` : ""}`
+      : "Checking…";
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
@@ -2155,17 +2225,30 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 ✈ OFFLINE
               </span>
             )}
-            {/* Sync status chips */}
-            {isOnline && syncStatus === "synced" && (
-              <span style={{ fontSize: 11, color: "#22c55e", letterSpacing: "0.1em", fontWeight: 700 }}>✓ SYNCED</span>
+            {/* Sync status chips — tap either to morph between compact and full detail */}
+            {isOnline && (
+              <ToolbarSyncChip
+                state={cloudChipState}
+                compact={cloudChipCompact}
+                full={cloudChipFull}
+                icon={
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                  </svg>
+                }
+              />
             )}
-            {isOnline && syncStatus === "error" && (
-              <span style={{ fontSize: 11, color: "#ef4444", letterSpacing: "0.1em", fontWeight: 700 }}>✗ SYNC FAILED</span>
-            )}
-            {isOnline && lastSyncTime && syncStatus === "idle" && (
-              <span style={{ fontSize: 10, color: "#3a6a8a", letterSpacing: "0.08em", fontStyle: "italic" }}>
-                SYNCED · {lastSyncTime}
-              </span>
+            {isOnline && settings.dutyLogSyncCode && (
+              <ToolbarSyncChip
+                state={dutyLogChipState}
+                compact={dutyLogChipCompact}
+                full={dutyLogChipFull}
+                icon={
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>
+                  </svg>
+                }
+              />
             )}
               {/* SYNC button */}
               <button
