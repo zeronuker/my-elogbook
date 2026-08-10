@@ -24,20 +24,30 @@ const timeOnly = (full) => (full ? full.split(" · ").pop() : "—");
 // Toolbar sync-status chip — tap/click morphs between compact (time only) and
 // full (date + time, or failure reason) in place. No dropdown/popover/toast —
 // hover tooltips don't work on iPad, so tap is the only reveal mechanism.
-function ToolbarSyncChip({ icon, compact, full, state }) {
+// `flash`: briefly render bold + bright (✓/✗) right after a check completes,
+// then settle back to the quiet compact/expanded style — mirrors the old
+// "✓ SYNCED" / "✗ SYNC FAILED" flash feedback for both Cloud and Duty Log.
+function ToolbarSyncChip({ icon, compact, full, state, flash }) {
   const [expanded, setExpanded] = useState(false);
-  const color = state === "bad" ? "#ef4444" : state === "busy" ? "#7c87a3" : "#3a6a8a";
+  const quietColor = state === "bad" ? "#ef4444" : state === "busy" ? "#7c87a3" : "#3a6a8a";
+  const flashColor = state === "bad" ? "#ef4444" : "#22c55e";
   return (
     <button
       onClick={() => setExpanded(e => !e)}
       style={{
-        display: "flex", alignItems: "center", gap: 4, fontSize: 10, letterSpacing: "0.06em",
-        color, fontStyle: state === "bad" ? "normal" : "italic", whiteSpace: "nowrap",
+        display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
         background: "none", border: "none", padding: "4px 2px", fontFamily: "inherit", cursor: "pointer",
+        transition: "color 0.2s ease, font-size 0.2s ease",
+        color: flash ? flashColor : quietColor,
+        fontWeight: flash ? 700 : 400,
+        fontStyle: flash || state === "bad" ? "normal" : "italic",
+        letterSpacing: flash ? "0.1em" : "0.06em",
+        fontSize: flash ? 11 : 10,
         animation: state === "busy" ? "blink 1.3s ease-in-out infinite" : "none",
       }}
     >
       {icon}
+      {flash && (state === "bad" ? "✗ " : "✓ ")}
       {expanded ? full : compact}
     </button>
   );
@@ -659,6 +669,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const dutyLogRemarkAppliedRef = useRef(new Set()); // row ids already auto-filled/appended this session — avoids re-appending on every render
   const [lastDutyLogCheckTime, setLastDutyLogCheckTime] = useState(""); // "DD Mon YYYY · HH:MM" of last successful Duty Log check
   const dutyLogFetchingRef = useRef(false); // guards against overlapping fetches when refocus/reconnect fire close together
+  const [dutyLogFlash, setDutyLogFlash] = useState(false); // brief bold ✓/✗ flash right after a check completes
+  const dutyLogFlashTimerRef = useRef(null);
   const [expandedRowIdx, setExpandedRowIdx] = useState(null); // accordion — one row's detail panel open at a time
   const [confirmDeleteRowIdx, setConfirmDeleteRowIdx] = useState(null); // inline two-step delete confirm
   const [openedRowIds, setOpenedRowIds] = useState(() => new Set()); // rows whose panel has been opened at least once — keeps it mounted so later collapse/expand can animate
@@ -1059,6 +1071,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     }
   };
 
+  // Briefly flashes the Duty Log toolbar chip bold/bright (✓ or ✗), mirroring
+  // the Cloud chip's transient syncStatus "synced"/"error" window.
+  const triggerDutyLogFlash = (ms) => {
+    clearTimeout(dutyLogFlashTimerRef.current);
+    setDutyLogFlash(true);
+    dutyLogFlashTimerRef.current = setTimeout(() => setDutyLogFlash(false), ms);
+  };
+
   // ── Duty Log link — reusable fetch, called on mount/code-change, refocus, and reconnect ──
   const fetchDutyLog = () => {
     const code = settingsRef.current.dutyLogSyncCode;
@@ -1073,6 +1093,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         if (!ok) {
           setDutyLogEntries([]);
           setDutyLogStatus({ state: status === 404 ? "not-found" : "invalid" });
+          triggerDutyLogFlash(5000);
           return;
         }
         const logs = body?.logs || [];
@@ -1091,8 +1112,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         const displayStr = `${dateStr} · ${timeStr}`;
         setLastDutyLogCheckTime(displayStr);
         if (user?.uid) localStorage.setItem(lsDutyLogCheckKey(user.uid), displayStr);
+        triggerDutyLogFlash(3000);
       })
-      .catch(() => { if (settingsRef.current.dutyLogSyncCode === code) setDutyLogStatus({ state: "error" }); })
+      .catch(() => {
+        if (settingsRef.current.dutyLogSyncCode === code) {
+          setDutyLogStatus({ state: "error" });
+          triggerDutyLogFlash(5000);
+        }
+      })
       .finally(() => { dutyLogFetchingRef.current = false; });
   };
 
@@ -2033,6 +2060,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
   // ── Toolbar sync chips — Cloud + Duty Log, computed fresh each render ──
   const cloudChipState = syncStatus === "syncing" ? "busy" : syncStatus === "error" ? "bad" : "ok";
+  // syncStatus sits at "synced"/"error" only for the transient window checkCloudSync/syncData
+  // hold it there before reverting to "idle" — reuse that window as the flash trigger directly.
+  const cloudChipFlash = syncStatus === "synced" || syncStatus === "error";
   const cloudChipCompact = cloudChipState === "busy" ? "…" : timeOnly(lastSyncTime);
   const cloudChipFull = cloudChipState === "bad"
     ? `Sync failed${lastSyncTime ? ` — last OK ${lastSyncTime}` : ""}`
@@ -2229,6 +2259,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             {isOnline && (
               <ToolbarSyncChip
                 state={cloudChipState}
+                flash={cloudChipFlash}
                 compact={cloudChipCompact}
                 full={cloudChipFull}
                 icon={
@@ -2241,6 +2272,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             {isOnline && settings.dutyLogSyncCode && (
               <ToolbarSyncChip
                 state={dutyLogChipState}
+                flash={dutyLogFlash}
                 compact={dutyLogChipCompact}
                 full={dutyLogChipFull}
                 icon={
