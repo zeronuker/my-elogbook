@@ -27,7 +27,10 @@ const timeOnly = (full) => (full ? full.split(" · ").pop() : "—");
 // `flash`: briefly render bold + bright (✓/✗) right after a check completes,
 // then settle back to the quiet compact/expanded style — mirrors the old
 // "✓ SYNCED" / "✗ SYNC FAILED" flash feedback for both Cloud and Duty Log.
-function ToolbarSyncChip({ icon, compact, full, state, flash }) {
+// `identityColor`: while expanded (tapped open), the ICON alone recolors to
+// this — lets Cloud vs. Duty Log be told apart at a glance once tapped. Text
+// color is unaffected, still driven by state/flash as normal.
+function ToolbarSyncChip({ icon, compact, full, state, flash, identityColor }) {
   const [expanded, setExpanded] = useState(false);
   const quietColor = state === "bad" ? "#ef4444" : state === "busy" ? "#7c87a3" : "#3a6a8a";
   const flashColor = state === "bad" ? "#ef4444" : "#22c55e";
@@ -46,7 +49,7 @@ function ToolbarSyncChip({ icon, compact, full, state, flash }) {
         animation: state === "busy" ? "blink 1.3s ease-in-out infinite" : "none",
       }}
     >
-      {icon}
+      <span style={{ display: "flex", color: expanded ? identityColor : "inherit" }}>{icon}</span>
       {flash && (state === "bad" ? "✗ " : "✓ ")}
       {expanded ? full : compact}
     </button>
@@ -2260,6 +2263,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               <ToolbarSyncChip
                 state={cloudChipState}
                 flash={cloudChipFlash}
+                identityColor="#3FE0C5"
                 compact={cloudChipCompact}
                 full={cloudChipFull}
                 icon={
@@ -2273,6 +2277,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               <ToolbarSyncChip
                 state={dutyLogChipState}
                 flash={dutyLogFlash}
+                identityColor="#fb923c"
                 compact={dutyLogChipCompact}
                 full={dutyLogChipFull}
                 icon={
