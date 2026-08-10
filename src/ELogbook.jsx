@@ -2493,7 +2493,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                           onMouseEnter={e => e.currentTarget.style.color = "#4fc3f7"}
                           onMouseLeave={e => e.currentTarget.style.color = "#6f93b8"}
                         >
-                          {rowIdx + 1}
+                          <span style={{
+                            display: "inline-block", minWidth: 20, padding: "2px 0", borderRadius: 3,
+                            background: "rgba(79,195,247,0.14)", border: "1px solid rgba(79,195,247,0.4)",
+                            color: "#e8ecf5", fontSize: 14,
+                          }}>{rowIdx + 1}</span>
                           <span style={{ fontSize: 9, transition: "transform 0.18s ease", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}>▾</span>
                         </button>
                       </td>
