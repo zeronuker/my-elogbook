@@ -1203,6 +1203,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const syncData = async () => {
     if (!user || syncStatus === "syncing" || !isOnline) return;
     setSyncStatus("syncing");
+    if (settings.dutyLogSyncCode) fetchDutyLog(); // piggyback Duty Log refresh on manual sync taps
     try {
       const ref = doc(db, "users", user.uid, "logbook", "data");
       const timeoutPromise = new Promise((_, reject) =>
