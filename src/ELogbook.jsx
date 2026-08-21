@@ -21,6 +21,17 @@ const dlNorm = (s) => (s || "").trim().toUpperCase();
 // Extracts just the "HH:MM" portion from a "DD Mon YYYY · HH:MM" display string.
 const timeOnly = (full) => (full ? full.split(" · ").pop() : "—");
 
+// Crew display order — CP through A2, anything else sorted alphabetically after A2.
+const CREW_RANK_ORDER = ["CP", "P1", "P2", "P3", "P4", "A1", "A2"];
+const crewRankIndex = (position) => {
+  const i = CREW_RANK_ORDER.indexOf((position || "").toUpperCase());
+  return i === -1 ? CREW_RANK_ORDER.length : i;
+};
+const sortCrewByRank = (crew) => [...crew].sort((a, b) => {
+  const diff = crewRankIndex(a.position) - crewRankIndex(b.position);
+  return diff !== 0 ? diff : (a.position || "").toUpperCase().localeCompare((b.position || "").toUpperCase());
+});
+
 // Toolbar sync-status chip — tap/click morphs between compact (time only) and
 // full (date + time, or failure reason) in place. No dropdown/popover/toast —
 // hover tooltips don't work on iPad, so tap is the only reveal mechanism.
@@ -2934,7 +2945,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                                         <>
                                           <div style={{ fontSize: 9, letterSpacing: "0.08em", color: "#4a6a8a", textTransform: "uppercase", marginBottom: 8 }}>Crew</div>
                                           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                                            {(dutyLogMatch.log.crew || []).length > 0 ? dutyLogMatch.log.crew.map((c, ci) => (
+                                            {(dutyLogMatch.log.crew || []).length > 0 ? sortCrewByRank(dutyLogMatch.log.crew).map((c, ci) => (
                                               <div key={ci} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12 }}>
                                                 <span style={{ color: "var(--cb-ink, #e8ecf5)" }}>{c.name}</span>
                                                 <span style={{ color: "#7c87a3", fontSize: 9.5, letterSpacing: "0.06em", whiteSpace: "nowrap" }}>{(c.position || "").toUpperCase()}</span>
