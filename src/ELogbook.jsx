@@ -12,6 +12,11 @@ import HowToGuideModal from "./HowToGuideModal";
 import FeedbackModal from "./FeedbackModal";
 import BrandBanner from "@brand/BrandBanner";
 import UpdatePrompt from "@brand/UpdatePrompt";
+import { CHANGELOG } from "./changelog";
+
+// Single source of truth: the app's displayed version is always the newest
+// changelog entry, so it can never drift out of sync with the changelog.
+const APP_VERSION = CHANGELOG.find((e) => e.current)?.v ?? CHANGELOG[0].v;
 
 // Duty Log link — read-only fetch from the superapp's duty-log sync endpoint (see my-superapp/api/dutylog-sync.js)
 const DUTY_LOG_SYNC_URL = "https://claudeborne-superapp.vercel.app/api/dutylog-sync";
@@ -3834,7 +3839,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <HowToGuideModal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
-        version="v6.24"
+        version={APP_VERSION}
       />
 
 
@@ -3945,7 +3950,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         flexWrap: "wrap",
         gap: 8,
       }}>
-        <span>eLOGBOOK v6.24 · CAAM</span>
+        <span>eLOGBOOK {APP_VERSION} · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
         <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>

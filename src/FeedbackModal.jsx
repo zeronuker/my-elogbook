@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { db } from "./firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { CHANGELOG } from "./changelog";
 
 // ════════════════════════════════════════════════════════════════════
 //  FeedbackModal — in-app bug report / feature request → Firestore
 // ════════════════════════════════════════════════════════════════════
 
-const APP_VERSION = "v6.24";
+const APP_VERSION = CHANGELOG.find((e) => e.current)?.v ?? CHANGELOG[0].v;
 const RATE_LIMIT_MS = 60_000;
 const LS_KEY = "elb_last_feedback_at";
 const getLastFeedbackAt = () => parseInt(localStorage.getItem(LS_KEY) || "0", 10);

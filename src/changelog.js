@@ -1,10 +1,12 @@
-// Version scheme: semantic-ish — a whole-number bump for a feature release,
-// .N for incremental features/fixes within it, and an extra .N suffix
-// (e.g. v6.12.1) for a same-day hotfix. One entry per commit/release, oldest
-// first below (rendered newest-first in the UI).
+// Version labels follow Eledger's scheme: first entry is v1.0, each
+// subsequent entry is +0.1, up to a max of x.10 — the entry after any x.10
+// rolls to (x+1).0. One entry per release (not per commit — a release here
+// can bundle several commits). Newest first below, matching render order
+// (CHANGELOG.find/.filter below rely on this order directly, unlike
+// Eledger's own oldest-first array).
 export const CHANGELOG = [
   {
-    v: "v6.24", date: "August 2026", current: true,
+    v: "v3.9", date: "August 2026", current: true,
     title: "Duty Log Link",
     notes: [
       "NEW: Link your Duty Log app via a sync code (Settings → Preferences → Duty Log Link) — matches sectors by date + departure/arrival and shows crew (name + position) alongside Remarks in the sector panel.",
@@ -12,7 +14,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.23", date: "August 2026",
+    v: "v3.8", date: "August 2026",
     title: "Autoland panel redesign",
     notes: [
       "NEW: Row-number tap now expands an inline panel instead of a popup — no dimmed backdrop, accordion-style (one row open at a time).",
@@ -24,7 +26,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.22", date: "July 2026",
+    v: "v3.7", date: "July 2026",
     title: "Auto-hide empty flight-time columns",
     notes: [
       "NEW: DAY and NIGHT columns (P1, P1 U/S, P2) that are completely empty for a month now collapse into a slim marker instead of a row of dashes — tap it to reveal the column again. Only ever applies to past, closed-out months, never the one you're actively logging, and a column with even one real entry is never touched. Toggle it off in Settings → Appearance if you'd rather always see every column.",
@@ -34,7 +36,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.21", date: "July 2026",
+    v: "v3.6", date: "July 2026",
     title: "Multi-sector auto-fill",
     notes: [
       "NEW: When you add a row with the same date as the row above (multi-sector duty day), aircraft type, markings, and captain auto-fill from the previous row — only into empty fields, never overwriting what you've already typed.",
@@ -42,7 +44,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.20", date: "July 2026",
+    v: "v3.5", date: "July 2026",
     title: "Day/night accuracy, sync scaling, and fixes",
     notes: [
       "FIX: Takeoff/landing recency (Dynamic day/night mode) now checks the actual sun position at the moment of departure/arrival, instead of which had more total daylight across the whole flight — these could previously disagree on long-haul sectors.",
@@ -56,7 +58,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.19", date: "June 2026",
+    v: "v3.4", date: "June 2026",
     title: "Route map",
     notes: [
       "NEW: Route Map — plot every sector flown in a chosen date range on a world map, with a colour-graded great-circle line (magenta → yellow) for each route and PNG export to share where you've flown. Open it from the toolbar or the Flight Summary tab.",
@@ -69,14 +71,14 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.18", date: "June 2026",
+    v: "v3.3", date: "June 2026",
     title: "Animated launch splash",
     notes: [
       "NEW: A short animated splash screen now plays on app launch — the C mark fades in, the chamfered double-line frame draws on around it, then the CLAUDEBORNE wordmark fades in, before settling into the app.",
     ],
   },
   {
-    v: "v6.17", date: "June 2026",
+    v: "v3.2", date: "June 2026",
     title: "Custom icon set replaces emoji",
     notes: [
       "NEW: Landing screen Log In / Sign Up Free tiles, the email/verification screens, and the signed-out screen now use custom brand-gradient icons (a paper plane, a boarding pass, an envelope, and a door) instead of emoji.",
@@ -85,7 +87,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.16", date: "June 2026",
+    v: "v3.1", date: "June 2026",
     title: "Security & reliability hardening",
     notes: [
       "FIX: Choosing \"Keep Local Data\" after a cloud sync conflict no longer triggers a second conflict popup — local data is now pushed directly to the cloud in a single step.",
@@ -101,7 +103,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.15", date: "June 2026",
+    v: "v3.0", date: "June 2026",
     title: "Brand banner & self-hosted fonts",
     notes: [
       "NEW: New topbar brand banner — outlined 'C' in Tourney 900, gradient CLAUDEBORNE wordmark, PILOT eLOGBOOK subtitle with corner chevrons framing the brand section.",
@@ -111,7 +113,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.14", date: "June 2026",
+    v: "v2.10", date: "June 2026",
     title: "Adaptive logbook width",
     notes: [
       "IMP: The logbook now sizes itself to fit all columns exactly on any desktop screen — no more horizontal scrolling. The app measures the table's actual rendered width after layout and sets its own container to match.",
@@ -123,7 +125,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.13", date: "June 2026",
+    v: "v2.9", date: "June 2026",
     title: "Sign-in & account deletion reliability",
     notes: [
       "FIX: Typing your email or password on the login and forgot-password screens no longer gets wiped mid-entry. The screens were quietly resetting on each redraw.",
@@ -146,7 +148,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.12.2", date: "June 2026",
+    v: "v2.8", date: "June 2026",
     title: "Hotfix — sign-up & sign-in flow",
     notes: [
       "FIX: New Google sign-ups now go through onboarding instead of dropping straight into the logbook.",
@@ -156,14 +158,14 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.12.1", date: "June 2026",
+    v: "v2.7", date: "June 2026",
     title: "Hotfix — HOC warning banner overflow",
     notes: [
       "FIX: The \"HOLDER OPERATING CAPACITY required\" banner now spans exactly the DAY, NIGHT and TOTAL columns instead of overflowing past the table into the action buttons. It was anchoring on the TOTAL column by mistake.",
     ],
   },
   {
-    v: "v6.12", date: "June 2026",
+    v: "v2.6", date: "June 2026",
     title: "Account deletion polish",
     notes: [
       "NEW: After deleting your account you now see a clear confirmation — \"✓ ACCOUNT DELETED\" — instead of the generic signed-out screen.",
@@ -172,7 +174,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.11", date: "June 2026",
+    v: "v2.5", date: "June 2026",
     title: "Google account deletion works on PWA",
     notes: [
       "FIX: Deleting a Google account from an installed PWA now works. When Google asks you to re-confirm your identity, the app uses Google Identity Services (the same reliable method as sign-in) instead of a popup — so it no longer gets stuck on iPad / Android home-screen apps.",
@@ -182,7 +184,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.10", date: "June 2026",
+    v: "v2.4", date: "June 2026",
     title: "Google sign-in rebuilt with Google Identity Services",
     notes: [
       "NEW: Google sign-in now uses Google Identity Services (GIS). On installed PWAs (iPad / Android home-screen app), Google sign-in works reliably — no more getting stuck on the login screen or having to force-quit and reopen.",
@@ -192,7 +194,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.9", date: "June 2026",
+    v: "v2.3", date: "June 2026",
     title: "Route-based day/night calculation",
     notes: [
       "NEW: The Sunrise/Sunset day/night method has been upgraded to a route-integrated calculation, renamed Route (sun). Night is now counted whenever the sun is below civil twilight (−6°), computed minute by minute along the actual great-circle route between departure and arrival airports.",
@@ -202,7 +204,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.8", date: "June 2026",
+    v: "v2.2", date: "June 2026",
     title: "Column visibility expansion · Settings polish · regulatory popups",
     notes: [
       "NEW: Every logbook column is now toggleable — including DAY P1 / P1 U/S / P2, NIGHT P1 / P1 U/S / P2, and TOTAL. Previously these seven were forced-visible.",
@@ -213,14 +215,14 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.7.1", date: "May 2026",
+    v: "v2.1", date: "May 2026",
     title: "Hotfix — account deletion order",
     notes: [
       "FIX: Account deletion now removes Firestore data before invalidating the auth user. Previous order could leave logbook data orphaned in the cloud if Firestore was slow to acknowledge the auth-token revocation between deleteUser() and the subsequent deleteDoc() calls.",
     ],
   },
   {
-    v: "v6.7", date: "May 2026",
+    v: "v2.0", date: "May 2026",
     title: "Column hide actually hides · gear badge · toast reminder",
     notes: [
       "FIX: Hiding a column now removes it entirely from the table — previously it was reduced to a 13-pixel stub that still took horizontal space, defeating the purpose of hiding.",
@@ -231,7 +233,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.6.1", date: "May 2026",
+    v: "v1.10", date: "May 2026",
     title: "Hotfix — revert PWA redirect auth",
     notes: [
       "FIX: Revert v6.6 PWA redirect-based Google sign-in — installed PWAs were landing on the welcome page after Google sign-in with no auth. Reverted to popup-based flow (same as v6.5 behaviour on PWA).",
@@ -240,7 +242,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.6", date: "May 2026",
+    v: "v1.9", date: "May 2026",
     title: "Google sign-in reliability (desktop)",
     notes: [
       "FIX: Google sign-in on desktop browsers with ad blockers / popup blockers now shows a clear error message instead of silently failing.",
@@ -249,7 +251,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.5", date: "May 2026",
+    v: "v1.8", date: "May 2026",
     title: "How-To Guide · UI polish · export fix",
     notes: [
       "NEW: In-app How-To Guide — 8 sections covering getting started, installing the app, logging flights, day/night calculation, carry forward hours, syncing, exporting, and settings.",
@@ -261,7 +263,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.4", date: "May 2026",
+    v: "v1.7", date: "May 2026",
     title: "Local-first architecture · PWA · offline support · manual sync",
     notes: [
       "NEW: Local-first architecture — all data now saves to device storage instantly. No network required to save.",
@@ -281,7 +283,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.3", date: "May 2026",
+    v: "v1.6", date: "May 2026",
     title: "In-app feedback · bug reports · feature requests",
     notes: [
       "NEW: In-app feedback system — Report a Bug and Suggest a Feature now open a native modal instead of an external link.",
@@ -289,7 +291,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.2", date: "May 2026",
+    v: "v1.5", date: "May 2026",
     title: "Column visibility · UX polish · live preview",
     notes: [
       "Column visibility: toggle any logbook column on/off from Settings → Appearance.",
@@ -324,7 +326,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.1", date: "May 2026",
+    v: "v1.4", date: "May 2026",
     title: "Settings overhaul · save chip fix",
     notes: [
       "Profile tab: all data fields standardised to identical width.",
@@ -342,7 +344,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v6.0", date: "May 2026",
+    v: "v1.3", date: "May 2026",
     title: "ClaudeBorne brand rollout",
     notes: [
       "Full visual rebuild — new logo, typography, surfaces, and gradient accents.",
@@ -359,7 +361,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v5.6", date: "May 2026",
+    v: "v1.2", date: "May 2026",
     title: "Carry-forward fix · refresh polish",
     notes: [
       "Carry-forward hours over 9:59 no longer zero out on save.",
@@ -369,7 +371,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v5.5", date: "April 2026",
+    v: "v1.1", date: "April 2026",
     title: "Onboarding stability",
     notes: [
       "Auth race-condition fix — no more reload-to-continue after sign-up.",
@@ -377,7 +379,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v5.4", date: "March 2026",
+    v: "v1.0", date: "March 2026",
     title: "PDF export removed",
     notes: [
       "Excel export remains; PDF will be reintroduced with a print stylesheet.",
