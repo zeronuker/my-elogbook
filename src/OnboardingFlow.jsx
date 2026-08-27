@@ -2,6 +2,9 @@ import { useState, useEffect, useRef, useId, memo } from 'react';
 import { auth } from './firebase';
 import GoogleSignInButton from './GoogleSignInButton';
 import BrandBanner from '@brand/BrandBanner';
+import { CHANGELOG } from './changelog';
+
+const APP_VERSION = CHANGELOG.find((e) => e.current)?.v ?? CHANGELOG[0].v;
 
 // Brand gradient used across all four onboarding icons below
 const GRAD_STOPS = (
@@ -230,7 +233,7 @@ const ScreenLanding = memo(({ goTo }) => (
     <div className="onb-land-logo-wrap">
       <BrandBanner subtitle="PILOT eLOGBOOK" />
     </div>
-    <div className="onb-land-ver">eLOGBOOK V6.24 · CAAM / MCAR 2016</div>
+    <div className="onb-land-ver">eLOGBOOK {APP_VERSION.toUpperCase()} · CAAM / MCAR 2016</div>
     <div className="onb-land-tag">Your personal electronic logbook.<br/>Accessible anywhere. Works offline. Sync on demand.</div>
     <div className="onb-badges">
       <span className="onb-badge onb-badge-blue">✓ CAD 1901</span>

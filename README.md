@@ -2,7 +2,7 @@
 
 A free, web-based pilot logbook for commercial airline pilots. Log flights, auto-calculate day/night hours, track regulatory limits and recency, and sync your logbook across devices — no subscription, no credit card.
 
-**Current version:** v6.14  
+**Current version:** v3.9  
 **Live app:** [https://www.claudeborne.my/]
 
 ---
