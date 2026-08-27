@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import GoogleSignInButton from "./GoogleSignInButton";
 import { CHANGELOG } from "./changelog";
+import Changelog from "@brand/Changelog";
 
 // ════════════════════════════════════════════════════════════════════
 //  ClaudeBorne · eLogbook — Settings Modal (v6 brand rewrite)
@@ -104,18 +105,6 @@ const SETTINGS_TABS = [
   { id: "misc",        label: "Misc",        hint: "help · changelog" },
 ];
 
-
-// Render a changelog note: pull a leading NEW/IMP/FIX/DEP tag into a styled badge.
-function renderNote(n) {
-  const m = /^(NEW|IMP|FIX|DEP):\s*/.exec(n);
-  if (!m) return n;
-  return (
-    <>
-      <span className={`sm-cl-tag sm-cl-tag-${m[1]}`}>{m[1]}</span>
-      {n.slice(m[0].length)}
-    </>
-  );
-}
 
 // ── Per-tab reset defaults ────────────────────────────────────────────
 const TAB_DEFAULTS = {
@@ -864,10 +853,6 @@ const MISC_CARDS = [
 ];
 
 function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion }) {
-  const [showHistory, setShowHistory] = useState(false);
-  const currentEntry = CHANGELOG.find(e => e.current);
-  const pastEntries  = CHANGELOG.filter(e => !e.current);
-
   return (
     <div className="sm-tab-content">
 
@@ -928,47 +913,7 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
       </div>
 
       <SmSectionHead title="Changelog" hint="// version history" />
-      <div className="sm-changelog">
-        {/* Current version — always visible */}
-        {currentEntry && (
-          <article key={currentEntry.v} className="sm-cl-entry current">
-            <div className="sm-cl-head">
-              <span className="sm-cl-v">{currentEntry.v}</span>
-              <span className="sm-cl-date">{currentEntry.date}</span>
-              <span className="sm-cl-now">// you are here</span>
-            </div>
-            <h4 className="sm-cl-title">{currentEntry.title}</h4>
-            <ul className="sm-cl-notes">
-              {currentEntry.notes.map((n, j) => <li key={j}>{renderNote(n)}</li>)}
-            </ul>
-          </article>
-        )}
-
-        {/* Toggle for past versions */}
-        {pastEntries.length > 0 && (
-          <button
-            onClick={() => setShowHistory(v => !v)}
-            className="sm-cl-history-toggle"
-          >
-            <span>{showHistory ? "▲" : "▼"}</span>
-            <span>{showHistory ? "Hide" : "Show"} previous versions ({pastEntries.length})</span>
-          </button>
-        )}
-
-        {/* Past versions — collapsed by default */}
-        {showHistory && pastEntries.map((e) => (
-          <article key={e.v} className="sm-cl-entry">
-            <div className="sm-cl-head">
-              <span className="sm-cl-v">{e.v}</span>
-              <span className="sm-cl-date">{e.date}</span>
-            </div>
-            <h4 className="sm-cl-title">{e.title}</h4>
-            <ul className="sm-cl-notes">
-              {e.notes.map((n, j) => <li key={j}>{renderNote(n)}</li>)}
-            </ul>
-          </article>
-        ))}
-      </div>
+      <Changelog changelog={CHANGELOG} />
 
     </div>
   );
@@ -1691,84 +1636,6 @@ const settingsCss = `
     flex-shrink: 0;
   }
 
-  /* ── Changelog (inside Misc tab) ────────────────────────────────── */
-  .sm-changelog { gap: 0; text-align: left; }
-  .sm-cl-entry { padding: 18px 0; border-bottom: 1px solid var(--cb-line); }
-  .sm-cl-entry:last-child { border-bottom: 0; }
-  .sm-cl-entry.current {
-    background: rgba(63,224,197,0.04);
-    margin: 0 -28px;
-    padding: 18px 28px;
-  }
-  .sm-cl-head { display: flex; gap: 14px; align-items: baseline; margin-bottom: 6px; }
-  .sm-cl-v {
-    font-family: var(--cb-font-display);
-    font-weight: 700;
-    font-size: calc(20px * var(--fs));
-    background-image: var(--cb-grad);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    letter-spacing: 0.04em;
-  }
-  .sm-cl-date {
-    font-family: var(--cb-font-mono);
-    font-size: calc(10px * var(--fs));
-    letter-spacing: 0.18em;
-    color: var(--cb-ink-dim);
-    text-transform: uppercase;
-  }
-  .sm-cl-now {
-    font-family: var(--cb-font-mono);
-    font-size: calc(10px * var(--fs));
-    letter-spacing: 0.18em;
-    color: var(--cb-mint);
-    text-transform: uppercase;
-    margin-left: auto;
-  }
-  .sm-cl-title {
-    font-family: var(--cb-font-display);
-    font-weight: 500;
-    font-size: calc(15px * var(--fs));
-    margin: 0 0 10px;
-    color: var(--cb-ink-2);
-    letter-spacing: 0.02em;
-  }
-  .sm-cl-notes { margin: 0; padding-left: 18px; }
-  .sm-cl-notes li {
-    font-size: calc(12.5px * var(--fs));
-    color: var(--cb-ink-2);
-    line-height: 1.6;
-    padding: 3px 0;
-  }
-  .sm-cl-notes li::marker { color: var(--cb-mint); }
-  .sm-cl-tag {
-    display: inline-block;
-    font-weight: 700;
-    font-size: calc(10px * var(--fs));
-    letter-spacing: 0.08em;
-    padding: 0 5px;
-    margin-right: 6px;
-    border: 1px solid;
-    border-radius: 3px;
-    line-height: 1.5;
-    vertical-align: 1px;
-  }
-  .sm-cl-tag-NEW { color: #4fc77a; border-color: #1b6b2f; background: rgba(79,199,122,0.1); }
-  .sm-cl-tag-IMP { color: #4fc3f7; border-color: #1e5a7a; background: rgba(79,195,247,0.1); }
-  .sm-cl-tag-FIX { color: #f5c542; border-color: #b8860b; background: rgba(245,197,66,0.1); }
-  .sm-cl-tag-DEP { color: #ff6b6b; border-color: #a33; background: rgba(239,68,68,0.1); }
-  .sm-cl-history-toggle {
-    display: flex; align-items: center; gap: 8px;
-    width: 100%; padding: 10px 0;
-    background: transparent; border: none; border-bottom: 1px dashed var(--cb-line-2);
-    color: var(--cb-ink-dim); font-family: var(--cb-font-mono);
-    font-size: calc(11px * var(--fs)); letter-spacing: 0.1em;
-    cursor: pointer; text-align: left;
-    transition: color 120ms;
-  }
-  .sm-cl-history-toggle:hover { color: var(--cb-mint); }
-
   /* ── Responsive ─────────────────────────────────────────────────── */
   @media (max-width: 600px) {
     .sm-modal { max-height: 96vh; }
@@ -1778,7 +1645,6 @@ const settingsCss = `
     .sm-foot-btns { justify-content: flex-end; }
     .sm-accent-grid { grid-template-columns: repeat(3, 1fr); }
     .sm-font-grid { grid-template-columns: repeat(3, 1fr); }
-    .sm-cl-entry.current { margin: 0 -18px; padding: 16px 18px; }
     .sm-sh-hint { display: none; }
     .sm-sh-title { width: 100%; }
   }

@@ -3,8 +3,9 @@ import { auth } from './firebase';
 import GoogleSignInButton from './GoogleSignInButton';
 import BrandBanner from '@brand/BrandBanner';
 import { CHANGELOG } from './changelog';
+import { currentVersion } from '@brand/Changelog';
 
-const APP_VERSION = CHANGELOG.find((e) => e.current)?.v ?? CHANGELOG[0].v;
+const APP_VERSION = currentVersion(CHANGELOG);
 
 // Brand gradient used across all four onboarding icons below
 const GRAD_STOPS = (

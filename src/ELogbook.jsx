@@ -13,10 +13,11 @@ import FeedbackModal from "./FeedbackModal";
 import BrandBanner from "@brand/BrandBanner";
 import UpdatePrompt from "@brand/UpdatePrompt";
 import { CHANGELOG } from "./changelog";
+import { currentVersion } from "@brand/Changelog";
 
 // Single source of truth: the app's displayed version is always the newest
 // changelog entry, so it can never drift out of sync with the changelog.
-const APP_VERSION = CHANGELOG.find((e) => e.current)?.v ?? CHANGELOG[0].v;
+const APP_VERSION = currentVersion(CHANGELOG);
 
 // Duty Log link — read-only fetch from the superapp's duty-log sync endpoint (see my-superapp/api/dutylog-sync.js)
 const DUTY_LOG_SYNC_URL = "https://claudeborne-superapp.vercel.app/api/dutylog-sync";
