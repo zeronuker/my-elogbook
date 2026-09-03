@@ -7,6 +7,7 @@ import { signOut } from "firebase/auth";
 import { doc, setDoc, getDoc, getDocs, addDoc, collection } from "firebase/firestore";
 import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
+import SearchModal from "./SearchModal";
 import RouteMapModal from "./RouteMapModal";
 import HowToGuideModal from "./HowToGuideModal";
 import FeedbackModal from "./FeedbackModal";
@@ -681,6 +682,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [revealedAutoCols, setRevealedAutoCols] = useState(() => new Set()); // session-only "peek" reveals for auto-hidden empty columns, keyed "monthKey:colKey" — resets on reload
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [pulseRowId, setPulseRowId] = useState(null); // briefly highlights a row after a search jump
+  const pulseTimerRef = useRef(null);
   const [routeMapOpen, setRouteMapOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -1770,6 +1774,27 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const isFirstPeriod = selectedYear === YEARS[0] && selectedMonth === 0;
   const isLastPeriod = selectedYear === YEARS[YEARS.length - 1] && selectedMonth === 11;
 
+  // Jumps to a search result's month/year and briefly pulses its row.
+  const handleSearchJump = (hit) => {
+    setSelectedMonth(hit.monthIdx);
+    setSelectedYear(hit.year);
+    setEditingCell(null);
+    setExpandedRowIdx(null);
+    setConfirmDeleteRowIdx(null);
+    if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    setPulseRowId(hit.row.id);
+    pulseTimerRef.current = setTimeout(() => setPulseRowId(null), 1600);
+  };
+
+  // Scrolls the pulsing row into view once its month has rendered.
+  useEffect(() => {
+    if (pulseRowId == null) return;
+    const el = document.querySelector(`[data-search-row="${pulseRowId}"]`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [pulseRowId, selectedMonth, selectedYear]);
+
+  useEffect(() => () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); }, []);
+
   const colScale = COLUMN_SCALE[settings.columnDensity] ?? COLUMN_SCALE.default;
   const cw = (base) => Math.round(base * colScale);
 
@@ -2157,6 +2182,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         @keyframes save-pulse { 0% { opacity:0; text-shadow: 0 0 12px rgba(34,197,94,0.9); }
                                 40% { opacity:1; text-shadow: 0 0 8px rgba(34,197,94,0.6); }
                                 100% { opacity:1; text-shadow: none; } }
+        @keyframes row-pulse { 0% { box-shadow: inset 0 0 0 2px rgba(79,195,247,0.9); }
+                                70% { box-shadow: inset 0 0 0 2px rgba(79,195,247,0.9); }
+                                100% { box-shadow: inset 0 0 0 2px rgba(79,195,247,0); } }
         ${themeCss}
         /* ── Topbar responsive ── */
         .elb-topbar {
@@ -2268,6 +2296,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         <div className="elb-pageheader-right" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
           {/* Icon buttons row */}
           <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
+            {/* Search */}
+            <button onClick={() => setSearchOpen(true)} title="Search logbook" style={iconBtnStyle}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
             {refreshStatus === "refreshing" && (
               <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
             )}
@@ -2494,7 +2528,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
               display: "flex", alignItems: "center", gap: 6,
               background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
-              borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
+              borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "1px solid var(--elb-border, #1e3a5f)",
               borderLeft: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid transparent",
               borderRight: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid transparent",
               borderBottom: activeTab === tab.id ? "none" : "1px solid var(--elb-border, #1e3a5f)",
@@ -2666,10 +2700,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                     <Fragment key={`${monthKey}-${row.id}`}>
                     <tr
                       title={rowTitle}
+                      data-search-row={row.id}
                       style={{
                         background: rowBg,
                         borderLeft: hasSignal ? "3px solid #a855f7" : "3px solid transparent",
                         transition: "background 0.15s, border-color 0.15s",
+                        animation: pulseRowId === row.id ? "row-pulse 1.6s ease-out" : undefined,
                       }}
                       onMouseEnter={e => e.currentTarget.style.background = "var(--elb-rowhover, #122030)"}
                       onMouseLeave={e => e.currentTarget.style.background = rowBg}
@@ -3882,6 +3918,15 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         user={user}
         onImport={handleImport}
         computeFlightTimes={(row, year, monthIdx) => calcFlightTimes(row, settings.dayNightMethod, year, monthIdx)}
+      />
+
+      {/* ── SEARCH MODAL ── */}
+      <SearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        monthData={data}
+        dutyLogEntries={dutyLogEntries}
+        onJumpTo={handleSearchJump}
       />
 
       {/* ── ROUTE MAP MODAL ── */}
