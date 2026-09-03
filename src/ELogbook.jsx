@@ -819,6 +819,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const lsSaveKey        = (uid) => `elb_last_local_save_${uid}`;
   const lsSyncDisplayKey = (uid) => `elb_last_sync_display_${uid}`;
   const lsDutyLogCheckKey = (uid) => `elb_last_dutylog_check_${uid}`;
+  const lsDutyLogDataKey  = (uid) => `elb_last_dutylog_data_${uid}`;
 
   // ── Background cloud check ──
   // Silently fetches Firestore updatedAt and compares to local lastSyncedAt.
@@ -887,6 +888,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         // Restore last Duty Log check timestamp so its toolbar chip isn't blank on load
         const storedDutyLogCheck = localStorage.getItem(lsDutyLogCheckKey(uid));
         if (storedDutyLogCheck) setLastDutyLogCheckTime(storedDutyLogCheck);
+
+        // Restore last-fetched Duty Log entries so crew/remarks/badge still show offline
+        const storedDutyLogData = localStorage.getItem(lsDutyLogDataKey(uid));
+        if (storedDutyLogData) {
+          try { setDutyLogEntries(JSON.parse(storedDutyLogData)); } catch { /* corrupt cache — ignore */ }
+        }
 
         // Background cloud check — runs silently, opens conflict modal if cloud is newer
         checkCloudSync(uid);
@@ -1112,6 +1119,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         if (settingsRef.current.dutyLogSyncCode !== code) return; // code changed mid-flight — stale result
         if (!ok) {
           setDutyLogEntries([]);
+          if (user?.uid) localStorage.removeItem(lsDutyLogDataKey(user.uid));
           setDutyLogStatus({ state: status === 404 ? "not-found" : "invalid" });
           triggerDutyLogFlash(5000);
           return;
@@ -1124,6 +1132,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           }
         }
         setDutyLogEntries(flat);
+        if (user?.uid) localStorage.setItem(lsDutyLogDataKey(user.uid), JSON.stringify(flat));
         setDutyLogStatus({ state: "connected", count: logs.length });
         dutyLogRemarkAppliedRef.current = new Set(); // new data — allow re-checking prefill/append
         const now = new Date();
@@ -1144,16 +1153,23 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   };
 
   useEffect(() => {
+    if (!dataLoaded) return; // settings still at defaults pre-load — don't treat that as the user clearing their code
     const code = settings.dutyLogSyncCode;
-    if (!code) { setDutyLogEntries([]); setDutyLogStatus({ state: "idle" }); return; }
+    if (!code) {
+      setDutyLogEntries([]);
+      if (user?.uid) localStorage.removeItem(lsDutyLogDataKey(user.uid));
+      setDutyLogStatus({ state: "idle" });
+      return;
+    }
     if (!DUTY_LOG_CODE_RE.test(code)) {
       setDutyLogEntries([]);
+      if (user?.uid) localStorage.removeItem(lsDutyLogDataKey(user.uid));
       setDutyLogStatus({ state: "invalid" });
       return;
     }
     fetchDutyLog();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.dutyLogSyncCode]);
+  }, [dataLoaded, settings.dutyLogSyncCode]);
 
   // Finds the Duty Log sector matching a logbook row, by date + departure/arrival.
   // row.date is a bare day-of-month string in this component; combine with the
