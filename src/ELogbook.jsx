@@ -2543,7 +2543,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
 
         {/* ── TABS ── */}
-        <div style={{ display: "flex", gap: 0, alignItems: "flex-end", overflowX: "auto", overflowY: "hidden" }}>
+        <div style={{ display: "flex", gap: 0, alignItems: "flex-end", overflowX: "auto", overflowY: "hidden", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
           {[
             { id: "logbook",  icon: <TabLogbookIcon />, label: "LOGBOOK" },
             { id: "summary",  icon: <TabSummaryIcon />, label: "FLIGHT SUMMARY" },
