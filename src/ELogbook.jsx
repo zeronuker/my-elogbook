@@ -2126,6 +2126,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     <div style={{
       background: "var(--elb-bg, #0a0d12)",
       minHeight: "100vh",
+      overflowX: "hidden",
       fontFamily: "var(--elb-font, 'Courier New', Courier, monospace)",
       color: "var(--elb-txt, #c8d6e5)",
       filter: ((previewSettings || settings).theme === "dark" && Number((previewSettings || settings).brightness) > 0 && Number((previewSettings || settings).brightness) < 100)
@@ -2168,6 +2169,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         @media (max-width: 640px) {
           .elb-topbar-caam { display: none; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
+          .elb-pageheader { flex-direction: column; }
+          .elb-pageheader-right { width: 100%; }
         }
         /* Add-sector button: floating on touch devices (any orientation) or a
            narrow window, otherwise sitting in the totals row on desktop. */
@@ -2230,7 +2233,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       </div>
 
       {/* ── PAGE HEADER ── */}
-      <div style={{
+      <div className="elb-pageheader" style={{
         background: "linear-gradient(135deg, var(--elb-bghd,#0d1117) 0%, var(--elb-bgalt,#161d2a) 100%)",
         borderBottom: "1px solid var(--elb-bdr,#1e3a5f)",
         padding: "18px 24px",
@@ -2252,7 +2255,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
 
         {/* RIGHT: Controls */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+        <div className="elb-pageheader-right" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
           {/* Period row (right-aligned) */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontFamily: "'JetBrains Mono','Courier New',monospace", fontSize: 9, letterSpacing: "0.18em", color: "var(--elb-txt-muted,#4a6a8a)" }}>SELECT PERIOD</span>
@@ -2439,7 +2442,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
 
         {/* ── TABS ── */}
-        <div style={{ display: "flex", gap: 0, alignItems: "flex-end", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
+        <div style={{ display: "flex", gap: 0, alignItems: "flex-end", borderBottom: "1px solid var(--elb-border, #1e3a5f)", overflowX: "auto" }}>
           {[
             { id: "logbook",  icon: <TabLogbookIcon />, label: "LOGBOOK" },
             { id: "summary",  icon: <TabSummaryIcon />, label: "FLIGHT SUMMARY" },
