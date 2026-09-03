@@ -2543,7 +2543,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
 
         {/* ── TABS ── */}
-        <div style={{ display: "flex", gap: 0, alignItems: "flex-end", overflowX: "auto", overflowY: "hidden", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
+        {/* Scroll clipping lives on this outer wrapper only — the inner row (below)
+            needs to stay unclipped so the active tab's -1px bleed can actually
+            paint over the divider instead of being cut off by overflow. */}
+        <div style={{ overflowX: "auto", overflowY: "hidden" }}>
+        <div style={{ display: "flex", gap: 0, alignItems: "flex-end", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
           {[
             { id: "logbook",  icon: <TabLogbookIcon />, label: "LOGBOOK" },
             { id: "summary",  icon: <TabSummaryIcon />, label: "FLIGHT SUMMARY" },
@@ -2569,6 +2573,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               flexShrink: 0,
             }}>{tab.icon}{tab.label}</button>
           ))}
+        </div>
         </div>
 
       {/* ── CONTENT ── */}
