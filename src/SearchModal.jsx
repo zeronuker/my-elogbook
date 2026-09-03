@@ -30,6 +30,15 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
     }
   }, [open]);
 
+  // Lock page scroll while open — otherwise touch-scrolling the results list
+  // on iOS scrolls the page underneath the fixed modal instead.
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prevOverflow; };
+  }, [open]);
+
   // ESC closes
   useEffect(() => {
     if (!open) return;
@@ -234,7 +243,7 @@ const searchModalCss = `
     letter-spacing:0.14em;color:var(--elb-txt-muted, #4a6a8a);text-transform:uppercase;
   }
 
-  .srch-results{overflow-y:auto;padding:8px 10px 14px;min-height:0;}
+  .srch-results{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:8px 10px 14px;min-height:0;}
   .srch-results::-webkit-scrollbar{width:4px;}
   .srch-results::-webkit-scrollbar-track{background:transparent;}
   .srch-results::-webkit-scrollbar-thumb{background:var(--elb-border, #1e3a5f);border-radius:2px;}

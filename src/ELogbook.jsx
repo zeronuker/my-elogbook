@@ -2182,9 +2182,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         @keyframes save-pulse { 0% { opacity:0; text-shadow: 0 0 12px rgba(34,197,94,0.9); }
                                 40% { opacity:1; text-shadow: 0 0 8px rgba(34,197,94,0.6); }
                                 100% { opacity:1; text-shadow: none; } }
-        @keyframes row-pulse { 0% { box-shadow: inset 0 0 0 2px rgba(79,195,247,0.9); }
-                                70% { box-shadow: inset 0 0 0 2px rgba(79,195,247,0.9); }
-                                100% { box-shadow: inset 0 0 0 2px rgba(79,195,247,0); } }
+        @keyframes row-pulse { 0%, 100% { background-color: transparent; }
+                                15%, 55% { background-color: rgba(79,195,247,0.5); }
+                                35%, 75% { background-color: rgba(79,195,247,0.08); } }
         ${themeCss}
         /* ── Topbar responsive ── */
         .elb-topbar {
