@@ -1783,7 +1783,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     setConfirmDeleteRowIdx(null);
     if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
     setPulseRowId(hit.row.id);
-    pulseTimerRef.current = setTimeout(() => setPulseRowId(null), 1600);
+    pulseTimerRef.current = setTimeout(() => setPulseRowId(null), 3500);
   };
 
   // Scrolls the pulsing row into view once its month has rendered.
@@ -2705,7 +2705,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                         background: rowBg,
                         borderLeft: hasSignal ? "3px solid #a855f7" : "3px solid transparent",
                         transition: "background 0.15s, border-color 0.15s",
-                        animation: pulseRowId === row.id ? "row-pulse 1.6s ease-out" : undefined,
+                        animation: pulseRowId === row.id ? "row-pulse 3.5s ease-out" : undefined,
                       }}
                       onMouseEnter={e => e.currentTarget.style.background = "var(--elb-rowhover, #122030)"}
                       onMouseLeave={e => e.currentTarget.style.background = rowBg}
