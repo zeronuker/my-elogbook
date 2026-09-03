@@ -2160,6 +2160,42 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       ? `Duty Log — ${lastDutyLogCheckTime}${dutyLogStatus.count != null ? ` · ${dutyLogStatus.count} log${dutyLogStatus.count === 1 ? "" : "s"} found` : ""}`
       : "Checking…";
 
+  // Save status chip — rendered twice below (desktop/tablet position vs. the
+  // phone-only position under the period picker), each shown/hidden by CSS
+  // for its own breakpoint so only one is ever visible at a time.
+  const saveChip = (
+    <>
+      {saveStatus === "saving" && (
+        <span style={{
+          fontSize: 10, fontStyle: "italic", letterSpacing: "0.10em",
+          color: "#f5c542", display: "flex", alignItems: "center", gap: 5,
+        }}>
+          <span style={{ display: "inline-block", animation: "spin 0.7s linear infinite", fontSize: 12 }}>↻</span>
+          SAVING...
+        </span>
+      )}
+      {(saveStatus === "saved" || saveStatus === "fading") && lastSaveTime && (
+        <span style={{
+          fontSize: 10, fontStyle: "italic", fontWeight: 700, letterSpacing: "0.10em",
+          color: "#22c55e", display: "flex", alignItems: "center", gap: 5,
+          animation: saveStatus === "saved" ? "save-pulse 0.6s ease-out" : "none",
+          opacity: saveStatus === "fading" ? 0 : 1,
+          transition: saveStatus === "fading" ? "opacity 0.5s ease" : "none",
+        }}>
+          ✓ SAVED TO LOCAL STORAGE &nbsp;{lastSaveTime}
+        </span>
+      )}
+      {saveStatus === "error" && (
+        <span style={{
+          fontSize: 10, fontStyle: "italic", letterSpacing: "0.10em",
+          color: "#ef4444", cursor: "pointer",
+        }} onClick={() => saveData(data)} title="Click to retry">
+          ✕ SAVE ERROR · RETRY
+        </span>
+      )}
+    </>
+  );
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
@@ -2212,6 +2248,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         .elb-pageheader {
           gap: 6px;
         }
+        .elb-savechip-top { display: flex; }
+        .elb-savechip-phone { display: none; }
         @media (max-width: 640px) {
           .elb-topbar-caam { display: none; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
@@ -2219,6 +2257,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-pageheader-right { width: 100%; }
           .elb-pageheader { gap: 2px; }
           .elb-pageheader-period { justify-content: flex-end; }
+          .elb-savechip-top { display: none; }
+          .elb-savechip-phone { display: flex; }
         }
         /* Add-sector button: floating on touch devices (any orientation) or a
            narrow window, otherwise sitting in the totals row on desktop. */
@@ -2428,36 +2468,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 </svg>
               </button>
             </div>
-          {/* Save chip — right-aligned, purely visual, does not affect actual save behaviour */}
-          <div style={{ display: "flex", justifyContent: "flex-end", minHeight: 18 }}>
-            {saveStatus === "saving" && (
-              <span style={{
-                fontSize: 10, fontStyle: "italic", letterSpacing: "0.10em",
-                color: "#f5c542", display: "flex", alignItems: "center", gap: 5,
-              }}>
-                <span style={{ display: "inline-block", animation: "spin 0.7s linear infinite", fontSize: 12 }}>↻</span>
-                SAVING...
-              </span>
-            )}
-            {(saveStatus === "saved" || saveStatus === "fading") && lastSaveTime && (
-              <span style={{
-                fontSize: 10, fontStyle: "italic", fontWeight: 700, letterSpacing: "0.10em",
-                color: "#22c55e", display: "flex", alignItems: "center", gap: 5,
-                animation: saveStatus === "saved" ? "save-pulse 0.6s ease-out" : "none",
-                opacity: saveStatus === "fading" ? 0 : 1,
-                transition: saveStatus === "fading" ? "opacity 0.5s ease" : "none",
-              }}>
-                ✓ SAVED TO LOCAL STORAGE &nbsp;{lastSaveTime}
-              </span>
-            )}
-            {saveStatus === "error" && (
-              <span style={{
-                fontSize: 10, fontStyle: "italic", letterSpacing: "0.10em",
-                color: "#ef4444", cursor: "pointer",
-              }} onClick={() => saveData(data)} title="Click to retry">
-                ✕ SAVE ERROR · RETRY
-              </span>
-            )}
+          {/* Save chip — right-aligned, purely visual, does not affect actual save behaviour.
+              Hidden on phone, where it's rendered again below the period picker instead. */}
+          <div className="elb-savechip-top" style={{ justifyContent: "flex-end", minHeight: 18 }}>
+            {saveChip}
           </div>
           </div>
         </div>
@@ -2520,6 +2534,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               </svg>
             </button>
           )}
+        </div>
+
+        {/* Phone-only save chip — hidden everywhere else; the desktop/tablet copy above stays put */}
+        <div className="elb-savechip-phone" style={{ justifyContent: "flex-end", minHeight: 18 }}>
+          {saveChip}
         </div>
         </div>
 
