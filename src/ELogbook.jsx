@@ -2246,12 +2246,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", color: "var(--elb-txt,#e8f4fd)" }}>{MONTHS[selectedMonth]}</span>
             <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{selectedYear}</span>
           </div>
-          <div style={{ fontFamily: "'JetBrains Mono','Courier New',monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--elb-acc,#4fc3f7)", textTransform: "uppercase", margin: "5px 0 6px", textAlign: "left" }}>
-            FLIGHT RECORDS
-          </div>
-          <div style={{ fontSize: 12, color: "var(--elb-txt-muted,#5a7a9a)", letterSpacing: "0.04em", textAlign: "left" }}>
-            Compliant with CAD 1901 · MCAR 2016 Part 69 &amp; Part 74
-          </div>
         </div>
 
         {/* RIGHT: Controls */}
@@ -2442,7 +2436,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
 
         {/* ── TABS ── */}
-        <div style={{ display: "flex", gap: 0, alignItems: "flex-end", borderBottom: "1px solid var(--elb-border, #1e3a5f)", overflowX: "auto" }}>
+        <div style={{ display: "flex", gap: 0, alignItems: "flex-end", overflowX: "auto", overflowY: "hidden" }}>
           {[
             { id: "logbook",  icon: <TabLogbookIcon />, label: "LOGBOOK" },
             { id: "summary",  icon: <TabSummaryIcon />, label: "FLIGHT SUMMARY" },
@@ -2454,7 +2448,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "2px solid transparent",
               borderLeft: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid transparent",
               borderRight: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid transparent",
-              borderBottom: activeTab === tab.id ? "1px solid var(--elb-bg, #0a0d12)" : "none",
+              borderBottom: activeTab === tab.id ? "none" : "1px solid var(--elb-border, #1e3a5f)",
               borderRadius: activeTab === tab.id ? "5px 5px 0 0" : 0,
               color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #5a7a9a)",
               padding: "7px 18px",
