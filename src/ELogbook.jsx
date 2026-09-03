@@ -2555,7 +2555,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "1px solid var(--elb-border, #1e3a5f)",
               borderLeft: "1px solid var(--elb-border, #1e3a5f)",
               borderRight: "1px solid var(--elb-border, #1e3a5f)",
-              borderBottom: activeTab === tab.id ? "none" : "1px solid var(--elb-border, #1e3a5f)",
+              borderBottom: activeTab === tab.id ? "1px solid var(--elb-bg, #0a0d12)" : "1px solid var(--elb-border, #1e3a5f)",
               borderRadius: activeTab === tab.id ? "5px 5px 0 0" : 0,
               color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #5a7a9a)",
               padding: "7px 18px",
