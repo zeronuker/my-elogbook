@@ -377,11 +377,22 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v3.9", date: "August 2026", current: true,
+    v: "v3.9", date: "August 2026",
     title: "Duty Log Link",
     notes: [
       "NEW: Link your Duty Log app via a sync code (Settings → Preferences → Duty Log Link) — matches sectors by date + departure/arrival and shows crew (name + position) alongside Remarks in the sector panel.",
       "NEW: Duty Log's sector remark auto-merges into your own Remarks — fills it if blank, appends with a \"[Duty Log]\" tag if you'd already written something. Never overwrites, never duplicates on re-sync.",
+    ],
+  },
+  {
+    v: "v3.10", date: "September 2026", current: true,
+    title: "Logbook search",
+    notes: [
+      "NEW: Logbook search — tap the search icon to find any flight by airport, aircraft markings, captain, Duty Log crew, or remarks, across every logged month at once. Selecting a result jumps to that month and briefly highlights the row.",
+      "NEW: Prev / next month arrows added beside the period selector — step through months without opening the dropdowns.",
+      "FIX: Duty Log crew, sector remark, and duty notes no longer disappear when you go offline — the last successful sync is now cached on-device and restored automatically.",
+      "IMP: Page header and tab bar reworked for phone screens — content no longer gets clipped or drags the whole page sideways when scrolling the table; the period picker and save-status chip are repositioned for a tidier phone layout.",
+      "IMP: Tabs restyled as bordered dividers — each tab is fully boxed, and the active tab visually fuses into the panel below it.",
     ],
   },
 ];
