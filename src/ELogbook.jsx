@@ -2296,12 +2296,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         <div className="elb-pageheader-right" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
           {/* Icon buttons row */}
           <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
-            {/* Search */}
-            <button onClick={() => setSearchOpen(true)} title="Search logbook" style={iconBtnStyle}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-            </button>
             {refreshStatus === "refreshing" && (
               <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
             )}
@@ -2359,6 +2353,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 >
                   <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
                   <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+              </button>
+              {/* Search */}
+              <button onClick={() => setSearchOpen(true)} title="Search logbook" style={iconBtnStyle}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
               </button>
               {/* Export/Import */}
@@ -2529,8 +2529,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               display: "flex", alignItems: "center", gap: 6,
               background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
               borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "1px solid var(--elb-border, #1e3a5f)",
-              borderLeft: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid transparent",
-              borderRight: activeTab === tab.id ? "1px solid var(--elb-border, #1e3a5f)" : "1px solid transparent",
+              borderLeft: "1px solid var(--elb-border, #1e3a5f)",
+              borderRight: "1px solid var(--elb-border, #1e3a5f)",
               borderBottom: activeTab === tab.id ? "none" : "1px solid var(--elb-border, #1e3a5f)",
               borderRadius: activeTab === tab.id ? "5px 5px 0 0" : 0,
               color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #5a7a9a)",
