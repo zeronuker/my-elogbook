@@ -2209,11 +2209,16 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           max-width: 100%;
           display: block;
         }
+        .elb-pageheader {
+          gap: 6px;
+        }
         @media (max-width: 640px) {
           .elb-topbar-caam { display: none; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
           .elb-pageheader-top { flex-direction: column; }
           .elb-pageheader-right { width: 100%; }
+          .elb-pageheader { gap: 2px; }
+          .elb-pageheader-period { justify-content: flex-end; }
         }
         /* Add-sector button: floating on touch devices (any orientation) or a
            narrow window, otherwise sitting in the totals row on desktop. */
@@ -2280,7 +2285,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         background: "linear-gradient(135deg, var(--elb-bghd,#0d1117) 0%, var(--elb-bgalt,#161d2a) 100%)",
         borderBottom: "1px solid var(--elb-bdr,#1e3a5f)",
         padding: "18px 24px",
-        display: "flex", flexDirection: "column", gap: 6,
+        display: "flex", flexDirection: "column",
         flexShrink: 0,
       }}>
         <div className="elb-pageheader-top" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
