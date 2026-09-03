@@ -2252,7 +2252,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         background: "linear-gradient(135deg, var(--elb-bghd,#0d1117) 0%, var(--elb-bgalt,#161d2a) 100%)",
         borderBottom: "1px solid var(--elb-bdr,#1e3a5f)",
         padding: "18px 24px",
-        display: "flex", flexDirection: "column", gap: 14,
+        display: "flex", flexDirection: "column", gap: 6,
         flexShrink: 0,
       }}>
         <div className="elb-pageheader-top" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
@@ -4048,6 +4048,7 @@ const selectStyle = {
   cursor: "pointer",
   outline: "none",
   minWidth: 140,
+  colorScheme: "dark",
 };
 
 const thStyle = {
