@@ -2,10 +2,9 @@ import { useState, useEffect, useRef, useMemo, Fragment } from "react";
 import DOMPurify from "dompurify";
 import SunCalc from "suncalc";
 import { getCoords } from "./airportCoords";
-import { db, auth } from "./firebase";
-import { signOut } from "firebase/auth";
-import { doc, setDoc, getDoc, getDocs, addDoc, collection } from "firebase/firestore";
-import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION, FONT_CHOICES } from "./SettingsModal";
+import { db } from "./firebase";
+import { doc, setDoc, getDoc, getDocs, collection } from "firebase/firestore";
+import SettingsModal, { DEFAULT_SETTINGS, ACCENT_PRESETS, ACCENT_MIGRATION } from "./SettingsModal";
 import ExportImportModal from "./ExportImportModal";
 import SearchModal from "./SearchModal";
 import RouteMapModal from "./RouteMapModal";
@@ -400,11 +399,6 @@ function calcFlightTimes(row, method, year, monthIdx, allowLong = false) {
   return result;
 }
 
-function sumColumn(rows, key) {
-  const total = rows.reduce((acc, r) => acc + parseHHMM(r[key]), 0);
-  return total ? toHHMM(total) : "00:00";
-}
-
 // ─── FTL helpers ──────────────────────────────────────────────────────────────
 
 // Flatten all logbook rows across all months into a list of sectors with dates.
@@ -659,7 +653,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [saveStatus, setSaveStatus] = useState("idle");
   const [saveError, setSaveError] = useState(""); // stores last error message for display
   const [lastSaveTime, setLastSaveTime] = useState(""); // Format: "DD MMM YYYY • HH:MM:SS"
-  const [refreshStatus, setRefreshStatus] = useState("idle");
+  const [refreshStatus] = useState("idle");
   const [syncStatus, setSyncStatus] = useState("idle"); // idle | syncing | synced | error
   const [lastSyncTime, setLastSyncTime] = useState("");
   const [syncConflict, setSyncConflict] = useState(null); // { cloudData } when conflict detected
@@ -1219,20 +1213,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataLoaded, dutyLogEntries, data, selectedMonth, selectedYear]);
 
-  // ── Refresh with animation ──
-  // Re-fetches data from Firestore (one-time getDoc).
-  const refreshData = async () => {
-    if (!user || refreshStatus === "refreshing") return;
-    setRefreshStatus("refreshing");
-    const start = Date.now();
-    await loadData(user.uid);
-    // Minimum 800ms spinner so the animation is visible
-    const elapsed = Date.now() - start;
-    if (elapsed < 800) await new Promise(r => setTimeout(r, 800 - elapsed));
-    setRefreshStatus("refreshed");
-    setTimeout(() => setRefreshStatus("idle"), 2500);
-  };
-
   // ── Sync local data to/from Firestore (manual, user-triggered) ──
   // 1. PULL: fetch Firestore document and compare updatedAt timestamp with last local sync.
   // 2. If Firestore is newer → show conflict modal (user chooses Keep Local or Keep Cloud).
@@ -1442,13 +1422,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     }
   };
 
-  // ── Sign Out ──
-  const handleSignOut = async () => {
-    await signOut(auth);
-    setData(initialData());
-  };
-
-
   // ── Hooks must be declared before any early returns ──────────────────────
   const dutyBufferMins = settings.useStandardFormula === false
     ? 0
@@ -1587,6 +1560,35 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // Inject theme CSS vars early so loading/login screens are also themed
   const themeCss = makeThemeCss(previewSettings || settings);
 
+  // These hooks must run on every render (not skipped by the !user early
+  // return below) — React requires the same hooks in the same order every
+  // time. Each one already no-ops safely before login (empty pulseRowId,
+  // no #root table yet), so hoisting them here changes nothing behaviorally.
+  const monthKey = `${selectedMonth}-${selectedYear}`;
+  const colScale = COLUMN_SCALE[settings.columnDensity] ?? COLUMN_SCALE.default;
+
+  // Scrolls the pulsing row into view once its month has rendered.
+  useEffect(() => {
+    if (pulseRowId == null) return;
+    const el = document.querySelector(`[data-search-row="${pulseRowId}"]`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [pulseRowId, selectedMonth, selectedYear]);
+
+  useEffect(() => () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); }, []);
+
+  // ── Sync #root width to logbook table's actual rendered width ─────
+  useEffect(() => {
+    if (activeTab !== "logbook") return;
+    // Reset first so table can overflow freely and give true scrollWidth
+    document.documentElement.style.removeProperty('--logbook-root-w');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const table = document.querySelector('#root table');
+      if (!table) return;
+      // +50 = content wrapper padding (24px×2) + root border (1px×2)
+      document.documentElement.style.setProperty('--logbook-root-w', `${table.scrollWidth + 50}px`);
+    }));
+  }, [colScale, revealedAutoCols, activeTab, monthKey]);
+
   if (!user) {
     return (
       <>
@@ -1603,7 +1605,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
 
   // ── Per-month state ──
-  const monthKey = `${selectedMonth}-${selectedYear}`;
   const rowsPerPage = Number(settings.rowsPerPage) || DEFAULT_ROWS;
   // rowsPerPage is a visual default for new/empty months only — not a hard minimum.
   // Users can delete rows below rowsPerPage; storedRows is always the truth.
@@ -1786,16 +1787,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     pulseTimerRef.current = setTimeout(() => setPulseRowId(null), 3500);
   };
 
-  // Scrolls the pulsing row into view once its month has rendered.
-  useEffect(() => {
-    if (pulseRowId == null) return;
-    const el = document.querySelector(`[data-search-row="${pulseRowId}"]`);
-    el?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [pulseRowId, selectedMonth, selectedYear]);
-
-  useEffect(() => () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); }, []);
-
-  const colScale = COLUMN_SCALE[settings.columnDensity] ?? COLUMN_SCALE.default;
   const cw = (base) => Math.round(base * colScale);
 
   const columns = [
@@ -1851,19 +1842,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     });
   };
   const settingsButtonTitle = update.needRefresh ? "Settings · update available" : "Settings";
-
-  // ── Sync #root width to logbook table's actual rendered width ─────
-  useEffect(() => {
-    if (activeTab !== "logbook") return;
-    // Reset first so table can overflow freely and give true scrollWidth
-    document.documentElement.style.removeProperty('--logbook-root-w');
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const table = document.querySelector('#root table');
-      if (!table) return;
-      // +50 = content wrapper padding (24px×2) + root border (1px×2)
-      document.documentElement.style.setProperty('--logbook-root-w', `${table.scrollWidth + 50}px`);
-    }));
-  }, [colScale, revealedAutoCols, activeTab, monthKey]);
 
   // HOC/long-flight warning banner spans the whole auto-calc region (6 stubable cols + TOTAL) —
   // none of these are ever omitted (only visually narrowed), so this is always 7.
@@ -1927,10 +1905,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     red:    { icon: "🚨", label: "LIMIT EXCEEDED — REGULATORY VIOLATION",         text: "One or more regulatory limits have been exceeded. Immediate action required — notify your Chief Pilot and CAAM Operations." },
   };
   const bannerInfo = bannerMessages[bannerCls];
-
-  const worstLimit = [...allComputedLimits]
-    .filter(l => l.status === bannerCls)
-    .sort((a, b) => b.rawPct - a.rawPct)[0];
 
   // Unique aircraft types found in logbook for recency dropdown
   const aircraftTypes = [...new Set(allSectors.map(s => s.type).filter(Boolean))].sort();
@@ -3526,7 +3500,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
                 {aircraftTypes.map(type => {
                   const recency = allRecencyByType[type];
-                  const overallOk = recency.dayTakeoffs90 >= 3 && recency.dayLandings90 >= 3 && recency.nightTakeoffs90 >= 3 && recency.nightLandings90 >= 3;
                   const anyRed = recency.dayTakeoffs90 < 3 || recency.dayLandings90 < 3 || recency.nightTakeoffs90 < 3 || recency.nightLandings90 < 3;
                   const borderCol = anyRed ? "#ef4444" : "#22c55e";
                   const dotCol = anyRed ? "#ef4444" : "#22c55e";
