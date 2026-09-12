@@ -2,15 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import html2canvas from "html2canvas";
-import { setWorkerUrl } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
-import { maplibreGL } from "@maplibre/maplibre-gl-leaflet";
-
-// Vite's dev-server transform injects an HMR-client import into every module
-// it serves, including maplibre-gl's own worker bundle — which throws inside
-// a Worker's global scope (no `document`). Point at a plain static copy of
-// the same file (see vite.config.js) so it's served untouched instead.
-setWorkerUrl("/maplibre-gl-worker.mjs");
 import { feature } from "topojson-client";
 import landTopology from "world-atlas/land-110m.json";
 import { getCoords } from "./airportCoords";
@@ -48,6 +39,28 @@ const BASEMAPS = {
     maxZoom: 19, attribution: "© Esri" },
   vector: { label: "VECTOR (NO WATERMARK)", type: "vector" },
 };
+
+// MapLibre (needed only for the CARTO Vector basemap) adds ~900KB to the
+// bundle, so it's loaded on demand instead of bundled into the main chunk.
+let maplibreGLPromise = null;
+function loadMaplibreGL() {
+  if (!maplibreGLPromise) {
+    maplibreGLPromise = Promise.all([
+      import("maplibre-gl"),
+      import("maplibre-gl/dist/maplibre-gl.css"),
+      import("@maplibre/maplibre-gl-leaflet"),
+    ]).then(([{ setWorkerUrl }, , { maplibreGL }]) => {
+      // Vite's dev-server transform injects an HMR-client import into every
+      // module it serves, including maplibre-gl's own worker bundle — which
+      // throws inside a Worker's global scope (no `document`). Point at a
+      // plain static copy of the same file (see vite.config.js) so it's
+      // served untouched instead.
+      setWorkerUrl("/maplibre-gl-worker.mjs");
+      return maplibreGL;
+    });
+  }
+  return maplibreGLPromise;
+}
 
 // Leaflet draws straight pixel lines between consecutive ring points — it
 // doesn't know a ring crosses the antimeridian. Natural Earth's land-110m
@@ -232,9 +245,16 @@ export default function RouteMapModal({ open, onClose, monthData }) {
         style: { fillColor: MAP_LAND_FILL, fillOpacity: 1, color: MAP_LAND_STROKE, weight: 0.6 },
       }).addTo(map);
     } else if (cfg.type === "maplibre") {
-      baseLayerRef.current = maplibreGL({ style: cfg.styleUrl, pane: "basePane" }).addTo(map);
-      attributionRef.current = L.control.attribution({ prefix: false }).addTo(map);
-      attributionRef.current.addAttribution(cfg.attribution);
+      let cancelled = false;
+      loadMaplibreGL().then(maplibreGL => {
+        // Bail if the user switched away from this basemap (or closed the
+        // modal) while the chunk was still downloading.
+        if (cancelled) return;
+        baseLayerRef.current = maplibreGL({ style: cfg.styleUrl, pane: "basePane" }).addTo(map);
+        attributionRef.current = L.control.attribution({ prefix: false }).addTo(map);
+        attributionRef.current.addAttribution(cfg.attribution);
+      });
+      return () => { cancelled = true; };
     } else {
       baseLayerRef.current = L.tileLayer(cfg.url, { pane: "basePane", subdomains: cfg.subdomains || "abc", maxZoom: cfg.maxZoom }).addTo(map);
       attributionRef.current = L.control.attribution({ prefix: false }).addTo(map);
