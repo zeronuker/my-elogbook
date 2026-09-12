@@ -1786,6 +1786,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-merged-phone button { padding: 4px 5px !important; }
           .elb-merged-phone svg { width: 14px !important; height: 14px !important; }
           .elb-merged-phone select { padding: 4px 6px !important; font-size: 13px !important; min-width: 60px !important; }
+          .elb-app-root { display: flex; flex-direction: column; }
+          .elb-app-main { flex: 1; min-height: 0; }
+          .elb-footer-active-period { display: none; }
         }
         /* Desktop-only sticky footer: pins the footer to the bottom of the
            viewport instead of it trailing after a block of empty space when
@@ -3505,7 +3508,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       }}>
         <span>eLOGBOOK {APP_VERSION} · CAAM</span>
         <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
-        <span>{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
+        <span className="elb-footer-active-period">{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
     </div>
     </>
