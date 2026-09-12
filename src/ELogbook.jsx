@@ -1806,6 +1806,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-add-sector-floating { display: flex; }
           .elb-add-sector-inline { display: none; }
         }
+        /* Phone footer now sits flush at the bottom of the screen — lift the
+           floating add-sector button above it so it doesn't cover the text. */
+        @media (max-width: 640px) {
+          .elb-add-sector-floating { bottom: 90px !important; }
+        }
       `}</style>
 
       {/* Desktop-only (>=1025px) sticky-footer wrapper — pins the footer to the
