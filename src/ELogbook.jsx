@@ -1548,6 +1548,55 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     ? "Save failed — click to retry"
     : lastSaveTime ? `Saved to local storage — ${lastSaveTime}` : "Not saved yet";
 
+  // Sync status chips — shared between the phone-only chip row and the
+  // desktop/tablet period row (where they sit right-aligned next to the
+  // month/year picker) so there's one source of truth for both.
+  const syncChipsGroup = (
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <ToolbarSyncChip
+        state={saveChipState}
+        flash={saveChipFlash}
+        identityColor="#22c55e"
+        compact={saveChipCompact}
+        full={saveChipFull}
+        onActivate={() => { if (saveChipState === "bad") saveData(data); }}
+        icon={
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+        }
+      />
+      {isOnline && (
+        <ToolbarSyncChip
+          state={cloudChipState}
+          flash={cloudChipFlash}
+          identityColor="#3FE0C5"
+          compact={cloudChipCompact}
+          full={cloudChipFull}
+          icon={
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+            </svg>
+          }
+        />
+      )}
+      {isOnline && settings.dutyLogSyncCode && (
+        <ToolbarSyncChip
+          state={dutyLogChipState}
+          flash={dutyLogFlash}
+          identityColor="#fb923c"
+          compact={dutyLogChipCompact}
+          full={dutyLogChipFull}
+          icon={
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>
+            </svg>
+          }
+        />
+      )}
+    </div>
+  );
+
   // Month/year selects — shared between the desktop period row and the phone
   // merged row (see elb-iconrow-desktop / elb-merged-phone below) so there's
   // only one set of handlers, even though it renders in two DOM locations.
@@ -1723,6 +1772,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         .elb-iconrow-desktop { display: flex; }
         .elb-pageheader-period { display: flex; }
         .elb-merged-phone { display: none; }
+        .elb-chiprow-phone { display: none; }
         @media (max-width: 640px) {
           .elb-topbar-caam { display: none; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
@@ -1732,6 +1782,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-iconrow-desktop { display: none; }
           .elb-pageheader-period { display: none; }
           .elb-merged-phone { display: flex; }
+          .elb-chiprow-phone { display: flex; }
           .elb-merged-phone button { padding: 4px 5px !important; }
           .elb-merged-phone svg { width: 14px !important; height: 14px !important; }
           .elb-merged-phone select { padding: 4px 6px !important; font-size: 13px !important; min-width: 60px !important; }
@@ -1830,102 +1881,65 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           </div>
         </div>
 
-        {/* SYNC CHIP ROW: save / cloud / duty log status, right-aligned, under the icon toolbar */}
-        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 14, marginTop: 12 }}>
-          <ToolbarSyncChip
-            state={saveChipState}
-            flash={saveChipFlash}
-            identityColor="#22c55e"
-            compact={saveChipCompact}
-            full={saveChipFull}
-            onActivate={() => { if (saveChipState === "bad") saveData(data); }}
-            icon={
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-              </svg>
-            }
-          />
-          {isOnline && (
-            <ToolbarSyncChip
-              state={cloudChipState}
-              flash={cloudChipFlash}
-              identityColor="#3FE0C5"
-              compact={cloudChipCompact}
-              full={cloudChipFull}
-              icon={
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
-                </svg>
-              }
-            />
-          )}
-          {isOnline && settings.dutyLogSyncCode && (
-            <ToolbarSyncChip
-              state={dutyLogChipState}
-              flash={dutyLogFlash}
-              identityColor="#fb923c"
-              compact={dutyLogChipCompact}
-              full={dutyLogChipFull}
-              icon={
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>
-                </svg>
-              }
-            />
-          )}
+        {/* PHONE-ONLY: sync chips get their own row (desktop/tablet render them inside the period row below, next to the month/year picker) */}
+        <div className="elb-chiprow-phone" style={{ justifyContent: "flex-end", alignItems: "center", marginTop: 12 }}>
+          {syncChipsGroup}
         </div>
 
-        {/* PERIOD ROW: prev/next month + month/year selects + today */}
-        <div className="elb-pageheader-period" style={{ alignItems: "center", gap: 8 }}>
-          <button
-            onClick={() => stepMonth(-1)}
-            disabled={isFirstPeriod}
-            title="Previous month"
-            style={{
-              ...iconBtnStyle,
-              color: isFirstPeriod ? "#3a4a5a" : "#3FE0C5",
-              opacity: isFirstPeriod ? 0.4 : 1,
-              cursor: isFirstPeriod ? "not-allowed" : "pointer",
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
-          </button>
-          {monthYearSelects}
-          <button
-            onClick={() => stepMonth(1)}
-            disabled={isLastPeriod}
-            title="Next month"
-            style={{
-              ...iconBtnStyle,
-              color: isLastPeriod ? "#3a4a5a" : "#3FE0C5",
-              opacity: isLastPeriod ? 0.4 : 1,
-              cursor: isLastPeriod ? "not-allowed" : "pointer",
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
-          {activeTab === "logbook" && (
+        {/* PERIOD ROW (desktop/tablet only): prev/next month + month/year selects + today, left; sync chips, right */}
+        <div className="elb-pageheader-period" style={{ alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button
-              onClick={goToToday}
-              disabled={isCurrentPeriod}
-              title="Go to today"
+              onClick={() => stepMonth(-1)}
+              disabled={isFirstPeriod}
+              title="Previous month"
               style={{
                 ...iconBtnStyle,
-                color: isCurrentPeriod ? "#3a4a5a" : "#3FE0C5",
-                borderColor: isCurrentPeriod ? "var(--elb-border, #1e3a5f)" : "#1e3a5f",
-                opacity: isCurrentPeriod ? 0.4 : 1,
-                cursor: isCurrentPeriod ? "not-allowed" : "pointer",
+                color: isFirstPeriod ? "#3a4a5a" : "#3FE0C5",
+                opacity: isFirstPeriod ? 0.4 : 1,
+                cursor: isFirstPeriod ? "not-allowed" : "pointer",
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
               </svg>
             </button>
-          )}
+            {monthYearSelects}
+            <button
+              onClick={() => stepMonth(1)}
+              disabled={isLastPeriod}
+              title="Next month"
+              style={{
+                ...iconBtnStyle,
+                color: isLastPeriod ? "#3a4a5a" : "#3FE0C5",
+                opacity: isLastPeriod ? 0.4 : 1,
+                cursor: isLastPeriod ? "not-allowed" : "pointer",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+            {activeTab === "logbook" && (
+              <button
+                onClick={goToToday}
+                disabled={isCurrentPeriod}
+                title="Go to today"
+                style={{
+                  ...iconBtnStyle,
+                  color: isCurrentPeriod ? "#3a4a5a" : "#3FE0C5",
+                  borderColor: isCurrentPeriod ? "var(--elb-border, #1e3a5f)" : "#1e3a5f",
+                  opacity: isCurrentPeriod ? 0.4 : 1,
+                  cursor: isCurrentPeriod ? "not-allowed" : "pointer",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </button>
+            )}
+          </div>
+          {syncChipsGroup}
         </div>
 
         </div>
