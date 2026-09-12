@@ -13,11 +13,13 @@
     "brand:sync": "git submodule update --remote brand-kit && git add brand-kit && git commit -m \"Bump claudeborne-brand-kit\""
   },
   "dependencies": {
+    "@maplibre/maplibre-gl-leaflet": "^0.1.4",
     "dompurify": "^3.2.6",
     "exceljs": "^4.4.0",
     "firebase": "^12.13.0",
     "html2canvas": "^1.4.1",
     "leaflet": "^1.9.4",
+    "maplibre-gl": "^6.9.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "suncalc": "^1.9.0",

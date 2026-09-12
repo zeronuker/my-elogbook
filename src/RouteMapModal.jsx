@@ -2,6 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import html2canvas from "html2canvas";
+import { setWorkerUrl } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { maplibreGL } from "@maplibre/maplibre-gl-leaflet";
+
+// Vite's dev-server transform injects an HMR-client import into every module
+// it serves, including maplibre-gl's own worker bundle — which throws inside
+// a Worker's global scope (no `document`). Point at a plain static copy of
+// the same file (see vite.config.js) so it's served untouched instead.
+setWorkerUrl("/maplibre-gl-worker.mjs");
 import { feature } from "topojson-client";
 import landTopology from "world-atlas/land-110m.json";
 import { getCoords } from "./airportCoords";
@@ -26,8 +35,11 @@ const ROUTE_COLOR_ARR = [250, 204, 21];  // #facc15 yellow — arrival end
 
 const BASEMAPS = {
   carto:  { label: "CARTO DARK", type: "tile",
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_3i3x_1_c753f0b8edbf6bd3a0226da6",
     subdomains: "abcd", maxZoom: 19, attribution: "© OpenStreetMap, © CARTO" },
+  cartoVector: { label: "CARTO VECTOR", type: "maplibre",
+    styleUrl: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+    attribution: "© OpenStreetMap, © CARTO" },
   stadia: { label: "STADIA DARK", type: "tile",
     url: "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
     maxZoom: 20, attribution: "© Stadia Maps, © OpenMapTiles, © OpenStreetMap" },
@@ -149,7 +161,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   const attributionRef = useRef(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [basemap, setBasemap] = useState("vector");
+  const [basemap, setBasemap] = useState("carto");
   const [exportFormat, setExportFormat] = useState("png");
   const [exporting, setExporting] = useState(false);
   const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 520px)").matches);
@@ -219,6 +231,10 @@ export default function RouteMapModal({ open, onClose, monthData }) {
         pane: "basePane",
         style: { fillColor: MAP_LAND_FILL, fillOpacity: 1, color: MAP_LAND_STROKE, weight: 0.6 },
       }).addTo(map);
+    } else if (cfg.type === "maplibre") {
+      baseLayerRef.current = maplibreGL({ style: cfg.styleUrl, pane: "basePane" }).addTo(map);
+      attributionRef.current = L.control.attribution({ prefix: false }).addTo(map);
+      attributionRef.current.addAttribution(cfg.attribution);
     } else {
       baseLayerRef.current = L.tileLayer(cfg.url, { pane: "basePane", subdomains: cfg.subdomains || "abc", maxZoom: cfg.maxZoom }).addTo(map);
       attributionRef.current = L.control.attribution({ prefix: false }).addTo(map);
@@ -273,6 +289,8 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   }, [open, dateFrom, dateTo, monthData]);
 
   if (!open) return null;
+
+  const exportUnsupported = BASEMAPS[basemap].type === "maplibre";
 
   const handleExportPng = async () => {
     setExporting(true);
@@ -339,7 +357,12 @@ export default function RouteMapModal({ open, onClose, monthData }) {
               <option value="png">PNG</option>
               <option value="jpg">JPG</option>
             </select>
-            <button onClick={handleExportPng} disabled={exporting} style={{ ...btnStyle, opacity: exporting ? 0.5 : 1, whiteSpace: "nowrap" }}>
+            <button
+              onClick={handleExportPng}
+              disabled={exporting || exportUnsupported}
+              title={exportUnsupported ? "Export isn't supported for the CARTO Vector map — switch map type to export" : undefined}
+              style={{ ...btnStyle, opacity: exporting || exportUnsupported ? 0.5 : 1, whiteSpace: "nowrap" }}
+            >
               {exporting ? "EXPORTING…" : "EXPORT"}
             </button>
           </div>

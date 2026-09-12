@@ -26,6 +26,13 @@ export default defineConfig({
         { src: 'brand-kit/static/css/brand.css',  dest: 'brand' },
         { src: 'brand-kit/static/logo/logo-mark.svg',       dest: 'brand' },
         { src: 'brand-kit/static/logo/logo-mark-light.svg', dest: 'brand' },
+        // Served as plain static files (not through Vite's module transform)
+        // so maplibre-gl's module Worker can load them without Vite injecting
+        // its HMR client import, which throws inside a Worker's global scope.
+        // The worker chunk imports the shared chunk as a sibling file, so
+        // both need to land at the same path.
+        { src: 'node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs', dest: '.' },
+        { src: 'node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs', dest: '.' },
       ],
     }),
     VitePWA({
