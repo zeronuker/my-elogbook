@@ -1723,7 +1723,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-    <div style={{
+    <div className="elb-app-root" style={{
       background: "var(--elb-bg, #0a0d12)",
       minHeight: "100vh",
       overflowX: "hidden",
@@ -1787,6 +1787,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-merged-phone svg { width: 14px !important; height: 14px !important; }
           .elb-merged-phone select { padding: 4px 6px !important; font-size: 13px !important; min-width: 60px !important; }
         }
+        /* Desktop-only sticky footer: pins the footer to the bottom of the
+           viewport instead of it trailing after a block of empty space when
+           the table content doesn't fill a tall screen. iPad/tablet (up to
+           1024px) and phone keep the plain document-flow footer. */
+        @media (min-width: 1025px) {
+          .elb-app-root { display: flex; flex-direction: column; }
+          .elb-app-main { flex: 1; min-height: 0; }
+        }
         /* Add-sector button: floating on touch devices (any orientation) or a
            narrow window, otherwise sitting in the totals row on desktop. */
         .elb-add-sector-floating { display: none; }
@@ -1796,6 +1804,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-add-sector-inline { display: none; }
         }
       `}</style>
+
+      {/* Desktop-only (>=1025px) sticky-footer wrapper — pins the footer to the
+          bottom of the viewport instead of leaving it stranded above a block of
+          empty space when the table content is shorter than the screen. Tablet
+          (iPad) and phone are unaffected — see .elb-app-main media query below. */}
+      <div className="elb-app-main">
 
       {/* ── TOPBAR ── */}
       <div className="elb-topbar" style={{
@@ -3476,6 +3490,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
       )}
 
+      </div>
       {/* ── FOOTER ── */}
       <div style={{
         padding: "10px 24px",
