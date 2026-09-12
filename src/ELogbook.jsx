@@ -819,7 +819,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       const now = new Date();
       const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
       const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      setLastSaveTime(`${dateStr} • ${timeStr}`);
+      setLastSaveTime(`${dateStr} · ${timeStr}`);
       return true;
     } catch (e) {
       console.error("Save error:", e);
@@ -1541,41 +1541,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       ? `Duty Log — ${lastDutyLogCheckTime}${dutyLogStatus.count != null ? ` · ${dutyLogStatus.count} log${dutyLogStatus.count === 1 ? "" : "s"} found` : ""}`
       : "Checking…";
 
-  // Save status chip — rendered twice below (desktop/tablet position vs. the
-  // phone-only position under the period picker), each shown/hidden by CSS
-  // for its own breakpoint so only one is ever visible at a time.
-  const saveChip = (
-    <>
-      {saveStatus === "saving" && (
-        <span style={{
-          fontSize: 10, fontStyle: "italic", letterSpacing: "0.10em",
-          color: "#f5c542", display: "flex", alignItems: "center", gap: 5,
-        }}>
-          <span style={{ display: "inline-block", animation: "spin 0.7s linear infinite", fontSize: 12 }}>↻</span>
-          SAVING...
-        </span>
-      )}
-      {(saveStatus === "saved" || saveStatus === "fading") && lastSaveTime && (
-        <span style={{
-          fontSize: 10, fontStyle: "italic", fontWeight: 700, letterSpacing: "0.10em",
-          color: "#22c55e", display: "flex", alignItems: "center", gap: 5,
-          animation: saveStatus === "saved" ? "save-pulse 0.6s ease-out" : "none",
-          opacity: saveStatus === "fading" ? 0 : 1,
-          transition: saveStatus === "fading" ? "opacity 0.5s ease" : "none",
-        }}>
-          ✓ SAVED TO LOCAL STORAGE &nbsp;{lastSaveTime}
-        </span>
-      )}
-      {saveStatus === "error" && (
-        <span style={{
-          fontSize: 10, fontStyle: "italic", letterSpacing: "0.10em",
-          color: "#ef4444", cursor: "pointer",
-        }} onClick={() => saveData(data)} title="Click to retry">
-          ✕ SAVE ERROR · RETRY
-        </span>
-      )}
-    </>
-  );
+  const saveChipState = saveStatus === "saving" ? "busy" : saveStatus === "error" ? "bad" : "ok";
+  const saveChipFlash = saveStatus === "saved";
+  const saveChipCompact = saveChipState === "busy" ? "…" : timeOnly(lastSaveTime);
+  const saveChipFull = saveChipState === "bad"
+    ? "Save failed — click to retry"
+    : lastSaveTime ? `Saved to local storage — ${lastSaveTime}` : "Not saved yet";
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -1596,9 +1567,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         @keyframes blink     { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
         @keyframes popIn     { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
         @keyframes cb-pulse  { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.75); } }
-        @keyframes save-pulse { 0% { opacity:0; text-shadow: 0 0 12px rgba(34,197,94,0.9); }
-                                40% { opacity:1; text-shadow: 0 0 8px rgba(34,197,94,0.6); }
-                                100% { opacity:1; text-shadow: none; } }
         @keyframes row-pulse { 0%, 100% { background-color: transparent; }
                                 15%, 55% { background-color: rgba(79,195,247,0.5); }
                                 35%, 75% { background-color: rgba(79,195,247,0.08); } }
@@ -1629,8 +1597,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         .elb-pageheader {
           gap: 6px;
         }
-        .elb-savechip-top { display: flex; }
-        .elb-savechip-phone { display: none; }
         @media (max-width: 640px) {
           .elb-topbar-caam { display: none; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
@@ -1638,8 +1604,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-pageheader-right { width: 100%; }
           .elb-pageheader { gap: 2px; }
           .elb-pageheader-period { justify-content: flex-end; }
-          .elb-savechip-top { display: none; }
-          .elb-savechip-phone { display: flex; }
         }
         /* Add-sector button: floating on touch devices (any orientation) or a
            narrow window, otherwise sitting in the totals row on desktop. */
@@ -1731,35 +1695,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 ✈ OFFLINE
               </span>
             )}
-            {/* Sync status chips — tap either to morph between compact and full detail */}
-            {isOnline && (
-              <ToolbarSyncChip
-                state={cloudChipState}
-                flash={cloudChipFlash}
-                identityColor="#3FE0C5"
-                compact={cloudChipCompact}
-                full={cloudChipFull}
-                icon={
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
-                  </svg>
-                }
-              />
-            )}
-            {isOnline && settings.dutyLogSyncCode && (
-              <ToolbarSyncChip
-                state={dutyLogChipState}
-                flash={dutyLogFlash}
-                identityColor="#fb923c"
-                compact={dutyLogChipCompact}
-                full={dutyLogChipFull}
-                icon={
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>
-                  </svg>
-                }
-              />
-            )}
               {/* SYNC button */}
               <button
                 onClick={syncData}
@@ -1849,12 +1784,52 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 </svg>
               </button>
             </div>
-          {/* Save chip — right-aligned, purely visual, does not affect actual save behaviour.
-              Hidden on phone, where it's rendered again below the period picker instead. */}
-          <div className="elb-savechip-top" style={{ justifyContent: "flex-end", minHeight: 18 }}>
-            {saveChip}
           </div>
-          </div>
+        </div>
+
+        {/* SYNC CHIP ROW: save / cloud / duty log status, right-aligned, under the icon toolbar */}
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 14, marginTop: 12 }}>
+          <ToolbarSyncChip
+            state={saveChipState}
+            flash={saveChipFlash}
+            identityColor="#22c55e"
+            compact={saveChipCompact}
+            full={saveChipFull}
+            onActivate={() => { if (saveChipState === "bad") saveData(data); }}
+            icon={
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+              </svg>
+            }
+          />
+          {isOnline && (
+            <ToolbarSyncChip
+              state={cloudChipState}
+              flash={cloudChipFlash}
+              identityColor="#3FE0C5"
+              compact={cloudChipCompact}
+              full={cloudChipFull}
+              icon={
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                </svg>
+              }
+            />
+          )}
+          {isOnline && settings.dutyLogSyncCode && (
+            <ToolbarSyncChip
+              state={dutyLogChipState}
+              flash={dutyLogFlash}
+              identityColor="#fb923c"
+              compact={dutyLogChipCompact}
+              full={dutyLogChipFull}
+              icon={
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>
+                </svg>
+              }
+            />
+          )}
         </div>
 
         {/* PERIOD ROW: prev/next month + month/year selects + today */}
@@ -1917,10 +1892,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           )}
         </div>
 
-        {/* Phone-only save chip — hidden everywhere else; the desktop/tablet copy above stays put */}
-        <div className="elb-savechip-phone" style={{ justifyContent: "flex-end", minHeight: 18 }}>
-          {saveChip}
-        </div>
         </div>
 
         {/* ── TABS ── */}

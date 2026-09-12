@@ -9,13 +9,13 @@ import { useState } from "react";
 // `identityColor`: while expanded (tapped open), the ICON alone recolors to
 // this — lets Cloud vs. Duty Log be told apart at a glance once tapped. Text
 // color is unaffected, still driven by state/flash as normal.
-export function ToolbarSyncChip({ icon, compact, full, state, flash, identityColor }) {
+export function ToolbarSyncChip({ icon, compact, full, state, flash, identityColor, onActivate }) {
   const [expanded, setExpanded] = useState(false);
   const quietColor = state === "bad" ? "#ef4444" : state === "busy" ? "#7c87a3" : "#3a6a8a";
   const flashColor = state === "bad" ? "#ef4444" : "#22c55e";
   return (
     <button
-      onClick={() => setExpanded(e => !e)}
+      onClick={() => { onActivate?.(); setExpanded(e => !e); }}
       style={{
         display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
         background: "none", border: "none", padding: "4px 2px", fontFamily: "inherit", cursor: "pointer",
