@@ -1548,6 +1548,129 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     ? "Save failed — click to retry"
     : lastSaveTime ? `Saved to local storage — ${lastSaveTime}` : "Not saved yet";
 
+  // Month/year selects — shared between the desktop period row and the phone
+  // merged row (see elb-iconrow-desktop / elb-merged-phone below) so there's
+  // only one set of handlers, even though it renders in two DOM locations.
+  // `abbreviateMonth` shortens the option labels for the phone merged row,
+  // where the full month name plus the icon toolbar doesn't fit one line.
+  const renderMonthYearSelects = (abbreviateMonth) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <select value={selectedMonth} onChange={e => handleMonthChange(Number(e.target.value))} style={selectStyle}>
+        {MONTHS.map((m, i) => <option key={i} value={i}>{(abbreviateMonth ? m.slice(0, 3) : m).toUpperCase()}</option>)}
+      </select>
+      <select value={selectedYear} onChange={e => handleYearChange(Number(e.target.value))} style={{ ...selectStyle, minWidth: 90 }}>
+        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+      </select>
+    </div>
+  );
+  const monthYearSelects = renderMonthYearSelects(false);
+  const monthYearSelectsPhone = renderMonthYearSelects(true);
+
+  // Icon toolbar buttons — shared between the desktop position (top-right,
+  // next to the title) and the phone merged row (next to the month/year
+  // selects, with the nav arrows/today button dropped for space).
+  const iconButtonsRow = (
+    <>
+      {refreshStatus === "refreshing" && (
+        <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
+      )}
+      {/* Offline indicator */}
+      {!isOnline && (
+        <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700, background: "rgba(245,197,66,0.1)", border: "1px solid rgba(245,197,66,0.3)", borderRadius: 3, padding: "2px 8px" }}>
+          ✈ OFFLINE
+        </span>
+      )}
+      {/* SYNC button */}
+      <button
+        onClick={syncData}
+        disabled={syncStatus === "syncing" || !isOnline}
+        title={!isOnline ? "Offline — connect to sync" : syncStatus === "syncing" ? "Syncing…" : "Sync to cloud"}
+        style={{
+          ...iconBtnStyle,
+          color: !isOnline ? "#2a4a6a" : syncStatus === "synced" ? "#22c55e" : syncStatus === "error" ? "#ef4444" : syncStatus === "syncing" ? "#f5c542" : "#3FE0C5",
+          borderColor: !isOnline ? "#1e3a5f" : syncStatus === "synced" ? "#22c55e" : syncStatus === "error" ? "#ef4444" : syncStatus === "syncing" ? "#f5c542" : "#1e3a5f",
+          opacity: (syncStatus === "syncing" || !isOnline) ? 0.4 : 1,
+          cursor: (syncStatus === "syncing" || !isOnline) ? "not-allowed" : "pointer",
+        }}
+      >
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ animation: syncStatus === "syncing" ? "spin 1s linear infinite" : "none" }}
+        >
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </button>
+      {/* Search */}
+      <button onClick={() => setSearchOpen(true)} title="Search logbook" style={iconBtnStyle}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </button>
+      {/* Export/Import */}
+      <button onClick={() => setExportImportOpen(true)} title="Export / Import" style={iconBtnStyle}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M2 12h20"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          <polyline points="18 7 23 7 23 9"/>
+          <line x1="23" y1="8" x2="16" y2="8"/>
+          <polyline points="6 17 1 17 1 15"/>
+          <line x1="1" y1="16" x2="8" y2="16"/>
+        </svg>
+      </button>
+      {/* Route Map */}
+      <button onClick={() => setRouteMapOpen(true)} title="Route map" style={iconBtnStyle}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/>
+          <path d="M8 2v16"/>
+          <path d="M16 6v16"/>
+        </svg>
+      </button>
+      {/* Settings */}
+      <button
+        onClick={() => { setSettingsInitialTab(null); setSettingsOpen(true); }}
+        title={settingsButtonTitle}
+        style={{
+          ...iconBtnStyle,
+          color: settingsOpen ? "#4fc3f7" : "#3FE0C5",
+          borderColor: settingsOpen ? "#4fc3f7" : "#1e3a5f",
+          background: settingsOpen ? "rgba(79,195,247,0.1)" : "transparent",
+          position: "relative",
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        {update.needRefresh && (
+          <span style={{
+            position: "absolute", top: -3, left: -3,
+            width: 9, height: 9, borderRadius: "50%",
+            background: "#3FE0C5",
+            border: "1px solid var(--elb-bg, #0a0d12)",
+          }} />
+        )}
+      </button>
+      {/* Sign Out */}
+      <button
+        onClick={onLogout}
+        title="Sign out"
+        style={{
+          ...iconBtnStyle,
+          color: "#3FE0C5",
+          borderColor: "var(--elb-border, #1e3a5f)",
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-border, #1e3a5f)"; e.currentTarget.style.color = "#3FE0C5"; }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </>
+  );
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
@@ -1597,13 +1720,21 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         .elb-pageheader {
           gap: 6px;
         }
+        .elb-iconrow-desktop { display: flex; }
+        .elb-pageheader-period { display: flex; }
+        .elb-merged-phone { display: none; }
         @media (max-width: 640px) {
           .elb-topbar-caam { display: none; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
           .elb-pageheader-top { flex-direction: column; }
           .elb-pageheader-right { width: 100%; }
           .elb-pageheader { gap: 2px; }
-          .elb-pageheader-period { justify-content: flex-end; }
+          .elb-iconrow-desktop { display: none; }
+          .elb-pageheader-period { display: none; }
+          .elb-merged-phone { display: flex; }
+          .elb-merged-phone button { padding: 4px 5px !important; }
+          .elb-merged-phone svg { width: 14px !important; height: 14px !important; }
+          .elb-merged-phone select { padding: 4px 6px !important; font-size: 13px !important; min-width: 60px !important; }
         }
         /* Add-sector button: floating on touch devices (any orientation) or a
            narrow window, otherwise sitting in the totals row on desktop. */
@@ -1684,106 +1815,18 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
         {/* RIGHT: sync/utility toolbar + save chip */}
         <div className="elb-pageheader-right" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
-          {/* Icon buttons row */}
-          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
-            {refreshStatus === "refreshing" && (
-              <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
-            )}
-            {/* Offline indicator */}
-            {!isOnline && (
-              <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700, background: "rgba(245,197,66,0.1)", border: "1px solid rgba(245,197,66,0.3)", borderRadius: 3, padding: "2px 8px" }}>
-                ✈ OFFLINE
-              </span>
-            )}
-              {/* SYNC button */}
-              <button
-                onClick={syncData}
-                disabled={syncStatus === "syncing" || !isOnline}
-                title={!isOnline ? "Offline — connect to sync" : syncStatus === "syncing" ? "Syncing…" : "Sync to cloud"}
-                style={{
-                  ...iconBtnStyle,
-                  color: !isOnline ? "#2a4a6a" : syncStatus === "synced" ? "#22c55e" : syncStatus === "error" ? "#ef4444" : syncStatus === "syncing" ? "#f5c542" : "#3FE0C5",
-                  borderColor: !isOnline ? "#1e3a5f" : syncStatus === "synced" ? "#22c55e" : syncStatus === "error" ? "#ef4444" : syncStatus === "syncing" ? "#f5c542" : "#1e3a5f",
-                  opacity: (syncStatus === "syncing" || !isOnline) ? 0.4 : 1,
-                  cursor: (syncStatus === "syncing" || !isOnline) ? "not-allowed" : "pointer",
-                }}
-              >
-                <svg
-                  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  style={{ animation: syncStatus === "syncing" ? "spin 1s linear infinite" : "none" }}
-                >
-                  <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                </svg>
-              </button>
-              {/* Search */}
-              <button onClick={() => setSearchOpen(true)} title="Search logbook" style={iconBtnStyle}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-              </button>
-              {/* Export/Import */}
-              <button onClick={() => setExportImportOpen(true)} title="Export / Import" style={iconBtnStyle}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M2 12h20"/>
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                  <polyline points="18 7 23 7 23 9"/>
-                  <line x1="23" y1="8" x2="16" y2="8"/>
-                  <polyline points="6 17 1 17 1 15"/>
-                  <line x1="1" y1="16" x2="8" y2="16"/>
-                </svg>
-              </button>
-              {/* Route Map */}
-              <button onClick={() => setRouteMapOpen(true)} title="Route map" style={iconBtnStyle}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/>
-                  <path d="M8 2v16"/>
-                  <path d="M16 6v16"/>
-                </svg>
-              </button>
-              {/* Settings */}
-              <button
-                onClick={() => { setSettingsInitialTab(null); setSettingsOpen(true); }}
-                title={settingsButtonTitle}
-                style={{
-                  ...iconBtnStyle,
-                  color: settingsOpen ? "#4fc3f7" : "#3FE0C5",
-                  borderColor: settingsOpen ? "#4fc3f7" : "#1e3a5f",
-                  background: settingsOpen ? "rgba(79,195,247,0.1)" : "transparent",
-                  position: "relative",
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-                {update.needRefresh && (
-                  <span style={{
-                    position: "absolute", top: -3, left: -3,
-                    width: 9, height: 9, borderRadius: "50%",
-                    background: "#3FE0C5",
-                    border: "1px solid var(--elb-bg, #0a0d12)",
-                  }} />
-                )}
-              </button>
-              {/* Sign Out */}
-              <button
-                onClick={onLogout}
-                title="Sign out"
-                style={{
-                  ...iconBtnStyle,
-                  color: "#3FE0C5",
-                  borderColor: "var(--elb-border, #1e3a5f)",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--elb-border, #1e3a5f)"; e.currentTarget.style.color = "#3FE0C5"; }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-              </button>
-            </div>
+          {/* Icon buttons row — desktop/tablet position; hidden on phone, see elb-merged-phone below */}
+          <div className="elb-iconrow-desktop" style={{ gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
+            {iconButtonsRow}
+          </div>
+        </div>
+        </div>
+
+        {/* PHONE-ONLY: month/year selects + icon toolbar merged into one row (nav arrows/today dropped for space) */}
+        <div className="elb-merged-phone" style={{ alignItems: "center", justifyContent: "space-between", columnGap: 4, rowGap: 8, flexWrap: "wrap" }}>
+          {monthYearSelectsPhone}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            {iconButtonsRow}
           </div>
         </div>
 
@@ -1833,7 +1876,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
 
         {/* PERIOD ROW: prev/next month + month/year selects + today */}
-        <div className="elb-pageheader-period" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="elb-pageheader-period" style={{ alignItems: "center", gap: 8 }}>
           <button
             onClick={() => stepMonth(-1)}
             disabled={isFirstPeriod}
@@ -1849,14 +1892,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <select value={selectedMonth} onChange={e => handleMonthChange(Number(e.target.value))} style={selectStyle}>
-              {MONTHS.map((m, i) => <option key={i} value={i}>{m.toUpperCase()}</option>)}
-            </select>
-            <select value={selectedYear} onChange={e => handleYearChange(Number(e.target.value))} style={{ ...selectStyle, minWidth: 90 }}>
-              {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
+          {monthYearSelects}
           <button
             onClick={() => stepMonth(1)}
             disabled={isLastPeriod}
