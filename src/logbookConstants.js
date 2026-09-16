@@ -74,3 +74,36 @@ export const COLUMN_SCALE = {
   default: 1.0,
   wide:    1.35,
 };
+
+// Shared table header/cell styles — used by the Logbook and Flight Summary tabs.
+export const thStyle = {
+  padding: "7px 8px",
+  textAlign: "center",
+  color: "var(--elb-txt-muted, #3a6a8a)",
+  fontSize: "var(--elb-th-sz, 10px)",
+  letterSpacing: "0.12em",
+  borderBottom: "1px solid var(--elb-border2, #1a3050)",
+  borderRight: "1px solid var(--elb-border4, #111820)",
+  whiteSpace: "nowrap",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  lineHeight: 1.3,
+};
+
+export const thSubStyle = {
+  ...thStyle,
+  color: "var(--elb-txt-muted, #3a6a8a)",
+  background: "var(--elb-bg2, #090d14)",
+  fontSize: "var(--elb-ths-sz, 9px)",
+  fontWeight: 700,
+};
+
+export const tdStyle = {
+  padding: "var(--elb-row-pad, 6px 8px)",
+  borderBottom: "1px solid var(--elb-border3, #0f1820)",
+  borderRight: "1px solid var(--elb-bg2, #0d1520)",
+  whiteSpace: "nowrap",
+  fontSize: "var(--elb-td-sz, 13px)",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
