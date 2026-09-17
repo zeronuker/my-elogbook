@@ -5,6 +5,10 @@ export const DUTY_LOG_CODE_RE = /^[A-Z0-9]{4,8}(-[A-Z0-9]{4,8}){1,3}$/;
 // Crew display order — CP through A2, anything else sorted alphabetically after A2.
 export const CREW_RANK_ORDER = ["CP", "P1", "P2", "P3", "P4", "A1", "A2"];
 
+// Table columns whose values are HH:MM time strings — shared by the manual-entry
+// normalization in updateCell and the Logbook table's own rendering.
+export const timeCols = ["dayP1","dayP1US","dayP2","nightP1","nightP1US","nightP2","total","std","sta"];
+
 export const FTL_COLOR  = { green: "#22c55e", yellow: "#eab308", red: "#ef4444" };
 export const FTL_BG     = { green: "rgba(34,197,94,0.08)",  yellow: "rgba(234,179,8,0.08)",  red: "rgba(239,68,68,0.08)"  };
 export const FTL_BORDER = { green: "rgba(34,197,94,0.3)",   yellow: "rgba(234,179,8,0.3)",   red: "rgba(239,68,68,0.3)"   };
