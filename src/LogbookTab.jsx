@@ -504,6 +504,12 @@ export default function LogbookTab({
                           <input
                             autoFocus
                             defaultValue={row[col.key]}
+                            inputMode={isTime ? "numeric" : undefined}
+                            onChange={isTime ? (e => {
+                              let v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                              if (v.length > 2) v = v.slice(0, 2) + ":" + v.slice(2);
+                              e.target.value = v;
+                            }) : undefined}
                             onBlur={e => { updateCell(rowIdx, col.key, e.target.value.toUpperCase()); setEditingCell(null); }}
                             onKeyDown={e => {
                               if (e.key === "Tab") {
