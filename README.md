@@ -2,8 +2,44 @@
 
 A free, web-based pilot logbook for commercial airline pilots. Log flights, auto-calculate day/night hours, track regulatory limits and recency, and sync your logbook across devices — no subscription, no credit card.
 
-**Current version:** v3.9  
-**Live app:** [https://www.claudeborne.my/]
+[![Live App](https://img.shields.io/badge/live%20app-claudeborne.my-2dd4bf?style=flat-square)](https://www.claudeborne.my/)
+[![PWA](https://img.shields.io/badge/installable-PWA-38bdf8?style=flat-square)](#sync--offline)
+[![Cost](https://img.shields.io/badge/cost-free%2C%20no%20subscription-22c55e?style=flat-square)](#)
+
+**Current version:** v3.10  
+**Live app:** [claudeborne.my](https://www.claudeborne.my/)
+
+![ClaudeBorne eLogbook — monthly logbook view with auto-calculated day/night hours](docs/screenshot-logbook.webp)
+
+---
+
+## Why ClaudeBorne
+
+Paper logbooks don't add up your hours for you. Spreadsheets don't know where the sun was over the Andaman Sea at 0200 UTC. And most digital logbook apps want a monthly fee to track numbers you're already required to track.
+
+ClaudeBorne exists because manually splitting day/night hours and cross-checking rolling FTL limits by hand is exactly the kind of work a computer should be doing instead of a pilot at the end of a duty day. Enter STD/STA, pick a capacity, and the app works out the rest — day/night split, running totals, recency, and regulatory limit tracking — for free, forever.
+
+### How it compares
+
+| | Paper Logbook | Excel / Spreadsheet | ClaudeBorne |
+|---|:---:|:---:|:---:|
+| Auto day/night split | ❌ | ❌ manual formulas | ✅ sun-position accurate |
+| FTL limits & recency tracking | ❌ | ❌ DIY | ✅ automatic |
+| Works offline | ✅ | ✅ | ✅ |
+| Syncs across devices | ❌ | ⚠️ manual file sharing | ✅ one-tap cloud sync |
+| Installs like a native app | ❌ | ❌ | ✅ PWA |
+| Cost | Cost of the book | Free–paid | Free, no subscription |
+
+---
+
+## Quick Start
+
+1. Go to **[claudeborne.my](https://www.claudeborne.my/)**
+2. Sign up with email or Google — verify your email
+3. Enter your carry-forward hours (optional, if you're moving from another logbook)
+4. Start logging flights — day/night hours and totals calculate themselves
+
+No credit card, no trial period, no install required (though you can install it as an app — see [Sync & Offline](#sync--offline)).
 
 ---
 
