@@ -212,7 +212,7 @@ function AppOverviewMockup() {
             <div style={{ background: BG, border: `1px solid ${BDR}`, borderRadius: 3, padding: "3px 10px", fontSize: 10, color: TXT, fontFamily: F }}>2026 ▾</div>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
-            {["↻", "⬡", "⚙", "⏻"].map(iconBtn)}
+            {["↻", "🔍", "⬡", "🧭", "⚙", "⏻"].map(iconBtn)}
           </div>
         </div>
       </div>
@@ -234,6 +234,67 @@ function AppOverviewMockup() {
             marginBottom: t.active ? -1 : 0,
           }}>{t.label}</div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Search & Route Map mockups ──────────────────────────────────────────────
+
+function SearchMockup() {
+  const results = [
+    { date: "13", mon: "SEP", route: "WMKK → WBKK", detail: "9M-ABC · Capt. Rashid · B738", tag: "DEPARTURE" },
+    { date: "18", mon: "SEP", route: "WBKK → WMKK", detail: "9M-XYZ · Capt. Rashid · B738", tag: "ARRIVAL" },
+  ];
+  return (
+    <div style={{ background: "#0d1520", border: `1px solid ${BDR}`, borderRadius: 8, margin: "14px 0 20px", overflow: "hidden" }}>
+      <div style={{ padding: "16px 20px 12px", borderBottom: `1px solid ${BDR}`, background: "linear-gradient(180deg, rgba(63,224,197,0.05), transparent)" }}>
+        <div style={{ fontSize: 10, letterSpacing: "0.24em", color: A, fontWeight: 700, marginBottom: 5, fontFamily: F }}>SEARCH LOGBOOK</div>
+        <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 18, color: "#e8f4fd" }}>Find a Flight</div>
+      </div>
+      <div style={{ padding: "12px 20px", borderBottom: `1px solid ${BDR}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: BG, border: `1px solid ${BDR}`, borderRadius: 6, padding: "8px 12px", fontSize: 11, color: MUT, fontFamily: F }}>
+          <span>🔍</span> Airport, markings, captain, crew, remarks…
+          <span style={{ marginLeft: "auto", fontSize: 9, color: DIM, border: `1px solid ${BDR}`, borderRadius: 3, padding: "2px 6px" }}>ESC</span>
+        </div>
+      </div>
+      <div style={{ padding: "8px 12px" }}>
+        {results.map(r => (
+          <div key={r.route} style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 10px", borderRadius: 6 }}>
+            <div style={{ width: 60, fontSize: 10, color: MUT, fontFamily: F }}>{r.date} {r.mon}</div>
+            <div style={{ width: 130, fontSize: 12, fontWeight: 700, color: "#e8f4fd", fontFamily: F }}>{r.route}</div>
+            <div style={{ flex: 1, fontSize: 10, color: MUT, fontFamily: F }}>{r.detail}</div>
+            <span style={{ fontSize: 8, letterSpacing: "0.1em", fontWeight: 700, padding: "3px 7px", borderRadius: 3, background: "rgba(79,195,247,0.12)", color: "#4fc3f7", border: "1px solid rgba(79,195,247,0.3)" }}>{r.tag}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ padding: "8px 20px", borderTop: `1px solid ${BDR}`, fontSize: 9, color: DIM, fontFamily: F, letterSpacing: "0.08em" }}>
+        ↑ ↓ navigate &nbsp; ↵ jump to flight
+      </div>
+    </div>
+  );
+}
+
+function RouteMapMockup() {
+  return (
+    <div style={{ background: BG, border: `1px solid ${BDR}`, borderRadius: 6, overflow: "hidden", margin: "14px 0 20px" }}>
+      <div style={{ background: BG2, borderBottom: `1px solid ${BDR}`, padding: "10px 16px", display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+        <span style={{ fontSize: 10, color: A, letterSpacing: "0.14em", fontFamily: F, fontWeight: 700 }}>// ROUTE MAP</span>
+        <MockField label="FROM" value="01/01/2026" />
+        <MockField label="TO" value="22/09/2026" />
+        <div style={{ fontSize: 10, color: TXT, fontFamily: F, border: `1px solid ${BDR}`, borderRadius: 3, padding: "4px 10px" }}>CARTO DARK ▾</div>
+        <div style={{ marginLeft: "auto", fontSize: 10, color: A, fontFamily: F, fontWeight: 700, border: `1px solid ${A}`, borderRadius: 3, padding: "5px 14px", background: "rgba(63,224,197,0.1)" }}>EXPORT</div>
+      </div>
+      <div style={{ background: "#0e1a27", padding: 16, height: 150, position: "relative" }}>
+        <svg viewBox="0 0 300 150" style={{ width: "100%", height: "100%" }}>
+          <circle cx="60" cy="40" r="55" fill="#16263b" opacity="0.6" />
+          <circle cx="220" cy="110" r="70" fill="#16263b" opacity="0.6" />
+          <line x1="70" y1="55" x2="210" y2="95" stroke="#ec4899" strokeWidth="2" />
+          <circle cx="70" cy="55" r="4" fill="#ec4899" />
+          <circle cx="210" cy="95" r="4" fill="#facc15" />
+          <line x1="70" y1="55" x2="140" y2="30" stroke="#f5c542" strokeWidth="2" />
+          <circle cx="140" cy="30" r="4" fill="#facc15" />
+        </svg>
       </div>
     </div>
   );
@@ -441,7 +502,7 @@ function DayNightSettingMockup() {
       <div style={{ fontSize: 9, letterSpacing: "0.12em", color: DIM, marginBottom: 12, fontFamily: F }}>SETTINGS → PREFERENCES · DAY/NIGHT METHOD</div>
       {[
         { label: "Fixed bands",  desc: "Night: 11:30 – 23:30 UTC. Simple, consistent.", selected: false },
-        { label: "Route (sun)",  desc: "Sun below −6° along the great-circle route. Most accurate.", selected: true },
+        { label: "Dynamic",      desc: "Sun below −6° along the great-circle route. Most accurate.", selected: true },
       ].map(opt => (
         <div key={opt.label} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", background: opt.selected ? "rgba(63,224,197,0.06)" : BG2, border: `1px solid ${opt.selected ? A : BDR}`, borderRadius: 4, marginBottom: 8 }}>
           <div style={{ width: 13, height: 13, borderRadius: "50%", border: `2px solid ${opt.selected ? A : DIM}`, background: opt.selected ? A : "transparent", flexShrink: 0, marginTop: 2 }} />
@@ -742,7 +803,9 @@ const SECTIONS = [
         <h4>Toolbar</h4>
         <ul>
           <li><strong>↻ Sync</strong> — upload your data to the cloud. The icon and status chip update to show sync state.</li>
+          <li><strong>🔍 Search</strong> — find any logged flight by airport, markings, captain, crew, or remarks (see Section 4).</li>
           <li><strong>⬡ Export / Import</strong> — export your logbook to Excel or import from a previous export file.</li>
+          <li><strong>🧭 Route Map</strong> — plot your logged sectors on a world map (see Section 4).</li>
           <li><strong>⚙ Settings</strong> — profile, appearance, preferences, and account management. A badge appears if you have hidden columns.</li>
           <li><strong>⏻ Sign Out</strong> — sign out of your account.</li>
         </ul>
@@ -756,7 +819,30 @@ const SECTIONS = [
     ),
   },
   {
-    id: 4, icon: "✈️", title: "The Logbook",
+    id: 4, icon: "🔎", title: "Search & Route Map",
+    Content: () => (
+      <div className="htg-content">
+        <p>Two toolbar tools help you find and visualize what's already in your logbook.</p>
+        <h4>Search</h4>
+        <ul>
+          <li>Tap <strong>🔍 Search</strong> in the toolbar</li>
+          <li>Type an airport code, markings, captain, crew name, or remarks text — results update as you type, matched across every logged flight</li>
+          <li>Use <strong>↑ / ↓</strong> to move between results, <strong>Enter</strong> to jump straight to that flight's month, <strong>Esc</strong> to close</li>
+        </ul>
+        <SearchMockup />
+        <h4>Route Map</h4>
+        <ul>
+          <li>Tap <strong>🧭 Route Map</strong> in the toolbar</li>
+          <li>Set a <strong>From / To</strong> date range — every sector in range is plotted as a great-circle line from departure to arrival</li>
+          <li>Choose a map style: Carto Dark, Carto Vector, Stadia Dark, Satellite (Esri), or Vector (no watermark)</li>
+          <li>Tap <strong>Export</strong> to download the map as a PNG</li>
+        </ul>
+        <RouteMapMockup />
+      </div>
+    ),
+  },
+  {
+    id: 5, icon: "✈️", title: "The Logbook",
     Content: () => (
       <div className="htg-content">
         <p>The Logbook tab shows all flight sectors for the selected month. Each row is one sector. Tap any cell to start editing.</p>
@@ -777,7 +863,7 @@ const SECTIONS = [
           <li><strong>H.O.C</strong> — Holder Operating Capacity: your legal role for this sector</li>
           <li><strong>P.F.</strong> — Pilot Flying checkbox: tick if you were the handling pilot</li>
           <li><strong>DEP / ARR</strong> — ICAO codes for departure and arrival airports</li>
-          <li><strong>STD / STA</strong> — scheduled departure and arrival in UTC. Accepts HH:MM or HHMM format</li>
+          <li><strong>STD / STA</strong> — scheduled departure and arrival in UTC. Accepts HH:MM or HHMM format — on phones, the numeric keypad opens and a colon is inserted automatically as you type (e.g. type 0830, it becomes 08:30)</li>
           <li><strong>☀ Day / ☾ Night columns</strong> — auto-calculated; broken into P1, P1 U/S, and P2</li>
           <li><strong>Total</strong> — auto-calculated sum of all day and night columns</li>
         </ul>
@@ -795,7 +881,7 @@ const SECTIONS = [
     ),
   },
   {
-    id: 5, icon: "💬", title: "Remarks",
+    id: 6, icon: "💬", title: "Remarks",
     Content: () => (
       <div className="htg-content">
         <p>Each row has a remarks panel for free-text notes and autoland flagging. Tap the row number in the <strong>#</strong> column to open it. The number changes colour and gets underlined when remarks or an autoland flag are recorded.</p>
@@ -821,14 +907,14 @@ const SECTIONS = [
     ),
   },
   {
-    id: 6, icon: "🌙", title: "Day / Night Calculation",
+    id: 7, icon: "🌙", title: "Day / Night Calculation",
     Content: () => (
       <div className="htg-content">
         <p>The app automatically splits your block time into day and night portions based on your STD, STA, and airport codes. No manual calculation needed.</p>
         <h4>Two methods are available</h4>
         <ul>
           <li><strong>Fixed bands</strong> — Night is defined as 11:30–23:30 UTC. Simple and consistent, unaffected by location or season.</li>
-          <li><strong>Route (sun)</strong> — The most accurate option. Night is counted whenever the sun is below civil twilight (−6°), calculated minute by minute along the great-circle route between your DEP and ARR airports. Correctly handles sectors that cross multiple time zones — for example, an eastbound sector landing into sunrise logs only the night portion as night.</li>
+          <li><strong>Dynamic</strong> — The most accurate option. Night is counted whenever the sun is below civil twilight (−6°), tracked minute by minute along the great-circle route between your DEP and ARR airports. Correctly handles sectors that cross multiple time zones — for example, an eastbound sector landing into sunrise logs only the night portion as night.</li>
         </ul>
         <h4>How to change the method</h4>
         <ul>
@@ -836,21 +922,21 @@ const SECTIONS = [
           <li>Under <strong>Day/Night Calculation</strong>, select your preferred method</li>
         </ul>
         <DayNightSettingMockup />
-        <Note>Route (sun) requires valid ICAO codes for both departure and arrival airports. If either airport is not in the database, that sector falls back to Fixed bands automatically.</Note>
+        <Note>Dynamic requires valid ICAO codes for both departure and arrival airports. If either airport is not in the database, that sector falls back to Fixed bands automatically.</Note>
         <DayNightSplitMockup />
       </div>
     ),
   },
   {
-    id: 7, icon: "☁️", title: "Cloud Sync",
+    id: 8, icon: "☁️", title: "Cloud Sync",
     Content: () => (
       <div className="htg-content">
         <p>Your flights are saved to your device immediately as you type. Use the Sync button to back up to the cloud and keep multiple devices in sync.</p>
         <h4>To sync</h4>
         <ul>
-          <li>Tap the <strong>↻ Sync</strong> icon in the toolbar</li>
+          <li>Sync runs automatically once when you sign in or reload the app</li>
+          <li>After that it's manual — tap the <strong>↻ Sync</strong> icon in the toolbar whenever you want to push new entries to the cloud</li>
           <li>The icon and status chip update to show the result</li>
-          <li>The app also checks automatically every 30 minutes and each time you reopen it</li>
         </ul>
         <SyncStatusMockup />
         <h4>Using on multiple devices</h4>
@@ -866,12 +952,12 @@ const SECTIONS = [
           <li>The version you keep overwrites the other — this cannot be undone</li>
         </ul>
         <SyncConflictMockup />
-        <Tip>If a new version of the app is ready, a banner will appear prompting you to refresh. The app checks for updates on the same schedule as sync.</Tip>
+        <Tip>Separately, the app checks for new app-version updates roughly every 30 minutes. If one's ready, a banner appears prompting you to refresh — that's about the app itself, not your flight data.</Tip>
       </div>
     ),
   },
   {
-    id: 8, icon: "📤", title: "Export & Import",
+    id: 9, icon: "📤", title: "Export & Import",
     Content: () => (
       <div className="htg-content">
         <p>ClaudeBorne eLogBook exports your logbook to Excel (.xlsx). Export a specific date range or use Export All to download every flight in your logbook at once.</p>
@@ -903,7 +989,7 @@ const SECTIONS = [
     ),
   },
   {
-    id: 9, icon: "📊", title: "Carry Forward Hours",
+    id: 10, icon: "📊", title: "Carry Forward Hours",
     Content: () => (
       <div className="htg-content">
         <p>Carry forward hours are your total flight hours accumulated before you started using ClaudeBorne eLogBook. Adding them ensures your grand totals and lifetime hours are correct.</p>
@@ -921,7 +1007,7 @@ const SECTIONS = [
     ),
   },
   {
-    id: 10, icon: "⚙️", title: "Settings",
+    id: 11, icon: "⚙️", title: "Settings",
     Content: () => (
       <div className="htg-content">
         <p>The Settings panel gives you control over your pilot profile, display, and app behaviour. Open it via the <strong>⚙ Settings</strong> icon in the toolbar.</p>
@@ -930,7 +1016,7 @@ const SECTIONS = [
         <ul>
           <li>Update your full name, date of birth, staff ID, licence number, licence type, airline, home base, and default rank</li>
           <li>Set defaults for aircraft type, markings, and captain name — these pre-fill new rows automatically</li>
-          <li>Manage <strong>Carry Forward Hours</strong> per aircraft type (see Section 9)</li>
+          <li>Manage <strong>Carry Forward Hours</strong> per aircraft type (see Section 10)</li>
         </ul>
         <h4>Appearance</h4>
         <ul>
@@ -941,8 +1027,9 @@ const SECTIONS = [
         </ul>
         <h4>Preferences</h4>
         <ul>
-          <li><strong>Day/Night calculation method</strong> — Fixed bands or Route (sun) (see Section 6)</li>
-          <li><strong>Pre-flight and post-flight buffers</strong> — duty time added around each sector for FTL calculations</li>
+          <li><strong>Day/Night calculation method</strong> — Fixed bands or Dynamic (see Section 7)</li>
+          <li><strong>Duty buffers</strong> — pre-flight and post-flight time added around each sector for cumulative duty (FTL) calculations. Toggle off to set duty = flight time exactly</li>
+          <li><strong>Duty Log Link</strong> — enter a sync code from the companion Duty Log app (Duty Log → Backup) to pull in crew and remarks automatically. Matches sectors by date and departure/arrival, and is read-only — it never overwrites your own entries</li>
           <li><strong>Date format</strong> and <strong>rows per page</strong> defaults</li>
         </ul>
         <h4>Misc</h4>
