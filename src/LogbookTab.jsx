@@ -349,6 +349,7 @@ export default function LogbookTab({
                     const isEditing = editingCell?.rowIdx === rowIdx && editingCell?.field === col.key;
                     const isTime = timeCols.includes(col.key);
                     const isAutoCalc = autoCalcCols.includes(col.key);
+                    const isNumericEntry = isTime || col.key === "date";
 
                     if (needsCapWarning && firstAutoCalcVisible && col.key === firstAutoCalcVisible) {
                       skipAutoCalc = true;
@@ -504,7 +505,7 @@ export default function LogbookTab({
                           <input
                             autoFocus
                             defaultValue={row[col.key]}
-                            inputMode={isTime ? "numeric" : undefined}
+                            inputMode={isNumericEntry ? "numeric" : undefined}
                             onChange={isTime ? (e => {
                               let v = e.target.value.replace(/\D/g, "").slice(0, 4);
                               if (v.length > 2) v = v.slice(0, 2) + ":" + v.slice(2);
