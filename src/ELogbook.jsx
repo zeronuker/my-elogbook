@@ -15,7 +15,7 @@ import { currentVersion } from "@brand/Changelog";
 import {
   MONTHS, EMPTY_ROW, YEARS,
   getDaysInMonth, makeMonthRows, normalizeMonthRows, initialData,
-  calcFlightTimes,
+  calcFlightTimes, parseHHMM,
 } from "./logbookCalculations";
 import {
   DUTY_LOG_SYNC_URL, DUTY_LOG_CODE_RE, timeCols,
@@ -555,16 +555,35 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // Finds the Duty Log sector matching a logbook row, by date + departure/arrival.
   // row.date is a bare day-of-month string in this component; combine with the
   // currently selected month/year to get an ISO date comparable to Duty Log's.
+  //
+  // A duty can repeat the same route (e.g. a shuttle), so date+dep+arr alone can
+  // match more than one Duty Log sector. When that happens, disambiguate by
+  // whichever sector's block-off time is closest to the row's own STD — but only
+  // trust that pick silently within 1 minute; a bigger gap still returns the
+  // closest sector (best guess), flagged `uncertain` so the UI can ask the pilot
+  // to verify rather than silently linking the wrong one.
   const findDutyLogMatch = (row) => {
     if (!dutyLogEntries.length || !row.date || !row.departure || !row.arrival) return null;
     const day = parseInt(row.date, 10);
     if (!day) return null;
     const isoDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return dutyLogEntries.find(e =>
+    const candidates = dutyLogEntries.filter(e =>
       e.isoDate === isoDate &&
       dlNorm(e.sector.from) === dlNorm(row.departure) &&
       dlNorm(e.sector.dest) === dlNorm(row.arrival)
-    ) || null;
+    );
+    if (!candidates.length) return null;
+    if (candidates.length === 1) return { ...candidates[0], uncertain: false };
+
+    if (!row.std || !row.std.trim()) return { ...candidates[0], uncertain: true };
+    const rowStdM = parseHHMM(row.std);
+    let best = candidates[0], bestDiff = Infinity;
+    for (const c of candidates) {
+      if (!c.sector.offBlk) continue;
+      const diff = Math.abs(parseHHMM(c.sector.offBlk) - rowStdM);
+      if (diff < bestDiff) { bestDiff = diff; best = c; }
+    }
+    return { ...best, uncertain: bestDiff > 1 };
   };
 
   // Merge a matched Duty Log sector's remark AND the duty's log-level notes into the

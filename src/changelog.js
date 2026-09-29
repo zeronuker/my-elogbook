@@ -385,7 +385,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v3.10", date: "September 2026", current: true,
+    v: "v3.10", date: "September 2026",
     title: "Logbook search",
     notes: [
       "NEW: Logbook search — tap the search icon to find any flight by airport, aircraft markings, captain, Duty Log crew, or remarks, across every logged month at once. Selecting a result jumps to that month and briefly highlights the row.",
@@ -393,6 +393,15 @@ export const CHANGELOG = [
       "FIX: Duty Log crew, sector remark, and duty notes no longer disappear when you go offline — the last successful sync is now cached on-device and restored automatically.",
       "IMP: Page header and tab bar reworked for phone screens — content no longer gets clipped or drags the whole page sideways when scrolling the table; the period picker and save-status chip are repositioned for a tidier phone layout.",
       "IMP: Tabs restyled as bordered dividers — each tab is fully boxed, and the active tab visually fuses into the panel below it.",
+    ],
+  },
+  {
+    v: "v4.0", date: "September 2026", current: true,
+    title: "Duty Log link — repeated-route disambiguation",
+    notes: [
+      "FIX: Duty Log matching no longer misassigns crew/remarks when the same route is flown more than once in a single duty (e.g. a shuttle pattern) — the closest-matching sector by scheduled time (STD) is now chosen instead of always the first one found.",
+      "NEW: When a Duty Log match can't be confirmed within 1 minute of STD, it's now flagged instead of silently trusted — an amber dot on the row number, plus an amber badge and a short warning line in the sector panel, prompt you to verify it.",
+      "FIX: Logbook search's crew-name lookup had the same repeated-route ambiguity — now uses the same closest-match logic.",
     ],
   },
 ];

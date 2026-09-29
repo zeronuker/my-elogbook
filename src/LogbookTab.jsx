@@ -293,6 +293,7 @@ export default function LogbookTab({
               : row.autoland ? "Autoland logged"
               : undefined;
             const isExpanded = expandedRowIdx === rowIdx;
+            const dutyLogMatch = settings.dutyLogSyncCode ? findDutyLogMatch(row) : null;
 
             return (
               <Fragment key={`${monthKey}-${row.id}`}>
@@ -316,7 +317,7 @@ export default function LogbookTab({
                       setExpandedRowIdx(prev => prev === rowIdx ? null : rowIdx);
                       setConfirmDeleteRowIdx(null);
                     }}
-                    title={isExpanded ? "Close" : "Remarks / autoland / delete"}
+                    title={dutyLogMatch?.uncertain ? "Duty Log link uncertain — STD/STA doesn't line up, verify sector" : (isExpanded ? "Close" : "Remarks / autoland / delete")}
                     style={{
                       width: "100%", minHeight: 30, background: "transparent", border: "none",
                       cursor: "pointer", color: "#6f93b8", fontSize: 18, fontWeight: 700,
@@ -327,11 +328,19 @@ export default function LogbookTab({
                     onMouseEnter={e => e.currentTarget.style.color = "#4fc3f7"}
                     onMouseLeave={e => e.currentTarget.style.color = "#6f93b8"}
                   >
-                    <span style={{
-                      display: "inline-block", minWidth: 20, padding: "2px 0", borderRadius: 3,
-                      background: "rgba(79,195,247,0.14)", border: "1px solid rgba(79,195,247,0.4)",
-                      color: "#e8ecf5", fontSize: 14,
-                    }}>{rowIdx + 1}</span>
+                    <span style={{ position: "relative", display: "inline-flex" }}>
+                      <span style={{
+                        display: "inline-block", minWidth: 20, padding: "2px 0", borderRadius: 3,
+                        background: "rgba(79,195,247,0.14)", border: "1px solid rgba(79,195,247,0.4)",
+                        color: "#e8ecf5", fontSize: 14,
+                      }}>{rowIdx + 1}</span>
+                      {dutyLogMatch?.uncertain && (
+                        <span style={{
+                          position: "absolute", top: -4, right: -4, width: 8, height: 8, borderRadius: "50%",
+                          background: "#eab308", border: "1.5px solid var(--elb-bg, #0a0d12)",
+                        }} />
+                      )}
+                    </span>
                     <span style={{ fontSize: 9, transition: "transform 0.18s ease", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}>▾</span>
                   </button>
                 </td>
@@ -569,7 +578,6 @@ export default function LogbookTab({
                         const canDuplicate = !!prevRow && isEmptyStaticRow(row);
                         const canDelete = rows.length > 1;
                         const isConfirmingDelete = confirmDeleteRowIdx === rowIdx;
-                        const dutyLogMatch = settings.dutyLogSyncCode ? findDutyLogMatch(row) : null;
                         return (
                           <div style={{
                             padding: "12px 16px 16px 44px", background: "var(--elb-bg, #0a0d12)", borderBottom: "1px solid var(--elb-bdr, #1e3a5f)",
@@ -639,10 +647,17 @@ export default function LogbookTab({
                                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                                   <span style={{ fontSize: 10.5, letterSpacing: "0.1em", color: "#7c87a3", textTransform: "uppercase" }}>Duty Log</span>
                                   {dutyLogMatch ? (
-                                    <span style={{ fontSize: 9.5, letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 20, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.35)", color: "#34d399" }}>
-                                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: "currentColor" }} />
-                                      Linked{dutyLogMatch.sector.fltNo ? ` · FLT ${dutyLogMatch.sector.fltNo}` : ""}
-                                    </span>
+                                    dutyLogMatch.uncertain ? (
+                                      <span style={{ fontSize: 9.5, letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 20, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.4)", color: "#eab308" }}>
+                                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "currentColor" }} />
+                                        Linked{dutyLogMatch.sector.fltNo ? ` · FLT ${dutyLogMatch.sector.fltNo}` : ""}
+                                      </span>
+                                    ) : (
+                                      <span style={{ fontSize: 9.5, letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 20, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.35)", color: "#34d399" }}>
+                                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "currentColor" }} />
+                                        Linked{dutyLogMatch.sector.fltNo ? ` · FLT ${dutyLogMatch.sector.fltNo}` : ""}
+                                      </span>
+                                    )
                                   ) : (
                                     <span style={{ fontSize: 9.5, letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 20, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(124,135,163,0.08)", border: "1px solid var(--elb-bdr, #1e3a5f)", color: "#7c87a3" }}>
                                       <span style={{ width: 5, height: 5, borderRadius: "50%", background: "currentColor" }} />
@@ -663,6 +678,12 @@ export default function LogbookTab({
                                         <div style={{ fontSize: 11, color: "#4a6a8a" }}>No crew listed</div>
                                       )}
                                     </div>
+                                    {dutyLogMatch.uncertain && (
+                                      <div style={{ marginTop: 10, padding: "8px 10px", background: "rgba(234,179,8,0.06)", border: "1px dashed rgba(234,179,8,0.4)", borderRadius: 4, fontSize: 10.5, color: "#eab308", lineHeight: 1.5, display: "flex", gap: 8, alignItems: "flex-start" }}>
+                                        <span style={{ flexShrink: 0, lineHeight: 1.1, fontSize: 12 }}>▲</span>
+                                        <span>STD/STA mismatch — verify sector.</span>
+                                      </div>
+                                    )}
                                     <div style={{ marginTop: 12, fontSize: 10, color: "#4a6a8a" }}>
                                       Sourced from Duty Log entry · {dutyLogMatch.isoDate} · sector remark + duty notes merge into Remarks, crew list is read-only display
                                     </div>

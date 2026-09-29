@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { parseHHMM } from "./logbookCalculations";
 
 const MONTHS_SHORT = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 const norm = (s) => (s || "").trim().toUpperCase();
@@ -66,11 +67,24 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
         let crewNames = [];
         if (day && row.departure && row.arrival) {
           const isoDate = `${year}-${String(monthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const dlMatch = (dutyLogEntries || []).find(e =>
+          const dlCandidates = (dutyLogEntries || []).filter(e =>
             e.isoDate === isoDate &&
             norm(e.sector.from) === norm(row.departure) &&
             norm(e.sector.dest) === norm(row.arrival)
           );
+          // Same route can repeat within one duty (a shuttle) — disambiguate by
+          // whichever sector's block-off time is closest to the row's own STD,
+          // same rule as the main Duty Log link in ELogbook.jsx.
+          let dlMatch = dlCandidates[0];
+          if (dlCandidates.length > 1 && row.std && row.std.trim()) {
+            const rowStdM = parseHHMM(row.std);
+            let bestDiff = Infinity;
+            for (const c of dlCandidates) {
+              if (!c.sector.offBlk) continue;
+              const diff = Math.abs(parseHHMM(c.sector.offBlk) - rowStdM);
+              if (diff < bestDiff) { bestDiff = diff; dlMatch = c; }
+            }
+          }
           if (dlMatch?.log?.crew) crewNames = dlMatch.log.crew.map(c => c.name).filter(Boolean);
         }
 
