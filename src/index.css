@@ -88,6 +88,31 @@ body {
   .elb-anim-stagger > * > :nth-child(8):not(table) { --i: 7; }
   .elb-anim-stagger > * > :nth-child(9):not(table) { --i: 8; }
   .elb-anim-stagger > * > :nth-child(10):not(table) { --i: 9; }
+  /* Table rows default to their position (inline --i, as in the logbook, wins) */
+  .elb-anim-stagger tbody > tr:nth-child(1) { --i: 0; }
+  .elb-anim-stagger tbody > tr:nth-child(2) { --i: 1; }
+  .elb-anim-stagger tbody > tr:nth-child(3) { --i: 2; }
+  .elb-anim-stagger tbody > tr:nth-child(4) { --i: 3; }
+  .elb-anim-stagger tbody > tr:nth-child(5) { --i: 4; }
+  .elb-anim-stagger tbody > tr:nth-child(6) { --i: 5; }
+  .elb-anim-stagger tbody > tr:nth-child(7) { --i: 6; }
+  .elb-anim-stagger tbody > tr:nth-child(8) { --i: 7; }
+  .elb-anim-stagger tbody > tr:nth-child(9) { --i: 8; }
+  .elb-anim-stagger tbody > tr:nth-child(10) { --i: 9; }
+  .elb-anim-stagger tbody > tr:nth-child(11) { --i: 10; }
+  .elb-anim-stagger tbody > tr:nth-child(12) { --i: 11; }
+  .elb-anim-stagger tbody > tr:nth-child(13) { --i: 12; }
+  .elb-anim-stagger tbody > tr:nth-child(14) { --i: 13; }
+  .elb-anim-stagger tbody > tr:nth-child(15) { --i: 14; }
+  .elb-anim-stagger tbody > tr:nth-child(16) { --i: 15; }
+  .elb-anim-stagger tbody > tr:nth-child(17) { --i: 16; }
+  .elb-anim-stagger tbody > tr:nth-child(18) { --i: 17; }
+  .elb-anim-stagger tbody > tr:nth-child(19) { --i: 18; }
+  .elb-anim-stagger tbody > tr:nth-child(20) { --i: 19; }
+  .elb-anim-stagger tbody > tr:nth-child(21) { --i: 20; }
+  .elb-anim-stagger tbody > tr:nth-child(22) { --i: 21; }
+  .elb-anim-stagger tbody > tr:nth-child(23) { --i: 22; }
+  .elb-anim-stagger tbody > tr:nth-child(24) { --i: 23; }
 }
 @keyframes elb-slide { from { opacity: 0; transform: translateX(calc(var(--dir, 1) * 36px)); } to { opacity: 1; transform: none; } }
 @keyframes elb-wipe  { from { opacity: .4; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
