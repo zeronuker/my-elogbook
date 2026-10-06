@@ -71,22 +71,23 @@ body {
 @media (prefers-reduced-motion: no-preference) {
   .elb-anim-slide   { animation: elb-slide var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1) both; }
   .elb-anim-wipe    { animation: elb-wipe calc(var(--elb-dur, 260ms) * 1.6) cubic-bezier(.22,.8,.3,1) both; }
-  /* Cascade targets each tab's top-level sections and table rows; delay caps at the 10th item */
-  .elb-anim-stagger > * > *, .elb-anim-stagger tbody > tr {
+  /* Cascade targets each tab's top-level sections (nth-child) and logbook table rows (inline --i).
+     Delay caps at the 24th item so a long month still finishes quickly. */
+  .elb-anim-stagger > * > :not(table), .elb-anim-stagger tbody > tr {
     --i: 10;
     animation: elb-rise var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1) both;
-    animation-delay: calc(var(--i) * var(--elb-stagger, 45ms));
+    animation-delay: calc(min(var(--i), 24) * var(--elb-stagger, 45ms));
   }
-  .elb-anim-stagger > * > :nth-child(1), .elb-anim-stagger tbody > :nth-child(1) { --i: 0; }
-  .elb-anim-stagger > * > :nth-child(2), .elb-anim-stagger tbody > :nth-child(2) { --i: 1; }
-  .elb-anim-stagger > * > :nth-child(3), .elb-anim-stagger tbody > :nth-child(3) { --i: 2; }
-  .elb-anim-stagger > * > :nth-child(4), .elb-anim-stagger tbody > :nth-child(4) { --i: 3; }
-  .elb-anim-stagger > * > :nth-child(5), .elb-anim-stagger tbody > :nth-child(5) { --i: 4; }
-  .elb-anim-stagger > * > :nth-child(6), .elb-anim-stagger tbody > :nth-child(6) { --i: 5; }
-  .elb-anim-stagger > * > :nth-child(7), .elb-anim-stagger tbody > :nth-child(7) { --i: 6; }
-  .elb-anim-stagger > * > :nth-child(8), .elb-anim-stagger tbody > :nth-child(8) { --i: 7; }
-  .elb-anim-stagger > * > :nth-child(9), .elb-anim-stagger tbody > :nth-child(9) { --i: 8; }
-  .elb-anim-stagger > * > :nth-child(10), .elb-anim-stagger tbody > :nth-child(10) { --i: 9; }
+  .elb-anim-stagger > * > :nth-child(1):not(table) { --i: 0; }
+  .elb-anim-stagger > * > :nth-child(2):not(table) { --i: 1; }
+  .elb-anim-stagger > * > :nth-child(3):not(table) { --i: 2; }
+  .elb-anim-stagger > * > :nth-child(4):not(table) { --i: 3; }
+  .elb-anim-stagger > * > :nth-child(5):not(table) { --i: 4; }
+  .elb-anim-stagger > * > :nth-child(6):not(table) { --i: 5; }
+  .elb-anim-stagger > * > :nth-child(7):not(table) { --i: 6; }
+  .elb-anim-stagger > * > :nth-child(8):not(table) { --i: 7; }
+  .elb-anim-stagger > * > :nth-child(9):not(table) { --i: 8; }
+  .elb-anim-stagger > * > :nth-child(10):not(table) { --i: 9; }
 }
 @keyframes elb-slide { from { opacity: 0; transform: translateX(calc(var(--dir, 1) * 36px)); } to { opacity: 1; transform: none; } }
 @keyframes elb-wipe  { from { opacity: .4; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }

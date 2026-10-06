@@ -301,6 +301,7 @@ export default function LogbookTab({
                 title={rowTitle}
                 data-search-row={row.id}
                 style={{
+                  "--i": rowIdx,
                   background: rowBg,
                   borderLeft: hasSignal ? "3px solid #a855f7" : "3px solid transparent",
                   transition: "background 0.15s, border-color 0.15s",
@@ -565,7 +566,7 @@ export default function LogbookTab({
                   return cells;
                 })()}
               </tr>
-              <tr>
+              <tr style={{ "--i": rowIdx }}>
                 <td colSpan={columns.length + 1} style={{ padding: 0, border: "none" }}>
                   <div style={{
                     display: "grid",
@@ -745,7 +746,7 @@ export default function LogbookTab({
           })}
 
           {/* ── TOTALS ROW ── */}
-          <tr style={{ background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
+          <tr style={{ "--i": rows.length, background: "var(--elb-bginput, #0b1828)", borderTop: "2px solid var(--elb-bdr, #1e3a5f)" }}>
             <td colSpan={totalsLabelColSpan} style={{ ...tdStyle, color: "#4fc3f7", fontSize: 12, letterSpacing: "0.12em", fontWeight: 700 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                 <button
