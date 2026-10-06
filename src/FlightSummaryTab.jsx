@@ -264,24 +264,21 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
 
           <span style={{ width: 1, height: 18, background: "#1e3a5f", margin: "0 4px" }} />
 
-          <button
-            type="button"
-            role="switch"
-            aria-checked={periodIncludeCF}
-            onClick={() => setPeriodIncludeCF(v => !v)}
-            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}
-          >
-            <span style={{ position: "relative", width: 30, height: 16, background: periodIncludeCF ? "#4fc3f7" : "#1e3a5f", borderRadius: 8, display: "inline-block", transition: "background 0.15s" }}>
-              <span style={{ position: "absolute", top: 2, left: periodIncludeCF ? 16 : 2, width: 12, height: 12, background: "#0a0d12", borderRadius: "50%", transition: "left 0.15s" }} />
-            </span>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={periodIncludeCF}
+              onChange={e => setPeriodIncludeCF(e.target.checked)}
+              style={{ accentColor: "#4fc3f7", cursor: "pointer", margin: 0 }}
+            />
             <span style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.1em", color: periodIncludeCF ? "#4fc3f7" : "var(--elb-txt-muted, #4a6a8a)" }}>
-              + CARRY FORWARD
+              ADD CARRY FORWARD HOURS
             </span>
-          </button>
+          </label>
         </div>
 
+        {periodPreset === "custom" && (
         <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 6 }}>
-          {periodPreset === "custom" ? (
             <>
               <span style={{ fontSize: 11, letterSpacing: "0.1em", color: "var(--elb-txt-muted, #4a6a8a)" }}>FROM</span>
               <input
@@ -314,15 +311,8 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
                 }}
               />
             </>
-          ) : (
-            <>
-              <span style={{ fontSize: 11, letterSpacing: "0.1em", color: "var(--elb-txt-muted, #4a6a8a)" }}>RANGE</span>
-              <span style={{ fontSize: 13, letterSpacing: "0.1em", color: "#4fc3f7", fontWeight: 700 }}>
-                {periodRange.from} — {periodRange.to}
-              </span>
-            </>
-          )}
         </div>
+        )}
 
         {periodWarning && (
           <div style={{ fontSize: 11, color: "#eab308", letterSpacing: "0.04em", marginBottom: 14 }}>
