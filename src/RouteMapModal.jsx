@@ -127,8 +127,22 @@ function greatCirclePoints(lat1, lon1, lat2, lon2, n = 64) {
   return pts;
 }
 
-// Mirrors the date-range row matching in ExportImportModal.getRowsInDateRange,
-// reduced to just the departure/arrival fields the map needs.
+// Mirrors the date-range row matching in ExportImportModal.getRowsInDateRange.
+// Returns a UTC-midnight Date for a row, or null if its date can't be read.
+function parseRowDate(row, keyMonthIdx, keyYear) {
+  if (typeof row.date === "string" && row.date.includes("/")) {
+    const parts = row.date.split("/");
+    if (parts.length === 3) {
+      return new Date(`${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}T00:00:00Z`);
+    }
+    if (parts.length !== 2) return null;
+  }
+  const day = parseInt(row.date);
+  if (!day || isNaN(day)) return null;
+  return new Date(`${keyYear}-${String(keyMonthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00Z`);
+}
+
+// Reduced to just the departure/arrival fields the map needs.
 function getSectorsInRange(monthData, dateFrom, dateTo) {
   if (!dateFrom || !dateTo || !monthData || typeof monthData !== "object") return [];
   const fromDate = new Date(dateFrom + "T00:00:00Z");
@@ -143,28 +157,30 @@ function getSectorsInRange(monthData, dateFrom, dateTo) {
 
     monthRows.forEach(row => {
       if (!row || !row.date || !row.departure || !row.arrival) return;
-      let rowDate;
-      if (typeof row.date === "string" && row.date.includes("/")) {
-        const parts = row.date.split("/");
-        if (parts.length === 3) {
-          rowDate = new Date(`${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}T00:00:00Z`);
-        } else if (parts.length === 2) {
-          const day = parseInt(parts[0]);
-          if (!day || isNaN(day)) return;
-          rowDate = new Date(`${keyYear}-${String(keyMonthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00Z`);
-        } else return;
-      } else {
-        const day = parseInt(row.date);
-        if (!day || isNaN(day)) return;
-        rowDate = new Date(`${keyYear}-${String(keyMonthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00Z`);
-      }
-      if (rowDate >= fromDate && rowDate <= toDate) {
+      const rowDate = parseRowDate(row, keyMonthIdx, keyYear);
+      if (rowDate && rowDate >= fromDate && rowDate <= toDate) {
         sectors.push({ departure: row.departure, arrival: row.arrival });
       }
     });
   });
 
   return sectors;
+}
+
+// Earliest flight date (YYYY-MM-DD) with a route logged, or null if none.
+function getEarliestDate(monthData) {
+  if (!monthData || typeof monthData !== "object") return null;
+  let earliest = null;
+  Object.entries(monthData).forEach(([key, monthRows]) => {
+    if (!Array.isArray(monthRows)) return;
+    const [monthIdxStr, yearStr] = key.split("-");
+    monthRows.forEach(row => {
+      if (!row || !row.date || !row.departure || !row.arrival) return;
+      const rowDate = parseRowDate(row, parseInt(monthIdxStr), parseInt(yearStr));
+      if (rowDate && (!earliest || rowDate < earliest)) earliest = rowDate;
+    });
+  });
+  return earliest ? earliest.toISOString().split("T")[0] : null;
 }
 
 export default function RouteMapModal({ open, onClose, monthData }) {
@@ -189,7 +205,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   useEffect(() => {
     if (open) {
       const today = new Date();
-      if (!dateFrom) setDateFrom(`${today.getFullYear()}-01-01`);
+      if (!dateFrom) setDateFrom(getEarliestDate(monthData) || `${today.getFullYear()}-01-01`);
       if (!dateTo) setDateTo(today.toISOString().split("T")[0]);
     }
   }, [open]);
@@ -210,7 +226,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
     // Leaflet's default SVG-rendered routes/markers — they silently vanish
     // from the exported image. Canvas-rendered paths are a real bitmap, so
     // html2canvas captures them correctly.
-    const map = L.map(mapElRef.current, { worldCopyJump: true, attributionControl: false, preferCanvas: true }).setView([20, 0], 2);
+    const map = L.map(mapElRef.current, { worldCopyJump: true, attributionControl: false, preferCanvas: true, zoomSnap: 0.25 }).setView([20, 0], 2);
     mapRef.current = map;
     // Dedicated pane below the default overlayPane (where routes/markers
     // live) so the basemap can never end up drawn on top of them, no
@@ -305,7 +321,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
     });
 
     const allPts = routes.flatMap(r => [[r.dep.lat, r.dep.lon], [r.arr.lat, r.arr.lon]]);
-    if (allPts.length) map.fitBounds(allPts, { padding: [40, 40] });
+    if (allPts.length) map.fitBounds(allPts, { padding: [30, 30] });
   }, [open, dateFrom, dateTo, monthData]);
 
   if (!open) return null;
