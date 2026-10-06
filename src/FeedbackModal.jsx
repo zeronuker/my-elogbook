@@ -56,7 +56,7 @@ const css = `
     display: flex; flex-direction: column;
     box-shadow: 0 30px 80px rgba(0,0,0,0.5);
     max-height: 90vh;
-    animation: fbPopIn 0.18s ease;
+    animation: fbPopIn var(--elb-dur, 0.18s) ease;
   }
   @keyframes fbPopIn { from { opacity: 0; transform: scale(0.96) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
   .fb-head {

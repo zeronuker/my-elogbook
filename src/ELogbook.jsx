@@ -23,6 +23,9 @@ import {
 } from "./logbookConstants";
 import { ToolbarSyncChip, TabLogbookIcon, TabSummaryIcon, TabLimitsIcon } from "./ELogbookIcons";
 import { makeThemeCss } from "./theme";
+import { useTransitionAnim } from "./useTransitionAnim";
+
+const TAB_IDS = ["logbook", "summary", "ftl"];
 import FlightSummaryTab from "./FlightSummaryTab";
 import LogbookTab from "./LogbookTab";
 import LimitsRecencyTab from "./LimitsRecencyTab";
@@ -68,6 +71,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState(null); // null → SettingsModal defaults to "profile"
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
+  const tabAnim = useTransitionAnim(activeTab, TAB_IDS, (previewSettings || settings).animStyle);
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [pulseRowId, setPulseRowId] = useState(null); // briefly highlights a row after a search jump
@@ -1493,6 +1497,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
       {/* ── CONTENT ── */}
       <div style={{ padding: "18px 24px" }}>
+        <div key={activeTab} className={tabAnim.className} style={tabAnim.style}>
 
         {/* ── LOGBOOK TAB ── */}
         {activeTab === "logbook" && (
@@ -1537,6 +1542,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             setActivePopup={setActivePopup}
           />
         )}
+        </div>
       </div>
 
       {/* ── REGULATORY REFERENCE POPUP ── */}
@@ -1562,7 +1568,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               padding: "20px 22px 18px",
               maxWidth: 480, width: "100%",
               boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
-              animation: "popIn 0.15s ease",
+              animation: "popIn var(--elb-dur, 0.15s) ease",
               fontFamily: "var(--elb-font, 'Courier New', monospace)",
             }}>
               {/* Header */}
@@ -1627,7 +1633,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             padding: "20px 22px 18px",
             maxWidth: 420, width: "100%",
             boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
-            animation: "popIn 0.15s ease",
+            animation: "popIn var(--elb-dur, 0.15s) ease",
             fontFamily: "var(--elb-font, 'Courier New', monospace)",
           }}>
             {/* Header */}
@@ -1725,6 +1731,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             borderTop: "2px solid var(--elb-acc, #3FE0C5)", borderRadius: 4,
             width: "100%", maxWidth: 420, padding: "24px 24px 20px",
             boxShadow: "0 20px 60px rgba(0,0,0,0.85)",
+            animation: "popIn var(--elb-dur, 0.15s) ease",
           }}>
             <div style={{ fontSize: "var(--elb-th-sz)", letterSpacing: "0.1em", color: "var(--elb-acc, #3FE0C5)", marginBottom: 8 }}>
               CONFIRM ACTION
@@ -1810,6 +1817,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             border: "1px solid rgba(245,197,66,0.3)",
             borderRadius: 10, padding: "18px 18px 16px",
             boxShadow: "0 20px 56px rgba(0,0,0,0.55)",
+            animation: "popIn var(--elb-dur, 0.15s) ease",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <span style={{

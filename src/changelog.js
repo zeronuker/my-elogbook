@@ -405,10 +405,19 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v4.1", date: "October 2026", current: true,
+    v: "v4.1", date: "October 2026",
     title: "Disable auto-update setting",
     notes: [
       "NEW: Settings → Misc → App Update has a 'Disable auto-update' switch. When on, the app stops checking for new versions in the background and never shows the 15s auto-update toast; 'Check for updates' still works manually.",
+    ],
+  },
+  {
+    v: "v4.2", date: "October 2026", current: true,
+    title: "Transition animations",
+    notes: [
+      "NEW: Switching between Logbook, Flight Summary and Limits & Recency now animates. Settings sub-tabs use the same transition.",
+      "NEW: Settings → Appearance → Animation lets you turn animations on or off, pick a style (Slide, Wipe or Cascade) and a speed (Normal, Slow or Slower).",
+      "IMP: Dialogs now open with a soft zoom, and the row detail panel follows the same speed. Turning animations off makes everything switch instantly.",
     ],
   },
 ];

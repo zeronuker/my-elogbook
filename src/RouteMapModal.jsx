@@ -335,6 +335,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
         background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 0, boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
         width: "min(920px, 92vw)", height: "min(660px, 88vh)",
         display: "flex", flexDirection: "column", fontFamily: "'Courier New', monospace", overflow: "hidden",
+        animation: "popIn var(--elb-dur, 0.15s) ease",
       }}>
         <div style={{
           display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "14px 16px",

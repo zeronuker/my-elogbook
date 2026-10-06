@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import GoogleSignInButton from "./GoogleSignInButton";
 import { CHANGELOG } from "./changelog";
 import Changelog from "@brand/Changelog";
+import { useTransitionAnim } from "./useTransitionAnim";
+import { ANIM_SPEED_MS } from "./logbookConstants";
 
 // ════════════════════════════════════════════════════════════════════
 //  ClaudeBorne · eLogbook — Settings Modal (v6 brand rewrite)
@@ -68,6 +70,9 @@ export const DEFAULT_SETTINGS = {
   columnDensity: "default",
   autoHideEmptyCols: true,
   panelExpandAnimation: true,
+  animEnabled: true,
+  animStyle: "slide",
+  animSpeed: "normal",
   // Preferences
   dateFormat: "D",
   rowsPerPage: 15,
@@ -117,6 +122,9 @@ const TAB_DEFAULTS = {
     fontType: "courier",
     brightness: 100,
     accentPreset: "gradient",
+    animEnabled: true,
+    animStyle: "slide",
+    animSpeed: "normal",
   },
   preferences: {
     dateFormat: "D",
@@ -137,6 +145,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
   const [resetFlash, setResetFlash] = useState(false);
+  const tabAnim = useTransitionAnim(tab, SETTINGS_TABS.map((t) => t.id), draft.animStyle);
 
   // Reset tab/flash when modal opens. If a caller passed initialTab (e.g. the
   // hidden-columns chip/badge), honour it on each open — otherwise default to profile.
@@ -223,10 +232,12 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
 
         {/* ── BODY ── */}
         <div className="sm-body">
+          <div key={tab} className={tabAnim.className} style={tabAnim.style}>
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} onReauthAndDeleteGoogle={onReauthAndDeleteGoogle} onReauthAndDeleteGooglePopup={onReauthAndDeleteGooglePopup} userProvider={userProvider} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} dutyLogStatus={dutyLogStatus} />}
           {tab === "misc"        && <MiscTab onFeedback={onFeedback} onGuide={onGuide} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} currentBuildVersion={currentBuildVersion} autoUpdateDisabled={autoUpdateDisabled} setAutoUpdateDisabled={setAutoUpdateDisabled} />}
+          </div>
         </div>
 
         {/* ── FOOT ── */}
@@ -725,6 +736,40 @@ function AppearanceTab({ d, upd }) {
         />
       </SmField>
 
+      <SmSectionHead title="Animation" hint="// tab, dialog and panel transitions across the app" />
+      <SmField label="Enable animations" hint="Turn off for instant switching everywhere.">
+        <SmToggle
+          checked={d.animEnabled !== false}
+          onChange={(v) => upd({ animEnabled: v })}
+        />
+      </SmField>
+      {d.animEnabled !== false && (
+        <>
+          <SmField label="Transition style" hint="How tab and settings pages appear. Dialogs always use a soft zoom.">
+            <SmSegmented
+              value={d.animStyle || "slide"}
+              onChange={(v) => upd({ animStyle: v })}
+              options={[
+                { value: "slide",   label: "Slide"   },
+                { value: "wipe",    label: "Wipe"    },
+                { value: "stagger", label: "Cascade" },
+              ]}
+            />
+          </SmField>
+          <SmField label="Speed">
+            <SmSegmented
+              value={d.animSpeed || "normal"}
+              onChange={(v) => upd({ animSpeed: v })}
+              options={[
+                { value: "normal", label: "Normal", note: `${ANIM_SPEED_MS.normal}ms` },
+                { value: "slow",   label: "Slow",   note: `${ANIM_SPEED_MS.slow}ms`   },
+                { value: "slower", label: "Slower", note: `${ANIM_SPEED_MS.slower}ms` },
+              ]}
+            />
+          </SmField>
+        </>
+      )}
+
     </div>
   );
 }
@@ -1095,7 +1140,7 @@ const settingsCss = `
     box-shadow: 0 30px 80px rgba(0,0,0,0.5);
     display: flex; flex-direction: column;
     z-index: 2100;
-    animation: smPopIn 0.18s ease;
+    animation: smPopIn var(--elb-dur, 0.18s) ease;
     font-family: var(--cb-font-body);
     color: var(--cb-ink);
     font-size: 14px;

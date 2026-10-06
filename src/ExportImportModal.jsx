@@ -996,7 +996,7 @@ const exportImportCss = `
     width:480px;max-width:92vw;max-height:88vh;
     background:var(--cb-surface-1);border:1px solid var(--cb-line-2);
     display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.5);
-    z-index:2100;animation:eimPopIn 0.18s ease;
+    z-index:2100;animation:eimPopIn var(--elb-dur, 0.18s) ease;
     font-family:var(--cb-font-body);color:var(--cb-ink);font-size:14px;text-align:left;
   }
 

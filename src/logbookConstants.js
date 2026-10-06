@@ -67,6 +67,8 @@ export const FONT_FAMILIES = {
   space:     "'Space Mono', monospace",
 };
 
+export const ANIM_SPEED_MS = { normal: 260, slow: 420, slower: 650 };
+
 export const DENSITY_PAD = {
   compact:  "3px 6px",
   default:  "6px 8px",

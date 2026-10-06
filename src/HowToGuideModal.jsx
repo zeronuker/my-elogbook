@@ -1075,7 +1075,7 @@ export default function HowToGuideModal({ open, onClose, version }) {
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)", zIndex: 2200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{ background: "#0a0d12", border: `1px solid ${BDR}`, borderRadius: 0, boxShadow: "0 30px 80px rgba(0,0,0,0.5)", width: "100%", maxWidth: 860, height: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ background: "#0a0d12", border: `1px solid ${BDR}`, borderRadius: 0, boxShadow: "0 30px 80px rgba(0,0,0,0.5)", width: "100%", maxWidth: 860, height: "90vh", display: "flex", flexDirection: "column", overflow: "hidden", animation: "popIn var(--elb-dur, 0.15s) ease" }}>
 
         {/* Header */}
         <div style={{

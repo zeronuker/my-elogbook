@@ -570,7 +570,7 @@ export default function LogbookTab({
                   <div style={{
                     display: "grid",
                     gridTemplateRows: isExpanded ? "1fr" : "0fr",
-                    transition: settings.panelExpandAnimation !== false ? "grid-template-rows 0.22s ease" : "none",
+                    transition: settings.panelExpandAnimation !== false ? "grid-template-rows var(--elb-dur, 0.22s) ease" : "none",
                   }}>
                     <div style={{ overflow: "hidden" }}>
                       {(isExpanded || openedRowIds.has(row.id)) && (() => {

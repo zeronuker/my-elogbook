@@ -1,5 +1,5 @@
 import { ACCENT_PRESETS, ACCENT_MIGRATION } from "./SettingsModal";
-import { DENSITY_PAD, FONT_FAMILIES } from "./logbookConstants";
+import { DENSITY_PAD, FONT_FAMILIES, ANIM_SPEED_MS } from "./logbookConstants";
 
 // ─── Theme CSS variable injection (v6 — aliases --elb-* to --cb-* tokens) ─────
 
@@ -32,6 +32,8 @@ export function makeThemeCss(settings = {}) {
   const rowPad   = DENSITY_PAD[settings.tableDensity] || DENSITY_PAD.default;
   const fontFamily = FONT_FAMILIES[settings.fontType] || FONT_FAMILIES.courier;
   const { accent, grad, dim } = resolveAccent(settings);
+  const animOn = settings.animEnabled !== false;
+  const animMs = ANIM_SPEED_MS[settings.animSpeed] || ANIM_SPEED_MS.normal;
 
   // CB surface / ink / line tokens — mirrors brand.css values
   const surf = isDark
@@ -94,6 +96,9 @@ export function makeThemeCss(settings = {}) {
       --elb-desc-sz:calc(${Math.max(11, fontSize)}px * var(--fs,1));
       --elb-hint-sz:calc(${Math.max(10, fontSize - 1)}px * var(--fs,1));
       --elb-row-pad:${rowPad};
+      /* Animation: off = 0ms so every duration-driven animation/transition becomes instant */
+      --elb-dur:${animOn ? animMs : 0}ms;
+      --elb-stagger:${animOn ? 45 : 0}ms;
     }
   `;
 }

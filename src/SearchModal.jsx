@@ -209,7 +209,7 @@ const searchModalCss = `
     width:600px;max-width:92vw;max-height:78vh;
     background:var(--elb-bg2, #0d1520);border:1px solid var(--elb-border, #1e3a5f);border-radius:8px;
     display:flex;flex-direction:column;box-shadow:0 30px 90px rgba(0,0,0,0.6);
-    z-index:2100;animation:srchPopIn 0.16s ease;
+    z-index:2100;animation:srchPopIn var(--elb-dur, 0.16s) ease;
     font-family:'Courier New',monospace;color:var(--elb-txt, #c8d6e5);text-align:left;
   }
   @keyframes srchPopIn{from{opacity:0;transform:translateX(-50%) scale(0.97) translateY(-6px);}to{opacity:1;transform:translateX(-50%) scale(1) translateY(0);}}
