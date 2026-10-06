@@ -18,10 +18,22 @@ function highlightMatch(text, query) {
   );
 }
 
+const PAGE_SIZE = 25;
+
+// Page numbers to show: first, last, and the current page with its neighbours;
+// "…" fills any gap between them.
+function pageNumbers(cur, total) {
+  const keep = [...new Set([0, total - 1, cur - 1, cur, cur + 1])]
+    .filter(p => p >= 0 && p < total)
+    .sort((a, b) => a - b);
+  return keep.flatMap((p, i) => (i && p - keep[i - 1] > 1 ? ["…", p] : [p]));
+}
+
 export default function SearchModal({ open, onClose, monthData, dutyLogEntries, onJumpTo }) {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef(null);
+  const listRef = useRef(null);
 
   useEffect(() => {
     if (open) {
@@ -107,6 +119,20 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
 
   useEffect(() => { setActiveIndex(0); }, [query]);
 
+  // The page follows the highlighted result, so arrow keys cross page boundaries.
+  const totalPages = Math.ceil(results.length / PAGE_SIZE);
+  const page = Math.floor(activeIndex / PAGE_SIZE);
+  const pageStart = page * PAGE_SIZE;
+
+  // Keeps focus in the search box so arrow keys keep working after a page click.
+  const goToPage = (p) => { setActiveIndex(p * PAGE_SIZE); inputRef.current?.focus(); };
+
+  // On a page change, bring the highlighted row into view (top after ↓ or a
+  // page click, bottom after ↑).
+  useEffect(() => {
+    listRef.current?.querySelector(".srch-result.focus")?.scrollIntoView({ block: "nearest" });
+  }, [page]);
+
   const handleSelect = (hit) => {
     onJumpTo(hit);
     onClose();
@@ -152,21 +178,24 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
         </div>
 
         {query.trim() && (
-          <div className="srch-meta">{results.length} result{results.length === 1 ? "" : "s"}</div>
+          <div className="srch-meta">
+            {results.length} result{results.length === 1 ? "" : "s"}
+            {totalPages > 1 && <> · showing {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, results.length)}</>}
+          </div>
         )}
 
-        <div className="srch-results">
+        <div className="srch-results" ref={listRef}>
           {!query.trim() && (
             <div className="srch-empty">Start typing to search every logged flight.</div>
           )}
           {query.trim() !== "" && results.length === 0 && (
             <div className="srch-empty">No flights match "{query.trim()}".</div>
           )}
-          {results.map((hit, i) => (
+          {results.slice(pageStart, pageStart + PAGE_SIZE).map((hit, n) => (
             <div
               key={`${hit.monthKey}-${hit.row.id}`}
-              className={"srch-result" + (i === activeIndex ? " focus" : "")}
-              onMouseEnter={() => setActiveIndex(i)}
+              className={"srch-result" + (pageStart + n === activeIndex ? " focus" : "")}
+              onMouseEnter={() => setActiveIndex(pageStart + n)}
               onClick={() => handleSelect(hit)}
             >
               <div className="srch-date">
@@ -191,10 +220,16 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
           ))}
         </div>
 
-        <footer className="srch-foot">
-          <span><span className="srch-kbd">↑</span><span className="srch-kbd">↓</span> navigate &nbsp; <span className="srch-kbd">↵</span> jump to flight</span>
-          {results.length > 0 && <span>{activeIndex + 1} / {results.length}</span>}
-        </footer>
+        {totalPages > 1 && (
+          <nav className="srch-pager" aria-label="Result pages">
+            <button className="srch-pg" disabled={page === 0} onClick={() => goToPage(page - 1)} aria-label="Previous page">‹</button>
+            {pageNumbers(page, totalPages).map((p, i) => p === "…"
+              ? <span key={`gap${i}`} className="srch-dots">…</span>
+              : <button key={p} className="srch-pg" aria-current={p === page ? "page" : undefined} onClick={() => goToPage(p)}>{p + 1}</button>
+            )}
+            <button className="srch-pg" disabled={page === totalPages - 1} onClick={() => goToPage(page + 1)} aria-label="Next page">›</button>
+          </nav>
+        )}
       </div>
     </>
   );
@@ -285,15 +320,24 @@ const searchModalCss = `
     border:1px solid rgba(79,195,247,0.3);
   }
 
-  .srch-foot{
-    padding:calc(10px * var(--fs)) calc(22px * var(--fs));border-top:1px solid var(--elb-border, #1e3a5f);
-    display:flex;justify-content:space-between;align-items:center;
-    font-size:calc(10px * var(--fs));color:var(--elb-txt-muted, #4a6a8a);letter-spacing:0.08em;flex-shrink:0;
+  .srch-pager{
+    flex-shrink:0;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;
+    padding:10px 12px;border-top:1px solid var(--elb-border, #1e3a5f);
   }
-  .srch-kbd{background:var(--elb-bg, #0a0d12);border:1px solid var(--elb-border, #1e3a5f);border-radius:3px;padding:1px 6px;font-size:calc(10px * var(--fs));color:var(--elb-txt-muted, #5a7a9a);margin:0 2px;}
+  .srch-pg{
+    min-width:30px;height:30px;padding:0 8px;display:grid;place-items:center;font-family:inherit;
+    font-size:calc(12px * var(--fs));background:transparent;color:var(--elb-txt-muted, #5a7a9a);
+    border:1px solid var(--elb-border, #1e3a5f);border-radius:4px;cursor:pointer;
+  }
+  .srch-pg:hover:not([disabled]):not([aria-current]){color:var(--elb-acc, #4fc3f7);border-color:var(--elb-acc, #4fc3f7);}
+  .srch-pg[aria-current="page"]{color:var(--elb-acc, #4fc3f7);border-color:var(--elb-acc, #4fc3f7);background:rgba(var(--cb-accent-rgb, 79,195,247),0.12);font-weight:700;}
+  .srch-pg[disabled]{opacity:0.35;cursor:default;}
+  .srch-dots{color:var(--elb-txt-muted, #4a6a8a);font-size:calc(12px * var(--fs));padding:0 2px;}
 
   @media (max-width: 560px){
     .srch-modal{width:94vw;top:6vh;}
     .srch-route{width:110px;}
+    .srch-tag{display:none;}
+    .srch-pg{min-width:28px;height:28px;padding:0 6px;}
   }
 `;

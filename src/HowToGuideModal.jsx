@@ -268,9 +268,6 @@ function SearchMockup() {
           </div>
         ))}
       </div>
-      <div style={{ padding: "8px 20px", borderTop: `1px solid ${BDR}`, fontSize: 9, color: DIM, fontFamily: F, letterSpacing: "0.08em" }}>
-        ↑ ↓ navigate &nbsp; ↵ jump to flight
-      </div>
     </div>
   );
 }
@@ -827,7 +824,8 @@ const SECTIONS = [
         <ul>
           <li>Tap <strong>🔍 Search</strong> in the toolbar</li>
           <li>Type an airport code, markings, captain, crew name, or remarks text — results update as you type, matched across every logged flight</li>
-          <li>Use <strong>↑ / ↓</strong> to move between results, <strong>Enter</strong> to jump straight to that flight's month, <strong>Esc</strong> to close</li>
+          <li>Results show 25 per page — use the page numbers under the list to move between pages</li>
+          <li>Use <strong>↑ / ↓</strong> to move between results (this also moves across pages), <strong>Enter</strong> to jump straight to that flight's month, <strong>Esc</strong> to close</li>
         </ul>
         <SearchMockup />
         <h4>Route Map</h4>
