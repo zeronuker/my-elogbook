@@ -104,9 +104,64 @@ function lerpColor(t) {
   return `rgb(${r},${g},${b})`;
 }
 
+// Draws every route as one smooth gradient stroke on its own canvas. Leaflet's
+// own polylines round each vertex to a whole pixel, which makes zoomed-out
+// routes (short on-screen segments) look squiggly; projecting here keeps
+// sub-pixel precision. The canvas is hidden during zoom animation and
+// redrawn at zoomend.
+const RouteLayer = L.Layer.extend({
+  initialize(routes) { this._routes = routes; },
+  onAdd(map) {
+    this._canvas = L.DomUtil.create("canvas", "", map.getPane("routesPane"));
+    this._canvas.style.pointerEvents = "none";
+    map.on("moveend zoomend resize", this._draw, this);
+    map.on("zoomstart", this._hide, this);
+    this._draw();
+  },
+  onRemove(map) {
+    map.off("moveend zoomend resize", this._draw, this);
+    map.off("zoomstart", this._hide, this);
+    L.DomUtil.remove(this._canvas);
+  },
+  _hide() { this._canvas.style.visibility = "hidden"; },
+  _draw() {
+    const map = this._map, canvas = this._canvas;
+    // Draw at 2x the device resolution; the browser downsamples it, which
+    // anti-aliases the diagonal edges far better than a 1:1 canvas can.
+    const size = map.getSize(), dpr = 2 * (window.devicePixelRatio || 1);
+    const origin = map.getPixelBounds().min, zoom = map.getZoom();
+    L.DomUtil.setPosition(canvas, map.containerPointToLayerPoint([0, 0]));
+    canvas.width = size.x * dpr;
+    canvas.height = size.y * dpr;
+    canvas.style.width = size.x + "px";
+    canvas.style.height = size.y + "px";
+    canvas.style.visibility = "visible";
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+    ctx.lineWidth = 2;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    this._routes.forEach(pts => {
+      const xy = pts.map(([lat, lon]) => map.project([lat, lon], zoom)._subtract(origin));
+      const a = xy[0], b = xy[xy.length - 1];
+      if (Math.hypot(b.x - a.x, b.y - a.y) < 1) {
+        ctx.strokeStyle = lerpColor(0.5);
+      } else {
+        const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+        g.addColorStop(0, lerpColor(0));
+        g.addColorStop(1, lerpColor(1));
+        ctx.strokeStyle = g;
+      }
+      ctx.beginPath();
+      xy.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+      ctx.stroke();
+    });
+  },
+});
+
 // Spherical interpolation between two lat/lon points — same slerp math used
 // for day/night route shading (ELogbook.jsx calcDayNightRoute).
-function greatCirclePoints(lat1, lon1, lat2, lon2, n = 64) {
+function greatCirclePoints(lat1, lon1, lat2, lon2, n = 256) {
   const toRad = d => d * Math.PI / 180;
   const toDeg = r => r * 180 / Math.PI;
   const φ1 = toRad(lat1), λ1 = toRad(lon1), φ2 = toRad(lat2), λ2 = toRad(lon2);
@@ -187,6 +242,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   const mapElRef = useRef(null);
   const mapRef = useRef(null);
   const baseLayerRef = useRef(null);
+  const routeLayerRef = useRef(null);
   const attributionRef = useRef(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -232,12 +288,15 @@ export default function RouteMapModal({ open, onClose, monthData }) {
     // live) so the basemap can never end up drawn on top of them, no
     // matter what order layers get added/swapped in.
     map.createPane("basePane").style.zIndex = 200;
+    // Routes sit above the basemap but below the airport markers (overlayPane, 400).
+    map.createPane("routesPane").style.zIndex = 350;
 
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
         baseLayerRef.current = null;
+        routeLayerRef.current = null;
         attributionRef.current = null;
       }
     };
@@ -283,10 +342,9 @@ export default function RouteMapModal({ open, onClose, monthData }) {
     const map = mapRef.current;
     if (!open || !map || !dateFrom || !dateTo) return;
 
+    if (routeLayerRef.current) { map.removeLayer(routeLayerRef.current); routeLayerRef.current = null; }
     map.eachLayer(layer => {
-      if ((layer instanceof L.Polyline && !(layer instanceof L.Polygon)) || layer instanceof L.CircleMarker) {
-        map.removeLayer(layer);
-      }
+      if (layer instanceof L.CircleMarker) map.removeLayer(layer);
     });
 
     const sectors = getSectorsInRange(monthData, dateFrom, dateTo);
@@ -305,14 +363,9 @@ export default function RouteMapModal({ open, onClose, monthData }) {
       airports.set(arrival, arr);
     });
 
-    routes.forEach(({ dep, arr }) => {
-      const pts = greatCirclePoints(dep.lat, dep.lon, arr.lat, arr.lon);
-      for (let i = 0; i < pts.length - 1; i++) {
-        L.polyline([pts[i], pts[i + 1]], {
-          color: lerpColor(i / (pts.length - 1)), weight: 2, opacity: 1, lineCap: "butt",
-        }).addTo(map);
-      }
-    });
+    routeLayerRef.current = new RouteLayer(
+      routes.map(({ dep, arr }) => greatCirclePoints(dep.lat, dep.lon, arr.lat, arr.lon))
+    ).addTo(map);
 
     airports.forEach((coord, icao) => {
       L.circleMarker([coord.lat, coord.lon], {
