@@ -124,8 +124,16 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
   const page = Math.floor(activeIndex / PAGE_SIZE);
   const pageStart = page * PAGE_SIZE;
 
-  // Keeps focus in the search box so arrow keys keep working after a page click.
-  const goToPage = (p) => { setActiveIndex(p * PAGE_SIZE); inputRef.current?.focus(); };
+  // Touch screens: blurring the search box hides the on-screen keyboard.
+  const isTouch = () => window.matchMedia?.("(pointer: coarse)").matches;
+  const hideKeyboard = () => { if (isTouch()) inputRef.current?.blur(); };
+
+  // Desktop keeps focus in the search box so arrow keys keep working after a
+  // page click; on touch that would reopen the keyboard, so hide it instead.
+  const goToPage = (p) => {
+    setActiveIndex(p * PAGE_SIZE);
+    if (isTouch()) inputRef.current?.blur(); else inputRef.current?.focus();
+  };
 
   // On a page change, bring the highlighted row into view (top after ↓ or a
   // page click, bottom after ↑).
@@ -141,7 +149,12 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
   const handleKeyDown = (e) => {
     if (e.key === "ArrowDown") { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, results.length - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)); }
-    else if (e.key === "Enter") { e.preventDefault(); if (results[activeIndex]) handleSelect(results[activeIndex]); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      // On touch, Return just hides the keyboard; tap a result to jump.
+      if (isTouch()) inputRef.current?.blur();
+      else if (results[activeIndex]) handleSelect(results[activeIndex]);
+    }
   };
 
   const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
@@ -173,7 +186,6 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
               onKeyDown={handleKeyDown}
               placeholder="Airport, markings, captain, crew, remarks…"
             />
-            <span className="srch-esc">ESC</span>
           </div>
         </div>
 
@@ -184,7 +196,7 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
           </div>
         )}
 
-        <div className="srch-results" ref={listRef}>
+        <div className="srch-results" ref={listRef} onTouchStart={hideKeyboard}>
           {!query.trim() && (
             <div className="srch-empty">Start typing to search every logged flight.</div>
           )}
@@ -281,10 +293,6 @@ const searchModalCss = `
   .srch-field input{
     all:unset;flex:1;color:var(--elb-txt, #e8f4fd);font-family:'Courier New',monospace;
     font-size:calc(14px * var(--fs));letter-spacing:0.03em;
-  }
-  .srch-esc{
-    font-size:calc(10px * var(--fs));color:var(--elb-txt-muted, #4a6a8a);border:1px solid var(--elb-border, #1e3a5f);
-    border-radius:3px;padding:2px 6px;letter-spacing:0.06em;flex-shrink:0;
   }
 
   .srch-meta{
