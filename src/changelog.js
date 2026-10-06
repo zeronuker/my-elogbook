@@ -416,7 +416,7 @@ export const CHANGELOG = [
     title: "Transition animations",
     notes: [
       "NEW: Switching between Logbook, Flight Summary and Limits & Recency now animates. Settings sub-tabs use the same transition.",
-      "NEW: Settings → Appearance → Animation lets you turn animations on or off, pick a style (Slide, Fade + rise or Cascade) and a speed (Normal, Slow or Slower).",
+      "NEW: Settings → Appearance → Animation lets you turn animations on or off, pick a style (Slide, Fade rise or Cascade) and a speed (Normal, Slow or Slower).",
       "IMP: Dialogs now open with a soft zoom, and the row detail panel follows the same speed. Turning animations off makes everything switch instantly.",
     ],
   },

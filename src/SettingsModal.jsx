@@ -750,7 +750,7 @@ function AppearanceTab({ d, upd }) {
               onChange={(v) => upd({ animStyle: v })}
               options={[
                 { value: "slide",   label: "Slide"   },
-                { value: "rise",    label: "Fade + rise" },
+                { value: "rise",    label: "Fade rise" },
                 { value: "stagger", label: "Cascade" },
               ]}
             />
