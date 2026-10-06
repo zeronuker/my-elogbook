@@ -396,12 +396,19 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v4.0", date: "September 2026", current: true,
+    v: "v4.0", date: "September 2026",
     title: "Duty Log link — repeated-route disambiguation",
     notes: [
       "FIX: Duty Log matching no longer misassigns crew/remarks when the same route is flown more than once in a single duty (e.g. a shuttle pattern) — the closest-matching sector by scheduled time (STD) is now chosen instead of always the first one found.",
       "NEW: When a Duty Log match can't be confirmed within 1 minute of STD, it's now flagged instead of silently trusted — an amber dot on the row number, plus an amber badge and a short warning line in the sector panel, prompt you to verify it.",
       "FIX: Logbook search's crew-name lookup had the same repeated-route ambiguity — now uses the same closest-match logic.",
+    ],
+  },
+  {
+    v: "v4.1", date: "October 2026", current: true,
+    title: "Disable auto-update setting",
+    notes: [
+      "NEW: Settings → Misc → App Update has a 'Disable auto-update' switch. When on, the app stops checking for new versions in the background and never shows the 15s auto-update toast; 'Check for updates' still works manually.",
     ],
   },
 ];
