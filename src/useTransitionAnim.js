@@ -1,5 +1,7 @@
 import { useState, useRef, useLayoutEffect } from "react";
 
+const ANIM_STYLES = ["slide", "rise", "stagger"];
+
 // Transition for a keyed panel (tab bodies). Put the returned className/style on
 // a wrapper with key={key}; the class is dropped after the animation so rows
 // added later don't replay it. `order` decides slide direction.
@@ -16,5 +18,5 @@ export function useTransitionAnim(key, order, animStyle) {
     const t = setTimeout(() => setOn(false), 1500);
     return () => clearTimeout(t);
   }, [key]);
-  return { className: on ? `elb-anim-${animStyle || "slide"}` : "", style: { "--dir": dir.current } };
+  return { className: on ? `elb-anim-${ANIM_STYLES.includes(animStyle) ? animStyle : "slide"}` : "", style: { "--dir": dir.current } };
 }

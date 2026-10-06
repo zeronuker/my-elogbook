@@ -70,7 +70,7 @@ body {
    --elb-dur in theme.js; 0ms when animations are off. ── */
 @media (prefers-reduced-motion: no-preference) {
   .elb-anim-slide   { animation: elb-slide var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1) both; }
-  .elb-anim-wipe    { animation: elb-wipe calc(var(--elb-dur, 260ms) * 1.6) cubic-bezier(.22,.8,.3,1) both; }
+  .elb-anim-rise    { animation: elb-rise var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1) both; }
   /* Cascade targets each tab's top-level sections (nth-child) and logbook table rows (inline --i).
      Delay caps at the 24th item so a long month still finishes quickly. */
   .elb-anim-stagger > * > :not(table), .elb-anim-stagger tbody > tr {
@@ -115,7 +115,6 @@ body {
   .elb-anim-stagger tbody > tr:nth-child(24) { --i: 23; }
 }
 @keyframes elb-slide { from { opacity: 0; transform: translateX(calc(var(--dir, 1) * 36px)); } to { opacity: 1; transform: none; } }
-@keyframes elb-wipe  { from { opacity: .4; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
 @keyframes elb-rise  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
 h1,

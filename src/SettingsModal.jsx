@@ -746,11 +746,11 @@ function AppearanceTab({ d, upd }) {
         <>
           <SmField label="Transition style" hint="How tab and settings pages appear. Dialogs always use a soft zoom.">
             <SmSegmented
-              value={d.animStyle || "slide"}
+              value={["slide", "rise", "stagger"].includes(d.animStyle) ? d.animStyle : "slide"}
               onChange={(v) => upd({ animStyle: v })}
               options={[
                 { value: "slide",   label: "Slide"   },
-                { value: "wipe",    label: "Wipe"    },
+                { value: "rise",    label: "Fade + rise" },
                 { value: "stagger", label: "Cascade" },
               ]}
             />
