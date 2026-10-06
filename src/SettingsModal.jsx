@@ -3,7 +3,6 @@ import GoogleSignInButton from "./GoogleSignInButton";
 import { CHANGELOG } from "./changelog";
 import Changelog from "@brand/Changelog";
 import { useTransitionAnim } from "./useTransitionAnim";
-import { ANIM_SPEED_MS } from "./logbookConstants";
 
 // ════════════════════════════════════════════════════════════════════
 //  ClaudeBorne · eLogbook — Settings Modal (v6 brand rewrite)
@@ -761,9 +760,9 @@ function AppearanceTab({ d, upd }) {
               value={d.animSpeed || "normal"}
               onChange={(v) => upd({ animSpeed: v })}
               options={[
-                { value: "normal", label: "Normal", note: `${ANIM_SPEED_MS.normal}ms` },
-                { value: "slow",   label: "Slow",   note: `${ANIM_SPEED_MS.slow}ms`   },
-                { value: "slower", label: "Slower", note: `${ANIM_SPEED_MS.slower}ms` },
+                { value: "normal", label: "Normal" },
+                { value: "slow",   label: "Slow"   },
+                { value: "slower", label: "Slower" },
               ]}
             />
           </SmField>
