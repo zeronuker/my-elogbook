@@ -1785,6 +1785,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         open={routeMapOpen}
         onClose={() => setRouteMapOpen(false)}
         monthData={data}
+        theme={(previewSettings || settings).theme}
       />
 
       {/* ── FEEDBACK MODAL ── */}

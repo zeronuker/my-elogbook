@@ -6,27 +6,33 @@ import { feature } from "topojson-client";
 import landTopology from "world-atlas/land-110m.json";
 import { getCoords } from "./airportCoords";
 
+// Modal chrome follows the app theme variables (dark fallbacks match the old values).
 const THEME = {
-  bg: "#0a0d12",
-  bgInput: "#0b1828",
-  accent: "#4fc3f7",
-  border: "#1e3a5f",
-  text: "#ffffff",
-  textMuted: "#b8d6e5",
+  bg: "var(--elb-bg, #0a0d12)",
+  bgInput: "var(--elb-bginput, #0b1828)",
+  border: "var(--elb-border, #1e3a5f)",
+  text: "var(--elb-txt, #ffffff)",
+  textMuted: "var(--elb-txt-muted, #b8d6e5)",
 };
 
 const MINT = "#3FE0C5";
+const MINT_LIGHT = "#0b8a78";  // readable on white
 const FONT_DISPLAY = "'Tourney', system-ui, sans-serif";
 
-const MAP_OCEAN = "#060a10";
-const MAP_LAND_FILL = "#16263b";
-const MAP_LAND_STROKE = "#2a4a6a";
+// Map-area colors the CSS variables can't reach (vector basemap, canvas, markers).
+const MAP_COLORS = {
+  dark:  { ocean: "#060a10", landFill: "#16263b", landStroke: "#2a4a6a", dotRing: "#3FE0C5" },
+  light: { ocean: "#d6dde3", landFill: "#f3f4f6", landStroke: "#b9c3cf", dotRing: "#0b6b5d" },
+};
 const ROUTE_COLOR_DEP = [236, 72, 153];  // #ec4899 magenta — departure end
-const ROUTE_COLOR_ARR = [250, 204, 21];  // #facc15 yellow — arrival end
+const ROUTE_COLOR_ARR = { dark: [250, 204, 21], light: [245, 158, 11] };  // yellow / amber (yellow washes out on light maps)
 
 const BASEMAPS = {
   carto:  { label: "CARTO DARK", type: "tile",
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_3i3x_1_c753f0b8edbf6bd3a0226da6",
+    subdomains: "abcd", maxZoom: 19, attribution: "© OpenStreetMap, © CARTO" },
+  cartoLight: { label: "CARTO LIGHT", type: "tile",
+    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_3i3x_1_c753f0b8edbf6bd3a0226da6",
     subdomains: "abcd", maxZoom: 19, attribution: "© OpenStreetMap, © CARTO" },
   cartoVector: { label: "CARTO VECTOR", type: "maplibre",
     styleUrl: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
@@ -97,10 +103,10 @@ function unwrapAntimeridian(geojson) {
   return geojson;
 }
 
-function lerpColor(t) {
-  const r = Math.round(ROUTE_COLOR_DEP[0] + (ROUTE_COLOR_ARR[0] - ROUTE_COLOR_DEP[0]) * t);
-  const g = Math.round(ROUTE_COLOR_DEP[1] + (ROUTE_COLOR_ARR[1] - ROUTE_COLOR_DEP[1]) * t);
-  const b = Math.round(ROUTE_COLOR_DEP[2] + (ROUTE_COLOR_ARR[2] - ROUTE_COLOR_DEP[2]) * t);
+function lerpColor(t, arr) {
+  const r = Math.round(ROUTE_COLOR_DEP[0] + (arr[0] - ROUTE_COLOR_DEP[0]) * t);
+  const g = Math.round(ROUTE_COLOR_DEP[1] + (arr[1] - ROUTE_COLOR_DEP[1]) * t);
+  const b = Math.round(ROUTE_COLOR_DEP[2] + (arr[2] - ROUTE_COLOR_DEP[2]) * t);
   return `rgb(${r},${g},${b})`;
 }
 
@@ -110,7 +116,7 @@ function lerpColor(t) {
 // sub-pixel precision. The canvas is hidden during zoom animation and
 // redrawn at zoomend.
 const RouteLayer = L.Layer.extend({
-  initialize(routes) { this._routes = routes; },
+  initialize(routes, arrColor) { this._routes = routes; this._arr = arrColor; },
   onAdd(map) {
     this._canvas = L.DomUtil.create("canvas", "", map.getPane("routesPane"));
     this._canvas.style.pointerEvents = "none";
@@ -145,11 +151,11 @@ const RouteLayer = L.Layer.extend({
       const xy = pts.map(([lat, lon]) => map.project([lat, lon], zoom)._subtract(origin));
       const a = xy[0], b = xy[xy.length - 1];
       if (Math.hypot(b.x - a.x, b.y - a.y) < 1) {
-        ctx.strokeStyle = lerpColor(0.5);
+        ctx.strokeStyle = lerpColor(0.5, this._arr);
       } else {
         const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-        g.addColorStop(0, lerpColor(0));
-        g.addColorStop(1, lerpColor(1));
+        g.addColorStop(0, lerpColor(0, this._arr));
+        g.addColorStop(1, lerpColor(1, this._arr));
         ctx.strokeStyle = g;
       }
       ctx.beginPath();
@@ -238,7 +244,10 @@ function getEarliestDate(monthData) {
   return earliest ? earliest.toISOString().split("T")[0] : null;
 }
 
-export default function RouteMapModal({ open, onClose, monthData }) {
+export default function RouteMapModal({ open, onClose, monthData, theme = "dark" }) {
+  const isLight = theme === "light";
+  const mapColors = MAP_COLORS[isLight ? "light" : "dark"];
+  const accent = isLight ? MINT_LIGHT : MINT;
   const mapElRef = useRef(null);
   const mapRef = useRef(null);
   const baseLayerRef = useRef(null);
@@ -246,7 +255,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
   const attributionRef = useRef(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [basemap, setBasemap] = useState("carto");
+  const [basemap, setBasemap] = useState(isLight ? "cartoLight" : "carto");
   const [exportFormat, setExportFormat] = useState("png");
   const [exporting, setExporting] = useState(false);
   const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 520px)").matches);
@@ -257,6 +266,9 @@ export default function RouteMapModal({ open, onClose, monthData }) {
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
+
+  // Switching theme resets the map to that theme's default basemap.
+  useEffect(() => { setBasemap(isLight ? "cartoLight" : "carto"); }, [isLight]);
 
   useEffect(() => {
     if (open) {
@@ -317,7 +329,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
       const land = unwrapAntimeridian(feature(landTopology, landTopology.objects.land));
       baseLayerRef.current = L.geoJSON(land, {
         pane: "basePane",
-        style: { fillColor: MAP_LAND_FILL, fillOpacity: 1, color: MAP_LAND_STROKE, weight: 0.6 },
+        style: { fillColor: mapColors.landFill, fillOpacity: 1, color: mapColors.landStroke, weight: 0.6 },
       }).addTo(map);
     } else if (cfg.type === "maplibre") {
       let cancelled = false;
@@ -335,7 +347,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
       attributionRef.current = L.control.attribution({ prefix: false }).addTo(map);
       attributionRef.current.addAttribution(cfg.attribution);
     }
-  }, [open, basemap]);
+  }, [open, basemap, isLight]);
 
   // Redraw routes/markers whenever the date range or data changes
   useEffect(() => {
@@ -364,18 +376,19 @@ export default function RouteMapModal({ open, onClose, monthData }) {
     });
 
     routeLayerRef.current = new RouteLayer(
-      routes.map(({ dep, arr }) => greatCirclePoints(dep.lat, dep.lon, arr.lat, arr.lon))
+      routes.map(({ dep, arr }) => greatCirclePoints(dep.lat, dep.lon, arr.lat, arr.lon)),
+      ROUTE_COLOR_ARR[isLight ? "light" : "dark"]
     ).addTo(map);
 
     airports.forEach((coord, icao) => {
       L.circleMarker([coord.lat, coord.lon], {
-        radius: 4, color: "#3FE0C5", fillColor: "#3FE0C5", fillOpacity: 1, weight: 1,
+        radius: 4, color: mapColors.dotRing, fillColor: MINT, fillOpacity: 1, weight: 1,
       }).bindTooltip(icao).addTo(map);
     });
 
     const allPts = routes.flatMap(r => [[r.dep.lat, r.dep.lon], [r.arr.lat, r.arr.lon]]);
     if (allPts.length) map.fitBounds(allPts, { padding: [30, 30] });
-  }, [open, dateFrom, dateTo, monthData]);
+  }, [open, dateFrom, dateTo, monthData, isLight]);
 
   if (!open) return null;
 
@@ -404,6 +417,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
         background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 0, boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
         width: "min(920px, 92vw)", height: "min(660px, 88vh)",
         display: "flex", flexDirection: "column", fontFamily: "'Courier New', monospace", overflow: "hidden",
+        colorScheme: isLight ? "light" : "dark",
         animation: "popIn var(--elb-dur, 0.15s) ease",
       }}>
         <div style={{
@@ -411,13 +425,13 @@ export default function RouteMapModal({ open, onClose, monthData }) {
           borderBottom: `1px solid ${THEME.border}`, background: "linear-gradient(180deg, rgba(63,224,197,0.04), transparent)",
         }}>
           <div>
-            <div style={{ color: MINT, fontSize: 10, letterSpacing: "0.2em", marginBottom: 4, textTransform: "uppercase" }}>// route map</div>
+            <div style={{ color: accent, fontSize: 10, letterSpacing: "0.2em", marginBottom: 4, textTransform: "uppercase" }}>// route map</div>
             <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 17, letterSpacing: "0.03em", color: THEME.text }}>Route map</div>
           </div>
           <button
             onClick={onClose}
             style={{ background: "transparent", border: `1px solid ${THEME.border}`, color: THEME.textMuted, cursor: "pointer", width: 28, height: 28, fontSize: 16, lineHeight: 1, transition: "color 0.12s, border-color 0.12s" }}
-            onMouseEnter={e => { e.currentTarget.style.color = MINT; e.currentTarget.style.borderColor = MINT; }}
+            onMouseEnter={e => { e.currentTarget.style.color = accent; e.currentTarget.style.borderColor = accent; }}
             onMouseLeave={e => { e.currentTarget.style.color = THEME.textMuted; e.currentTarget.style.borderColor = THEME.border; }}
           >×</button>
         </div>
@@ -458,7 +472,7 @@ export default function RouteMapModal({ open, onClose, monthData }) {
           </div>
         </div>
 
-        <div ref={mapElRef} style={{ flex: 1, background: MAP_OCEAN }} />
+        <div ref={mapElRef} style={{ flex: 1, background: mapColors.ocean }} />
       </div>
     </div>
   );
@@ -469,7 +483,7 @@ const fieldRowStyle = isNarrow => isNarrow
   : { display: "flex", alignItems: "center", gap: 6 };
 
 const labelStyle = isNarrow => ({
-  color: "#b8d6e5", fontSize: 11, width: isNarrow ? 36 : "auto", flexShrink: 0,
+  color: THEME.textMuted, fontSize: 11, width: isNarrow ? 36 : "auto", flexShrink: 0,
 });
 
 const inputStyle = {
