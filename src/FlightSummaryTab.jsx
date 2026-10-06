@@ -232,7 +232,7 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
       {/* ── GRAND TOTAL HOURS IN PERIOD ── */}
       <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid var(--elb-bdr3, #0f1820)" }}>
         <div style={{ fontSize: 13, letterSpacing: "0.15em", color: "#4fc3f7", marginBottom: 14 }}>
-          GRAND TOTAL HOURS IN PERIOD :
+          GRAND TOTAL HOURS
         </div>
 
         <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
