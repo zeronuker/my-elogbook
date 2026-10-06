@@ -1709,6 +1709,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         checkingUpdate={update.checkingUpdate}
         updateChecked={update.updateChecked}
         currentBuildVersion={update.current.version}
+        autoUpdateDisabled={update.autoUpdateDisabled}
+        setAutoUpdateDisabled={update.setAutoUpdateDisabled}
       />
 
       {/* ── BRANDED CONFIRM DIALOG (replaces window.confirm) ── */}

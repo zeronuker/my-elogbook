@@ -132,7 +132,7 @@ const TAB_DEFAULTS = {
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
-export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion, initialTab, dutyLogStatus }) {
+export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion, autoUpdateDisabled, setAutoUpdateDisabled, initialTab, dutyLogStatus }) {
   const [tab, setTab]               = useState(initialTab || "profile");
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -226,7 +226,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} onReauthAndDeleteGoogle={onReauthAndDeleteGoogle} onReauthAndDeleteGooglePopup={onReauthAndDeleteGooglePopup} userProvider={userProvider} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} dutyLogStatus={dutyLogStatus} />}
-          {tab === "misc"        && <MiscTab onFeedback={onFeedback} onGuide={onGuide} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} currentBuildVersion={currentBuildVersion} />}
+          {tab === "misc"        && <MiscTab onFeedback={onFeedback} onGuide={onGuide} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} currentBuildVersion={currentBuildVersion} autoUpdateDisabled={autoUpdateDisabled} setAutoUpdateDisabled={setAutoUpdateDisabled} />}
         </div>
 
         {/* ── FOOT ── */}
@@ -852,7 +852,7 @@ const MISC_CARDS = [
   },
 ];
 
-function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion }) {
+function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion, autoUpdateDisabled, setAutoUpdateDisabled }) {
   return (
     <div className="sm-tab-content">
 
@@ -911,6 +911,10 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
           <span style={{ fontSize: 11, color: 'var(--elb-acc)', letterSpacing: '0.06em' }}>NEW VERSION AVAILABLE</span>
         )}
       </div>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, letterSpacing: '0.06em', color: 'var(--elb-txt-muted, #7c87a3)', padding: '0 0 16px', cursor: 'pointer' }}>
+        <input type="checkbox" checked={autoUpdateDisabled} onChange={(e) => setAutoUpdateDisabled(e.target.checked)} />
+        DISABLE AUTO-UPDATE
+      </label>
 
       <SmSectionHead title="Changelog" hint="// version history" />
       <Changelog changelog={CHANGELOG} />
