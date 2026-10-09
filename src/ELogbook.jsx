@@ -1318,8 +1318,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       <div className="elb-topbar" style={{
         background: "var(--cb-surface-0, #0a1020)",
         borderBottom: "1px solid rgba(255,255,255,0.07)",
-        height: 60,
-        paddingTop: "env(safe-area-inset-top, 0px)",
+        height: "calc(60px + var(--ios-edge, 0px))",
+        paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ios-edge, 0px))",
         display: "flex",
         alignItems: "center",
         flexShrink: 0,
