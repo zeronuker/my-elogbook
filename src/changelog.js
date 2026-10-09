@@ -418,6 +418,8 @@ export const CHANGELOG = [
       "NEW: Switching between Logbook, Flight Summary and Limits & Recency now animates. Settings sub-tabs use the same transition.",
       "NEW: Settings → Appearance → Animation lets you turn animations on or off, pick a style (Slide, Fade rise or Cascade) and a speed (Normal, Slow or Slower).",
       "IMP: Dialogs now open with a soft zoom, and the row detail panel follows the same speed. Turning animations off makes everything switch instantly.",
+      "FIX: iPadOS 27 drew a blur over the top of the installed app (a system effect, not an app element). Removed the Apple web-app tags and the viewport-fit=cover setting, and added a permanent top-edge strip in the top bar's colour; the status bar now blends into the top bar. Remove the Home Screen icon and add it again once to take effect.",
+      "FIX: On iPad in landscape, the installed app stopped short of the screen edges and left an empty strip on each side; it now fills the full width.",
     ],
   },
 ];
