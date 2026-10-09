@@ -179,3 +179,9 @@ code {
     z-index: 99999;
   }
 }
+
+/* Installed app on touch devices (iPad landscape): fill the screen instead of
+   stopping at the ~1126px table-fit width, which left empty strips on both sides. */
+@media (display-mode: standalone) and (pointer: coarse) {
+  #root { width: 100%; }
+}
