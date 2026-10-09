@@ -6,7 +6,7 @@ A free, web-based pilot logbook for commercial airline pilots. Log flights, auto
 [![PWA](https://img.shields.io/badge/installable-PWA-38bdf8?style=flat-square)](#sync--offline)
 [![Cost](https://img.shields.io/badge/cost-free%2C%20no%20subscription-22c55e?style=flat-square)](#)
 
-**Current version:** v3.10  
+**Current version:** v4.2  
 **Live app:** [claudeborne.my](https://www.claudeborne.my/)
 
 ![ClaudeBorne eLogbook — monthly logbook view with auto-calculated day/night hours](docs/screenshot-logbook.webp)
