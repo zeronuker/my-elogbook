@@ -3,6 +3,7 @@ import { db } from "./firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { CHANGELOG } from "./changelog";
 import { currentVersion } from "@brand/Changelog";
+import { useExitAnim } from "./useExitAnim";
 
 // ════════════════════════════════════════════════════════════════════
 //  FeedbackModal — in-app bug report / feature request → Firestore
@@ -56,9 +57,7 @@ const css = `
     display: flex; flex-direction: column;
     box-shadow: 0 30px 80px rgba(0,0,0,0.5);
     max-height: 90vh;
-    animation: fbPopIn var(--elb-dur, 0.18s) ease;
   }
-  @keyframes fbPopIn { from { opacity: 0; transform: scale(0.96) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
   .fb-head {
     padding: 14px 22px;
     border-bottom: 1px solid var(--elb-border, #1a3050);
@@ -201,9 +200,14 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
   const [submitted, setSubmitted] = useState(false);
   const [error, setError]         = useState("");
 
-  // Reset state when modal opens
-  const handleOpen = (prevOpen) => {
-    if (!prevOpen && open) {
+  const { mounted, closing } = useExitAnim(open);
+
+  // Reset the form each time the modal opens. Done on open (not on close) so
+  // the form doesn't visibly clear while the exit animation is still playing.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
       setType(initialType);
       setDesc("");
       setSteps("");
@@ -211,27 +215,12 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
       setSubmitted(false);
       setError("");
     }
-  };
-
-  // Sync type when initialType changes (bug vs feature)
-  // and reset form on open
-  if (!open) {
-    // Reset on next open by returning early
-    if (submitted || submitting || description || steps || error) {
-      // Will reset via useEffect equivalent — handled below
-    }
-    return null;
   }
 
-  const handleClose = () => {
-    setType(initialType);
-    setDesc("");
-    setSteps("");
-    setSubmitting(false);
-    setSubmitted(false);
-    setError("");
-    onClose();
-  };
+  if (!mounted) return null;
+
+  const exitCls = closing ? " elb-closing" : "";
+  const handleClose = onClose;
 
   const handleSubmit = async () => {
     if (!description.trim()) return;
@@ -283,8 +272,8 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
   return (
     <>
       <style>{css}</style>
-      <div className="fb-backdrop" onClick={handleClose}>
-        <div className="fb-modal" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+      <div className={"fb-backdrop elb-fade" + exitCls} onClick={handleClose}>
+        <div className={"fb-modal elb-pop" + exitCls} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
 
           {/* HEAD */}
           <header className="fb-head">

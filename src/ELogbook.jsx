@@ -24,8 +24,10 @@ import {
 import { ToolbarSyncChip, TabLogbookIcon, TabSummaryIcon, TabLimitsIcon } from "./ELogbookIcons";
 import { makeThemeCss } from "./theme";
 import { useTransitionAnim } from "./useTransitionAnim";
+import { useExitAnim } from "./useExitAnim";
 
 const TAB_IDS = ["logbook", "summary", "ftl"];
+const closingCls = (exit) => (exit.closing ? " elb-closing" : "");
 import FlightSummaryTab from "./FlightSummaryTab";
 import LogbookTab from "./LogbookTab";
 import LimitsRecencyTab from "./LimitsRecencyTab";
@@ -91,6 +93,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // Branded confirmation modal (replaces window.confirm)
   const [confirmDialog, setConfirmDialog] = useState(null); // { title, body, resolve }
   const confirmResolveRef = useRef(null);
+
+  // Exit animations for the inline dialogs below — each keeps its dialog
+  // mounted (with the last payload) while the close animation plays.
+  const popupExit = useExitAnim(!!activePopup, activePopup);
+  const saveErrorExit = useExitAnim(saveStatus === "error", saveError);
+  const confirmExit = useExitAnim(!!confirmDialog, confirmDialog);
+  const syncConflictExit = useExitAnim(!!syncConflict, syncConflict);
 
   // Show a branded confirm dialog; returns Promise<boolean>
   const showConfirm = (title, body) => new Promise(resolve => {
@@ -1245,7 +1254,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         @keyframes spin      { from { transform: rotate(0deg);   } to { transform: rotate(360deg); } }
         @keyframes fadeIn    { from { opacity: 0;                } to { opacity: 1;                } }
         @keyframes blink     { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-        @keyframes popIn     { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
         @keyframes cb-pulse  { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.75); } }
         @keyframes row-pulse { 0%, 100% { background-color: transparent; }
                                 15%, 55% { background-color: rgba(79,195,247,0.5); }
@@ -1546,11 +1554,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       </div>
 
       {/* ── REGULATORY REFERENCE POPUP ── */}
-      {activePopup && (() => {
-        const p = FTL_POPUPS[activePopup];
+      {popupExit.mounted && (() => {
+        const p = FTL_POPUPS[popupExit.payload];
         if (!p) return null;
         return (
           <div
+            className={"elb-fade" + closingCls(popupExit)}
             onClick={e => { if (e.target === e.currentTarget) setActivePopup(null); }}
             style={{
               position: "fixed", inset: 0,
@@ -1560,7 +1569,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               padding: 20,
             }}
           >
-            <div style={{
+            <div className={"elb-pop" + closingCls(popupExit)} style={{
               background: "var(--cb-surface-1, #141a2e)",
               border: "1px solid var(--cb-line-2, #1e3a5f)",
               borderTop: "2px solid var(--cb-accent, #4fc3f7)",
@@ -1568,7 +1577,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               padding: "20px 22px 18px",
               maxWidth: 480, width: "100%",
               boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
-              animation: "popIn var(--elb-dur, 0.15s) ease",
               fontFamily: "var(--elb-font, 'Courier New', monospace)",
             }}>
               {/* Header */}
@@ -1614,8 +1622,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       })()}
 
       {/* ── AUTOSAVE ERROR MODAL ── */}
-      {saveStatus === "error" && (
+      {saveErrorExit.mounted && (
         <div
+          className={"elb-fade" + closingCls(saveErrorExit)}
           onClick={e => { if (e.target === e.currentTarget) { setSaveStatus("idle"); setSaveError(""); } }}
           style={{
             position: "fixed", inset: 0,
@@ -1625,7 +1634,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             padding: 20,
           }}
         >
-          <div style={{
+          <div className={"elb-pop" + closingCls(saveErrorExit)} style={{
             background: "var(--cb-surface-1, #141a2e)",
             border: "1px solid rgba(239,68,68,0.3)",
             borderTop: "2px solid #ef4444",
@@ -1633,7 +1642,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             padding: "20px 22px 18px",
             maxWidth: 420, width: "100%",
             boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
-            animation: "popIn var(--elb-dur, 0.15s) ease",
             fontFamily: "var(--elb-font, 'Courier New', monospace)",
           }}>
             {/* Header */}
@@ -1658,9 +1666,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             {/* Message */}
             <div style={{ fontSize: 13, color: "var(--cb-ink-2, #b8c0d4)", lineHeight: 1.7, marginBottom: 14 }}>
               Could not save to the cloud. Your local changes are preserved — use Retry to try again.
-              {saveError && (
+              {saveErrorExit.payload && (
                 <div style={{ marginTop: 8, fontSize: 11, color: "var(--cb-ink-dim, #7c87a3)", fontFamily: "var(--elb-font, 'Courier New', monospace)", letterSpacing: "0.05em" }}>
-                  {saveError}
+                  {saveErrorExit.payload}
                 </div>
               )}
             </div>
@@ -1720,27 +1728,26 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       />
 
       {/* ── BRANDED CONFIRM DIALOG (replaces window.confirm) ── */}
-      {confirmDialog && (
-        <div style={{
+      {confirmExit.mounted && (
+        <div className={"elb-fade" + closingCls(confirmExit)} style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 3000,
           display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
           fontFamily: "var(--elb-font, 'Courier New', monospace)",
         }}>
-          <div style={{
+          <div className={"elb-pop" + closingCls(confirmExit)} style={{
             background: "var(--elb-bg2, #141a2e)", border: "1px solid var(--elb-border, #1a3050)",
             borderTop: "2px solid var(--elb-acc, #3FE0C5)", borderRadius: 4,
             width: "100%", maxWidth: 420, padding: "24px 24px 20px",
             boxShadow: "0 20px 60px rgba(0,0,0,0.85)",
-            animation: "popIn var(--elb-dur, 0.15s) ease",
           }}>
             <div style={{ fontSize: "var(--elb-th-sz)", letterSpacing: "0.1em", color: "var(--elb-acc, #3FE0C5)", marginBottom: 8 }}>
               CONFIRM ACTION
             </div>
             <div style={{ fontSize: "var(--elb-td-sz)", fontWeight: 700, color: "var(--elb-txt, #e8ecf5)", marginBottom: 12, letterSpacing: "0.04em" }}>
-              {confirmDialog.title}
+              {confirmExit.payload?.title}
             </div>
             <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #b8c0d4)", lineHeight: 1.7, marginBottom: 20 }}>
-              {confirmDialog.body}
+              {confirmExit.payload?.body}
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button onClick={handleConfirmNo} style={{
@@ -1807,18 +1814,17 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       {/* Shown when Firestore has newer data than this device's last sync. Fully blocking by
           design — no dismiss, no click-outside, no Escape — a wrong guess here loses real data,
           so unlike the update toast there's no safe default/countdown; the user must choose. */}
-      {syncConflict && (
-        <div style={{
+      {syncConflictExit.mounted && (
+        <div className={"elb-fade" + closingCls(syncConflictExit)} style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(3px)", zIndex: 4000,
           display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
         }}>
-          <div style={{
+          <div className={"elb-pop" + closingCls(syncConflictExit)} style={{
             width: "min(360px, 100%)",
             background: "var(--cb-surface-1, #141a2e)",
             border: "1px solid rgba(245,197,66,0.3)",
             borderRadius: 10, padding: "18px 18px 16px",
             boxShadow: "0 20px 56px rgba(0,0,0,0.55)",
-            animation: "popIn var(--elb-dur, 0.15s) ease",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <span style={{
@@ -1865,8 +1871,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               borderTop: "1px solid rgba(255,255,255,0.07)",
             }}>
               <span>LOCAL SYNCED · {lastSyncTime || "—"}</span>
-              <span>CLOUD UPDATED · {syncConflict.cloudData?.updatedAt
-                ? new Date(syncConflict.cloudData.updatedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + " · " + new Date(syncConflict.cloudData.updatedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+              <span>CLOUD UPDATED · {syncConflictExit.payload?.cloudData?.updatedAt
+                ? new Date(syncConflictExit.payload.cloudData.updatedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + " · " + new Date(syncConflictExit.payload.cloudData.updatedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
                 : "—"}</span>
             </div>
           </div>
