@@ -100,5 +100,8 @@ export function makeThemeCss(settings = {}) {
       --elb-dur:${animOn ? animMs : 0}ms;
       --elb-stagger:${animOn ? 45 : 0}ms;
     }
+    ${animOn ? "" : `
+    /* Animations off: hover/focus transitions go instant too (the Leaflet map keeps its own) */
+    *:not(.leaflet-container):not(.leaflet-container *) { transition-duration: 0ms !important; }`}
   `;
 }

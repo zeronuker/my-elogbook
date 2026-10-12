@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 // How long the exit animation runs. Reads the live --elb-dur (0ms when
 // animations are off in Settings) so close timing always matches the CSS.
-function exitMs() {
+export function exitMs() {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
   const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--elb-dur"));
   return Number.isNaN(v) ? 150 : v;

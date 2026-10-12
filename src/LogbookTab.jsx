@@ -8,6 +8,7 @@ import {
   CREW_RANK_ORDER, COLUMN_SCALE, timeCols,
   thStyle, thSubStyle, tdStyle,
 } from "./logbookConstants";
+import { exitMs } from "./useExitAnim";
 
 const crewRankIndex = (position) => {
   const i = CREW_RANK_ORDER.indexOf((position || "").toUpperCase());
@@ -26,12 +27,21 @@ export default function LogbookTab({
   editingCell, setEditingCell,
   expandedRowIdx, setExpandedRowIdx,
   confirmDeleteRowIdx, setConfirmDeleteRowIdx,
-  pulseRowId, setActivePopup,
+  pulseRowId, newRowId, setActivePopup,
   updateCell, deleteRow, addSector, findDutyLogMatch,
 }) {
   const [revealedAutoCols, setRevealedAutoCols] = useState(() => new Set());
   const [openedRowIds, setOpenedRowIds] = useState(() => new Set());
   const [confirmedLongFlights, setConfirmedLongFlights] = useState(() => new Set());
+  const [leavingRowId, setLeavingRowId] = useState(null); // row playing its exit animation before it's deleted
+
+  // Plays the row's exit animation, then deletes it. `deleteRow` is the instance from this
+  // render, so it still targets this month even if the user navigates during the animation.
+  const removeRow = (rowIdx, rowId) => {
+    if (leavingRowId != null) return;
+    setLeavingRowId(rowId);
+    setTimeout(() => { deleteRow(rowIdx); setLeavingRowId(null); }, exitMs());
+  };
 
   const monthKey = `${selectedMonth}-${selectedYear}`;
 
@@ -298,6 +308,7 @@ export default function LogbookTab({
             return (
               <Fragment key={`${monthKey}-${row.id}`}>
               <tr
+                className={leavingRowId === row.id ? "elb-row-out" : newRowId === row.id ? "elb-row-in" : undefined}
                 title={rowTitle}
                 data-search-row={row.id}
                 style={{
@@ -712,7 +723,7 @@ export default function LogbookTab({
                                         style={{ fontFamily: "'Courier New',monospace", fontSize: 10.5, padding: "5px 9px", borderRadius: 3, cursor: "pointer", background: "transparent", border: "1px solid var(--elb-bdr, #1e3a5f)", color: "#7c87a3" }}
                                       >Cancel</button>
                                       <button
-                                        onClick={() => { deleteRow(rowIdx); setConfirmDeleteRowIdx(null); setExpandedRowIdx(null); }}
+                                        onClick={() => { removeRow(rowIdx, row.id); setConfirmDeleteRowIdx(null); setExpandedRowIdx(null); }}
                                         style={{ fontFamily: "'Courier New',monospace", fontSize: 10.5, padding: "5px 9px", borderRadius: 3, cursor: "pointer", background: "#ef4444", border: "1px solid #ef4444", color: "#fff", fontWeight: 700 }}
                                       >Delete</button>
                                     </div>
@@ -722,7 +733,7 @@ export default function LogbookTab({
                                     <button
                                       onClick={() => {
                                         if (rowHasData(row)) setConfirmDeleteRowIdx(rowIdx);
-                                        else { deleteRow(rowIdx); setExpandedRowIdx(null); }
+                                        else { removeRow(rowIdx, row.id); setExpandedRowIdx(null); }
                                       }}
                                       style={{
                                         background: "transparent", border: "1px solid rgba(239,68,68,0.4)", color: "#ef4444",

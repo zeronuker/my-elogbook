@@ -27,6 +27,8 @@ import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";
 
 const TAB_IDS = ["logbook", "summary", "ftl"];
+// Chronological order of every month key — lets the month transition slide forward/back.
+const MONTH_KEYS = YEARS.flatMap(y => Array.from({ length: 12 }, (_, m) => `${m}-${y}`));
 const closingCls = (exit) => (exit.closing ? " elb-closing" : "");
 import FlightSummaryTab from "./FlightSummaryTab";
 import LogbookTab from "./LogbookTab";
@@ -77,6 +79,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [pulseRowId, setPulseRowId] = useState(null); // briefly highlights a row after a search jump
+  const [newRowId, setNewRowId] = useState(null); // row just added via "+ add sector" — plays its enter animation
   const pulseTimerRef = useRef(null);
   const [routeMapOpen, setRouteMapOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -847,6 +850,17 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // time. Each one already no-ops safely before login (empty pulseRowId,
   // no #root table yet), so hoisting them here changes nothing behaviorally.
   const monthKey = `${selectedMonth}-${selectedYear}`;
+  // Re-runs the tab transition when stepping between months on the logbook tab.
+  const monthAnim = useTransitionAnim(monthKey, MONTH_KEYS, (previewSettings || settings).animStyle);
+  // Tab switches play the tab transition; month steps within the logbook play the month one.
+  const contentAnim = activeTab === "logbook" && !tabAnim.className ? monthAnim : tabAnim;
+
+  // The new row's enter animation only needs to play once, on mount.
+  useEffect(() => {
+    if (newRowId == null) return;
+    const t = setTimeout(() => setNewRowId(null), 1000);
+    return () => clearTimeout(t);
+  }, [newRowId]);
 
   // Scrolls the pulsing row into view once its month has rendered.
   useEffect(() => {
@@ -965,6 +979,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   };
 
   const addSector = () => {
+    // Same id the updater below assigns — recomputed here only to flag the row for its enter animation.
+    setNewRowId(Math.max(0, ...(data[monthKey] || makeMonthRows(selectedMonth, selectedYear)).map(r => r.id)) + 1);
     setData(prev => {
       const current = prev[monthKey] || makeMonthRows(selectedMonth, selectedYear);
       // Always strictly higher than any existing id — current.length + 1 alone
@@ -1506,7 +1522,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
       {/* ── CONTENT ── */}
       <div style={{ padding: "18px 24px" }}>
-        <div key={activeTab} className={tabAnim.className} style={tabAnim.style}>
+        <div key={activeTab} className={contentAnim.className} style={contentAnim.style}>
 
         {/* ── LOGBOOK TAB ── */}
         {activeTab === "logbook" && (
@@ -1522,6 +1538,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             confirmDeleteRowIdx={confirmDeleteRowIdx}
             setConfirmDeleteRowIdx={setConfirmDeleteRowIdx}
             pulseRowId={pulseRowId}
+            newRowId={newRowId}
             setActivePopup={setActivePopup}
             updateCell={updateCell}
             deleteRow={deleteRow}

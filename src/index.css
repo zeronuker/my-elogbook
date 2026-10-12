@@ -133,6 +133,13 @@ body {
 }
 .elb-closing { pointer-events: none; }
 
+/* ── Logbook row enter (after "add sector") / exit (before delete) ── */
+@keyframes elb-row-out { to { opacity: 0; transform: translateX(-24px); } }
+@media (prefers-reduced-motion: no-preference) {
+  tr.elb-row-in  { animation: elb-rise var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1) both; }
+  tr.elb-row-out { animation: elb-row-out var(--elb-dur, 260ms) ease forwards; pointer-events: none; }
+}
+
 h1,
 h2 {
   font-family: var(--heading);
