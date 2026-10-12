@@ -700,7 +700,7 @@ export default function LogbookTab({
                             {canDelete && (
                               <div style={{ flex: "1 1 100%", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--elb-bdr, #1e3a5f)" }}>
                                 {isConfirmingDelete ? (
-                                  <div style={{
+                                  <div className="elb-anim-rise" style={{
                                     display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
                                     background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.4)",
                                     borderRadius: 4, padding: "8px 11px", fontSize: 11, color: "#c8d6e5",

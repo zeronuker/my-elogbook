@@ -444,7 +444,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
         </button>
       ) : needsPassword ? (
         /* ── Password re-auth prompt (email/password users) ── */
-        <div className="sm-delete-confirm">
+        <div key="pw" className="sm-delete-confirm elb-anim-rise">
           <div className="sm-delete-warn">⚠ Confirm your identity</div>
           <div className="sm-delete-body">
             Enter your password to permanently delete your account and all logbook data.
@@ -491,7 +491,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
         </div>
       ) : needsGoogleReauth ? (
         /* ── Google re-auth prompt (Google users) — uses GIS so it works on PWA ── */
-        <div className="sm-delete-confirm">
+        <div key="google" className="sm-delete-confirm elb-anim-rise">
           <div className="sm-delete-warn">⚠ Confirm your identity</div>
           <div className="sm-delete-body">
             For your security, confirm with Google to permanently delete your account and all logbook data.
@@ -535,7 +535,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
         </div>
       ) : (
         /* ── Initial confirmation panel ── */
-        <div className="sm-delete-confirm">
+        <div key="confirm" className="sm-delete-confirm elb-anim-rise">
           <div className="sm-delete-warn">⚠ This cannot be undone</div>
           <div className="sm-delete-body">
             All logbook data, carry-forward hours, and your eLOGBOOK account will be permanently deleted.

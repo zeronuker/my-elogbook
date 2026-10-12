@@ -286,7 +286,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
 
           {submitted ? (
             /* SUCCESS STATE */
-            <div className="fb-success">
+            <div className="fb-success elb-fade">
               <span className="fb-success-icon">{type === "bug" ? "🐛" : type === "feature" ? "💡" : "✉"}</span>
               <div className="fb-success-title">Thank you!</div>
               <div className="fb-success-sub">

@@ -859,8 +859,8 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                 </div>
               </div>
 
-              {exportStatus?.error && <div className="eim-note error">✗ {exportStatus.error}</div>}
-              {exportStatus?.success && <div className="eim-note ok">✓ {exportStatus.count} flights exported</div>}
+              {exportStatus?.error && <div className="eim-note error elb-fade">✗ {exportStatus.error}</div>}
+              {exportStatus?.success && <div className="eim-note ok elb-fade">✓ {exportStatus.count} flights exported</div>}
 
               <div className="eim-actions">
                 <button className="eim-btn-primary" onClick={handleExport} disabled={isExporting}
@@ -914,10 +914,10 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                 </>
               )}
 
-              {importStatus?.error && <div className="eim-note error">✗ {importStatus.error}</div>}
-              {importStatus?.warning && <div className="eim-note warn">⚠ {importStatus.warning}</div>}
-              {importStatus?.saving && <div className="eim-note warn">⏳ Saving to cloud...</div>}
-              {importStatus?.success && <div className="eim-note ok">✓ {importStatus.added} flights added, {importStatus.skipped} skipped</div>}
+              {importStatus?.error && <div className="eim-note error elb-fade">✗ {importStatus.error}</div>}
+              {importStatus?.warning && <div className="eim-note warn elb-fade">⚠ {importStatus.warning}</div>}
+              {importStatus?.saving && <div className="eim-note warn elb-fade">⏳ Saving to cloud...</div>}
+              {importStatus?.success && <div className="eim-note ok elb-fade">✓ {importStatus.added} flights added, {importStatus.skipped} skipped</div>}
 
               <div className="eim-actions">
                 <button
@@ -970,8 +970,8 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
               </div>
               {restoreFileName && <div className="eim-filename">{restoreFileName}</div>}
 
-              {backupStatus?.error && <div className="eim-note error">✗ {backupStatus.error}</div>}
-              {backupStatus?.success && <div className="eim-note ok">✓ Restored — reloading...</div>}
+              {backupStatus?.error && <div className="eim-note error elb-fade">✗ {backupStatus.error}</div>}
+              {backupStatus?.success && <div className="eim-note ok elb-fade">✓ Restored — reloading...</div>}
             </div>
           )}
           </div>

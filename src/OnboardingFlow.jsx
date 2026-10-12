@@ -694,6 +694,10 @@ function OnboardingFlow({
 
     .onb-screen { display: none; }
     .onb-screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    /* Replays each time a screen becomes active (display none → flex) */
+    @media (prefers-reduced-motion: no-preference) {
+      .onb-screen.active { animation: elb-rise var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1); }
+    }
 
     .onb-prog-bar {
       position: fixed; top: 0; left: 0; right: 0;
