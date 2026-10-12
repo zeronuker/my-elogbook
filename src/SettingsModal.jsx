@@ -3,6 +3,7 @@ import GoogleSignInButton from "./GoogleSignInButton";
 import { CHANGELOG } from "./changelog";
 import Changelog from "@brand/Changelog";
 import { useTransitionAnim } from "./useTransitionAnim";
+import { useExitAnim } from "./useExitAnim";
 
 // ════════════════════════════════════════════════════════════════════
 //  ClaudeBorne · eLogbook — Settings Modal (v6 brand rewrite)
@@ -145,6 +146,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
   const [savedFlash, setSavedFlash] = useState(false);
   const [resetFlash, setResetFlash] = useState(false);
   const tabAnim = useTransitionAnim(tab, SETTINGS_TABS.map((t) => t.id), draft.animStyle);
+  const { mounted, closing } = useExitAnim(open);
 
   // Reset tab/flash when modal opens. If a caller passed initialTab (e.g. the
   // hidden-columns chip/badge), honour it on each open — otherwise default to profile.
@@ -179,8 +181,9 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
     if (open && onPreview) onPreview(draft);
   }, [draft]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!open) return null;
+  if (!mounted) return null;
 
+  const exitCls = closing ? " elb-closing" : "";
   const upd = (patch) => setDraft((prev) => ({ ...prev, ...patch }));
 
   const handleSave = async () => {
@@ -200,8 +203,8 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
   return (
     <>
       <style>{settingsCss}</style>
-      <div className="sm-backdrop" onClick={onClose} />
-      <div className="sm-modal" role="dialog" aria-modal="true" aria-label="Settings">
+      <div className={"sm-backdrop elb-fade" + exitCls} onClick={onClose} />
+      <div className={"sm-modal elb-pop" + exitCls} role="dialog" aria-modal="true" aria-label="Settings">
 
         {/* ── HEAD ── */}
         <header className="sm-head">
@@ -1139,14 +1142,9 @@ const settingsCss = `
     box-shadow: 0 30px 80px rgba(0,0,0,0.5);
     display: flex; flex-direction: column;
     z-index: 2100;
-    animation: smPopIn var(--elb-dur, 0.18s) ease;
     font-family: var(--cb-font-body);
     color: var(--cb-ink);
     font-size: 14px;
-  }
-  @keyframes smPopIn {
-    from { opacity:0; transform: translate(-50%,-50%) scale(0.96) translateY(6px); }
-    to   { opacity:1; transform: translate(-50%,-50%) scale(1) translateY(0); }
   }
   @keyframes sm-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 

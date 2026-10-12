@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { parseHHMM } from "./logbookCalculations";
+import { useExitAnim } from "./useExitAnim";
 
 const MONTHS_SHORT = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 const norm = (s) => (s || "").trim().toUpperCase();
@@ -32,6 +33,7 @@ function pageNumbers(cur, total) {
 export default function SearchModal({ open, onClose, monthData, dutyLogEntries, onJumpTo }) {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const { mounted, closing } = useExitAnim(open);
   const inputRef = useRef(null);
   const listRef = useRef(null);
 
@@ -159,13 +161,15 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
 
   const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
 
-  if (!open) return null;
+  if (!mounted) return null;
+
+  const exitCls = closing ? " elb-closing" : "";
 
   return (
     <>
       <style>{searchModalCss}</style>
-      <div className="srch-backdrop" onClick={handleBackdrop} />
-      <div className="srch-modal" role="dialog" aria-modal="true" aria-label="Search logbook">
+      <div className={"srch-backdrop elb-fade" + exitCls} onClick={handleBackdrop} />
+      <div className={"srch-modal elb-pop" + exitCls} role="dialog" aria-modal="true" aria-label="Search logbook">
         <header className="srch-head">
           <div>
             <div className="srch-eyebrow">Search Logbook</div>
@@ -256,10 +260,9 @@ const searchModalCss = `
     width:600px;max-width:92vw;max-height:78vh;
     background:var(--elb-bg2, #0d1520);border:1px solid var(--elb-border, #1e3a5f);border-radius:8px;
     display:flex;flex-direction:column;box-shadow:0 30px 90px rgba(0,0,0,0.6);
-    z-index:2100;animation:srchPopIn var(--elb-dur, 0.16s) ease;
+    z-index:2100;
     font-family:'Courier New',monospace;color:var(--elb-txt, #c8d6e5);text-align:left;
   }
-  @keyframes srchPopIn{from{opacity:0;transform:translateX(-50%) scale(0.97) translateY(-6px);}to{opacity:1;transform:translateX(-50%) scale(1) translateY(0);}}
 
   .srch-head{
     padding:calc(18px * var(--fs)) calc(22px * var(--fs)) calc(14px * var(--fs));

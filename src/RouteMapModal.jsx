@@ -5,6 +5,7 @@ import html2canvas from "html2canvas";
 import { feature } from "topojson-client";
 import landTopology from "world-atlas/land-110m.json";
 import { getCoords } from "./airportCoords";
+import { useExitAnim } from "./useExitAnim";
 
 // Modal chrome follows the app theme variables (dark fallbacks match the old values).
 const THEME = {
@@ -248,6 +249,9 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   const isLight = theme === "light";
   const mapColors = MAP_COLORS[isLight ? "light" : "dark"];
   const accent = isLight ? MINT_LIGHT : MINT;
+  // `mounted` outlives `open` while the exit animation plays; the map lives
+  // for that whole window so it doesn't blank out mid-fade.
+  const { mounted, closing } = useExitAnim(open);
   const mapElRef = useRef(null);
   const mapRef = useRef(null);
   const baseLayerRef = useRef(null);
@@ -289,7 +293,7 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   // Init / teardown map instance with modal open state. The base layer
   // itself (tiles vs. vector outline) is handled by the effect below.
   useEffect(() => {
-    if (!open || !mapElRef.current || mapRef.current) return;
+    if (!mounted || !mapElRef.current || mapRef.current) return;
     // preferCanvas: html2canvas (used for PNG export) can't reliably capture
     // Leaflet's default SVG-rendered routes/markers — they silently vanish
     // from the exported image. Canvas-rendered paths are a real bitmap, so
@@ -312,14 +316,14 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
         attributionRef.current = null;
       }
     };
-  }, [open]);
+  }, [mounted]);
 
   // Swap the base layer when the user picks a different basemap. Tile
   // providers require visible attribution per their terms; the vector
   // outline uses bundled public-domain data (Natural Earth) so it needs none.
   useEffect(() => {
     const map = mapRef.current;
-    if (!open || !map) return;
+    if (!mounted || !map) return;
 
     if (baseLayerRef.current) { map.removeLayer(baseLayerRef.current); baseLayerRef.current = null; }
     if (attributionRef.current) { map.removeControl(attributionRef.current); attributionRef.current = null; }
@@ -347,12 +351,12 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
       attributionRef.current = L.control.attribution({ prefix: false }).addTo(map);
       attributionRef.current.addAttribution(cfg.attribution);
     }
-  }, [open, basemap, isLight]);
+  }, [mounted, basemap, isLight]);
 
   // Redraw routes/markers whenever the date range or data changes
   useEffect(() => {
     const map = mapRef.current;
-    if (!open || !map || !dateFrom || !dateTo) return;
+    if (!mounted || !map || !dateFrom || !dateTo) return;
 
     if (routeLayerRef.current) { map.removeLayer(routeLayerRef.current); routeLayerRef.current = null; }
     map.eachLayer(layer => {
@@ -388,9 +392,9 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
 
     const allPts = routes.flatMap(r => [[r.dep.lat, r.dep.lon], [r.arr.lat, r.arr.lon]]);
     if (allPts.length) map.fitBounds(allPts, { padding: [30, 30] });
-  }, [open, dateFrom, dateTo, monthData, isLight]);
+  }, [mounted, dateFrom, dateTo, monthData, isLight]);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   const exportUnsupported = BASEMAPS[basemap].type === "maplibre";
 
@@ -410,15 +414,15 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
 
   return (
     <div
+      className={"elb-fade" + (closing ? " elb-closing" : "")}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}
     >
-      <div style={{
+      <div className={"elb-pop" + (closing ? " elb-closing" : "")} style={{
         background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 0, boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
         width: "min(920px, 92vw)", height: "min(660px, 88vh)",
         display: "flex", flexDirection: "column", fontFamily: "'Courier New', monospace", overflow: "hidden",
         colorScheme: isLight ? "light" : "dark",
-        animation: "popIn var(--elb-dur, 0.15s) ease",
       }}>
         <div style={{
           display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "14px 16px",
