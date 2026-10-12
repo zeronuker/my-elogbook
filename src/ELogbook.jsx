@@ -100,6 +100,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const saveErrorExit = useExitAnim(saveStatus === "error", saveError);
   const confirmExit = useExitAnim(!!confirmDialog, confirmDialog);
   const syncConflictExit = useExitAnim(!!syncConflict, syncConflict);
+  const migratingExit = useExitAnim(migrating);
 
   // Show a branded confirm dialog; returns Promise<boolean>
   const showConfirm = (title, body) => new Promise(resolve => {
@@ -1889,8 +1890,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
       {/* ── MIGRATION OVERLAY ── */}
       {/* Shown once on first load when pulling existing data from Firestore into localStorage */}
-      {migrating && (
-        <div style={{
+      {migratingExit.mounted && (
+        <div className={"elb-fade" + closingCls(migratingExit)} style={{
           position: "fixed", inset: 0, background: "rgba(10,16,32,0.92)", zIndex: 5000,
           display: "flex", alignItems: "center", justifyContent: "center",
           fontFamily: "var(--elb-font, 'Courier New', monospace)",

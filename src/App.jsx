@@ -22,6 +22,7 @@ import ELogbook2026 from './ELogbook'
 import OnboardingFlow from './OnboardingFlow'
 import LoadingOverlay from './LoadingOverlay'
 import SplashScreen from '@brand/SplashScreen'
+import { useExitAnim } from './useExitAnim'
 
 // Session key used to prevent infinite reload loops from the auto-recovery safety net
 const AUTH_RECOVERY_KEY = 'elb_auth_recovery_attempted'
@@ -64,6 +65,7 @@ function App() {
   const [isSigningUp, setIsSigningUp] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [storageAvailable, setStorageAvailable] = useState(true)
+  const storageBannerExit = useExitAnim(!storageAvailable)
   const [verifyAction, setVerifyAction] = useState(null) // { status: 'checking'|'success'|'error', code?: string }
   const [showAccountDeleted, setShowAccountDeleted] = useState(false)
   const accountDeletedRef = useRef(false) // set just before the deleteUser() that removes the account
@@ -712,8 +714,8 @@ function App() {
   return (
     <>
       {splash}
-      {!storageAvailable && (
-        <div style={{
+      {storageBannerExit.mounted && (
+        <div className={'elb-fade' + (storageBannerExit.closing ? ' elb-closing' : '')} style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
           background: '#7c2d12', color: '#fef2f2',
           padding: '10px 16px', fontSize: 13,
