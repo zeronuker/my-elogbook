@@ -6,6 +6,7 @@ import { feature } from "topojson-client";
 import landTopology from "world-atlas/land-110m.json";
 import { getCoords } from "./airportCoords";
 import { useExitAnim } from "./useExitAnim";
+import { useEscClose } from "./useEscClose";
 
 // Modal chrome follows the app theme variables (dark fallbacks match the old values).
 const THEME = {
@@ -282,13 +283,7 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
     }
   }, [open]);
 
-  // ESC closes
-  useEffect(() => {
-    if (!open) return;
-    const onKey = e => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  useEscClose(open, onClose);
 
   // Init / teardown map instance with modal open state. The base layer
   // itself (tiles vs. vector outline) is handled by the effect below.

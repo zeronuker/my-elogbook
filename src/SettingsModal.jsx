@@ -4,6 +4,7 @@ import { CHANGELOG } from "./changelog";
 import Changelog from "@brand/Changelog";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";
+import { useEscClose } from "./useEscClose";
 
 // ════════════════════════════════════════════════════════════════════
 //  ClaudeBorne · eLogbook — Settings Modal (v6 brand rewrite)
@@ -167,13 +168,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ESC key closes
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  useEscClose(open, onClose);
 
   // Live preview — push draft to parent on every change so the app
   // re-renders with the new theme/font/density behind the modal

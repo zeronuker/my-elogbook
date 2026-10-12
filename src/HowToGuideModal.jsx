@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useExitAnim } from "./useExitAnim";
+import { useEscClose } from "./useEscClose";
 import { useTransitionAnim } from "./useTransitionAnim";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -1061,12 +1062,7 @@ export default function HowToGuideModal({ open, onClose, version, animStyle }) {
 
   useEffect(() => { if (open) setActive(0); }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = e => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open, onClose]);
+  useEscClose(open, onClose);
 
   if (!mounted) return null;
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { parseHHMM } from "./logbookCalculations";
 import { useExitAnim } from "./useExitAnim";
+import { useEscClose } from "./useEscClose";
 
 const MONTHS_SHORT = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 const norm = (s) => (s || "").trim().toUpperCase();
@@ -54,13 +55,7 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
     return () => { document.body.style.overflow = prevOverflow; };
   }, [open]);
 
-  // ESC closes
-  useEffect(() => {
-    if (!open) return;
-    const onKey = e => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  useEscClose(open, onClose);
 
   // Searches every row across every logged month — departure, arrival,
   // markings, captain, remarks, and (for rows linked to a synced Duty Log

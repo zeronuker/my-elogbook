@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ExcelJS from "exceljs";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";
+import { useEscClose } from "./useEscClose";
 
 const DARK_COCKPIT_THEME = {
   bg:        "#0a0d12",
@@ -92,13 +93,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     }
   };
 
-  // ESC closes
-  useEffect(() => {
-    if (!open) return;
-    const onKey = e => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
+  useEscClose(open, onClose);
 
   const handleBackdrop = (e) => {
     if (e.target === e.currentTarget) onClose();

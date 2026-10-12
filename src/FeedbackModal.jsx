@@ -5,6 +5,7 @@ import { CHANGELOG } from "./changelog";
 import { currentVersion } from "@brand/Changelog";
 import { useExitAnim } from "./useExitAnim";
 import { useTransitionAnim } from "./useTransitionAnim";
+import { useEscClose } from "./useEscClose";
 
 // ════════════════════════════════════════════════════════════════════
 //  FeedbackModal — in-app bug report / feature request → Firestore
@@ -205,6 +206,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
 
   const { mounted, closing } = useExitAnim(open);
   const typeAnim = useTransitionAnim(type, TYPE_ORDER, animStyle);
+  useEscClose(open, onClose);
 
   // Reset the form each time the modal opens. Done on open (not on close) so
   // the form doesn't visibly clear while the exit animation is still playing.

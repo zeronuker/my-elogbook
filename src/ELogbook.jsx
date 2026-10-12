@@ -25,6 +25,7 @@ import { ToolbarSyncChip, TabLogbookIcon, TabSummaryIcon, TabLimitsIcon } from "
 import { makeThemeCss } from "./theme";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";
+import { useEscClose } from "./useEscClose";
 
 const TAB_IDS = ["logbook", "summary", "ftl"];
 // Chronological order of every month key — lets the month transition slide forward/back.
@@ -118,6 +119,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     setConfirmDialog(null);
     confirmResolveRef.current?.(false);
   };
+
+  // Esc closes only the top dialog (see useEscClose). The sync-conflict modal passes
+  // null: it's deliberately undismissable, but still shields dialogs behind it from Esc.
+  useEscClose(!!activePopup, () => setActivePopup(null));
+  useEscClose(saveStatus === "error", () => { setSaveStatus("idle"); setSaveError(""); });
+  useEscClose(!!confirmDialog, handleConfirmNo);
+  useEscClose(!!syncConflict, null);
 
   // ── Data loading — triggered by user prop from App.jsx ──
   // useEffect on user prop replaces onAuthStateChanged listener — App.jsx owns auth state.
