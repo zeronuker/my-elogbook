@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import ExcelJS from "exceljs";
+import { useTransitionAnim } from "./useTransitionAnim";
+import { useExitAnim } from "./useExitAnim";
 
 const DARK_COCKPIT_THEME = {
   bg:        "#0a0d12",
@@ -19,8 +21,17 @@ const COLUMN_ORDER = [
   "nightP1", "nightP1US", "nightP2", "total", "remarks", "autoland"
 ];
 
+const TABS = [
+  { id: "export", label: "Export", hint: "date range · xlsx" },
+  { id: "import", label: "Import", hint: "xlsx · preview" },
+  { id: "backup", label: "Backup", hint: "json · restore" },
+];
+const TAB_IDS = TABS.map(t => t.id);
+
 export default function ExportImportModal({ open, onClose, monthData, settings, user, onImport, computeFlightTimes }) {
   const [tab, setTab] = useState("export");
+  const tabAnim = useTransitionAnim(tab, TAB_IDS, settings?.animStyle);
+  const { mounted, closing } = useExitAnim(open);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [file, setFile] = useState(null);
@@ -797,19 +808,15 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     }
   };
 
-  if (!open) return null;
+  if (!mounted) return null;
 
-  const TABS = [
-    { id: "export", label: "Export", hint: "date range · xlsx" },
-    { id: "import", label: "Import", hint: "xlsx · preview" },
-    { id: "backup", label: "Backup", hint: "json · restore" },
-  ];
+  const exitCls = closing ? " elb-closing" : "";
 
   return (
     <>
       <style>{exportImportCss}</style>
-      <div className="eim-backdrop" onClick={handleBackdrop} />
-      <div className="eim-modal" role="dialog" aria-modal="true" aria-label="Export/Import">
+      <div className={"eim-backdrop elb-fade" + exitCls} onClick={handleBackdrop} />
+      <div className={"eim-modal elb-pop" + exitCls} role="dialog" aria-modal="true" aria-label="Export/Import">
 
         {/* ── HEAD ── */}
         <header className="eim-head">
@@ -836,6 +843,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
         {/* ── BODY ── */}
         <div className="eim-body">
+          <div key={tab} className={tabAnim.className} style={tabAnim.style}>
           {tab === "export" && (
             <div className="eim-pane">
               <div className="eim-sh"><h3 className="eim-sh-title">Date range</h3><span className="eim-sh-hint">flights · xlsx</span></div>
@@ -966,6 +974,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
               {backupStatus?.success && <div className="eim-note ok">✓ Restored — reloading...</div>}
             </div>
           )}
+          </div>
         </div>
 
         {/* ── FOOT ── */}
@@ -996,11 +1005,9 @@ const exportImportCss = `
     width:480px;max-width:92vw;max-height:88vh;
     background:var(--cb-surface-1);border:1px solid var(--cb-line-2);
     display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.5);
-    z-index:2100;animation:eimPopIn var(--elb-dur, 0.18s) ease;
+    z-index:2100;
     font-family:var(--cb-font-body);color:var(--cb-ink);font-size:14px;text-align:left;
   }
-
-  @keyframes eimPopIn{from{opacity:0;transform:translate(-50%,-50%) scale(0.96) translateY(6px);}to{opacity:1;transform:translate(-50%,-50%) scale(1) translateY(0);}}
 
   /* ── Header ── */
   .eim-head{
