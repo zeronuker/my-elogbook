@@ -4,6 +4,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { CHANGELOG } from "./changelog";
 import { currentVersion } from "@brand/Changelog";
 import { useExitAnim } from "./useExitAnim";
+import { useTransitionAnim } from "./useTransitionAnim";
 
 // ════════════════════════════════════════════════════════════════════
 //  FeedbackModal — in-app bug report / feature request → Firestore
@@ -192,7 +193,9 @@ const css = `
   }
 `;
 
-export default function FeedbackModal({ open, onClose, type: initialType = "bug", user }) {
+const TYPE_ORDER = ["bug", "feature", "general"];
+
+export default function FeedbackModal({ open, onClose, type: initialType = "bug", user, animStyle }) {
   const [type, setType]           = useState(initialType);
   const [description, setDesc]    = useState("");
   const [steps, setSteps]         = useState("");
@@ -201,6 +204,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
   const [error, setError]         = useState("");
 
   const { mounted, closing } = useExitAnim(open);
+  const typeAnim = useTransitionAnim(type, TYPE_ORDER, animStyle);
 
   // Reset the form each time the modal opens. Done on open (not on close) so
   // the form doesn't visibly clear while the exit animation is still playing.
@@ -329,6 +333,9 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
                   </div>
                 </div>
 
+                {/* Fields below the selector re-play the transition when the type changes */}
+                <div key={type} className={typeAnim.className} style={{ ...typeAnim.style, display: "flex", flexDirection: "column", gap: 16 }}>
+
                 {/* Description */}
                 <div className="fb-field">
                   <div className="fb-label">
@@ -362,6 +369,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
                     />
                   </div>
                 )}
+                </div>
 
                 {error && <div className="fb-error">{error}</div>}
               </div>

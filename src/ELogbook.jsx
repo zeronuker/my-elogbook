@@ -1818,6 +1818,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         open={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
         user={user}
+        animStyle={(previewSettings || settings).animStyle}
       />
 
       {/* ── HOW-TO GUIDE MODAL ── */}
@@ -1825,6 +1826,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
         version={APP_VERSION}
+        animStyle={(previewSettings || settings).animStyle}
       />
 
 

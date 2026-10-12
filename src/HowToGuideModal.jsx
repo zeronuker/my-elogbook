@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useExitAnim } from "./useExitAnim";
+import { useTransitionAnim } from "./useTransitionAnim";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const A   = "var(--elb-accent, #3FE0C5)";
@@ -1051,9 +1052,12 @@ const SECTIONS = [
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 
-export default function HowToGuideModal({ open, onClose, version }) {
+const SECTION_ORDER = SECTIONS.map((_, i) => i);
+
+export default function HowToGuideModal({ open, onClose, version, animStyle }) {
   const [active, setActive] = useState(0);
   const { mounted, closing } = useExitAnim(open);
+  const topicAnim = useTransitionAnim(active, SECTION_ORDER, animStyle);
 
   useEffect(() => { if (open) setActive(0); }, [open]);
 
@@ -1126,10 +1130,12 @@ export default function HowToGuideModal({ open, onClose, version }) {
 
           {/* Content */}
           <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
-            <div style={{ fontSize: 12, letterSpacing: "0.14em", color: A, fontWeight: 700, marginBottom: 18, textTransform: "uppercase", fontFamily: F }}>
-              {icon}&nbsp;&nbsp;{title}
+            <div key={active} className={topicAnim.className} style={topicAnim.style}>
+              <div style={{ fontSize: 12, letterSpacing: "0.14em", color: A, fontWeight: 700, marginBottom: 18, textTransform: "uppercase", fontFamily: F }}>
+                {icon}&nbsp;&nbsp;{title}
+              </div>
+              <Content />
             </div>
-            <Content />
           </div>
         </div>
 
