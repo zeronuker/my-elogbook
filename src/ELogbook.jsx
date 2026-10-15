@@ -30,6 +30,8 @@ import { useEscClose } from "./useEscClose";
 const TAB_IDS = ["logbook", "summary", "ftl"];
 // Chronological order of every month key — lets the month transition slide forward/back.
 const MONTH_KEYS = YEARS.flatMap(y => Array.from({ length: 12 }, (_, m) => `${m}-${y}`));
+// One transition order for the content area: every logbook month in sequence, then the other tabs.
+const CONTENT_ORDER = [...MONTH_KEYS.map(k => `logbook:${k}`), ...TAB_IDS.filter(id => id !== "logbook")];
 const closingCls = (exit) => (exit.closing ? " elb-closing" : "");
 import FlightSummaryTab from "./FlightSummaryTab";
 import LogbookTab from "./LogbookTab";
@@ -77,7 +79,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState(null); // null → SettingsModal defaults to "profile"
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
-  const tabAnim = useTransitionAnim(activeTab, TAB_IDS, (previewSettings || settings).animStyle);
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [pulseRowId, setPulseRowId] = useState(null); // briefly highlights a row after a search jump
@@ -859,10 +860,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // time. Each one already no-ops safely before login (empty pulseRowId,
   // no #root table yet), so hoisting them here changes nothing behaviorally.
   const monthKey = `${selectedMonth}-${selectedYear}`;
-  // Re-runs the tab transition when stepping between months on the logbook tab.
-  const monthAnim = useTransitionAnim(monthKey, MONTH_KEYS, (previewSettings || settings).animStyle);
-  // Tab switches play the tab transition; month steps within the logbook play the month one.
-  const contentAnim = activeTab === "logbook" && !tabAnim.className ? monthAnim : tabAnim;
+  // One transition for the content area: it replays on a tab switch and on every month/year change in the logbook.
+  const contentAnim = useTransitionAnim(activeTab === "logbook" ? `logbook:${monthKey}` : activeTab, CONTENT_ORDER, (previewSettings || settings).animStyle);
 
   // The new row's enter animation only needs to play once, on mount.
   useEffect(() => {

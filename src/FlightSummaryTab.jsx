@@ -1,7 +1,10 @@
-import { useState, useMemo } from "react";
-import { MONTHS, calcFlightTimes, parseHHMM, toHHMM, makeMonthRows } from "./logbookCalculations";
+import { useState, useMemo, useRef } from "react";
+import { MONTHS, YEARS, calcFlightTimes, parseHHMM, toHHMM, makeMonthRows } from "./logbookCalculations";
 import { thStyle, thSubStyle, tdStyle } from "./logbookConstants";
 import { useTransitionAnim } from "./useTransitionAnim";
+
+// Transition order: Annual Overview years in sequence, then Grand Total.
+const SUB_ORDER = [...YEARS.map(y => `annual-${y}`), "grand"];
 
 export default function FlightSummaryTab({ data, settings, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear, setActiveTab, subTab, setSubTab }) {
   const [periodPreset, setPeriodPreset] = useState("asof"); // "12m" | "month" | "asof" | "custom"
@@ -12,9 +15,12 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
   const [periodCustomTo, setPeriodCustomTo] = useState(() => new Date().toISOString().split("T")[0]);
   const [periodIncludeCF, setPeriodIncludeCF] = useState(true);
   const [periodWarning, setPeriodWarning] = useState("");
-  // Animate sub-tab switches only — the parent already animates the whole tab on entry.
-  const subAnim = useTransitionAnim(subTab, ["annual", "grand"], settings.animStyle);
-  const [subSwitched, setSubSwitched] = useState(false);
+  // Animate sub-tab switches and Annual Overview year changes — not first entry, which the parent already animates.
+  const animKey = subTab === "annual" ? `annual-${selectedYear}` : "grand";
+  const subAnim = useTransitionAnim(animKey, SUB_ORDER, settings.animStyle);
+  const prevAnimKey = useRef(animKey);
+  const hasChanged = useRef(false);
+  if (prevAnimKey.current !== animKey) { prevAnimKey.current = animKey; hasChanged.current = true; }
 
   const GT_KEYS = ["dayP1", "dayP1US", "dayP2", "nightP1", "nightP1US", "nightP2"];
 
@@ -162,7 +168,7 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => { setSubTab(t.id); setSubSwitched(true); }}
+              onClick={() => setSubTab(t.id)}
               style={{
                 flex: 1, minWidth: 0, padding: "12px 6px", cursor: "pointer",
                 background: active ? "rgba(79,195,247,0.18)" : "transparent",
@@ -179,7 +185,7 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
         })}
       </div>
 
-      <div key={subTab} className={subSwitched ? subAnim.className : ""} style={subAnim.style}>
+      <div className={hasChanged.current ? subAnim.className : ""} style={subAnim.style}>
       {subTab === "annual" && (
       <div style={{ marginBottom: 24 }}>
         <div style={{ marginBottom: 16 }}>

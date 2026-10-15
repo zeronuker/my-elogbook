@@ -69,13 +69,13 @@ body {
 /* ── Transition animations (tabs, settings sub-tabs). Duration comes from
    --elb-dur in theme.js; 0ms when animations are off. ── */
 @media (prefers-reduced-motion: no-preference) {
-  .elb-anim-slide   { animation: elb-slide var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1) both; }
-  .elb-anim-rise    { animation: elb-rise var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1) both; }
+  .elb-anim-slide   { animation: var(--elb-sn, elb-slide) var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1) both; }
+  .elb-anim-rise    { animation: var(--elb-rn, elb-rise) var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1) both; }
   /* Cascade targets each tab's top-level sections (nth-child) and logbook table rows (inline --i).
      Delay caps at the 24th item so a long month still finishes quickly. */
   .elb-anim-stagger > * > :not(table), .elb-anim-stagger tbody > tr {
     --i: 10;
-    animation: elb-rise var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1) both;
+    animation: var(--elb-rn, elb-rise) var(--elb-dur, 260ms) cubic-bezier(.22,.8,.3,1) both;
     animation-delay: calc(min(var(--i), 24) * var(--elb-stagger, 45ms));
   }
   .elb-anim-stagger > * > :nth-child(1):not(table) { --i: 0; }
@@ -116,6 +116,9 @@ body {
 }
 @keyframes elb-slide { from { opacity: 0; transform: translateX(calc(var(--dir, 1) * 36px)); } to { opacity: 1; transform: none; } }
 @keyframes elb-rise  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+/* Identical twins: the hook alternates names so a new key replays the animation even if the class never left. */
+@keyframes elb-slide-b { from { opacity: 0; transform: translateX(calc(var(--dir, 1) * 36px)); } to { opacity: 1; transform: none; } }
+@keyframes elb-rise-b  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
 /* ── Dialog open/close (soft zoom + backdrop fade) ──
    .elb-pop on the panel, .elb-fade on the backdrop. Add .elb-closing to play the

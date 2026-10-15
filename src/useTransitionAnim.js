@@ -8,9 +8,11 @@ const ANIM_STYLES = ["slide", "rise", "stagger"];
 export function useTransitionAnim(key, order, animStyle) {
   const prev = useRef(key);
   const dir = useRef(1);
+  const flip = useRef(false);
   const [on, setOn] = useState(true);
   if (prev.current !== key) {
     dir.current = order.indexOf(key) > order.indexOf(prev.current) ? 1 : -1;
+    flip.current = !flip.current; // alternate keyframe names so a change replays even while the class is still on
     prev.current = key;
   }
   useLayoutEffect(() => {
@@ -18,5 +20,8 @@ export function useTransitionAnim(key, order, animStyle) {
     const t = setTimeout(() => setOn(false), 1500);
     return () => clearTimeout(t);
   }, [key]);
-  return { className: on ? `elb-anim-${ANIM_STYLES.includes(animStyle) ? animStyle : "slide"}` : "", style: { "--dir": dir.current } };
+  return {
+    className: on ? `elb-anim-${ANIM_STYLES.includes(animStyle) ? animStyle : "slide"}` : "",
+    style: { "--dir": dir.current, "--elb-sn": flip.current ? "elb-slide-b" : "elb-slide", "--elb-rn": flip.current ? "elb-rise-b" : "elb-rise" },
+  };
 }
