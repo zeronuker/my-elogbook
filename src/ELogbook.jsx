@@ -31,6 +31,8 @@ const TAB_IDS = ["logbook", "summary", "ftl"];
 // Chronological order of every month key — lets the month transition slide forward/back.
 const MONTH_KEYS = YEARS.flatMap(y => Array.from({ length: 12 }, (_, m) => `${m}-${y}`));
 // One transition order for the content area: every logbook month in sequence, then the other tabs.
+// Order for the page-heading transition: year-only headings (Annual Overview), then every month heading.
+const TITLE_ORDER = [...YEARS.map(y => `y:${y}`), ...MONTH_KEYS.map(k => `m:${k}`)];
 const CONTENT_ORDER = [...MONTH_KEYS.map(k => `logbook:${k}`), ...TAB_IDS.filter(id => id !== "logbook")];
 const closingCls = (exit) => (exit.closing ? " elb-closing" : "");
 import FlightSummaryTab from "./FlightSummaryTab";
@@ -862,6 +864,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const monthKey = `${selectedMonth}-${selectedYear}`;
   // One transition for the content area: it replays on a tab switch and on every month/year change in the logbook.
   const contentAnim = useTransitionAnim(activeTab === "logbook" ? `logbook:${monthKey}` : activeTab, CONTENT_ORDER, (previewSettings || settings).animStyle);
+  // The big "OCTOBER 2026" / "2026" heading animates whenever its text changes. Stagger targets child
+  // elements the heading doesn't have, so it uses the rise animation instead.
+  const titleStyle = (previewSettings || settings).animStyle;
+  const titleAnim = useTransitionAnim(
+    activeTab === "summary" && summarySubTab === "annual" ? `y:${selectedYear}` : `m:${monthKey}`,
+    TITLE_ORDER,
+    titleStyle === "stagger" ? "rise" : titleStyle,
+  );
 
   // The new row's enter animation only needs to play once, on mount.
   useEffect(() => {
@@ -1421,7 +1431,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         <div className="elb-pageheader-top" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
         {/* LEFT: Title */}
         <div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "0.22em", lineHeight: 1 }}>
+          <div className={titleAnim.className} style={{ display: "flex", alignItems: "baseline", gap: "0.22em", lineHeight: 1, ...titleAnim.style }}>
             {!yearOnly && <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", color: "var(--elb-txt,#e8f4fd)" }}>{MONTHS[selectedMonth]}</span>}
             <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{selectedYear}</span>
           </div>
