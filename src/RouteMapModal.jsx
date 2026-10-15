@@ -260,7 +260,9 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   const attributionRef = useRef(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [basemap, setBasemap] = useState(isLight ? "cartoLight" : "carto");
+  // Online: CARTO for the current theme. Offline: the bundled vector outline, since tiles can't load.
+  const defaultBasemap = () => !navigator.onLine ? "vector" : isLight ? "cartoLight" : "carto";
+  const [basemap, setBasemap] = useState(defaultBasemap);
   const [exportFormat, setExportFormat] = useState("png");
   const [exporting, setExporting] = useState(false);
   const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 520px)").matches);
@@ -273,10 +275,11 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   }, []);
 
   // Switching theme resets the map to that theme's default basemap.
-  useEffect(() => { setBasemap(isLight ? "cartoLight" : "carto"); }, [isLight]);
+  useEffect(() => { setBasemap(defaultBasemap()); }, [isLight]);
 
   useEffect(() => {
     if (open) {
+      if (!navigator.onLine && BASEMAPS[basemap].type !== "vector") setBasemap("vector");
       const today = new Date();
       if (!dateFrom) setDateFrom(getEarliestDate(monthData) || `${today.getFullYear()}-01-01`);
       if (!dateTo) setDateTo(today.toISOString().split("T")[0]);
