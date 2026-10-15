@@ -496,7 +496,17 @@ export default function LogbookTab({
                     cells.push(
                       <td
                         key={col.key}
-                        onClick={() => !isAutoCalc && !isAfterSta && setEditingCell({ rowIdx, field: col.key })}
+                        onMouseDown={e => {
+                          // Keep focus on the open input so the layout doesn't shift before the click lands (iPad keyboard fix)
+                          const a = document.activeElement;
+                          if (!isAutoCalc && !isAfterSta && a && a !== e.target && a.tagName === "INPUT" && a.closest("td") !== e.currentTarget) e.preventDefault();
+                        }}
+                        onClick={e => {
+                          if (isAutoCalc || isAfterSta || e.target.tagName === "INPUT") return;
+                          const a = document.activeElement;
+                          if (a && a.tagName === "INPUT") a.blur(); // commits the old cell
+                          setEditingCell({ rowIdx, field: col.key });
+                        }}
                         style={{
                           ...tdStyle,
                           textAlign: "center",
