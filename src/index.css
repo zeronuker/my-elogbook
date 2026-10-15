@@ -211,3 +211,28 @@ code {
 @media (display-mode: standalone) and (pointer: coarse) {
   #root { width: 100%; }
 }
+
+/* ── Flight Summary sub-tabs: rounded button group with an icon on each. Colors follow the theme variables. ── */
+.elb-subtabs {
+  display: flex; gap: 8px; margin-bottom: 20px; padding: 6px;
+  background: var(--elb-bg2, #0b1320);
+  border: 1px solid var(--elb-bdr, #1e3a5f); border-radius: 12px;
+}
+.elb-subtab {
+  flex: 1; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  background: transparent; border: 1px solid transparent; border-radius: 8px; cursor: pointer;
+  color: var(--elb-txt-muted, #4a6a8a);
+  font-family: var(--elb-font, 'Courier New', monospace); font-size: 13px; font-weight: 700; letter-spacing: 0.1em;
+  padding: 12px 10px; text-align: center;
+}
+.elb-subtab svg { flex: none; }
+.elb-subtab[aria-selected="true"] {
+  color: var(--elb-acc, #4fc3f7);
+  border-color: var(--elb-acc, #4fc3f7);
+  background: color-mix(in srgb, var(--elb-acc, #4fc3f7) 14%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--elb-acc, #4fc3f7) 35%, transparent);
+}
+.elb-subtab:hover:not([aria-selected="true"]) { color: var(--elb-txt, #9bbcd4); }
+@media (max-width: 520px) {
+  .elb-subtab { flex-direction: column; gap: 4px; font-size: 10px; letter-spacing: 0.04em; padding: 10px 4px; }
+}

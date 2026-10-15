@@ -6,6 +6,10 @@ import { useTransitionAnim } from "./useTransitionAnim";
 // Transition order: Annual Overview years in sequence, then Grand Total.
 const SUB_ORDER = [...YEARS.map(y => `annual-${y}`), "grand"];
 
+const SubTabIcon = ({ children }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
+);
+
 export default function FlightSummaryTab({ data, settings, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear, setActiveTab, subTab, setSubTab }) {
   const [periodPreset, setPeriodPreset] = useState("asof"); // "12m" | "month" | "asof" | "custom"
   const [periodCustomFrom, setPeriodCustomFrom] = useState(() => {
@@ -150,39 +154,26 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
   [data, selectedYear, settings.dayNightMethod]);
 
   const SUB_TABS = [
-    { id: "annual", label: "ANNUAL OVERVIEW" },
-    { id: "grand",  label: "GRAND TOTAL" },
+    { id: "annual", label: "ANNUAL OVERVIEW", icon: <SubTabIcon><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></SubTabIcon> },
+    { id: "grand",  label: "GRAND TOTAL",     icon: <SubTabIcon><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 12l10 5 10-5"/><path d="M2 17l10 5 10-5"/></SubTabIcon> },
   ];
 
   return (
     <div>
-      <div role="tablist" aria-label="Flight Summary views" style={{
-        display: "flex", marginBottom: 20,
-        border: "1px solid var(--elb-bdr, #1e3a5f)", borderRadius: 6, overflow: "hidden",
-      }}>
-        {SUB_TABS.map((t, i) => {
-          const active = subTab === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setSubTab(t.id)}
-              style={{
-                flex: 1, minWidth: 0, padding: "12px 6px", cursor: "pointer",
-                background: active ? "rgba(79,195,247,0.18)" : "transparent",
-                border: "none", borderRight: i < SUB_TABS.length - 1 ? "1px solid var(--elb-bdr, #1e3a5f)" : "none",
-                color: active ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #4a6a8a)",
-                fontFamily: "var(--elb-font, 'Courier New', monospace)",
-                fontSize: 12, letterSpacing: "0.12em", fontWeight: active ? 700 : 400,
-                textAlign: "center",
-              }}
-            >
-              {t.label}
-            </button>
-          );
-        })}
+      <div className="elb-subtabs" role="tablist" aria-label="Flight Summary views">
+        {SUB_TABS.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            className="elb-subtab"
+            aria-selected={subTab === t.id}
+            onClick={() => setSubTab(t.id)}
+          >
+            {t.icon}
+            <span>{t.label}</span>
+          </button>
+        ))}
       </div>
 
       <div className={hasChanged.current ? subAnim.className : ""} style={subAnim.style}>
