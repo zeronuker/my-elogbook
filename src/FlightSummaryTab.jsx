@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { MONTHS, calcFlightTimes, parseHHMM, toHHMM, makeMonthRows } from "./logbookCalculations";
 import { thStyle, thSubStyle, tdStyle } from "./logbookConstants";
+import { useTransitionAnim } from "./useTransitionAnim";
 
 export default function FlightSummaryTab({ data, settings, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear, setActiveTab, subTab, setSubTab }) {
   const [periodPreset, setPeriodPreset] = useState("asof"); // "12m" | "month" | "asof" | "custom"
@@ -11,6 +12,9 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
   const [periodCustomTo, setPeriodCustomTo] = useState(() => new Date().toISOString().split("T")[0]);
   const [periodIncludeCF, setPeriodIncludeCF] = useState(true);
   const [periodWarning, setPeriodWarning] = useState("");
+  // Animate sub-tab switches only — the parent already animates the whole tab on entry.
+  const subAnim = useTransitionAnim(subTab, ["annual", "grand"], settings.animStyle);
+  const [subSwitched, setSubSwitched] = useState(false);
 
   const GT_KEYS = ["dayP1", "dayP1US", "dayP2", "nightP1", "nightP1US", "nightP2"];
 
@@ -158,7 +162,7 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => setSubTab(t.id)}
+              onClick={() => { setSubTab(t.id); setSubSwitched(true); }}
               style={{
                 flex: 1, minWidth: 0, padding: "12px 6px", cursor: "pointer",
                 background: active ? "rgba(79,195,247,0.18)" : "transparent",
@@ -175,6 +179,7 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
         })}
       </div>
 
+      <div key={subTab} className={subSwitched ? subAnim.className : ""} style={subAnim.style}>
       {subTab === "annual" && (
       <div style={{ marginBottom: 24 }}>
         <div style={{ marginBottom: 16 }}>
@@ -423,6 +428,7 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
         )}
       </div>
       )}
+      </div>
     </div>
   );
 }
