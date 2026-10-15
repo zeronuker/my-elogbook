@@ -52,6 +52,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [data, setData] = useState(initialData);
   const [editingCell, setEditingCell] = useState(null);
   const [activeTab, setActiveTab] = useState("logbook");
+  const [summarySubTab, setSummarySubTab] = useState("annual"); // "annual" | "grand" — kept here so it survives switching main tabs
   const [saveStatus, setSaveStatus] = useState("idle");
   const [saveError, setSaveError] = useState(""); // stores last error message for display
   const [lastSaveTime, setLastSaveTime] = useState(""); // Format: "DD MMM YYYY • HH:MM:SS"
@@ -1040,8 +1041,15 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     setExpandedRowIdx(null);
     setConfirmDeleteRowIdx(null);
   };
-  const isFirstPeriod = selectedYear === YEARS[0] && selectedMonth === 0;
-  const isLastPeriod = selectedYear === YEARS[YEARS.length - 1] && selectedMonth === 11;
+  // Annual Overview is a whole-year view, so the picker drops the month and the arrows step by year.
+  const yearOnly = activeTab === "summary" && summarySubTab === "annual";
+  const stepYear = (delta) => {
+    const newYear = selectedYear + delta;
+    if (newYear < YEARS[0] || newYear > YEARS[YEARS.length - 1]) return;
+    setSelectedYear(newYear);
+  };
+  const isFirstPeriod = selectedYear === YEARS[0] && (yearOnly || selectedMonth === 0);
+  const isLastPeriod = selectedYear === YEARS[YEARS.length - 1] && (yearOnly || selectedMonth === 11);
 
   // Jumps to a search result's month/year and briefly pulses its row.
   const handleSearchJump = (hit) => {
@@ -1146,9 +1154,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // where the full month name plus the icon toolbar doesn't fit one line.
   const renderMonthYearSelects = (abbreviateMonth) => (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <select value={selectedMonth} onChange={e => handleMonthChange(Number(e.target.value))} style={selectStyle}>
-        {MONTHS.map((m, i) => <option key={i} value={i}>{(abbreviateMonth ? m.slice(0, 3) : m).toUpperCase()}</option>)}
-      </select>
+      {!yearOnly && (
+        <select value={selectedMonth} onChange={e => handleMonthChange(Number(e.target.value))} style={selectStyle}>
+          {MONTHS.map((m, i) => <option key={i} value={i}>{(abbreviateMonth ? m.slice(0, 3) : m).toUpperCase()}</option>)}
+        </select>
+      )}
       <select value={selectedYear} onChange={e => handleYearChange(Number(e.target.value))} style={{ ...selectStyle, minWidth: 90 }}>
         {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
       </select>
@@ -1409,7 +1419,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         {/* LEFT: Title */}
         <div>
           <div style={{ display: "flex", alignItems: "baseline", gap: "0.22em", lineHeight: 1 }}>
-            <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", color: "var(--elb-txt,#e8f4fd)" }}>{MONTHS[selectedMonth]}</span>
+            {!yearOnly && <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", color: "var(--elb-txt,#e8f4fd)" }}>{MONTHS[selectedMonth]}</span>}
             <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{selectedYear}</span>
           </div>
         </div>
@@ -1440,9 +1450,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         <div className="elb-pageheader-period" style={{ alignItems: "center", justifyContent: "space-between", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button
-              onClick={() => stepMonth(-1)}
+              onClick={() => (yearOnly ? stepYear(-1) : stepMonth(-1))}
               disabled={isFirstPeriod}
-              title="Previous month"
+              title={yearOnly ? "Previous year" : "Previous month"}
               style={{
                 ...iconBtnStyle,
                 color: isFirstPeriod ? "#3a4a5a" : "#3FE0C5",
@@ -1456,9 +1466,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             </button>
             {monthYearSelects}
             <button
-              onClick={() => stepMonth(1)}
+              onClick={() => (yearOnly ? stepYear(1) : stepMonth(1))}
               disabled={isLastPeriod}
-              title="Next month"
+              title={yearOnly ? "Next year" : "Next month"}
               style={{
                 ...iconBtnStyle,
                 color: isLastPeriod ? "#3a4a5a" : "#3FE0C5",
@@ -1565,6 +1575,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             setSelectedMonth={setSelectedMonth}
             setSelectedYear={setSelectedYear}
             setActiveTab={setActiveTab}
+            subTab={summarySubTab}
+            setSubTab={setSummarySubTab}
           />
         )}
 

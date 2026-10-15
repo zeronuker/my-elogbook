@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { MONTHS, calcFlightTimes, parseHHMM, toHHMM, makeMonthRows } from "./logbookCalculations";
 import { thStyle, thSubStyle, tdStyle } from "./logbookConstants";
 
-export default function FlightSummaryTab({ data, settings, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear, setActiveTab }) {
+export default function FlightSummaryTab({ data, settings, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear, setActiveTab, subTab, setSubTab }) {
   const [periodPreset, setPeriodPreset] = useState("asof"); // "12m" | "month" | "asof" | "custom"
   const [periodCustomFrom, setPeriodCustomFrom] = useState(() => {
     const d = new Date(); d.setDate(1);
@@ -139,8 +139,43 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
     }),
   [data, selectedYear, settings.dayNightMethod]);
 
+  const SUB_TABS = [
+    { id: "annual", label: "ANNUAL OVERVIEW" },
+    { id: "grand",  label: "GRAND TOTAL" },
+  ];
+
   return (
     <div>
+      <div role="tablist" aria-label="Flight Summary views" style={{
+        display: "flex", marginBottom: 20,
+        border: "1px solid var(--elb-bdr, #1e3a5f)", borderRadius: 6, overflow: "hidden",
+      }}>
+        {SUB_TABS.map((t, i) => {
+          const active = subTab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setSubTab(t.id)}
+              style={{
+                flex: 1, minWidth: 0, padding: "12px 6px", cursor: "pointer",
+                background: active ? "rgba(79,195,247,0.18)" : "transparent",
+                border: "none", borderRight: i < SUB_TABS.length - 1 ? "1px solid var(--elb-bdr, #1e3a5f)" : "none",
+                color: active ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #4a6a8a)",
+                fontFamily: "var(--elb-font, 'Courier New', monospace)",
+                fontSize: 12, letterSpacing: "0.12em", fontWeight: active ? 700 : 400,
+                textAlign: "center",
+              }}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {subTab === "annual" && (
       <div style={{ marginBottom: 24 }}>
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 13, color: "#4fc3f7", letterSpacing: "0.15em" }}>
@@ -229,8 +264,11 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
         </div>
       </div>
 
+      )}
+
       {/* ── GRAND TOTAL HOURS IN PERIOD ── */}
-      <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid var(--elb-bdr3, #0f1820)" }}>
+      {subTab === "grand" && (
+      <div>
         <div style={{ fontSize: 13, letterSpacing: "0.15em", color: "#4fc3f7", marginBottom: 14 }}>
           GRAND TOTAL HOURS
         </div>
@@ -384,6 +422,7 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

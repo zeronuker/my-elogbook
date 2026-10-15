@@ -796,7 +796,7 @@ const SECTIONS = [
         <h4>Main tabs</h4>
         <ul>
           <li><strong>📋 Logbook</strong> — your month-by-month flight records. This is where you enter and edit individual sectors.</li>
-          <li><strong>📊 Flight Summary</strong> — an annual overview table showing hours by month and by aircraft type. Grand totals appear here.</li>
+          <li><strong>📊 Flight Summary</strong> — two views: Annual Overview (hours by month for the selected year) and Grand Total (hours by aircraft type for any period).</li>
           <li><strong>⏱ Limits &amp; Recency</strong> — real-time regulatory monitoring. Flight time limits, duty hour limits, and takeoff/landing recency per aircraft type.</li>
         </ul>
         <h4>Toolbar</h4>
