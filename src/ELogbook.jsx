@@ -1042,6 +1042,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   };
   // Annual Overview is a whole-year view, so the picker drops the month and the arrows step by year.
   const yearOnly = activeTab === "summary" && summarySubTab === "annual";
+  // Grand Total and Limits & Recency don't depend on the selected month/year, so the picker is hidden there.
+  // visibility (not display) keeps the header height and the sync chips in place when switching tabs.
+  const showPicker = !(activeTab === "ftl" || (activeTab === "summary" && summarySubTab === "grand"));
+  const pickerVis = showPicker ? "visible" : "hidden";
   const stepYear = (delta) => {
     const newYear = selectedYear + delta;
     if (newYear < YEARS[0] || newYear > YEARS[YEARS.length - 1]) return;
@@ -1434,7 +1438,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
         {/* PHONE-ONLY: month/year selects + icon toolbar merged into one row (nav arrows/today dropped for space) */}
         <div className="elb-merged-phone" style={{ alignItems: "center", justifyContent: "space-between", columnGap: 4, rowGap: 8, flexWrap: "wrap" }}>
-          {monthYearSelectsPhone}
+          <div style={{ visibility: pickerVis }}>{monthYearSelectsPhone}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
             {iconButtonsRow}
           </div>
@@ -1447,7 +1451,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
         {/* PERIOD ROW (desktop/tablet only): prev/next month + month/year selects + today, left; sync chips, right */}
         <div className="elb-pageheader-period" style={{ alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, visibility: pickerVis }}>
             <button
               onClick={() => (yearOnly ? stepYear(-1) : stepMonth(-1))}
               disabled={isFirstPeriod}
