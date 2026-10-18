@@ -1052,7 +1052,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   };
   // Annual Overview is a whole-year view, so the picker drops the month and the arrows step by year.
   const yearOnly = activeTab === "summary" && summarySubTab === "annual";
-  // Grand Total and Limits & Recency don't depend on the selected month/year, so the picker is hidden there.
+  // Grand Total and Compliance don't depend on the selected month/year, so the picker is hidden there.
   // visibility (not display) keeps the header height and the sync chips in place when switching tabs.
   const showPicker = !(activeTab === "ftl" || (activeTab === "summary" && summarySubTab === "grand"));
   const pickerVis = showPicker ? "visible" : "hidden";
@@ -1526,7 +1526,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           {[
             { id: "logbook",  icon: <TabLogbookIcon />, label: "LOGBOOK" },
             { id: "summary",  icon: <TabSummaryIcon />, label: "FLIGHT SUMMARY" },
-            { id: "ftl",      icon: <TabLimitsIcon />,  label: "LIMITS & RECENCY" },
+            { id: "ftl",      icon: <TabLimitsIcon />,  label: "COMPLIANCE" },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
               display: "flex", alignItems: "center", gap: 6,

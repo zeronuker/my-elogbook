@@ -225,7 +225,7 @@ function AppOverviewMockup() {
         {[
           { label: "📋 LOGBOOK", active: true },
           { label: "📊 FLIGHT SUMMARY", active: false },
-          { label: "⏱ LIMITS & RECENCY", active: false },
+          { label: "⏱ COMPLIANCE", active: false },
         ].map((t, i) => (
           <div key={i} style={{
             padding: "8px 16px", fontSize: 11, fontFamily: F, letterSpacing: "0.1em",
@@ -797,7 +797,7 @@ const SECTIONS = [
         <ul>
           <li><strong>📋 Logbook</strong> — your month-by-month flight records. This is where you enter and edit individual sectors.</li>
           <li><strong>📊 Flight Summary</strong> — two views: Annual Overview (hours by month for the selected year) and Grand Total (hours by aircraft type for any period).</li>
-          <li><strong>⏱ Limits &amp; Recency</strong> — real-time regulatory monitoring. Flight time limits, duty hour limits, and takeoff/landing recency per aircraft type.</li>
+          <li><strong>⏱ Compliance</strong> — real-time regulatory monitoring. Flight time limits, duty hour limits, and takeoff/landing recency per aircraft type.</li>
         </ul>
         <h4>Toolbar</h4>
         <ul>
@@ -902,7 +902,7 @@ const SECTIONS = [
           <li><strong style={{ color: "#a855f7" }}>Purple</strong> — autoland flagged, no remarks text</li>
           <li><strong style={{ color: "#ec4899" }}>Magenta</strong> — both remarks and autoland</li>
         </ul>
-        <Tip>Tick AUTOLAND when an autoland was performed. This feeds the Limits &amp; Recency tab for autoland currency tracking.</Tip>
+        <Tip>Tick AUTOLAND when an autoland was performed. This feeds the Compliance tab for autoland currency tracking.</Tip>
       </div>
     ),
   },

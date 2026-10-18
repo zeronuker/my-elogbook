@@ -214,7 +214,7 @@ code {
 
 /* ── Flight Summary sub-tabs: rounded button group with an icon on each. Colors follow the theme variables. ── */
 .elb-subtabs {
-  display: flex; gap: 8px; margin-bottom: 20px; padding: 6px;
+  display: flex; gap: 8px; margin-bottom: 20px; padding: 4px;
   background: var(--elb-bg2, #0b1320);
   border: 1px solid var(--elb-bdr, #1e3a5f); border-radius: 12px;
 }
@@ -223,7 +223,7 @@ code {
   background: transparent; border: 1px solid transparent; border-radius: 8px; cursor: pointer;
   color: var(--elb-txt-muted, #4a6a8a);
   font-family: var(--elb-font, 'Courier New', monospace); font-size: 13px; font-weight: 700; letter-spacing: 0.1em;
-  padding: 12px 10px; text-align: center;
+  padding: 7px 10px; text-align: center;
 }
 .elb-subtab svg { flex: none; }
 .elb-subtab[aria-selected="true"] {

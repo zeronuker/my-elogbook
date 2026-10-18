@@ -1,11 +1,31 @@
+import { useState, useRef } from "react";
 import { getCoords } from "./airportCoords";
+import { useTransitionAnim } from "./useTransitionAnim";
 import {
   parseHHMM, toHHMM, isPointDay,
   getAllSectors, rollingMins, rolling12MonthFlightMins, ftlCls,
 } from "./logbookCalculations";
 import { FTL_COLOR, FTL_BG, FTL_BORDER } from "./logbookConstants";
 
+const SUB_ORDER = ["flight", "recency"];
+
+const SubTabIcon = ({ children }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
+);
+
+const SUB_TABS = [
+  { id: "flight",  label: "FLIGHT & DUTY", icon: <SubTabIcon><path d="M3 3v18h18"/><path d="M7 16v2M11 12v6M15 9v9M19 5v13"/><path d="M5 7h16" strokeDasharray="2 3"/></SubTabIcon> },
+  { id: "recency", label: "RECENCY",       icon: <SubTabIcon><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></SubTabIcon> },
+];
+
 export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
+  const [subTab, setSubTab] = useState("flight");
+  // Animate sub-tab switches only — not first entry, which the parent already animates.
+  const subAnim = useTransitionAnim(subTab, SUB_ORDER, settings.animStyle);
+  const prevSubTab = useRef(subTab);
+  const hasChanged = useRef(false);
+  if (prevSubTab.current !== subTab) { prevSubTab.current = subTab; hasChanged.current = true; }
+
   const dutyBufferMins = settings.useStandardFormula === false
     ? 0
     : (Number(settings.preFlightBuffer) || 0) + (Number(settings.postFlightBuffer) || 0);
@@ -254,7 +274,24 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
 
   return (
     <div>
+      <div className="elb-subtabs" role="tablist" aria-label="Compliance views">
+        {SUB_TABS.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            className="elb-subtab"
+            aria-selected={subTab === t.id}
+            onClick={() => setSubTab(t.id)}
+          >
+            {t.icon}
+            <span>{t.label}</span>
+          </button>
+        ))}
+      </div>
 
+      <div className={hasChanged.current ? subAnim.className : ""} style={subAnim.style}>
+      {subTab === "flight" && (<>
       {/* ── STATUS BANNER ── */}
       <div style={{
         borderRadius: 4,
@@ -295,6 +332,9 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
         {dutyLimits.map(l => renderLimitCard({ ...l, rawPct: l.max ? (l.used / l.max) * 100 : 0, status: ftlCls(l.max ? (l.used / l.max) * 100 : 0) }))}
       </div>
 
+      </>)}
+
+      {subTab === "recency" && (<>
       {/* ── TAKEOFF & LANDING RECENCY ── */}
       <SectionHeader icon="🛬" title="TAKEOFF & LANDING RECENCY — 3 WITHIN 90 DAYS" popupId="rec-tol" />
 
@@ -477,6 +517,9 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
             </div>
           </div>
         )}
+      </div>
+
+      </>)}
       </div>
 
       {/* ── DISCLAIMER ── */}
