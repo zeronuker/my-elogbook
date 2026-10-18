@@ -420,6 +420,11 @@ export const CHANGELOG = [
       "IMP: Dialogs now open with a soft zoom, and the row detail panel follows the same speed. Turning animations off makes everything switch instantly.",
       "FIX: iPadOS 27 drew a blur over the top of the installed app (a system effect, not an app element). Removed the Apple web-app tags and the viewport-fit=cover setting, and added a permanent top-edge strip in the top bar's colour; the status bar now blends into the top bar. Remove the Home Screen icon and add it again once to take effect.",
       "FIX: On iPad in landscape, the installed app stopped short of the screen edges and left an empty strip on each side; it now fills the full width.",
+      "NEW: The Limits & Recency tab is now Compliance, split into two sub tabs, Flight & Duty and Recency, in the same icon button style as Flight Summary. The status banner now appears under Flight & Duty only.",
+      "IMP: Regulation text now matches CAD 1901, CAD 6 Part 1, MCAR 2016 and CAGM 6008(III). The takeoff/landing recency popup cites CAD 6 para 9.4.1 and its night-landing rule, and \"Part 69 & 74\" is now \"Regulations 69 & 74\".",
+      "IMP: The autoland card is now a reference log (last autoland and 6-month count). The unsupported \"3 in 6 months\" pass/fail status is gone.",
+      "IMP: The status banner is reworded, and limits turn yellow at 80% (was 90%), on both the banner and the limit cards.",
+      "FIX: The 7, 14 and 28-day duty limits counted one day too many. They now cover exactly 7, 14 and 28 days.",
     ],
   },
 ];
