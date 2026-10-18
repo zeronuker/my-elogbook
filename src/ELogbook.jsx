@@ -1972,7 +1972,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         gap: 8,
       }}>
         <span>eLOGBOOK {APP_VERSION} · CAAM</span>
-        <span>CAD 1901 · MCAR 2016 Part 69 &amp; Part 74</span>
+        <span>CAD 1901 · MCAR 2016 Regulations 69 &amp; 74</span>
         <span className="elb-footer-active-period">{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
     </div>

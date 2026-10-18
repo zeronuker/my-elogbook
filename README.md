@@ -93,7 +93,7 @@ Automatically computed from your logbook data — no manual input required:
 - Rolling 28-day / 90-day / 365-day flight duty and flight time limits
 - Recent experience requirements (day/night takeoffs and landings)
 - Autoland recency counter
-- Per-type trackers with regulatory reference popups (CAD 1901 / MCAR 2016 Part 69 & 74)
+- Per-type trackers with regulatory reference popups (CAD 1901 / MCAR 2016 Regulations 69 & 74)
 - Status banners show green/amber/red compliance state
 - Configurable pre-flight and post-flight duty buffers (default: +75 min / +15 min)
 

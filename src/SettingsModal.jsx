@@ -810,7 +810,7 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
         />
       </SmField>
 
-      <SmSectionHead title="Day / Night calculation" hint="// CAD-6 Part-1 vs simple time bands" />
+      <SmSectionHead title="Day / Night calculation" hint="// civil twilight vs fixed UTC bands" />
 
       <SmField label="Method">
         <SmSegmented

@@ -531,8 +531,9 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
       }}>
         <span style={{ color: "#4fc3f7" }}>⚠ DISCLAIMER:</span> The information displayed is for{" "}
         <span style={{ color: "#4fc3f7" }}>references only</span> and is solely based on logbook data.
-        Compliance with <span style={{ color: "#4fc3f7" }}>CAD 1901</span> and{" "}
-        <span style={{ color: "#4fc3f7" }}>MCAR 2016 Part 69 &amp; Part 74</span> remains the users responsibility.
+        Compliance with <span style={{ color: "#4fc3f7" }}>CAD 1901</span>,{" "}
+        <span style={{ color: "#4fc3f7" }}>CAD 6 Part 1</span> and{" "}
+        <span style={{ color: "#4fc3f7" }}>MCAR 2016 Regulations 69 &amp; 74</span> remains the users responsibility.
       </div>
 
     </div>

@@ -238,7 +238,7 @@ const ScreenLanding = memo(({ goTo }) => (
     <div className="onb-land-tag">Your personal electronic logbook.<br/>Accessible anywhere. Works offline. Sync on demand.</div>
     <div className="onb-badges">
       <span className="onb-badge onb-badge-blue">✓ CAD 1901</span>
-      <span className="onb-badge onb-badge-blue">✓ MCAR 2016 Part 69 & Part 74</span>
+      <span className="onb-badge onb-badge-blue">✓ MCAR 2016 Regulations 69 & 74</span>
       <span className="onb-badge onb-badge-green">✓ FREE</span>
       <span className="onb-badge onb-badge-green">✓ OFFLINE-FIRST</span>
     </div>
