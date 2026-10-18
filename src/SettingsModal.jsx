@@ -1281,6 +1281,7 @@ const settingsCss = `
     color: var(--cb-ink-dim);
     line-height: 1.5;
     margin-top: 3px;
+    text-align: justify;
   }
   .sm-field-control { flex-shrink: 0; display: flex; align-items: center; gap: 8px; width: 240px; }
 
@@ -1463,7 +1464,7 @@ const settingsCss = `
     color: var(--cb-ink-2);
     line-height: 1.7;
     letter-spacing: 0.04em;
-    text-align: left;
+    text-align: justify;
   }
   .sm-hint b { color: var(--cb-mint); font-weight: 500; }
 

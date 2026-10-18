@@ -311,7 +311,7 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: FTL_COLOR[bannerCls], textAlign: "left" }}>
             {bannerInfo.label}
           </div>
-          <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", marginTop: 3, letterSpacing: "0.04em", lineHeight: 1.5, textAlign: "left" }}>
+          <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", marginTop: 3, letterSpacing: "0.04em", lineHeight: 1.5, textAlign: "justify" }}>
             {bannerInfo.text}
           </div>
           <div style={{ marginTop: 6, fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em", textAlign: "left" }}>
@@ -341,7 +341,7 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
       {/* Explanation note */}
       <div style={{
         fontSize: "var(--elb-hint-sz)", color: "#3a5a7a", lineHeight: 1.7, letterSpacing: "0.03em",
-        marginBottom: 16, borderLeft: "2px solid #1a3050", paddingLeft: 8, textAlign: "left",
+        marginBottom: 16, borderLeft: "2px solid #1a3050", paddingLeft: 8, textAlign: "justify",
       }}>
         Each sector with <span style={{ color: "#4fc3f7" }}>PILOT FLYING ✓</span> counts as 1 takeoff and 1 landing.
       </div>
@@ -517,7 +517,7 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
         background: "rgba(79,195,247,0.04)", border: "1px solid rgba(79,195,247,0.1)",
         borderRadius: 4, padding: "10px 14px", marginTop: 20,
         fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.04em", lineHeight: 1.7,
-        textAlign: "left",
+        textAlign: "justify",
       }}>
         <span style={{ color: "#4fc3f7" }}>⚠ DISCLAIMER:</span> The information displayed is for{" "}
         <span style={{ color: "#4fc3f7" }}>references only</span> and is solely based on logbook data.
