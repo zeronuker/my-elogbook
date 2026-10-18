@@ -38,9 +38,10 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
 
   const ft28dMins   = rollingMins(allSectors, 28,  "flightMins", today);
   const ft12mMins   = rolling12MonthFlightMins(allSectors, today);
-  const duty7dMins  = rollingMins(allSectors,  7,  "dutyMins",   today);
-  const duty14dMins = rollingMins(allSectors, 14,  "dutyMins",   today);
-  const duty28dMins = rollingMins(allSectors, 28,  "dutyMins",   today);
+  // "any N consecutive days" = today + the previous N-1 days (flight time above keeps N prior days, per "previous flight times")
+  const duty7dMins  = rollingMins(allSectors,  6,  "dutyMins",   today);
+  const duty14dMins = rollingMins(allSectors, 13,  "dutyMins",   today);
+  const duty28dMins = rollingMins(allSectors, 27,  "dutyMins",   today);
 
   const ftlLimits = [
     { key: "ft28d", label: "ANY 28 CONSECUTIVE DAYS",           used: ft28dMins,   max: 100 * 60, popupId: "ftl-28d" },

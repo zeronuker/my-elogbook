@@ -337,7 +337,7 @@ export function getAllSectors(data, dutyBufferMins = 90, dayNightMethod = "fixed
   return sectors;
 }
 
-// Sum `field` for sectors within the last `days` calendar days (inclusive of today).
+// Sum `field` for sectors on today plus the previous `days` calendar days.
 export function rollingMins(sectors, days, field, asOf) {
   const cutoff = new Date(asOf);
   cutoff.setDate(cutoff.getDate() - days);
