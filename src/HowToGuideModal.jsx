@@ -902,7 +902,7 @@ const SECTIONS = [
           <li><strong style={{ color: "#a855f7" }}>Purple</strong> — autoland flagged, no remarks text</li>
           <li><strong style={{ color: "#ec4899" }}>Magenta</strong> — both remarks and autoland</li>
         </ul>
-        <Tip>Tick AUTOLAND when an autoland was performed. This feeds the Compliance tab for autoland currency tracking.</Tip>
+        <Tip>Tick AUTOLAND when an autoland was performed. This appears in the autoland log on the Compliance tab.</Tip>
       </div>
     ),
   },

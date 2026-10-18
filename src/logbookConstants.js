@@ -52,10 +52,10 @@ export const FTL_POPUPS = {
     note:  `Use the <strong style="color:#c8d6e5">PILOT FLYING</strong> checkbox in the logbook to mark sectors where you were the handling pilot — each checked sector counts as 1 T/O and 1 LDG. Simulator takeoffs and landings count under CAD 6 but are not tracked here.`,
   },
   "rec-autoland": {
-    para:  "MCAR 2016 PART 8 · SUBPART A",
-    title: "AUTOLAND RECENCY — 3 WITHIN 6 MONTHS",
-    body:  `A pilot qualified for <strong style="color:#c8d6e5">CAT III autoland operations</strong> shall maintain currency by performing <span style="color:#4fc3f7">at least 3 autoland approaches and landings within the preceding 6 months</span>.<br><br>Autoland operations may be performed on any approved aircraft type or in an approved Full Flight Simulator (FFS). Simulator autolands count toward currency if conducted in an approved FFS with a valid approval letter.`,
-    note:  `Check the <span style="color:#4fc3f7">AUTOLAND checkbox</span> in the remarks window to mark sectors where a coupled autoland to touchdown was performed. Track autoland recency for all aircraft types combined — a 6-month rolling window with minimum 3 entries required.`,
+    para:  "CAGM 6008(III) LVO · PARA 4.4.6 & 4.6",
+    title: "LVO / AUTOLAND CURRENCY",
+    body:  `To maintain LVO currency, <strong style="color:#c8d6e5">recurrent checks are required as per CAD 6 para 4.11</strong> and may be combined with pilot proficiency checks. As a minimum, <span style="color:#4fc3f7">at least three LVO approaches should be conducted in an aircraft or FSTD</span> concurrent with the PPC checks (para 4.6).<br><br>The period of Category II/III certification is <span style="color:#4fc3f7">six months or up to the validity period of the PPC</span> (para 4.4.6).`,
+    note:  `Check the <span style="color:#4fc3f7">AUTOLAND checkbox</span> in the remarks window to mark sectors where a coupled autoland to touchdown was performed. The card shows what you have logged for reference. Currency itself depends on your recurrent check and PPC, which this app does not track.`,
   },
 };
 

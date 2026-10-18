@@ -63,9 +63,9 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
                   : "green";
 
   const bannerMessages = {
-    green:  { icon: "✅", label: "ALL LIMITS WITHIN RANGE — FULLY COMPLIANT",    text: "All flight time and cumulative duty limits are well within regulatory requirements. No action required at this time." },
-    yellow: { icon: "⚠️", label: "APPROACHING LIMIT — ACTION REQUIRED",           text: "One or more limits are within 10% of the regulatory maximum. Monitor closely before accepting your next duty assignment." },
-    red:    { icon: "🚨", label: "LIMIT EXCEEDED — REGULATORY VIOLATION",         text: "One or more regulatory limits have been exceeded. Immediate action required — notify your Chief Pilot and CAAM Operations." },
+    green:  { icon: "✅", label: "WITHIN LIMITS",                  text: "Flight time and cumulative duty are below 80% of every CAD 1901 limit, based on your logbook entries." },
+    yellow: { icon: "⚠️", label: "APPROACHING LIMIT",              text: "One or more limits are at 80% or more of the CAD 1901 maximum. Check the cards below before accepting further duty." },
+    red:    { icon: "🚨", label: "LIMIT REACHED OR EXCEEDED",      text: "One or more CAD 1901 limits are at 100% or more, based on your logbook entries. Verify your hours before further duty and notify your Chief Pilot and CAAM." },
   };
   const bannerInfo = bannerMessages[bannerCls];
 
@@ -167,7 +167,6 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
   cutoff6m.setDate(today.getDate() - 180);
   cutoff6m.setHours(0, 0, 0, 0);
   const autoland6m = autolandDates.filter(d => d > cutoff6m).length;
-  const autolandCurrent = autoland6m >= 3;
 
   const daysSinceAutoland = lastAutolandDate
     ? Math.floor((today - lastAutolandDate) / (1000 * 60 * 60 * 24))
@@ -344,8 +343,6 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
         marginBottom: 16, borderLeft: "2px solid #1a3050", paddingLeft: 8, textAlign: "left",
       }}>
         Each sector with <span style={{ color: "#4fc3f7" }}>PILOT FLYING ✓</span> counts as 1 takeoff and 1 landing.
-        Day / night is determined by <span style={{ color: "#4fc3f7" }}>STD</span> (takeoff) and{" "}
-        <span style={{ color: "#4fc3f7" }}>STA</span> (landing) {settings.dayNightMethod === "sunrise" ? "using sunrise/sunset times at the departure airport" : "UTC times — civil day = 23:30–11:30 UTC, civil night = 11:30–23:30 UTC"}.
       </div>
 
       {/* Recency grid for all aircraft types */}
@@ -448,11 +445,11 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
         </div>
       )}
 
-      {/* ── AUTOLAND RECENCY ── */}
-      <SectionHeader icon="🎯" title="AUTOLAND RECENCY — 3 WITHIN 6 MONTHS · ALL TYPES" popupId="rec-autoland" />
+      {/* ── LVO / AUTOLAND CURRENCY — reference only, tied to PPC/LVO checks (CAGM 6008(III) para 4.6) ── */}
+      <SectionHeader icon="🎯" title="LVO / AUTOLAND CURRENCY — CAGM 6008(III)" popupId="rec-autoland" />
       <div style={{
         background: "var(--elb-bg2, #0d1520)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))",
-        borderLeft: `3px solid ${autolandCurrent ? "#22c55e" : "#ef4444"}`, borderRadius: 4, padding: 16,
+        borderLeft: "3px solid #a855f7", borderRadius: 4, padding: 16,
       }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
           <div style={{ textAlign: "left" }}>
@@ -460,46 +457,38 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
               display: "inline-block", fontSize: "var(--elb-hint-sz)", letterSpacing: "0.12em",
               padding: "2px 8px", borderRadius: 2, marginBottom: 6, fontWeight: 700,
               background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.3)", color: "#c084fc",
-            }}>CAT III AUTOLAND</div>
+            }}>AUTOLAND LOG</div>
             <div style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.08em" }}>
-              ALL AIRCRAFT TYPES · LAST 6 MONTHS · MINIMUM 3
+              ALL AIRCRAFT TYPES · LAST 6 MONTHS · FOR REFERENCE
             </div>
           </div>
-          <div style={{ width: 7, height: 7, borderRadius: "50%", marginTop: 4,
-            background: autolandCurrent ? "#22c55e" : "#ef4444",
-            boxShadow: `0 0 6px ${autolandCurrent ? "#22c55e" : "#ef4444"}`,
-            animation: "blink 1.5s ease infinite" }} />
         </div>
         {lastAutolandDate ? (
           <div style={{
             display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12,
           }}>
             <div style={{
-              background: "var(--elb-bg3, #080b10)", border: "1px solid rgba(234,179,8,0.2)",
+              background: "var(--elb-bg3, #080b10)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))",
               borderRadius: 3, padding: "12px 10px", textAlign: "center",
             }}>
               <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em", marginBottom: 6 }}>LAST AUTOLAND</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#4fc3f7", marginBottom: 3 }}>
                 {fmtRecencyDate(lastAutolandDate)}
               </div>
-              <div style={{ fontSize: "var(--elb-hint-sz)", color: "#eab308", fontWeight: 700, letterSpacing: "0.08em" }}>
+              <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.08em" }}>
                 {daysSinceAutoland} DAYS AGO
               </div>
             </div>
             <div style={{
-              background: "var(--elb-bg3, #080b10)", border: `1px solid ${autolandCurrent ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
-              borderTop: `2px solid ${autolandCurrent ? "#22c55e" : "#ef4444"}`,
+              background: "var(--elb-bg3, #080b10)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))",
               borderRadius: 3, padding: "12px 10px", textAlign: "center",
             }}>
-              <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em", marginBottom: 6 }}>STATUS · 6 MONTHS</div>
-              <div style={{ fontSize: 30, fontWeight: 700, lineHeight: 1, color: autolandCurrent ? "#22c55e" : "#ef4444", fontFamily: "'Courier New',monospace", marginBottom: 3 }}>
+              <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em", marginBottom: 6 }}>LOGGED · 6 MONTHS</div>
+              <div style={{ fontSize: 30, fontWeight: 700, lineHeight: 1, color: "#4fc3f7", fontFamily: "'Courier New',monospace", marginBottom: 3 }}>
                 {autoland6m}
               </div>
-              <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", marginBottom: 6 }}>
-                {autolandCurrent ? "REQ: 3 ✓" : "REQ: 3 — NEED " + (3 - autoland6m)}
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: autolandCurrent ? "#22c55e" : "#ef4444", letterSpacing: "0.08em" }}>
-                {autolandCurrent ? "✓ CURRENT" : "✗ NOT CURRENT"}
+              <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)" }}>
+                SEE ⓘ FOR THE RULE
               </div>
             </div>
           </div>

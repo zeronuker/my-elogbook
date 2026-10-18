@@ -360,5 +360,5 @@ export function rolling12MonthFlightMins(sectors, asOf) {
 
 // Colour helper
 export function ftlCls(pct) {
-  return pct >= 100 ? "red" : pct >= 90 ? "yellow" : "green";
+  return pct >= 100 ? "red" : pct >= 80 ? "yellow" : "green";
 }
