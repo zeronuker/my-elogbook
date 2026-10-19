@@ -28,7 +28,7 @@ export const EMPTY_ROW = () => ({
   autoland: false,
 });
 
-export const YEARS = Array.from({ length: new Date().getFullYear() - 2024 + 6 }, (_, i) => 2024 + i);
+export const YEARS = Array.from({ length: new Date().getFullYear() - 2023 + 6 }, (_, i) => 2023 + i);
 
 export function getDaysInMonth(monthIdx, year) {
   return new Date(year, monthIdx + 1, 0).getDate();
