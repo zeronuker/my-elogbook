@@ -425,6 +425,7 @@ export const CHANGELOG = [
       "IMP: The autoland card is now a reference log (last autoland and 6-month count). The unsupported \"3 in 6 months\" pass/fail status is gone.",
       "IMP: The status banner is reworded, and limits turn yellow at 80% (was 90%), on both the banner and the limit cards.",
       "FIX: The 7, 14 and 28-day duty limits counted one day too many. They now cover exactly 7, 14 and 28 days.",
+      "FIX: The 28-day flight time limit now counts the flying day as one of the 28 days (today plus the previous 27 days), so a flight exactly 28 days ago no longer counts against today.",
     ],
   },
 ];
