@@ -1362,11 +1362,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-topbar-caam { display: none; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
           .elb-pageheader-right { gap: 6px !important; }
-          .elb-title-text { font-size: 26px !important; }
           .elb-offline-inline { display: none; }
-          .elb-pageheader-top { gap: 8px !important; }
-          @media (max-width: 400px) { .elb-title-text { font-size: 22px !important; } }
-          .elb-pageheader { gap: 2px; }
+          .elb-pageheader-top { gap: 8px !important; }          .elb-pageheader { gap: 2px; }
           .elb-pageheader-period { display: none; }
           .elb-merged-phone { display: flex; }
           .elb-chiprow-phone { display: flex; }
