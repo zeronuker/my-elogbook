@@ -36,9 +36,9 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
-  const ft28dMins   = rollingMins(allSectors, 28,  "flightMins", today);
+  // "N consecutive days" = today + the previous N-1 days; the flying day counts as one of the days
+  const ft28dMins   = rollingMins(allSectors, 27,  "flightMins", today);
   const ft12mMins   = rolling12MonthFlightMins(allSectors, today);
-  // "any N consecutive days" = today + the previous N-1 days (flight time above keeps N prior days, per "previous flight times")
   const duty7dMins  = rollingMins(allSectors,  6,  "dutyMins",   today);
   const duty14dMins = rollingMins(allSectors, 13,  "dutyMins",   today);
   const duty28dMins = rollingMins(allSectors, 27,  "dutyMins",   today);
