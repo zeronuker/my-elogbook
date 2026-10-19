@@ -266,12 +266,19 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   const [exportFormat, setExportFormat] = useState("png");
   const [exporting, setExporting] = useState(false);
   const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 520px)").matches);
+  const [isCompact, setIsCompact] = useState(() => window.matchMedia("(max-width: 720px)").matches);
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 520px)");
-    const handler = e => setIsNarrow(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+    const mqNarrow = window.matchMedia("(max-width: 520px)");
+    const mqCompact = window.matchMedia("(max-width: 720px)");
+    const onNarrow = e => setIsNarrow(e.matches);
+    const onCompact = e => setIsCompact(e.matches);
+    mqNarrow.addEventListener("change", onNarrow);
+    mqCompact.addEventListener("change", onCompact);
+    return () => {
+      mqNarrow.removeEventListener("change", onNarrow);
+      mqCompact.removeEventListener("change", onCompact);
+    };
   }, []);
 
   // Switching theme resets the map to that theme's default basemap.
@@ -450,7 +457,8 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
             <label style={labelStyle(isNarrow)}>TO</label>
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={isNarrow ? { ...inputStyle, flex: 1 } : inputStyle} />
           </div>
-          <div style={fieldRowStyle(isNarrow)}>
+          {/* Compact (wrapped) layout: order 1 pushes MAP after the export group, so export shares the date row */}
+          <div style={{ ...fieldRowStyle(isNarrow), order: isCompact && !isNarrow ? 1 : 0 }}>
             <label style={labelStyle(isNarrow)}>MAP</label>
             <select value={basemap} onChange={e => setBasemap(e.target.value)} style={isNarrow ? { ...inputStyle, flex: 1 } : inputStyle}>
               {Object.entries(BASEMAPS).map(([key, cfg]) => (
