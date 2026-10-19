@@ -1369,6 +1369,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-chiprow-phone { display: flex; }
           .elb-merged-phone button, .elb-iconrow-desktop button { padding: 4px 5px !important; }
           .elb-title-col { display: flex; flex-direction: column; gap: 10px; }
+          .elb-title-text { font-size: 40px !important; }
           .elb-merged-phone svg { width: 20px !important; height: 20px !important; }
           .elb-iconrow-desktop svg { width: 20px !important; height: 20px !important; }
           .elb-merged-phone select { padding: 4px 6px !important; font-size: 20px !important; min-width: 60px !important; }
