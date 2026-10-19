@@ -1368,9 +1368,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-merged-phone { display: flex; }
           .elb-chiprow-phone { display: flex; }
           .elb-merged-phone button, .elb-iconrow-desktop button { padding: 4px 5px !important; }
-          .elb-merged-phone svg { width: 14px !important; height: 14px !important; }
+          .elb-title-col { display: flex; flex-direction: column; gap: 10px; }
+          .elb-merged-phone svg { width: 20px !important; height: 20px !important; }
           .elb-iconrow-desktop svg { width: 20px !important; height: 20px !important; }
-          .elb-merged-phone select { padding: 4px 6px !important; font-size: 13px !important; min-width: 60px !important; }
+          .elb-merged-phone select { padding: 4px 6px !important; font-size: 20px !important; min-width: 60px !important; }
           .elb-app-root { display: flex; flex-direction: column; }
           .elb-app-main { flex: 1; min-height: 0; }
           .elb-footer-active-period { display: none; }
@@ -1451,10 +1452,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       }}>
         <div className="elb-pageheader-top" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
         {/* LEFT: Title */}
-        <div>
+        <div className="elb-title-col">
           <div className={titleAnim.className} style={{ display: "flex", alignItems: "baseline", gap: "0.22em", lineHeight: 1, ...titleAnim.style }}>
             {!yearOnly && <span className="elb-title-text" style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", color: "var(--elb-txt,#e8f4fd)" }}>{MONTHS[selectedMonth]}</span>}
             <span className="elb-title-text" style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{selectedYear}</span>
+          </div>
+          {/* PHONE-ONLY: month/year selects + today sit right under the title (nav arrows dropped for space) */}
+          <div className="elb-merged-phone" style={{ alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, visibility: pickerVis }}>{monthYearSelectsPhone}{todayBtn}</div>
           </div>
         </div>
 
@@ -1472,11 +1477,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             {offlineChip}
           </div>
         </div>
-        </div>
-
-        {/* PHONE-ONLY: month/year selects + today (nav arrows dropped for space) */}
-        <div className="elb-merged-phone" style={{ alignItems: "center", marginTop: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, visibility: pickerVis }}>{monthYearSelectsPhone}{todayBtn}</div>
         </div>
 
         {/* PERIOD ROW (desktop/tablet only): prev/next month + month/year selects + today, left; sync chips, right */}
