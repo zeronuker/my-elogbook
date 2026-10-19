@@ -1179,6 +1179,24 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   );
   const monthYearSelects = renderMonthYearSelects(false);
   const monthYearSelectsPhone = renderMonthYearSelects(true);
+  const todayBtn = activeTab === "logbook" && (
+    <button
+      onClick={goToToday}
+      disabled={isCurrentPeriod}
+      title="Go to today"
+      style={{
+        ...iconBtnStyle,
+        color: isCurrentPeriod ? "#3a4a5a" : "#3FE0C5",
+        borderColor: isCurrentPeriod ? "var(--elb-border, #1e3a5f)" : "#1e3a5f",
+        opacity: isCurrentPeriod ? 0.4 : 1,
+        cursor: isCurrentPeriod ? "not-allowed" : "pointer",
+      }}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    </button>
+  );
 
   // Icon toolbar buttons — shared between the desktop position (top-right,
   // next to the title) and the phone merged row (next to the month/year
@@ -1446,9 +1464,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
         </div>
 
-        {/* PHONE-ONLY: month/year selects + icon toolbar merged into one row (nav arrows/today dropped for space) */}
+        {/* PHONE-ONLY: month/year selects + today + icon toolbar merged into one row (nav arrows dropped for space) */}
         <div className="elb-merged-phone" style={{ alignItems: "center", justifyContent: "space-between", columnGap: 4, rowGap: 8, flexWrap: "wrap" }}>
-          <div style={{ visibility: pickerVis }}>{monthYearSelectsPhone}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, visibility: pickerVis }}>{monthYearSelectsPhone}{todayBtn}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
             {iconButtonsRow}
           </div>
@@ -1493,24 +1511,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             </button>
-            {activeTab === "logbook" && (
-              <button
-                onClick={goToToday}
-                disabled={isCurrentPeriod}
-                title="Go to today"
-                style={{
-                  ...iconBtnStyle,
-                  color: isCurrentPeriod ? "#3a4a5a" : "#3FE0C5",
-                  borderColor: isCurrentPeriod ? "var(--elb-border, #1e3a5f)" : "#1e3a5f",
-                  opacity: isCurrentPeriod ? 0.4 : 1,
-                  cursor: isCurrentPeriod ? "not-allowed" : "pointer",
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-              </button>
-            )}
+            {todayBtn}
           </div>
           {syncChipsGroup}
         </div>
