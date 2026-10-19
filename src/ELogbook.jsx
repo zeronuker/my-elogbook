@@ -1358,15 +1358,16 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         @media (max-width: 640px) {
           .elb-topbar-caam { display: none; }
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
-          .elb-pageheader-top { flex-direction: column; }
-          .elb-pageheader-right { width: 100%; }
+          .elb-pageheader-right { gap: 6px !important; }
+          .elb-title-text { font-size: 26px !important; }
+          .elb-pageheader-top { gap: 8px !important; }
+          @media (max-width: 400px) { .elb-title-text { font-size: 22px !important; } }
           .elb-pageheader { gap: 2px; }
-          .elb-iconrow-desktop { display: none; }
           .elb-pageheader-period { display: none; }
           .elb-merged-phone { display: flex; }
           .elb-chiprow-phone { display: flex; }
-          .elb-merged-phone button { padding: 4px 5px !important; }
-          .elb-merged-phone svg { width: 14px !important; height: 14px !important; }
+          .elb-merged-phone button, .elb-iconrow-desktop button { padding: 4px 5px !important; }
+          .elb-merged-phone svg, .elb-iconrow-desktop svg { width: 14px !important; height: 14px !important; }
           .elb-merged-phone select { padding: 4px 6px !important; font-size: 13px !important; min-width: 60px !important; }
           .elb-app-root { display: flex; flex-direction: column; }
           .elb-app-main { flex: 1; min-height: 0; }
@@ -1450,31 +1451,27 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         {/* LEFT: Title */}
         <div>
           <div className={titleAnim.className} style={{ display: "flex", alignItems: "baseline", gap: "0.22em", lineHeight: 1, ...titleAnim.style }}>
-            {!yearOnly && <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", color: "var(--elb-txt,#e8f4fd)" }}>{MONTHS[selectedMonth]}</span>}
-            <span style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{selectedYear}</span>
+            {!yearOnly && <span className="elb-title-text" style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", color: "var(--elb-txt,#e8f4fd)" }}>{MONTHS[selectedMonth]}</span>}
+            <span className="elb-title-text" style={{ fontFamily: "'Tourney',system-ui,sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: "0.02em", background: "linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{selectedYear}</span>
           </div>
         </div>
 
         {/* RIGHT: sync/utility toolbar + save chip */}
         <div className="elb-pageheader-right" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
-          {/* Icon buttons row — desktop/tablet position; hidden on phone, see elb-merged-phone below */}
+          {/* Icon buttons row — beside the title on every width */}
           <div className="elb-iconrow-desktop" style={{ gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
             {iconButtonsRow}
           </div>
-        </div>
-        </div>
-
-        {/* PHONE-ONLY: month/year selects + today + icon toolbar merged into one row (nav arrows dropped for space) */}
-        <div className="elb-merged-phone" style={{ alignItems: "center", justifyContent: "space-between", columnGap: 4, rowGap: 8, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, visibility: pickerVis }}>{monthYearSelectsPhone}{todayBtn}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            {iconButtonsRow}
+          {/* PHONE-ONLY: sync chips stack under the icons (desktop/tablet render them inside the period row below) */}
+          <div className="elb-chiprow-phone" style={{ justifyContent: "flex-end", alignItems: "center" }}>
+            {syncChipsGroup}
           </div>
         </div>
+        </div>
 
-        {/* PHONE-ONLY: sync chips get their own row (desktop/tablet render them inside the period row below, next to the month/year picker) */}
-        <div className="elb-chiprow-phone" style={{ justifyContent: "flex-end", alignItems: "center", marginTop: 12 }}>
-          {syncChipsGroup}
+        {/* PHONE-ONLY: month/year selects + today (nav arrows dropped for space) */}
+        <div className="elb-merged-phone" style={{ alignItems: "center", marginTop: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, visibility: pickerVis }}>{monthYearSelectsPhone}{todayBtn}</div>
         </div>
 
         {/* PERIOD ROW (desktop/tablet only): prev/next month + month/year selects + today, left; sync chips, right */}
