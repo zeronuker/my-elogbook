@@ -1198,6 +1198,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     </button>
   );
 
+  // Offline chip — inline in the icon row on desktop/tablet, below the sync chips on phone
+  const offlineChip = !isOnline && (
+    <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700, background: "rgba(245,197,66,0.1)", border: "1px solid rgba(245,197,66,0.3)", borderRadius: 3, padding: "2px 8px" }}>
+      ✈ OFFLINE
+    </span>
+  );
+
   // Icon toolbar buttons — shared between the desktop position (top-right,
   // next to the title) and the phone merged row (next to the month/year
   // selects, with the nav arrows/today button dropped for space).
@@ -1206,12 +1213,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       {refreshStatus === "refreshing" && (
         <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700 }}>REFRESHING...</span>
       )}
-      {/* Offline indicator */}
-      {!isOnline && (
-        <span style={{ fontSize: 11, color: "#f5c542", letterSpacing: "0.1em", fontWeight: 700, background: "rgba(245,197,66,0.1)", border: "1px solid rgba(245,197,66,0.3)", borderRadius: 3, padding: "2px 8px" }}>
-          ✈ OFFLINE
-        </span>
-      )}
+      <span className="elb-offline-inline">{offlineChip}</span>
       {/* SYNC button */}
       <button
         onClick={syncData}
@@ -1352,6 +1354,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           gap: 6px;
         }
         .elb-iconrow-desktop { display: flex; }
+        .elb-offline-inline { display: contents; }
         .elb-pageheader-period { display: flex; }
         .elb-merged-phone { display: none; }
         .elb-chiprow-phone { display: none; }
@@ -1360,6 +1363,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
           .elb-pageheader-right { gap: 6px !important; }
           .elb-title-text { font-size: 26px !important; }
+          .elb-offline-inline { display: none; }
           .elb-pageheader-top { gap: 8px !important; }
           @media (max-width: 400px) { .elb-title-text { font-size: 22px !important; } }
           .elb-pageheader { gap: 2px; }
@@ -1465,6 +1469,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           {/* PHONE-ONLY: sync chips stack under the icons (desktop/tablet render them inside the period row below) */}
           <div className="elb-chiprow-phone" style={{ justifyContent: "flex-end", alignItems: "center" }}>
             {syncChipsGroup}
+          </div>
+          <div className="elb-chiprow-phone" style={{ justifyContent: "flex-end", alignItems: "center" }}>
+            {offlineChip}
           </div>
         </div>
         </div>
