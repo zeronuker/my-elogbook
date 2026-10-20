@@ -1689,5 +1689,16 @@ const settingsCss = `
     .sm-font-grid { grid-template-columns: repeat(3, 1fr); }
     .sm-sh-hint { display: none; }
     .sm-sh-title { width: 100%; }
+    /* 4 tabs don't fit in one row on a phone: 2×2 grid keeps every tab reachable */
+    .sm-tabs { grid-template-columns: repeat(2, 1fr); }
+    .sm-tab { min-width: 0; padding: 12px 14px; }
+    .sm-tab:nth-child(odd) { border-left: 0; }
+    .sm-tab:nth-child(n+3) { border-top: 1px solid var(--cb-line); }
+    /* Label above control, control full width (fixed 240/320px controls overflowed the window) */
+    .sm-field { flex-direction: column; align-items: stretch; gap: 8px; }
+    .sm-field-control { width: 100% !important; flex-shrink: 1; min-width: 0; }
+    .sm-input, .sm-select, .sm-slider { box-sizing: border-box; }
+    /* Changelog's current-version highlight bleeds 18px each side, wider than the phone window */
+    .sm-tab-content article { margin: 0 !important; }
   }
 `;

@@ -249,7 +249,7 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
   // ── Section header helper ──────────────────────────────────────────────────
   const SectionHeader = ({ icon, title, popupId }) => (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, marginTop: 20 }}>
-      <div style={{ fontSize: "var(--elb-th-sz)", letterSpacing: "0.18em", color: "var(--elb-acc, #4fc3f7)", whiteSpace: "nowrap" }}>
+      <div style={{ fontSize: "var(--elb-th-sz)", letterSpacing: "0.18em", color: "var(--elb-acc, #4fc3f7)", minWidth: 0, textAlign: "left" }}>
         {icon} {title}
       </div>
       <div style={{ flex: 1, height: 1, background: "var(--elb-border2, #1a3050)" }} />

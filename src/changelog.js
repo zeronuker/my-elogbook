@@ -436,6 +436,8 @@ export const CHANGELOG = [
       "NEW: On the month pages, flights where you were pilot flying print their capacity (P1, P2 or P1 U/S) in bold and underlined, with a legend at the foot of each page.",
       "IMP: The Export tab now opens with an Excel / PDF toggle. Excel offers All flights (the default) or Date range, and one Export Excel button replaces the separate Export and Export all buttons.",
       "IMP: A month with more flights than fit on one page continues on the next, and each page carries its own totals. Long captain names and remarks shrink or wrap to two lines, and are cut with an ellipsis only when they still cannot fit.",
+      "FIX: On narrow phones the right-hand side of the app could be cut off with no way to scroll to it, so Route map, Settings and Sign out could not be tapped. The header, tabs, windows and the log in and sign up screens now fit the screen on phones as narrow as 320 px.",
+      "IMP: Phone layouts are tidier. The header icons sit under the month and year, the three main tabs share the row, Settings tabs form a 2 × 2 grid with each label above its field, and the How-to guide has a chapter dropdown. Feedback types and the Route map export row also fit.",
     ],
   },
 ];

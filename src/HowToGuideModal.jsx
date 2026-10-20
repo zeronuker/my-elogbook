@@ -1148,11 +1148,22 @@ export default function HowToGuideModal({ open, onClose, version, animStyle }) {
           >✕</button>
         </div>
 
+        {/* Phone-only chapter picker (the sidebar is hidden at this width) */}
+        <select
+          className="htg-select"
+          value={active}
+          onChange={e => setActive(Number(e.target.value))}
+          aria-label="Chapter"
+          style={{ margin: "10px 16px 0", padding: "8px 10px", background: "rgba(63,224,197,0.07)", border: `1px solid ${A}`, borderRadius: 0, color: A, fontSize: 12, letterSpacing: "0.08em", fontFamily: F }}
+        >
+          {SECTIONS.map((s, i) => <option key={s.id} value={i}>{s.title}</option>)}
+        </select>
+
         {/* Body */}
         <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
 
           {/* Sidebar */}
-          <div style={{ width: 210, borderRight: `1px solid ${BDR}`, overflowY: "auto", flexShrink: 0 }}>
+          <div className="htg-side" style={{ width: 210, borderRight: `1px solid ${BDR}`, overflowY: "auto", flexShrink: 0 }}>
             {SECTIONS.map((s, i) => (
               <button
                 key={s.id}
@@ -1176,7 +1187,7 @@ export default function HowToGuideModal({ open, onClose, version, animStyle }) {
           </div>
 
           {/* Content */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+          <div className="htg-pane" style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
             <div key={active} className={topicAnim.className} style={topicAnim.style}>
               <div style={{ fontSize: 12, letterSpacing: "0.14em", color: A, fontWeight: 700, marginBottom: 18, textTransform: "uppercase", fontFamily: F }}>
                 {icon}&nbsp;&nbsp;{title}
@@ -1208,6 +1219,14 @@ export default function HowToGuideModal({ open, onClose, version, animStyle }) {
         .htg-content ul { margin: 0 0 10px; padding-left: 20px; }
         .htg-content li { margin-bottom: 7px; line-height: 1.65; font-size: 13px; color: #c8dce8; font-family: 'JetBrains Mono','Courier New',monospace; }
         .htg-content strong { color: #e2eef5; font-weight: 600; }
+        .htg-select { display: none; }
+        .htg-select option { background: #0a0d12; color: #9bbcd4; }
+        .htg-select option:checked { background: #12304a; color: #3FE0C5; }
+        @media (max-width: 560px) {
+          .htg-side { display: none; }
+          .htg-select { display: block; }
+          .htg-pane { padding: 16px !important; min-width: 0; }
+        }
       `}</style>
     </div>
   );

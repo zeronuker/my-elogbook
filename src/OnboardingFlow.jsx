@@ -749,6 +749,11 @@ function OnboardingFlow({
     }
 
     .onb-cbody { padding: 26px 30px; }
+    /* Phones: leave room for the 300px Google button (GoogleSignInButton sizes itself to the screen) */
+    @media (max-width: 400px) {
+      .onb-container { padding: 12px; }
+      .onb-cbody { padding: 22px 16px; }
+    }
 
     .onb-slbl {
       font-size: 13px;

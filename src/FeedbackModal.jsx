@@ -192,6 +192,21 @@ const css = `
     font-size: 11px; color: #f87171;
     letter-spacing: 0.04em;
   }
+
+  /* Phones: the 3 type buttons share the row in equal thirds (labels wrap);
+     footer stacks so SUBMIT stays inside the window. */
+  @media (max-width: 520px) {
+    .fb-backdrop { padding: 12px; }
+    .fb-head, .fb-body, .fb-foot { padding-left: 16px; padding-right: 16px; }
+    .fb-type-row { gap: 6px; }
+    .fb-type-btn {
+      flex: 1 1 0; min-width: 0; padding: 8px 4px; font-size: 11px; letter-spacing: 0.03em;
+      display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 2px !important;
+    }
+    .fb-type-btn span { white-space: normal !important; }
+    .fb-foot { flex-direction: column; align-items: stretch; gap: 10px; }
+    .fb-btn-row { justify-content: flex-end; }
+  }
 `;
 
 const TYPE_ORDER = ["bug", "feature", "general"];

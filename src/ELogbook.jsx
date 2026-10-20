@@ -1360,7 +1360,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         .elb-chiprow-phone { display: none; }
         @media (max-width: 640px) {
           .elb-topbar-caam { display: none; }
-          .elb-topbar-username { max-width: clamp(80px, 32vw, 180px); }
+          .elb-topbar-username { max-width: min(100%, 180px); }
           .elb-pageheader-right { gap: 6px !important; }
           .elb-offline-inline { display: none; }
           .elb-pageheader-top { gap: 8px !important; }          .elb-pageheader { gap: 2px; }
@@ -1369,13 +1369,34 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-chiprow-phone { display: flex; }
           .elb-merged-phone button, .elb-iconrow-desktop button { padding: 4px 5px !important; }
           .elb-title-col { display: flex; flex-direction: column; gap: 10px; }
-          .elb-title-text { font-size: 40px !important; }
+          .elb-title-text { font-size: clamp(28px, 9vw, 40px) !important; }
+          /* Fit narrow phones (360px): icon column wraps under the title, top bar user chip shrinks */
+          .elb-pageheader-top { flex-wrap: wrap; }
+          .elb-pageheader-right { min-width: 0; margin-left: auto; }
+          .elb-iconrow-desktop { flex-wrap: wrap; justify-content: flex-end; }
+          .elb-topbar-right { flex: 1 1 0; min-width: 0; justify-content: flex-end; padding-right: 12px !important; }
+          .elb-topbar-usertext { flex: 0 1 auto; }
           .elb-merged-phone svg { width: 20px !important; height: 20px !important; }
           .elb-iconrow-desktop svg { width: 20px !important; height: 20px !important; }
           .elb-merged-phone select { padding: 4px 6px !important; font-size: 20px !important; min-width: 60px !important; }
           .elb-app-root { display: flex; flex-direction: column; }
           .elb-app-main { flex: 1; min-height: 0; }
           .elb-footer-active-period { display: none; }
+        }
+        /* Narrow phones: stack the icon row under the month/year picker, left-aligned with it */
+        @media (max-width: 560px) {
+          .elb-pageheader-top { flex-direction: column; align-items: flex-start; }
+          .elb-pageheader-right { margin-left: 0; align-items: flex-start !important; }
+          .elb-iconrow-desktop, .elb-chiprow-phone { justify-content: flex-start !important; }
+        }
+        /* Narrow phones: the 3 main tabs share the row in equal thirds, icon above a small label */
+        @media (max-width: 520px) {
+          .elb-maintabs { align-items: stretch !important; gap: 2px !important; }
+          .elb-maintab {
+            flex: 1 1 0 !important; min-width: 0; flex-direction: column; justify-content: center;
+            gap: 4px !important; padding: 8px 2px !important; font-size: 10px !important;
+            letter-spacing: 0.06em !important; white-space: normal !important; text-align: center;
+          }
         }
         /* Desktop-only sticky footer: pins the footer to the bottom of the
            viewport instead of it trailing after a block of empty space when
@@ -1526,13 +1547,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             needs to stay unclipped so the active tab's -1px bleed can actually
             paint over the divider instead of being cut off by overflow. */}
         <div style={{ overflowX: "auto", overflowY: "hidden" }}>
-        <div style={{ display: "flex", gap: 4, alignItems: "flex-end", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
+        <div className="elb-maintabs" style={{ display: "flex", gap: 4, alignItems: "flex-end", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
           {[
             { id: "logbook",  icon: <TabLogbookIcon />, label: "LOGBOOK" },
             { id: "summary",  icon: <TabSummaryIcon />, label: "FLIGHT SUMMARY" },
             { id: "ftl",      icon: <TabLimitsIcon />,  label: "COMPLIANCE" },
           ].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+            <button key={tab.id} className="elb-maintab" onClick={() => setActiveTab(tab.id)} style={{
               display: "flex", alignItems: "center", gap: 6,
               background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
               borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "1px solid var(--elb-border, #1e3a5f)",

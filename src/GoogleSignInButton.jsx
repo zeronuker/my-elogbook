@@ -65,7 +65,7 @@ function ensureGisInit() {
  * @param disabled     boolean
  * @param width        number                     — button width in px (200–400)
  */
-export default function GoogleSignInButton({ onCredential, onFallback, active = true, disabled = false, width = 300 }) {
+export default function GoogleSignInButton({ onCredential, onFallback, active = true, disabled = false, width = Math.min(300, Math.max(200, window.innerWidth - 60)) }) {
   const ref = useRef(null)
   const [gisFailed, setGisFailed] = useState(false)
 

@@ -445,29 +445,33 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
           >×</button>
         </div>
 
-        <div style={{
-          display: "flex", flexDirection: isNarrow ? "column" : "row", alignItems: isNarrow ? "stretch" : "center",
-          gap: isNarrow ? 8 : 12, padding: "10px 16px", borderBottom: `1px solid ${THEME.border}`, flexWrap: isNarrow ? "nowrap" : "wrap",
+        {/* Narrow: label + control grid; controls keep their natural width, export row spans the widest one */}
+        <div style={isNarrow ? {
+          display: "grid", gridTemplateColumns: "36px max-content", justifyContent: "start", alignItems: "center",
+          gap: 8, padding: "10px 16px", borderBottom: `1px solid ${THEME.border}`,
+        } : {
+          display: "flex", flexDirection: "row", alignItems: "center",
+          gap: 12, padding: "10px 16px", borderBottom: `1px solid ${THEME.border}`, flexWrap: "wrap",
         }}>
           <div style={fieldRowStyle(isNarrow)}>
             <label style={labelStyle(isNarrow)}>FROM</label>
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={isNarrow ? { ...inputStyle, flex: 1 } : inputStyle} />
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={isNarrow ? narrowInputStyle : inputStyle} />
           </div>
           <div style={fieldRowStyle(isNarrow)}>
             <label style={labelStyle(isNarrow)}>TO</label>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={isNarrow ? { ...inputStyle, flex: 1 } : inputStyle} />
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={isNarrow ? narrowInputStyle : inputStyle} />
           </div>
           {/* Compact (wrapped) layout: order 1 pushes MAP after the export group, so export shares the date row */}
           <div style={{ ...fieldRowStyle(isNarrow), order: isCompact && !isNarrow ? 1 : 0 }}>
             <label style={labelStyle(isNarrow)}>MAP</label>
-            <select value={basemap} onChange={e => setBasemap(e.target.value)} style={isNarrow ? { ...inputStyle, flex: 1 } : inputStyle}>
+            <select value={basemap} onChange={e => setBasemap(e.target.value)} style={isNarrow ? narrowInputStyle : inputStyle}>
               {Object.entries(BASEMAPS).map(([key, cfg]) => (
                 <option key={key} value={key}>{cfg.label}</option>
               ))}
             </select>
           </div>
-          <div style={{ display: "flex", gap: 8, marginLeft: isNarrow ? 0 : "auto" }}>
-            <select value={exportFormat} onChange={e => setExportFormat(e.target.value)} style={isNarrow ? { ...inputStyle, flex: 1 } : inputStyle}>
+          <div style={isNarrow ? { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8, gridColumn: 2, width: 0, minWidth: "100%" } : { display: "flex", gap: 8, marginLeft: "auto" }}>
+            <select value={exportFormat} onChange={e => setExportFormat(e.target.value)} style={isNarrow ? { ...inputStyle, minWidth: 0, boxSizing: "border-box" } : inputStyle}>
               <option value="png">PNG</option>
               <option value="jpg">JPG</option>
             </select>
@@ -475,7 +479,7 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
               onClick={handleExportPng}
               disabled={exporting || exportUnsupported}
               title={exportUnsupported ? "Export isn't supported for the CARTO Vector map — switch map type to export" : undefined}
-              style={{ ...btnStyle, opacity: exporting || exportUnsupported ? 0.5 : 1, whiteSpace: "nowrap" }}
+              style={{ ...btnStyle, opacity: exporting || exportUnsupported ? 0.5 : 1, whiteSpace: "nowrap", ...(isNarrow && { minWidth: 0, boxSizing: "border-box" }) }}
             >
               {exporting ? "EXPORTING…" : "EXPORT"}
             </button>
@@ -489,7 +493,7 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
 }
 
 const fieldRowStyle = isNarrow => isNarrow
-  ? { display: "flex", alignItems: "center", gap: 8 }
+  ? { display: "contents" }
   : { display: "flex", alignItems: "center", gap: 6 };
 
 const labelStyle = isNarrow => ({
@@ -500,6 +504,8 @@ const inputStyle = {
   background: THEME.bgInput, border: `1px solid ${THEME.border}`, color: THEME.text, borderRadius: 0,
   fontSize: 12, padding: "4px 8px", fontFamily: "inherit",
 };
+
+const narrowInputStyle = { ...inputStyle, justifySelf: "start" };
 
 const btnStyle = {
   backgroundImage: `linear-gradient(135deg, ${MINT}, #3B8DFF)`, border: 0, borderRadius: 0, color: "#0a0d12",
