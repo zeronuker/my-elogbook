@@ -412,7 +412,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v4.2", date: "October 2026", current: true,
+    v: "v4.2", date: "October 2026",
     title: "Transition animations",
     notes: [
       "NEW: Switching between Logbook, Flight Summary and Limits & Recency now animates. Settings sub-tabs use the same transition.",
@@ -426,6 +426,16 @@ export const CHANGELOG = [
       "IMP: The status banner is reworded, and limits turn yellow at 80% (was 90%), on both the banner and the limit cards.",
       "FIX: The 7, 14 and 28-day duty limits counted one day too many. They now cover exactly 7, 14 and 28 days.",
       "FIX: The 28-day flight time limit now counts the flying day as one of the 28 days (today plus the previous 27 days), so a flight exactly 28 days ago no longer counts against today.",
+    ],
+  },
+  {
+    v: "v4.3", date: "October 2026", current: true,
+    title: "PDF logbook export",
+    notes: [
+      "NEW: Export → PDF saves your whole logbook as a printable PDF in A4 or US Letter, landscape or portrait. It has a cover, a profile page with your details, carry-forward hours and a signature box, then one page per month with a previous total, a total for the page and a grand total.",
+      "NEW: On the month pages, flights where you were pilot flying print their capacity (P1, P2 or P1 U/S) in bold and underlined, with a legend at the foot of each page.",
+      "IMP: The Export tab now opens with an Excel / PDF toggle. Excel offers All flights (the default) or Date range, and one Export Excel button replaces the separate Export and Export all buttons.",
+      "IMP: A month with more flights than fit on one page continues on the next, and each page carries its own totals. Long captain names and remarks shrink or wrap to two lines, and are cut with an ellipsis only when they still cannot fit.",
     ],
   },
 ];

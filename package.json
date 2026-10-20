@@ -1,12 +1,13 @@
 {
   "name": "my-elogbook",
   "private": true,
-  "version": "4.2.0",
+  "version": "4.3.0",
   "type": "module",
   "scripts": {
     "dev": "node brand-kit/scripts/write-build-info.mjs && vite",
     "build": "node brand-kit/scripts/write-build-info.mjs && vite build",
     "lint": "eslint .",
+    "check:pdf": "node scripts/check-logbook-pdf.mjs",
     "preview": "vite preview",
     "brand:fonts": "node brand-kit/scripts/download-fonts.mjs",
     "brand:icons": "node brand-kit/scripts/generate-brand-icons.mjs",
@@ -18,6 +19,7 @@
     "exceljs": "^4.4.0",
     "firebase": "^12.13.0",
     "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
     "maplibre-gl": "^6.9.0",
     "react": "^19.2.5",

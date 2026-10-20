@@ -23,11 +23,44 @@ const COLUMN_ORDER = [
 ];
 
 const TABS = [
-  { id: "export", label: "Export", hint: "date range · xlsx" },
+  { id: "export", label: "Export", hint: "xlsx · pdf" },
   { id: "import", label: "Import", hint: "xlsx · preview" },
   { id: "backup", label: "Backup", hint: "json · restore" },
 ];
 const TAB_IDS = TABS.map(t => t.id);
+
+// Inter for the PDF: static TTFs (jsPDF cannot use the woff2 files), fetched once on first export and cached by the service worker.
+const toBase64 = (buf) => {
+  const bytes = new Uint8Array(buf);
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+};
+let pdfFontsPromise = null;
+const loadPdfFonts = () => {
+  if (!pdfFontsPromise) {
+    const get = async (file) => {
+      const res = await fetch(`${import.meta.env.BASE_URL}fonts/inter/${file}`);
+      if (!res.ok) throw new Error("Could not load the PDF fonts");
+      return toBase64(await res.arrayBuffer());
+    };
+    pdfFontsPromise = Promise.all([get("inter-pdf-400.ttf"), get("inter-pdf-700.ttf")])
+      .then(([regular, bold]) => ({ regular, bold }))
+      .catch((e) => { pdfFontsPromise = null; throw e; });
+  }
+  return pdfFontsPromise;
+};
+
+// Two or more choices side by side; the chosen one is highlighted.
+function Seg({ options, value, onChange, big }) {
+  return (
+    <div className={"eim-seg" + (big ? " big" : "")}>
+      {options.map(([v, label]) => (
+        <button key={v} type="button" aria-pressed={value === v} onClick={() => onChange(v)}>{label}</button>
+      ))}
+    </div>
+  );
+}
 
 export default function ExportImportModal({ open, onClose, monthData, settings, user, onImport, computeFlightTimes }) {
   const [tab, setTab] = useState("export");
@@ -40,6 +73,10 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   const [importStatus, setImportStatus] = useState(null);
   const [exportStatus, setExportStatus] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [format, setFormat] = useState("xlsx");     // "xlsx" | "pdf"
+  const [scope, setScope] = useState("all");        // Excel only: "all" | "range"
+  const [paper, setPaper] = useState("a4");         // PDF only: "a4" | "letter"
+  const [orient, setOrient] = useState("landscape"); // PDF only: "landscape" | "portrait"
   const [persisted, setPersisted] = useState(null);
   const [backupStatus, setBackupStatus] = useState(null);
   const [restoreFileName, setRestoreFileName] = useState(null);
@@ -478,6 +515,34 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     exportToExcel(rows, "All flights").finally(() => setIsExporting(false));
   };
 
+  // PDF is always the whole logbook: the previous-total row needs every earlier flight, so it has no date range.
+  const handleExportPdf = async () => {
+    const rows = getAllRows().sort((a, b) => (a._fullDate || 0) - (b._fullDate || 0));
+    if (rows.length === 0) {
+      setExportStatus({ error: "No flights found" });
+      return;
+    }
+    setIsExporting(true);
+    try {
+      // Loaded on demand so the PDF library and fonts stay out of the app's start-up.
+      const [{ jsPDF }, { buildLogbookPdf }, fonts] = await Promise.all([import("jspdf"), import("./logbookPdf"), loadPdfFonts()]);
+      const doc = buildLogbookPdf(jsPDF, { rows, computeFlightTimes, settings, email: user?.email || "", paper, orientation: orient, fonts });
+      doc.save(`ClaudeBorne_Logbook_${new Date().toISOString().split("T")[0]}.pdf`);
+      setExportStatus({ success: true, count: rows.length, pages: doc.getNumberOfPages() });
+      setTimeout(() => setExportStatus(null), 3000);
+    } catch (e) {
+      setExportStatus({ error: e?.message || "PDF export failed" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportClick = () => {
+    if (format === "pdf") handleExportPdf();
+    else if (scope === "range") handleExport();
+    else handleExportAll();
+  };
+
   // ─────────────────────────────────────────────────────────────────
   // IMPORT LOGIC
   // ─────────────────────────────────────────────────────────────────
@@ -841,30 +906,57 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
           <div key={tab} className={tabAnim.className} style={tabAnim.style}>
           {tab === "export" && (
             <div className="eim-pane">
-              <div className="eim-sh"><h3 className="eim-sh-title">Date range</h3><span className="eim-sh-hint">flights · xlsx</span></div>
+              <div className="eim-sh"><h3 className="eim-sh-title">Format</h3><span className="eim-sh-hint">choose one</span></div>
+              <Seg big value={format} options={[["xlsx", "Excel"], ["pdf", "PDF"]]} onChange={v => { setFormat(v); setExportStatus(null); }} />
 
-              <div className="eim-daterow">
-                <div className="eim-datefield">
-                  <label>From</label>
-                  <input type="date" className="eim-input" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+              {format === "xlsx" ? (
+                <div className="eim-exp-opts">
+                  <div className="eim-sh"><h3 className="eim-sh-title">Flights to export</h3><span className="eim-sh-hint">flights · xlsx</span></div>
+                  <div className="eim-field">
+                    <div className="eim-field-meta"><span className="eim-field-label">Include</span></div>
+                    <div className="eim-field-control wide">
+                      <Seg value={scope} options={[["all", "All flights"], ["range", "Date range"]]} onChange={setScope} />
+                    </div>
+                  </div>
+                  {scope === "range" && (
+                    <div className="eim-daterow">
+                      <div className="eim-datefield">
+                        <label>From</label>
+                        <input type="date" className="eim-input" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+                      </div>
+                      <div className="eim-datefield">
+                        <label>To</label>
+                        <input type="date" className="eim-input" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="eim-datefield">
-                  <label>To</label>
-                  <input type="date" className="eim-input" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+              ) : (
+                <div className="eim-exp-opts">
+                  <div className="eim-sh"><h3 className="eim-sh-title">Page setup</h3><span className="eim-sh-hint">entire logbook · pdf</span></div>
+                  <div className="eim-field">
+                    <div className="eim-field-meta"><span className="eim-field-label">Paper size</span></div>
+                    <div className="eim-field-control"><Seg value={paper} options={[["a4", "A4"], ["letter", "US Letter"]]} onChange={setPaper} /></div>
+                  </div>
+                  <div className="eim-field">
+                    <div className="eim-field-meta"><span className="eim-field-label">Orientation</span></div>
+                    <div className="eim-field-control"><Seg value={orient} options={[["landscape", "Landscape"], ["portrait", "Portrait"]]} onChange={setOrient} /></div>
+                  </div>
+                  <p className="eim-help">Cover, profile page, then one page per month from your first flight to your last, with carry-forward hours included.</p>
                 </div>
-              </div>
+              )}
 
               {exportStatus?.error && <div className="eim-note error elb-fade">✗ {exportStatus.error}</div>}
-              {exportStatus?.success && <div className="eim-note ok elb-fade">✓ {exportStatus.count} flights exported</div>}
+              {exportStatus?.success && (
+                <div className="eim-note ok elb-fade">
+                  ✓ {exportStatus.pages ? `PDF exported: ${exportStatus.count} flights, ${exportStatus.pages} pages` : `${exportStatus.count} flights exported`}
+                </div>
+              )}
 
               <div className="eim-actions">
-                <button className="eim-btn-primary" onClick={handleExport} disabled={isExporting}
+                <button className="eim-btn-primary" onClick={handleExportClick} disabled={isExporting}
                   style={{ opacity: isExporting ? 0.7 : 1, cursor: isExporting ? "wait" : "pointer" }}>
-                  {isExporting ? "Generating…" : "Export"}
-                </button>
-                <button className="eim-btn-ghost" onClick={handleExportAll} disabled={isExporting}
-                  style={{ opacity: isExporting ? 0.7 : 1, cursor: isExporting ? "wait" : "pointer" }}>
-                  {isExporting ? "Generating…" : "Export all"}
+                  {isExporting ? "Generating…" : format === "pdf" ? "Export PDF" : "Export Excel"}
                 </button>
               </div>
             </div>
@@ -1103,6 +1195,21 @@ const exportImportCss = `
   .eim-note.warn{background:rgba(245,197,66,0.08);border-color:#f5c542;color:#f5c542;}
 
   .eim-actions{display:flex;gap:8px;margin-top:14px;}
+
+  /* ── Two-option choice (format, include, paper, orientation) ── */
+  .eim-seg{display:flex;border:1px solid var(--cb-line-2);}
+  .eim-seg button{
+    flex:1;background:transparent;border:0;color:var(--cb-ink-2);cursor:pointer;
+    font-family:var(--cb-font-mono);font-size:calc(10px * var(--fs));letter-spacing:0.14em;
+    text-transform:uppercase;padding:7px 8px;
+  }
+  .eim-seg button + button{border-left:1px solid var(--cb-line-2);}
+  .eim-seg button:hover{color:var(--cb-mint);}
+  .eim-seg button[aria-pressed="true"]{color:var(--cb-mint);background:rgba(63,224,197,0.08);}
+  .eim-seg.big button{padding:11px 8px;font-size:calc(11px * var(--fs));}
+  .eim-field-control.wide{width:250px;}
+  .eim-exp-opts .eim-sh:first-child{margin-top:24px;}
+  .eim-help{font-size:calc(11px * var(--fs));color:var(--cb-ink-dim);line-height:1.5;margin:8px 0 0;}
 
   /* ── Footer ── */
   .eim-foot{

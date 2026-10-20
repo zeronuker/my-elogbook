@@ -12,6 +12,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      canvg: resolve(__dirname, 'src/canvgStub.js'),
       '@brand/BrandBanner': resolve(__dirname, 'brand-kit/component/BrandBanner.jsx'),
       '@brand/SplashScreen': resolve(__dirname, 'brand-kit/component/SplashScreen.jsx'),
       '@brand/UpdatePrompt': resolve(__dirname, 'brand-kit/component/UpdatePrompt.jsx'),
@@ -49,7 +50,7 @@ export default defineConfig({
       workbox: {
         // Cache app shell + all static assets
         // airportCoords.json is bundled into JS by Vite — no separate cache entry needed
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,ttf,webmanifest}'],
         // Main bundle is ~2.4MB — raise limit to accommodate
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB
       },

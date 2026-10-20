@@ -6,7 +6,7 @@ A free, web-based pilot logbook for commercial airline pilots. Log flights, auto
 [![PWA](https://img.shields.io/badge/installable-PWA-38bdf8?style=flat-square)](#sync--offline)
 [![Cost](https://img.shields.io/badge/cost-free%2C%20no%20subscription-22c55e?style=flat-square)](#)
 
-**Current version:** v4.2  
+**Current version:** v4.3  
 **Live app:** [claudeborne.my](https://www.claudeborne.my/)
 
 ![ClaudeBorne eLogbook — monthly logbook view with auto-calculated day/night hours](docs/screenshot-logbook.webp)
@@ -115,10 +115,10 @@ Enter your historical hours by aircraft type before your first entry in the app.
 
 ## Export & Import
 
-- **Export to Excel** — select a date range and download a formatted `.xlsx` file
-- **Export All** — exports every flight in your logbook in one click, no date range needed
+- **Export to Excel** — choose All flights (the default) or a date range and download a formatted `.xlsx` file
+- **Export to PDF** — the whole logbook as a printable PDF in A4 or US Letter, landscape or portrait: a cover, a profile page with your details, carry-forward hours and a signature box, then one page per month with previous, page and grand totals
 - **Import from Excel** — bulk-load historical data from a formatted spreadsheet
-- Exported files include separate Summary and Flights tabs with computed day/night/total columns
+- Excel files include separate Summary and Flights tabs with computed day/night/total columns
 
 ---
 
@@ -177,7 +177,7 @@ Flight Examiner and Instructor roles auto-log the pilot as captain (P1) on every
 | Auth & Database | Firebase Authentication + Firestore |
 | Offline/PWA | vite-plugin-pwa |
 | Excel Export/Import | XLSX |
-| PDF Export | jsPDF + jsPDF AutoTable |
+| PDF Export | jsPDF (pages drawn directly), Inter font |
 | Sun Position | SunCalc |
 | Deployment | Vercel (auto-deploy on push to `main`) |
 

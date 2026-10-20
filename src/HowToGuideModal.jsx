@@ -600,7 +600,24 @@ function SyncConflictMockup() {
 
 // ── Section 8 mockups ─────────────────────────────────────────────────────────
 
-function ExportModalMockup() {
+// Two or more choices side by side, one highlighted.
+function MockSeg({ options, value }) {
+  return (
+    <div style={{ display: "flex", border: `1px solid ${BDR}`, borderRadius: 4, overflow: "hidden", marginBottom: 12 }}>
+      {options.map((o, i) => (
+        <div key={o} style={{
+          flex: 1, textAlign: "center", padding: "7px 4px", fontSize: 10, letterSpacing: "0.1em", fontFamily: F,
+          color: o === value ? A : MUT, background: o === value ? "rgba(63,224,197,0.10)" : "transparent",
+          borderLeft: i ? `1px solid ${BDR}` : "none", fontWeight: o === value ? 700 : 400,
+        }}>{o}</div>
+      ))}
+    </div>
+  );
+}
+
+function ExportModalMockup({ format = "xlsx" }) {
+  const pdf = format === "pdf";
+  const label = (text) => <div style={{ fontSize: 9, letterSpacing: "0.12em", color: DIM, marginBottom: 4, fontFamily: F }}>{text}</div>;
   return (
     <div style={{ background: BG, border: `1px solid ${BDR}`, borderRadius: 6, overflow: "hidden", margin: "14px auto 20px", maxWidth: 380 }}>
       <div style={{ background: BG2, borderBottom: `1px solid ${BDR}`, padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -616,13 +633,29 @@ function ExportModalMockup() {
         ))}
       </div>
       <div style={{ padding: "16px 20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-          <MockField label="FROM" value="01 JAN 2026" />
-          <MockField label="TO" value="13 JUN 2026" />
-        </div>
-        <MockBtn label="⬇ EXPORT" primary />
-        <MockBtn label="⬇ EXPORT ALL" />
-        <div style={{ fontSize: 10, color: DIM, fontFamily: F, letterSpacing: "0.05em", marginTop: 2, lineHeight: 1.5 }}>Export All skips the date range and downloads every flight in your logbook.</div>
+        {label("FORMAT")}
+        <MockSeg options={["EXCEL", "PDF"]} value={pdf ? "PDF" : "EXCEL"} />
+        {pdf ? (
+          <>
+            {label("PAPER SIZE")}
+            <MockSeg options={["A4", "US LETTER"]} value="A4" />
+            {label("ORIENTATION")}
+            <MockSeg options={["LANDSCAPE", "PORTRAIT"]} value="LANDSCAPE" />
+            <MockBtn label="⬇ EXPORT PDF" primary />
+            <div style={{ fontSize: 10, color: DIM, fontFamily: F, letterSpacing: "0.05em", marginTop: 2, lineHeight: 1.5 }}>The PDF always covers your whole logbook, so it has no date range.</div>
+          </>
+        ) : (
+          <>
+            {label("INCLUDE")}
+            <MockSeg options={["ALL FLIGHTS", "DATE RANGE"]} value="DATE RANGE" />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+              <MockField label="FROM" value="01 JAN 2026" />
+              <MockField label="TO" value="13 JUN 2026" />
+            </div>
+            <MockBtn label="⬇ EXPORT EXCEL" primary />
+            <div style={{ fontSize: 10, color: DIM, fontFamily: F, letterSpacing: "0.05em", marginTop: 2, lineHeight: 1.5 }}>All flights is the default and exports every flight in your logbook. The From and To dates appear when you choose Date range.</div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -803,7 +836,7 @@ const SECTIONS = [
         <ul>
           <li><strong>↻ Sync</strong> — upload your data to the cloud. The icon and status chip update to show sync state.</li>
           <li><strong>🔍 Search</strong> — find any logged flight by airport, markings, captain, crew, or remarks (see Section 4).</li>
-          <li><strong>⬡ Export / Import</strong> — export your logbook to Excel or import from a previous export file.</li>
+          <li><strong>⬡ Export / Import</strong> — export your logbook to Excel or PDF, or import from a previous Excel export.</li>
           <li><strong>🧭 Route Map</strong> — plot your logged sectors on a world map (see Section 4).</li>
           <li><strong>⚙ Settings</strong> — profile, appearance, preferences, and account management. A badge appears if you have hidden columns.</li>
           <li><strong>⏻ Sign Out</strong> — sign out of your account.</li>
@@ -960,15 +993,25 @@ const SECTIONS = [
     id: 9, icon: "📤", title: "Export & Import",
     Content: () => (
       <div className="htg-content">
-        <p>ClaudeBorne eLogBook exports your logbook to Excel (.xlsx). Export a specific date range or use Export All to download every flight in your logbook at once.</p>
+        <p>ClaudeBorne eLogBook exports your logbook to Excel (.xlsx) or to a printable PDF.</p>
         <h4>To export</h4>
         <ul>
           <li>Tap the <strong>⬡ Export / Import</strong> icon in the toolbar</li>
-          <li>To export a specific period: set the <strong>From</strong> and <strong>To</strong> dates, then tap <strong>⬇ Export</strong></li>
-          <li>To export everything: tap <strong>⬇ Export All</strong> — the date range is ignored</li>
-          <li>The .xlsx file downloads to your device</li>
+          <li>Use the <strong>Format</strong> toggle to choose <strong>Excel</strong> or <strong>PDF</strong></li>
         </ul>
-        <ExportModalMockup />
+        <h4>Excel</h4>
+        <ul>
+          <li><strong>All flights</strong> (the default) exports every flight in your logbook</li>
+          <li>To export a specific period, choose <strong>Date range</strong>, then set the <strong>From</strong> and <strong>To</strong> dates</li>
+          <li>Tap <strong>⬇ Export Excel</strong> — the .xlsx file downloads to your device</li>
+        </ul>
+        <ExportModalMockup format="xlsx" />
+        <h4>PDF</h4>
+        <ul>
+          <li>Choose the <strong>Paper size</strong> (A4 or US Letter) and the <strong>Orientation</strong> (Landscape or Portrait) — it starts on A4 landscape</li>
+          <li>Tap <strong>⬇ Export PDF</strong> — the PDF always covers your whole logbook, so it has no date range</li>
+        </ul>
+        <ExportModalMockup format="pdf" />
         <h4>What's in the Excel file</h4>
         <ul>
           <li><strong>Profile</strong> — your pilot details (name, licence, airline)</li>
@@ -977,6 +1020,14 @@ const SECTIONS = [
           <li><strong>Summary</strong> — monthly hour totals across all categories</li>
         </ul>
         <ExcelSheetsMockup />
+        <h4>What's in the PDF</h4>
+        <ul>
+          <li><strong>Cover</strong> — your name, licence, operator and the dates your logbook covers</li>
+          <li><strong>Profile</strong> — your pilot details, your pre-app hours by aircraft type (carry forward), an hours summary, and a certification box to sign and date. With many aircraft types it continues on a second page</li>
+          <li><strong>One page per month</strong> — each page starts with the previous total and ends with the total for the page and the grand total. A busy month continues on the next page, and each page carries its own totals</li>
+          <li>On the month pages, a flight where you were pilot flying shows its capacity (P1, P2 or P1 U/S) in <strong>bold and underlined</strong>. The legend is at the foot of each page</li>
+        </ul>
+        <Tip>Print the PDF and sign the certification on the profile page. Long captain names and remarks shrink or wrap to fit, and are shortened with … only when they still don't fit.</Tip>
         <h4>Importing data</h4>
         <ul>
           <li>Tap the <strong>⬆ Import</strong> tab in the same window</li>
@@ -984,7 +1035,7 @@ const SECTIONS = [
           <li>Review the import preview (valid rows, duplicates, errors)</li>
           <li>Tap <strong>Import</strong> to confirm — duplicate entries are skipped automatically</li>
         </ul>
-        <Note>Only files exported from ClaudeBorne eLogBook can be imported. Third-party logbook files are not supported.</Note>
+        <Note>Only Excel files exported from ClaudeBorne eLogBook can be imported. PDF exports are for printing and filing and cannot be imported, and third-party logbook files are not supported.</Note>
       </div>
     ),
   },
