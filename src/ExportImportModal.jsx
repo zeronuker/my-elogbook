@@ -303,10 +303,18 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     ]);
 
     // SHEET 2: CARRY FORWARD BY AIRCRAFT TYPE
-    const cfByType = {};
+    // Repeated aircraft types are added together, as the Flight Summary tab does (the Excel export used to keep only the last row).
+    const CF_KEYS = ["dayP1", "dayP1US", "dayP2", "nightP1", "nightP1US", "nightP2"];
+    const cfMins = {};
     (settings?.carryForward || []).forEach(cf => {
-      if (cf.type) cfByType[cf.type] = cf;
+      const type = (cf.type || "").trim().toUpperCase();
+      if (!type) return;
+      cfMins[type] = cfMins[type] || Object.fromEntries(CF_KEYS.map(k => [k, 0]));
+      CF_KEYS.forEach(k => { cfMins[type][k] += parseTimeToMinutes(cf[k]); });
     });
+    const cfByType = Object.fromEntries(
+      Object.entries(cfMins).map(([type, m]) => [type, Object.fromEntries(CF_KEYS.map(k => [k, minutesToTime(m[k])]))])
+    );
     const cfRows = [
       ["CARRY FORWARD HOURS"],
       [],
