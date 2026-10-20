@@ -8,39 +8,35 @@
 **If unsure whether a change counts as major, ask the user before deciding.**
 
 **Process (when a changelog entry is warranted):**
-1. Ask Claude to mockup the changelog entry first
-2. Review mockup visually
-3. Update `src/SettingsModal.jsx` (MiscTab → changelog section)
-4. Update all version references (login screen, toolbar, settings header)
+1. Draft the entry text first and review it (it shows in Settings → Misc → Changelog)
+2. Add it to the end of the `CHANGELOG` array in `src/changelog.js` and move `current: true` onto it
+3. The version is read from the `current` entry, so the footer, login screen and feedback form follow automatically. Labels follow the scheme at the top of `src/changelog.js` (+0.1 per release, and the entry after x.10 becomes the next x.0)
+4. Keep the `version` in `package.json`, the two root `version` fields at the top of `package-lock.json`, and the "Current version" line in `README.md` in step with it
 5. Commit changelog + version changes
 6. Deploy
 
-**Changelog location:** `src/SettingsModal.jsx` → MiscTab → elb-changelog-scroll
+**Changelog location:** `src/changelog.js` (shown in Settings → Misc by the shared `@brand/Changelog` component)
 
-**Tag types:** NEW (feature), IMP (improvement), FIX (bug fix), DEP (deprecation)
+**Tag types:** NEW (feature), IMP (improvement), FIX (bug fix), DEP (deprecation) — written as a prefix in each note, e.g. `"FIX: ..."`
 
 **Example:**
-```jsx
-<div className="elb-changelog-entry">
-  <div className="elb-changelog-ver">
-    <span className="elb-changelog-tag">V5.4 <span className="elb-tag elb-tag-new">CURRENT</span></span>
-    <span className="elb-changelog-date">20 MAY 2026</span>
-  </div>
-  <div className="elb-changelog-section">
-    <div className="elb-changelog-subsection">Category Name</div>
-    <ul className="elb-changelog-items">
-      <li><span className="elb-tag elb-tag-new">NEW</span> Feature description</li>
-      <li><span className="elb-tag elb-tag-fix">FIX</span> Bug fix description</li>
-    </ul>
-  </div>
-</div>
+```js
+{
+  v: "v4.3", date: "October 2026", current: true,
+  title: "PDF logbook export",
+  notes: [
+    "NEW: Feature description",
+    "FIX: Bug fix description",
+  ],
+},
+```
 ```
 
 ---
 
 ## Project Standards
 
-**Tech Stack:** React 19, Vite, Firebase, XLSX, jsPDF  
+**Tech Stack:** React 19, Vite, Firebase, ExcelJS (Excel export/import), jsPDF (PDF export)  
 **Theme:** Dark Cockpit (fixed, non-customizable)  
 **Font:** Courier New, 14px  
 **Deployment:** Git push → Vercel auto-deploy (no local test wait)
@@ -49,6 +45,8 @@
 - Main UI: `src/ELogbook.jsx`
 - Settings: `src/SettingsModal.jsx`
 - Export/Import: `src/ExportImportModal.jsx`
+- PDF export: `src/logbookPdf.js` (check with `npm run check:pdf`)
+- Changelog and version: `src/changelog.js`
 - Firebase: `src/firebase.js`
 
 ---
@@ -57,9 +55,9 @@
 
 - [ ] Features/fixes implemented
 - [ ] Code tested locally (if needed)
-- [ ] If change is major: changelog mockup reviewed
-- [ ] Version numbers updated (if releasing new version)
-- [ ] If change is major: changelog entry added to SettingsModal.jsx
+- [ ] If change is major: changelog entry reviewed
+- [ ] Version numbers updated (if releasing new version: `src/changelog.js`, `package.json`, `package-lock.json`, `README.md`)
+- [ ] If change is major: changelog entry added to `src/changelog.js`
 - [ ] If UI changed, review HowToGuideModal.jsx mockups for accuracy
 - [ ] Commit message descriptive
 - [ ] Ready to `git push origin main`
@@ -71,10 +69,10 @@
 **Add new feature (major):**
 1. Code the feature
 2. Test locally
-3. Ask Claude to mockup changelog entry
-4. Update SettingsModal.jsx with new entry
-5. Bump version number (V5.X → V5.Y)
-6. Update version refs in all files
+3. Draft the changelog entry and review it
+4. Add it to `src/changelog.js` with `current: true` (and remove `current` from the previous entry)
+5. Bump the version everywhere (v4.3 → v4.4): `package.json`, `package-lock.json`, `README.md`
+6. Update the how-to guide if the UI changed
 7. Commit + push
 
 **Bug fix:**
@@ -87,11 +85,7 @@
 
 ## Questions?
 
-Reference the memory system:
-- `changelog_requirements.md` — Detailed changelog format & structure
-- `deployment_workflow.md` — How to deploy
-- `visual_design_standard.md` — UI/theme standards
-- Other memory files in `/memory/` folder
+Reference the memory system: the notes in the `/memory/` folder (see its `MEMORY.md` index) cover the changelog and version process, deploy checks, the dev login bypass and the PDF export.
 
 
 # Karpathy Principles
