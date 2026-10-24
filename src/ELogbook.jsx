@@ -8,6 +8,7 @@ import SearchModal from "./SearchModal";
 import RouteMapModal from "./RouteMapModal";
 import HowToGuideModal from "./HowToGuideModal";
 import ChamferFrame from "@brand/ChamferFrame";
+import { useScrollLock } from "./useScrollLock";
 import FeedbackModal from "./FeedbackModal";
 import BrandBanner from "@brand/BrandBanner";
 import UpdatePrompt from "@brand/UpdatePrompt";
@@ -110,6 +111,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const confirmExit = useExitAnim(!!confirmDialog, confirmDialog);
   const syncConflictExit = useExitAnim(!!syncConflict, syncConflict);
   const migratingExit = useExitAnim(migrating);
+  useScrollLock(popupExit.mounted || saveErrorExit.mounted || confirmExit.mounted || syncConflictExit.mounted || migratingExit.mounted);
 
   // Show a branded confirm dialog; returns Promise<boolean>
   const showConfirm = (title, body) => new Promise(resolve => {

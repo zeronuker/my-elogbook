@@ -7,6 +7,7 @@ import { getCoords } from "./airportCoords";
 import { parseHHMM } from "./logbookCalculations";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
+import { useScrollLock } from "./useScrollLock";
 import ChamferFrame from "@brand/ChamferFrame";
 
 // Modal chrome follows the app theme variables (dark fallbacks match the old values).
@@ -273,6 +274,7 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   // `mounted` outlives `open` while the exit animation plays; the map lives
   // for that whole window so it doesn't blank out mid-fade.
   const { mounted, closing } = useExitAnim(open);
+  useScrollLock(mounted);
   const mapElRef = useRef(null);
   const mapRef = useRef(null);
   const baseLayerRef = useRef(null);
@@ -520,7 +522,7 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
 
         {isNarrow ? (
           /* Phone: one field per line, labels above, dates side by side, full-width export button */
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "10px 16px", borderBottom: `1px solid ${THEME.border}`, maxHeight: "60%", overflowY: "auto", flexShrink: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "10px 16px", borderBottom: `1px solid ${THEME.border}`, maxHeight: "60%", overflowY: "auto", overscrollBehavior: "contain", flexShrink: 0 }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(118px, 1fr))", gap: 10 }}>
               {fromField}
               {toField}

@@ -3,6 +3,7 @@ import { parseHHMM } from "./logbookCalculations";
 import ChamferFrame from "@brand/ChamferFrame";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
+import { useScrollLock } from "./useScrollLock";
 
 const MONTHS_SHORT = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 const norm = (s) => (s || "").trim().toUpperCase();
@@ -36,6 +37,7 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const { mounted, closing } = useExitAnim(open);
+  useScrollLock(mounted);
   const inputRef = useRef(null);
   const listRef = useRef(null);
 
@@ -45,15 +47,6 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
       setActiveIndex(0);
       setTimeout(() => inputRef.current?.focus(), 0);
     }
-  }, [open]);
-
-  // Lock page scroll while open — otherwise touch-scrolling the results list
-  // on iOS scrolls the page underneath the fixed modal instead.
-  useEffect(() => {
-    if (!open) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prevOverflow; };
   }, [open]);
 
   useEscClose(open, onClose);

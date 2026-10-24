@@ -5,6 +5,7 @@ import { loadPdfFonts } from "./pdfFonts";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
+import { useScrollLock } from "./useScrollLock";
 
 const DARK_COCKPIT_THEME = {
   bg:        "#0a0d12",
@@ -46,6 +47,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   const [tab, setTab] = useState("export");
   const tabAnim = useTransitionAnim(tab, TAB_IDS, settings?.animStyle);
   const { mounted, closing } = useExitAnim(open);
+  useScrollLock(mounted);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [file, setFile] = useState(null);
@@ -1120,7 +1122,7 @@ const exportImportCss = `
   .eim-tab-hint{font-family:var(--cb-font-mono);font-size:calc(9px * var(--fs));letter-spacing:0.14em;color:var(--cb-ink-dim);text-transform:uppercase;}
 
   /* ── Body ── */
-  .eim-body{flex:1 1 auto;overflow-y:auto;padding:20px 24px;min-height:0;}
+  .eim-body{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:20px 24px;min-height:0;}
   .eim-body::-webkit-scrollbar{width:4px;}
   .eim-body::-webkit-scrollbar-track{background:transparent;}
   .eim-body::-webkit-scrollbar-thumb{background:var(--cb-line-2);border-radius:2px;}

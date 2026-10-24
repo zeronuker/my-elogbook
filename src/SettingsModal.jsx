@@ -6,6 +6,7 @@ import Changelog from "@brand/Changelog";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
+import { useScrollLock } from "./useScrollLock";
 
 // ════════════════════════════════════════════════════════════════════
 //  ClaudeBorne · eLogbook — Settings Modal (v6 brand rewrite)
@@ -149,6 +150,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
   const [resetFlash, setResetFlash] = useState(false);
   const tabAnim = useTransitionAnim(tab, SETTINGS_TABS.map((t) => t.id), draft.animStyle);
   const { mounted, closing } = useExitAnim(open);
+  useScrollLock(mounted);
 
   // Reset tab/flash when modal opens. If a caller passed initialTab (e.g. the
   // hidden-columns chip/badge), honour it on each open — otherwise default to profile.
@@ -1215,7 +1217,7 @@ const settingsCss = `
 
   /* ── Body ───────────────────────────────────────────────────────── */
   .sm-body {
-    flex: 1 1 auto; overflow-y: auto;
+    flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain;
     padding: 24px 28px;
     min-height: 0; /* required: allows flex child to shrink below content size so footer stays visible */
   }

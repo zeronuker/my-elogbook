@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ChamferFrame from "@brand/ChamferFrame";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
+import { useScrollLock } from "./useScrollLock";
 import { useTransitionAnim } from "./useTransitionAnim";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -1110,6 +1111,7 @@ const SECTION_ORDER = SECTIONS.map((_, i) => i);
 export default function HowToGuideModal({ open, onClose, version, animStyle }) {
   const [active, setActive] = useState(0);
   const { mounted, closing } = useExitAnim(open);
+  useScrollLock(mounted);
   const topicAnim = useTransitionAnim(active, SECTION_ORDER, animStyle);
 
   useEffect(() => { if (open) setActive(0); }, [open]);
@@ -1164,7 +1166,7 @@ export default function HowToGuideModal({ open, onClose, version, animStyle }) {
         <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
 
           {/* Sidebar */}
-          <div className="htg-side" style={{ width: 210, borderRight: `1px solid ${BDR}`, overflowY: "auto", flexShrink: 0 }}>
+          <div className="htg-side" style={{ width: 210, borderRight: `1px solid ${BDR}`, overflowY: "auto", overscrollBehavior: "contain", flexShrink: 0 }}>
             {SECTIONS.map((s, i) => (
               <button
                 key={s.id}
@@ -1188,7 +1190,7 @@ export default function HowToGuideModal({ open, onClose, version, animStyle }) {
           </div>
 
           {/* Content */}
-          <div className="htg-pane" style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+          <div className="htg-pane" style={{ flex: 1, overflowY: "auto", overscrollBehavior: "contain", padding: "24px 28px" }}>
             <div key={active} className={topicAnim.className} style={topicAnim.style}>
               <div style={{ fontSize: 12, letterSpacing: "0.14em", color: A, fontWeight: 700, marginBottom: 18, textTransform: "uppercase", fontFamily: F }}>
                 {icon}&nbsp;&nbsp;{title}

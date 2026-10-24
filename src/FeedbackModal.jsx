@@ -7,6 +7,7 @@ import { currentVersion } from "@brand/Changelog";
 import { useExitAnim } from "./useExitAnim";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useEscClose } from "./useEscClose";
+import { useScrollLock } from "./useScrollLock";
 
 // ════════════════════════════════════════════════════════════════════
 //  FeedbackModal — in-app bug report / feature request → Firestore
@@ -84,7 +85,7 @@ const css = `
   .fb-close:hover { color: var(--cb-mint); border-color: var(--cb-mint); }
   .fb-body {
     padding: 20px 22px;
-    overflow-y: auto; flex: 1 1 auto; min-height: 0;
+    overflow-y: auto; overscroll-behavior: contain; flex: 1 1 auto; min-height: 0;
     display: flex; flex-direction: column; gap: 16px;
   }
   .fb-field { display: flex; flex-direction: column; gap: 6px; }
@@ -216,6 +217,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
   const [error, setError]         = useState("");
 
   const { mounted, closing } = useExitAnim(open);
+  useScrollLock(mounted);
   const typeAnim = useTransitionAnim(type, TYPE_ORDER, animStyle);
   useEscClose(open, onClose);
 
