@@ -436,11 +436,8 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
 
   // Toolbar parts, built once and placed by whichever layout is showing.
   const fieldStyle = isNarrow ? { ...inputStyle, width: "100%", minWidth: 0, boxSizing: "border-box" } : inputStyle;
-  const fromField = (
-    <Field label="FROM" stacked={isNarrow}>
-      <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={fieldStyle} />
-    </Field>
-  );
+  const fromInput = <input id="route-map-from" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={fieldStyle} />;
+  const fromField = <Field label="FROM" stacked={isNarrow}>{fromInput}</Field>;
   const toField = (
     <Field label="TO" stacked={isNarrow}>
       <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={fieldStyle} />
@@ -540,15 +537,16 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
             </div>
           </div>
         ) : (
-          /* Wide: two labelled rows, VIEW and EXPORT */
-          <div style={{ display: "grid", gridTemplateColumns: "max-content 1fr", columnGap: 14, rowGap: 10, alignItems: "center", padding: "12px 16px", borderBottom: `1px solid ${THEME.border}` }}>
-            <span style={groupLabelStyle}>VIEW</span>
+          /* Wide: two rows. What to draw, then how to export it. The FROM label gets its own column,
+             so the export row starts exactly under the FROM date field. */
+          <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", columnGap: 6, rowGap: 10, alignItems: "center", padding: "12px 16px", borderBottom: `1px solid ${THEME.border}` }}>
+            <label htmlFor="route-map-from" style={labelStyle}>FROM</label>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 16px" }}>
-              {fromField}
+              {fromInput}
               {toField}
               {mapField}
             </div>
-            <span style={groupLabelStyle}>EXPORT</span>
+            <span />
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
               {kindSelect}
               {sizeSelect}
