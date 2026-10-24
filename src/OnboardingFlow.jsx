@@ -4,7 +4,7 @@ import GoogleSignInButton from './GoogleSignInButton';
 import BrandBanner from '@brand/BrandBanner';
 import { CHANGELOG } from './changelog';
 import { currentVersion } from '@brand/Changelog';
-import ChamferFrame from './ChamferFrame';
+import ChamferFrame from '@brand/ChamferFrame';
 
 const APP_VERSION = currentVersion(CHANGELOG);
 

@@ -15,6 +15,7 @@ export default defineConfig({
       canvg: resolve(__dirname, 'src/canvgStub.js'),
       '@brand/BrandBanner': resolve(__dirname, 'brand-kit/component/BrandBanner.jsx'),
       '@brand/SplashScreen': resolve(__dirname, 'brand-kit/component/SplashScreen.jsx'),
+      '@brand/ChamferFrame': resolve(__dirname, 'brand-kit/component/ChamferFrame.jsx'),
       '@brand/UpdatePrompt': resolve(__dirname, 'brand-kit/component/UpdatePrompt.jsx'),
       '@brand/useUpdate': resolve(__dirname, 'brand-kit/component/useUpdate.js'),
       '@brand/Changelog': resolve(__dirname, 'brand-kit/component/Changelog.jsx'),

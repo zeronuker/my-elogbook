@@ -212,27 +212,6 @@ code {
   #root { width: 100%; }
 }
 
-/* ── Double-line chamfered modal frame (ChamferFrame.jsx) ──
-   Four stacked layers (line, face, line, face), each clipped to a corner cut whose leg shrinks
-   by 0.586 x its inset so the two lines stay parallel. The shadow is its own static layer because
-   clip-path would cut off a box-shadow. --cf-line is the accent gradient (set in theme.js); modals
-   that keep a warning colour override it, and --cf-face overrides the fill. */
-:where(.cf) { position: relative; }
-.cf { --cf-c: 16px; display: flex; flex-direction: column; }
-.cf-l1, .cf-l2, .cf-l3, .cf-l4 { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
-.cf-l1, .cf-l2, .cf-l3, .cf-l4, .cf-shadow > i {
-  --leg: calc(var(--cf-c) - 0.586 * var(--o));
-  clip-path: polygon(var(--leg) 0, calc(100% - var(--leg)) 0, 100% var(--leg), 100% calc(100% - var(--leg)),
-    calc(100% - var(--leg)) 100%, var(--leg) 100%, 0 calc(100% - var(--leg)), 0 var(--leg));
-}
-.cf-l1 { --o: 0px;   padding: 1.5px; background: var(--cf-line, #3FE0C5); }
-.cf-l2 { --o: 1.5px; padding: 3px;   background: var(--cf-face, var(--cb-surface-1, #141a2e)); }
-.cf-l3 { --o: 4.5px; padding: 1.5px; background: var(--cf-line, #3FE0C5); }
-.cf-l4 { --o: 6px; padding: var(--cf-pad, 0); background: var(--cf-face, var(--cb-surface-1, #141a2e)); }
-.cf-shadow { position: absolute; inset: 0; pointer-events: none; filter: drop-shadow(0 22px 36px rgba(0,0,0,0.5)); }
-.cf-shadow > i { --o: 0px; display: block; width: 100%; height: 100%; background: #000; }
-@media (max-width: 520px) { .cf { --cf-c: 12px; } }
-
 /* ── Flight Summary sub-tabs: rounded button group with an icon on each. Colors follow the theme variables. ── */
 .elb-subtabs {
   display: flex; gap: 8px; margin-bottom: 20px; padding: 4px;

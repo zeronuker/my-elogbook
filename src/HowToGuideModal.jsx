@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import ChamferFrame from "./ChamferFrame";
+import ChamferFrame from "@brand/ChamferFrame";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
 import { useTransitionAnim } from "./useTransitionAnim";

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import ExcelJS from "exceljs";
-import ChamferFrame from "./ChamferFrame";
+import ChamferFrame from "@brand/ChamferFrame";
 import { loadPdfFonts } from "./pdfFonts";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";

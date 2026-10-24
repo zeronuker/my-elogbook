@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { parseHHMM } from "./logbookCalculations";
-import ChamferFrame from "./ChamferFrame";
+import ChamferFrame from "@brand/ChamferFrame";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ChamferFrame from "./ChamferFrame";
+import ChamferFrame from "@brand/ChamferFrame";
 import { db } from "./firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { CHANGELOG } from "./changelog";

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import GoogleSignInButton from "./GoogleSignInButton";
-import ChamferFrame from "./ChamferFrame";
+import ChamferFrame from "@brand/ChamferFrame";
 import { CHANGELOG } from "./changelog";
 import Changelog from "@brand/Changelog";
 import { useTransitionAnim } from "./useTransitionAnim";

@@ -7,7 +7,7 @@ import ExportImportModal from "./ExportImportModal";
 import SearchModal from "./SearchModal";
 import RouteMapModal from "./RouteMapModal";
 import HowToGuideModal from "./HowToGuideModal";
-import ChamferFrame from "./ChamferFrame";
+import ChamferFrame from "@brand/ChamferFrame";
 import FeedbackModal from "./FeedbackModal";
 import BrandBanner from "@brand/BrandBanner";
 import UpdatePrompt from "@brand/UpdatePrompt";

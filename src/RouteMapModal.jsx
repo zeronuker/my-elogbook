@@ -7,7 +7,7 @@ import { getCoords } from "./airportCoords";
 import { parseHHMM } from "./logbookCalculations";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
-import ChamferFrame from "./ChamferFrame";
+import ChamferFrame from "@brand/ChamferFrame";
 
 // Modal chrome follows the app theme variables (dark fallbacks match the old values).
 const THEME = {
