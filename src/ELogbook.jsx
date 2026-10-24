@@ -1038,6 +1038,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     setConfirmDeleteRowIdx(null);
   };
   const isCurrentPeriod = selectedMonth === new Date().getMonth() && selectedYear === new Date().getFullYear();
+  // Annual Overview is a whole-year view, so its version of the button only changes the year.
+  const goToCurrentYear = () => handleYearChange(new Date().getFullYear());
 
   const stepMonth = (delta) => {
     let newMonth = selectedMonth + delta;
@@ -1180,17 +1182,18 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   );
   const monthYearSelects = renderMonthYearSelects(false);
   const monthYearSelectsPhone = renderMonthYearSelects(true);
-  const todayBtn = activeTab === "logbook" && (
+  const atNow = yearOnly ? selectedYear === new Date().getFullYear() : isCurrentPeriod;
+  const todayBtn = (activeTab === "logbook" || yearOnly) && (
     <button
-      onClick={goToToday}
-      disabled={isCurrentPeriod}
-      title="Go to today"
+      onClick={yearOnly ? goToCurrentYear : goToToday}
+      disabled={atNow}
+      title={yearOnly ? "Go to current year" : "Go to today"}
       style={{
         ...iconBtnStyle,
-        color: isCurrentPeriod ? "#3a4a5a" : "#3FE0C5",
-        borderColor: isCurrentPeriod ? "var(--elb-border, #1e3a5f)" : "#1e3a5f",
-        opacity: isCurrentPeriod ? 0.4 : 1,
-        cursor: isCurrentPeriod ? "not-allowed" : "pointer",
+        color: atNow ? "#3a4a5a" : "#3FE0C5",
+        borderColor: atNow ? "var(--elb-border, #1e3a5f)" : "#1e3a5f",
+        opacity: atNow ? 0.4 : 1,
+        cursor: atNow ? "not-allowed" : "pointer",
       }}
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
