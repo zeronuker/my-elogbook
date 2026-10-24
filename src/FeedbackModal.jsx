@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ChamferFrame from "./ChamferFrame";
 import { db } from "./firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { CHANGELOG } from "./changelog";
@@ -52,12 +53,7 @@ const css = `
     font-family: var(--elb-font, 'Courier New', monospace);
   }
   .fb-modal {
-    background: var(--elb-bg2, #141a2e);
-    border: 1px solid var(--elb-border, #1a3050);
-    border-radius: 0;
     width: 100%; max-width: 480px;
-    display: flex; flex-direction: column;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
     max-height: 90vh;
   }
   .fb-head {
@@ -294,7 +290,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
     <>
       <style>{css}</style>
       <div className={"fb-backdrop elb-fade" + exitCls} onClick={handleClose}>
-        <div className={"fb-modal elb-pop" + exitCls} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+        <ChamferFrame className={"fb-modal elb-pop" + exitCls} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
 
           {/* HEAD */}
           <header className="fb-head">
@@ -410,7 +406,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
             </>
           )}
 
-        </div>
+        </ChamferFrame>
       </div>
     </>
   );

@@ -438,6 +438,8 @@ export const CHANGELOG = [
       "IMP: A month with more flights than fit on one page continues on the next, and each page carries its own totals. Long captain names and remarks shrink or wrap to two lines, and are cut with an ellipsis only when they still cannot fit.",
       "FIX: On narrow phones the right-hand side of the app could be cut off with no way to scroll to it, so Route map, Settings and Sign out could not be tapped. The header, tabs, windows and the log in and sign up screens now fit the screen on phones as narrow as 320 px.",
       "IMP: Phone layouts are tidier. The header icons sit under the month and year, the three main tabs share the row, Settings tabs form a 2 × 2 grid with each label above its field, and the How-to guide has a chapter dropdown. Feedback types and the Route map export row also fit.",
+      "NEW: The Route map exports as an Image (PNG in wide, square or portrait), a PDF (A4, A3 or US Letter) or an Interactive file that opens in any browser, where the receiver can zoom, pan and hover for details. All three follow your theme. A Stats box adds flight hours, distance, countries and aircraft types, and is off by default so a shared map shows no numbers. This replaces the old PNG and JPG export.",
+      "IMP: Every window now shares one look: a double-line border with cut corners that follows your accent colour. This covers Settings, Search, Export/Import, Feedback, the guide, the route map, the confirm and reference popups, the update notice, and the landing, log in and sign up screens. Save failed keeps its red and Sync conflict keeps its amber.",
     ],
   },
 ];

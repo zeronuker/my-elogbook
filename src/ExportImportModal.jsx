@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import ExcelJS from "exceljs";
+import ChamferFrame from "./ChamferFrame";
+import { loadPdfFonts } from "./pdfFonts";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
@@ -28,28 +30,6 @@ const TABS = [
   { id: "backup", label: "Backup", hint: "json · restore" },
 ];
 const TAB_IDS = TABS.map(t => t.id);
-
-// Inter for the PDF: static TTFs (jsPDF cannot use the woff2 files), fetched once on first export and cached by the service worker.
-const toBase64 = (buf) => {
-  const bytes = new Uint8Array(buf);
-  let s = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-  return btoa(s);
-};
-let pdfFontsPromise = null;
-const loadPdfFonts = () => {
-  if (!pdfFontsPromise) {
-    const get = async (file) => {
-      const res = await fetch(`${import.meta.env.BASE_URL}fonts/inter/${file}`);
-      if (!res.ok) throw new Error("Could not load the PDF fonts");
-      return toBase64(await res.arrayBuffer());
-    };
-    pdfFontsPromise = Promise.all([get("inter-pdf-400.ttf"), get("inter-pdf-700.ttf")])
-      .then(([regular, bold]) => ({ regular, bold }))
-      .catch((e) => { pdfFontsPromise = null; throw e; });
-  }
-  return pdfFontsPromise;
-};
 
 // Two or more choices side by side; the chosen one is highlighted.
 function Seg({ options, value, onChange, big }) {
@@ -884,7 +864,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     <>
       <style>{exportImportCss}</style>
       <div className={"eim-backdrop elb-fade" + exitCls} onClick={handleBackdrop} />
-      <div className={"eim-modal elb-pop" + exitCls} role="dialog" aria-modal="true" aria-label="Export/Import">
+      <ChamferFrame className={"eim-modal elb-pop" + exitCls} role="dialog" aria-modal="true" aria-label="Export/Import">
 
         {/* ── HEAD ── */}
         <header className="eim-head">
@@ -1079,7 +1059,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
             <button className="eim-btn-ghost" onClick={onClose}>Close</button>
           </div>
         </footer>
-      </div>
+      </ChamferFrame>
     </>
   );
 }
@@ -1098,8 +1078,6 @@ const exportImportCss = `
   .eim-modal{
     position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
     width:480px;max-width:92vw;max-height:88vh;
-    background:var(--cb-surface-1);border:1px solid var(--cb-line-2);
-    display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.5);
     z-index:2100;
     font-family:var(--cb-font-body);color:var(--cb-ink);font-size:14px;text-align:left;
   }

@@ -54,6 +54,7 @@ export function makeThemeCss(settings = {}) {
       --cb-accent:${accent};
       --cb-accent-rgb:${hexToRgb(accent)};
       --cb-grad:${grad};
+      --cf-line:${grad};
       --cb-font-body:${fontFamily};
       --cb-font-mono:${fontFamily};
       --fs:${(fontSize / 14).toFixed(4)};

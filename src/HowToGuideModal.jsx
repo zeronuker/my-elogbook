@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ChamferFrame from "./ChamferFrame";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
 import { useTransitionAnim } from "./useTransitionAnim";
@@ -1127,7 +1128,7 @@ export default function HowToGuideModal({ open, onClose, version, animStyle }) {
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)", zIndex: 2200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className={"elb-pop" + exitCls} style={{ background: "#0a0d12", border: `1px solid ${BDR}`, borderRadius: 0, boxShadow: "0 30px 80px rgba(0,0,0,0.5)", width: "100%", maxWidth: 860, height: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <ChamferFrame className={"elb-pop" + exitCls} face="#0a0d12" style={{ width: "100%", maxWidth: 860, height: "90vh" }}>
 
         {/* Header */}
         <div style={{
@@ -1210,7 +1211,7 @@ export default function HowToGuideModal({ open, onClose, version, animStyle }) {
             style={{ background: active === SECTIONS.length - 1 ? "rgba(63,224,197,0.10)" : "transparent", border: `1px solid ${active === SECTIONS.length - 1 ? A : BDR}`, borderRadius: 0, color: active === SECTIONS.length - 1 ? A : DIM, padding: "5px 14px", cursor: "pointer", fontSize: 11, letterSpacing: "0.08em", fontFamily: F }}
           >{active === SECTIONS.length - 1 ? "FINISH ✓" : "NEXT →"}</button>
         </div>
-      </div>
+      </ChamferFrame>
 
       <style>{`
         .htg-content { text-align: left; }

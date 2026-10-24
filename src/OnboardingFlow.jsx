@@ -4,6 +4,7 @@ import GoogleSignInButton from './GoogleSignInButton';
 import BrandBanner from '@brand/BrandBanner';
 import { CHANGELOG } from './changelog';
 import { currentVersion } from '@brand/Changelog';
+import ChamferFrame from './ChamferFrame';
 
 const APP_VERSION = currentVersion(CHANGELOG);
 
@@ -92,8 +93,7 @@ const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSi
   return (
     <div style={{ maxWidth: '400px', width: '100%' }}>
       <button className="onb-back" onClick={() => goTo('landing')} disabled={isLoading}>← BACK</button>
-      <div className="onb-card">
-        <div className="onb-cbar"></div>
+      <ChamferFrame className="onb-card">
         <div className="onb-cbody">
           <div className="onb-slbl">NEW PILOT · STEP 1 OF 3</div>
           <div className="onb-stitle">CREATE YOUR ACCOUNT</div>
@@ -181,7 +181,7 @@ const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSi
             Already have an account? <span style={{ color: 'var(--accent)', cursor: 'pointer' }} onClick={() => goTo('login')}>LOG IN</span>
           </div>
         </div>
-      </div>
+      </ChamferFrame>
     </div>
   );
 });
@@ -190,8 +190,7 @@ const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSi
 const ScreenSignUp2 = memo(({ formData, updateFormData, isLoading, goTo }) => {
   return (
     <div style={{ maxWidth: '480px', width: '100%' }}>
-      <div className="onb-card">
-        <div className="onb-cbar"></div>
+      <ChamferFrame className="onb-card">
         <div className="onb-cbody">
           <div className="onb-slbl">NEW PILOT · STEP 3 OF 3</div>
           <div className="onb-stitle">PILOT CREDENTIALS</div>
@@ -223,7 +222,7 @@ const ScreenSignUp2 = memo(({ formData, updateFormData, isLoading, goTo }) => {
           </button>
           <button className="onb-btn onb-btn-g" onClick={() => goTo('done')} disabled={isLoading}>SKIP TO LOGBOOK</button>
         </div>
-      </div>
+      </ChamferFrame>
     </div>
   );
 });
@@ -243,16 +242,16 @@ const ScreenLanding = memo(({ goTo }) => (
       <span className="onb-badge onb-badge-green">✓ OFFLINE-FIRST</span>
     </div>
     <div className="onb-land-btns">
-      <div className="onb-lbtn" onClick={() => goTo('login')}>
+      <ChamferFrame className="onb-lbtn" onClick={() => goTo('login')}>
         <div className="onb-lbtn-icon"><LoginIcon size={36} /></div>
         <div className="onb-lbtn-title">LOG IN</div>
         <div className="onb-lbtn-sub">Access your existing logbook</div>
-      </div>
-      <div className="onb-lbtn signup" onClick={() => goTo('signup1')}>
+      </ChamferFrame>
+      <ChamferFrame className="onb-lbtn signup" onClick={() => goTo('signup1')}>
         <div className="onb-lbtn-icon"><SignupIcon size={36} /></div>
         <div className="onb-lbtn-title">SIGN UP FREE</div>
         <div className="onb-lbtn-sub">Create your pilot logbook today</div>
-      </div>
+      </ChamferFrame>
     </div>
     <div className="onb-land-legal">By continuing you agree to our Terms of Service.<br/>Your data is stored securely and privately.</div>
   </div>
@@ -271,8 +270,7 @@ const ScreenLogin = memo(({ onLogin, signupError, isLoading, onClearError, goTo,
   return (
     <div style={{ maxWidth: '380px', width: '100%' }}>
       <button className="onb-back" onClick={() => goTo('landing')}>← BACK</button>
-      <div className="onb-card">
-        <div className="onb-cbar"></div>
+      <ChamferFrame className="onb-card">
         <div className="onb-cbody">
           <div className="onb-slbl">RETURNING PILOT</div>
           <div className="onb-stitle">WELCOME BACK</div>
@@ -306,7 +304,7 @@ const ScreenLogin = memo(({ onLogin, signupError, isLoading, onClearError, goTo,
             No account? <span style={{ color: 'var(--accent)', cursor: 'pointer' }} onClick={() => goTo('signup1')}>SIGN UP FREE</span>
           </div>
         </div>
-      </div>
+      </ChamferFrame>
     </div>
   )
 });
@@ -340,8 +338,7 @@ const ScreenEmailVerification = memo(({ email, onResendVerification }) => {
 
   return (
     <div style={{ maxWidth: '480px', width: '100%' }}>
-      <div className="onb-card">
-        <div className="onb-cbar"></div>
+      <ChamferFrame className="onb-card">
         <div className="onb-cbody">
           <div className="onb-slbl">NEW PILOT · STEP 2 OF 3</div>
           <div className="onb-stitle">VERIFY YOUR EMAIL</div>
@@ -369,7 +366,7 @@ const ScreenEmailVerification = memo(({ email, onResendVerification }) => {
           </div>
           <button className="onb-btn onb-btn-g onb-waiting-btn" disabled>WAITING FOR VERIFICATION...</button>
         </div>
-      </div>
+      </ChamferFrame>
     </div>
   )
 });
@@ -394,8 +391,7 @@ const ScreenForgotPassword = memo(({ onForgotPassword, goTo }) => {
   return (
     <div style={{ maxWidth: '380px', width: '100%' }}>
       <button className="onb-back" onClick={() => goTo('login')}>← BACK</button>
-      <div className="onb-card">
-        <div className="onb-cbar"></div>
+      <ChamferFrame className="onb-card">
         <div className="onb-cbody">
           <div className="onb-slbl">ACCOUNT RECOVERY</div>
           <div className="onb-stitle">RESET PASSWORD</div>
@@ -427,7 +423,7 @@ const ScreenForgotPassword = memo(({ onForgotPassword, goTo }) => {
             </>
           )}
         </div>
-      </div>
+      </ChamferFrame>
     </div>
   )
 });
@@ -444,12 +440,11 @@ const ScreenVerifyResult = memo(({ verifyAction, email, onResendVerification, go
   if (!verifyAction || verifyAction.status === 'checking') {
     return (
       <div style={{ maxWidth: '480px', width: '100%' }}>
-        <div className="onb-card">
-          <div className="onb-cbar"></div>
+        <ChamferFrame className="onb-card">
           <div className="onb-cbody">
             <div className="onb-stitle">VERIFYING YOUR EMAIL…</div>
           </div>
-        </div>
+        </ChamferFrame>
       </div>
     )
   }
@@ -467,25 +462,23 @@ const ScreenVerifyResult = memo(({ verifyAction, email, onResendVerification, go
 
   return (
     <div style={{ maxWidth: '480px', width: '100%' }}>
-      <div className="onb-card" style={{ marginBottom: 16 }}>
-        <div className="onb-cbar" style={{ background: '#ef4444' }}></div>
+      <ChamferFrame className="onb-card" color="#ef4444" style={{ marginBottom: 16 }}>
         <div className="onb-cbody">
           <div className="onb-stitle">VERIFICATION FAILED</div>
           <div className="onb-ssub" style={{ color: '#ef4444' }}>
             {VERIFY_ERROR_MESSAGES[verifyAction.code] || 'Something went wrong verifying your email.'}
           </div>
         </div>
-      </div>
+      </ChamferFrame>
       {email ? (
         <ScreenEmailVerification email={email} onResendVerification={onResendVerification} />
       ) : (
-        <div className="onb-card">
-          <div className="onb-cbar"></div>
+        <ChamferFrame className="onb-card">
           <div className="onb-cbody">
             <div className="onb-ssub">Log in to resend the verification email.</div>
             <button className="onb-btn onb-btn-p" style={{ marginTop: 12 }} onClick={() => goTo('login')}>GO TO LOGIN →</button>
           </div>
-        </div>
+        </ChamferFrame>
       )}
     </div>
   )
@@ -664,6 +657,7 @@ function OnboardingFlow({
       --text:#e8ecf5;--muted:#b8c0d4;--dim:#7c87a3;
       --mono:'JetBrains Mono',monospace;
       --grad:linear-gradient(135deg,#3FE0C5 0%,#3B8DFF 55%,#5B6BFF 100%);
+      --cf-line:var(--grad);--cf-face:var(--surface);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -735,18 +729,7 @@ function OnboardingFlow({
 
     .onb-dot.done { background: var(--green); }
 
-    .onb-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    .onb-cbar {
-      height: 3px;
-      background: var(--grad);
-    }
+    .onb-card { width: 100%; }
 
     .onb-cbody { padding: 26px 30px; }
     /* Phones: leave room for the 300px Google button (GoogleSignInButton sizes itself to the screen) */
@@ -978,18 +961,15 @@ function OnboardingFlow({
     }
 
     .onb-lbtn {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 22px 14px;
+      --cf-c: 12px;
+      --cf-pad: 22px 14px;
       cursor: pointer;
-      transition: all 0.2s;
       text-align: center;
     }
 
-    .onb-lbtn:hover { border-color: var(--muted); }
-    .onb-lbtn.signup { border-color: var(--accent); background: rgba(63,224,197,0.08); }
-    .onb-lbtn.signup:hover { background: rgba(63,224,197,0.15); border-color: var(--accent); }
+    .onb-lbtn:hover { --cf-face: var(--raised); }
+    .onb-lbtn.signup { --cf-face: #172d3a; }
+    .onb-lbtn.signup:hover { --cf-face: #1d3b4a; }
 
     .onb-lbtn-icon { font-size: 32px; margin-bottom: 12px; }
     .onb-lbtn-title { font-size: 15px; font-weight: 700; letter-spacing: 0.1em; color: var(--text); margin-bottom: 6px; }
@@ -1204,26 +1184,26 @@ function OnboardingFlow({
 
       {/* ── PWA update banner — shown when a new version is available ── */}
       {updateReady && update.needRefresh && (
-        <div style={{
-          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-          background: '#0d1a2e', border: '1px solid #3FE0C5', borderRadius: 6,
-          padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12,
+        <ChamferFrame face="#0d1a2e" pad="10px 16px" style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', '--cf-c': '10px',
           fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: 12,
-          color: '#c8d6e5', zIndex: 9999, whiteSpace: 'nowrap', boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+          color: '#c8d6e5', zIndex: 9999, whiteSpace: 'nowrap',
         }}>
-          <span style={{ color: '#3FE0C5' }}>↑</span>
-          <span>New version available</span>
-          <button
-            onClick={() => update.updateServiceWorker?.(true)}
-            style={{
-              background: '#3FE0C5', color: '#0a0d12', border: 'none', borderRadius: 4,
-              padding: '4px 12px', fontFamily: 'inherit', fontSize: 11,
-              fontWeight: 700, letterSpacing: '0.08em', cursor: 'pointer',
-            }}
-          >
-            UPDATE
-          </button>
-        </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ color: '#3FE0C5' }}>↑</span>
+            <span>New version available</span>
+            <button
+              onClick={() => update.updateServiceWorker?.(true)}
+              style={{
+                background: '#3FE0C5', color: '#0a0d12', border: 'none', borderRadius: 4,
+                padding: '4px 12px', fontFamily: 'inherit', fontSize: 11,
+                fontWeight: 700, letterSpacing: '0.08em', cursor: 'pointer',
+              }}
+            >
+              UPDATE
+            </button>
+          </div>
+        </ChamferFrame>
       )}
     </div>
   );

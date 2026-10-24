@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import html2canvas from "html2canvas";
 import { feature } from "topojson-client";
 import landTopology from "world-atlas/land-110m.json";
 import { getCoords } from "./airportCoords";
+import { parseHHMM } from "./logbookCalculations";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
+import ChamferFrame from "./ChamferFrame";
 
 // Modal chrome follows the app theme variables (dark fallbacks match the old values).
 const THEME = {
@@ -205,7 +206,7 @@ function parseRowDate(row, keyMonthIdx, keyYear) {
   return new Date(`${keyYear}-${String(keyMonthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00Z`);
 }
 
-// Reduced to just the departure/arrival fields the map needs.
+// Each match keeps its row, month and year so the export can work out hours from it.
 function getSectorsInRange(monthData, dateFrom, dateTo) {
   if (!dateFrom || !dateTo || !monthData || typeof monthData !== "object") return [];
   const fromDate = new Date(dateFrom + "T00:00:00Z");
@@ -222,7 +223,7 @@ function getSectorsInRange(monthData, dateFrom, dateTo) {
       if (!row || !row.date || !row.departure || !row.arrival) return;
       const rowDate = parseRowDate(row, keyMonthIdx, keyYear);
       if (rowDate && rowDate >= fromDate && rowDate <= toDate) {
-        sectors.push({ departure: row.departure, arrival: row.arrival });
+        sectors.push({ departure: row.departure, arrival: row.arrival, row, year: keyYear, monthIdx: keyMonthIdx, date: rowDate.toISOString().slice(0, 10) });
       }
     });
   });
@@ -246,7 +247,26 @@ function getEarliestDate(monthData) {
   return earliest ? earliest.toISOString().split("T")[0] : null;
 }
 
-export default function RouteMapModal({ open, onClose, monthData, theme = "dark" }) {
+// The flights the export draws: only those whose airports are both known, with day and night minutes from the logbook's own calculation.
+function toExportFlights(sectors, computeFlightTimes) {
+  const mins = (ft, keys) => keys.reduce((t, k) => t + parseHHMM(ft[k] || ""), 0);
+  return sectors.flatMap(s => {
+    const from = getCoords(s.departure), to = getCoords(s.arrival);
+    if (!from || !to) return [];
+    const ft = computeFlightTimes ? computeFlightTimes(s.row, s.year, s.monthIdx) : {};
+    return [{
+      dep: s.departure.toUpperCase().trim(), arr: s.arrival.toUpperCase().trim(), from, to, date: s.date, type: s.row.type,
+      dayMins: mins(ft, ["dayP1", "dayP1US", "dayP2"]), nightMins: mins(ft, ["nightP1", "nightP1US", "nightP2"]),
+    }];
+  });
+}
+
+const EXPORT_KINDS = [["image", "Image"], ["pdf", "PDF"], ["html", "Interactive"]];
+const IMAGE_SIZE_OPTIONS = [["wide", "Wide 16:9"], ["square", "Square 1:1"], ["portrait", "Portrait 4:5"]];
+const PAPER_OPTIONS = [["a4", "A4"], ["a3", "A3"], ["letter", "US Letter"]];
+const ORIENT_OPTIONS = [["landscape", "Landscape"], ["portrait", "Portrait"]];
+
+export default function RouteMapModal({ open, onClose, monthData, theme = "dark", computeFlightTimes }) {
   const isLight = theme === "light";
   const mapColors = MAP_COLORS[isLight ? "light" : "dark"];
   const accent = isLight ? MINT_LIGHT : MINT;
@@ -263,7 +283,12 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   // Online: CARTO for the current theme. Offline: the bundled vector outline, since tiles can't load.
   const defaultBasemap = () => !navigator.onLine ? "vector" : isLight ? "cartoLight" : "carto";
   const [basemap, setBasemap] = useState(defaultBasemap);
-  const [exportFormat, setExportFormat] = useState("png");
+  const [exportKind, setExportKind] = useState("image");
+  const [imageSize, setImageSize] = useState("wide");
+  const [paper, setPaper] = useState("a4");
+  const [orient, setOrient] = useState("landscape");
+  const [showStats, setShowStats] = useState(false);
+  const [exportError, setExportError] = useState("");
   const [exporting, setExporting] = useState(false);
   const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 520px)").matches);
   const [isCompact, setIsCompact] = useState(() => window.matchMedia("(max-width: 720px)").matches);
@@ -299,10 +324,7 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   // itself (tiles vs. vector outline) is handled by the effect below.
   useEffect(() => {
     if (!mounted || !mapElRef.current || mapRef.current) return;
-    // preferCanvas: html2canvas (used for PNG export) can't reliably capture
-    // Leaflet's default SVG-rendered routes/markers — they silently vanish
-    // from the exported image. Canvas-rendered paths are a real bitmap, so
-    // html2canvas captures them correctly.
+    // preferCanvas: markers draw to one canvas. The old screenshot export needed this; it is kept so the map looks the same.
     const map = L.map(mapElRef.current, { worldCopyJump: true, attributionControl: false, preferCanvas: true, zoomSnap: 0.25 }).setView([20, 0], 2);
     mapRef.current = map;
     // Dedicated pane below the default overlayPane (where routes/markers
@@ -401,17 +423,17 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
 
   if (!mounted) return null;
 
-  const exportUnsupported = BASEMAPS[basemap].type === "maplibre";
-
-  const handleExportPng = async () => {
+  // The export is drawn from the logbook data, not from the map on screen, so it works with any basemap and offline.
+  const handleExport = async () => {
     setExporting(true);
+    setExportError("");
     try {
-      const canvas = await html2canvas(mapElRef.current, { useCORS: true, scale: 4 });
-      const link = document.createElement("a");
-      const isJpg = exportFormat === "jpg";
-      link.download = `route-map-${dateFrom}-to-${dateTo}.${isJpg ? "jpg" : "png"}`;
-      link.href = isJpg ? canvas.toDataURL("image/jpeg", 0.92) : canvas.toDataURL("image/png");
-      link.click();
+      const flights = toExportFlights(getSectorsInRange(monthData, dateFrom, dateTo), computeFlightTimes);
+      const { buildRouteMapFile, downloadBlob } = await import("./routeMapExport");
+      const { blob, ext } = await buildRouteMapFile({ kind: exportKind, flights, theme, showStats, size: imageSize, paper, orient });
+      downloadBlob(blob, `route-map-${dateFrom}-to-${dateTo}.${ext}`);
+    } catch (e) {
+      setExportError(e?.message || "Export failed");
     } finally {
       setExporting(false);
     }
@@ -423,10 +445,9 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}
     >
-      <div className={"elb-pop" + (closing ? " elb-closing" : "")} style={{
-        background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 0, boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
+      <ChamferFrame className={"elb-pop" + (closing ? " elb-closing" : "")} face={THEME.bg} style={{
         width: "min(920px, 92vw)", height: "min(660px, 88vh)",
-        display: "flex", flexDirection: "column", fontFamily: "'Courier New', monospace", overflow: "hidden",
+        fontFamily: "'Courier New', monospace",
         colorScheme: isLight ? "light" : "dark",
       }}>
         <div style={{
@@ -470,24 +491,42 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
               ))}
             </select>
           </div>
-          <div style={isNarrow ? { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8, gridColumn: 2, width: 0, minWidth: "100%" } : { display: "flex", gap: 8, marginLeft: "auto" }}>
-            <select value={exportFormat} onChange={e => setExportFormat(e.target.value)} style={isNarrow ? { ...inputStyle, minWidth: 0, boxSizing: "border-box" } : inputStyle}>
-              <option value="png">PNG</option>
-              <option value="jpg">JPG</option>
+          <div style={isNarrow ? { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, gridColumn: 2, width: 0, minWidth: "100%" } : { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+            <select value={exportKind} onChange={e => setExportKind(e.target.value)} aria-label="Export type" style={inputStyle}>
+              {EXPORT_KINDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
+            {exportKind === "image" && (
+              <select value={imageSize} onChange={e => setImageSize(e.target.value)} aria-label="Image size" style={inputStyle}>
+                {IMAGE_SIZE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            )}
+            {exportKind === "pdf" && (
+              <>
+                <select value={paper} onChange={e => setPaper(e.target.value)} aria-label="Paper size" style={inputStyle}>
+                  {PAPER_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+                <select value={orient} onChange={e => setOrient(e.target.value)} aria-label="Orientation" style={inputStyle}>
+                  {ORIENT_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+              </>
+            )}
+            <label style={{ display: "flex", alignItems: "center", gap: 5, color: THEME.textMuted, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
+              <input type="checkbox" checked={showStats} onChange={e => setShowStats(e.target.checked)} />
+              STATS
+            </label>
             <button
-              onClick={handleExportPng}
-              disabled={exporting || exportUnsupported}
-              title={exportUnsupported ? "Export isn't supported for the CARTO Vector map — switch map type to export" : undefined}
-              style={{ ...btnStyle, opacity: exporting || exportUnsupported ? 0.5 : 1, whiteSpace: "nowrap", ...(isNarrow && { minWidth: 0, boxSizing: "border-box" }) }}
+              onClick={handleExport}
+              disabled={exporting}
+              style={{ ...btnStyle, opacity: exporting ? 0.5 : 1, whiteSpace: "nowrap" }}
             >
               {exporting ? "EXPORTING…" : "EXPORT"}
             </button>
+            {exportError && <span role="alert" style={{ color: "#ef4444", fontSize: 11, flexBasis: "100%" }}>{exportError}</span>}
           </div>
         </div>
 
         <div ref={mapElRef} style={{ flex: 1, background: mapColors.ocean }} />
-      </div>
+      </ChamferFrame>
     </div>
   );
 }

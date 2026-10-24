@@ -7,6 +7,7 @@ import ExportImportModal from "./ExportImportModal";
 import SearchModal from "./SearchModal";
 import RouteMapModal from "./RouteMapModal";
 import HowToGuideModal from "./HowToGuideModal";
+import ChamferFrame from "./ChamferFrame";
 import FeedbackModal from "./FeedbackModal";
 import BrandBanner from "@brand/BrandBanner";
 import UpdatePrompt from "@brand/UpdatePrompt";
@@ -1645,14 +1646,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               padding: 20,
             }}
           >
-            <div className={"elb-pop" + closingCls(popupExit)} style={{
-              background: "var(--cb-surface-1, #141a2e)",
-              border: "1px solid var(--cb-line-2, #1e3a5f)",
-              borderTop: "2px solid var(--cb-accent, #4fc3f7)",
-              borderRadius: 6,
-              padding: "20px 22px 18px",
+            <ChamferFrame className={"elb-pop" + closingCls(popupExit)} pad="20px 22px 18px" style={{
               maxWidth: 480, width: "100%",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
               fontFamily: "var(--elb-font, 'Courier New', monospace)",
             }}>
               {/* Header */}
@@ -1692,7 +1687,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.note) }}
                 />
               )}
-            </div>
+            </ChamferFrame>
           </div>
         );
       })()}
@@ -1710,14 +1705,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             padding: 20,
           }}
         >
-          <div className={"elb-pop" + closingCls(saveErrorExit)} style={{
-            background: "var(--cb-surface-1, #141a2e)",
-            border: "1px solid rgba(239,68,68,0.3)",
-            borderTop: "2px solid #ef4444",
-            borderRadius: 6,
-            padding: "20px 22px 18px",
+          <ChamferFrame className={"elb-pop" + closingCls(saveErrorExit)} color="#ef4444" pad="20px 22px 18px" style={{
             maxWidth: 420, width: "100%",
-            boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
             fontFamily: "var(--elb-font, 'Courier New', monospace)",
           }}>
             {/* Header */}
@@ -1772,7 +1761,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.10)"}
               >↺ RETRY</button>
             </div>
-          </div>
+          </ChamferFrame>
         </div>
       )}
 
@@ -1810,11 +1799,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
           fontFamily: "var(--elb-font, 'Courier New', monospace)",
         }}>
-          <div className={"elb-pop" + closingCls(confirmExit)} style={{
-            background: "var(--elb-bg2, #141a2e)", border: "1px solid var(--elb-border, #1a3050)",
-            borderTop: "2px solid var(--elb-acc, #3FE0C5)", borderRadius: 4,
-            width: "100%", maxWidth: 420, padding: "24px 24px 20px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.85)",
+          <ChamferFrame className={"elb-pop" + closingCls(confirmExit)} pad="24px 24px 20px" style={{
+            width: "100%", maxWidth: 420,
           }}>
             <div style={{ fontSize: "var(--elb-th-sz)", letterSpacing: "0.1em", color: "var(--elb-acc, #3FE0C5)", marginBottom: 8 }}>
               CONFIRM ACTION
@@ -1839,7 +1825,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 cursor: "pointer", borderRadius: 3, fontWeight: 700,
               }}>CONFIRM</button>
             </div>
-          </div>
+          </ChamferFrame>
         </div>
       )}
 
@@ -1869,6 +1855,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         onClose={() => setRouteMapOpen(false)}
         monthData={data}
         theme={(previewSettings || settings).theme}
+        computeFlightTimes={(row, year, monthIdx) => calcFlightTimes(row, settings.dayNightMethod, year, monthIdx)}
       />
 
       {/* ── FEEDBACK MODAL ── */}
@@ -1897,12 +1884,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(3px)", zIndex: 4000,
           display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
         }}>
-          <div className={"elb-pop" + closingCls(syncConflictExit)} style={{
+          <ChamferFrame className={"elb-pop" + closingCls(syncConflictExit)} color="#f5c542" pad="18px 18px 16px" style={{
             width: "min(360px, 100%)",
-            background: "var(--cb-surface-1, #141a2e)",
-            border: "1px solid rgba(245,197,66,0.3)",
-            borderRadius: 10, padding: "18px 18px 16px",
-            boxShadow: "0 20px 56px rgba(0,0,0,0.55)",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <span style={{
@@ -1953,7 +1936,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 ? new Date(syncConflictExit.payload.cloudData.updatedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + " · " + new Date(syncConflictExit.payload.cloudData.updatedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
                 : "—"}</span>
             </div>
-          </div>
+          </ChamferFrame>
         </div>
       )}
 

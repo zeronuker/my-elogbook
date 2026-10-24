@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { parseHHMM } from "./logbookCalculations";
+import ChamferFrame from "./ChamferFrame";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
 
@@ -164,7 +165,7 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
     <>
       <style>{searchModalCss}</style>
       <div className={"srch-backdrop elb-fade" + exitCls} onClick={handleBackdrop} />
-      <div className={"srch-modal elb-pop" + exitCls} role="dialog" aria-modal="true" aria-label="Search logbook">
+      <ChamferFrame className={"srch-modal elb-pop" + exitCls} role="dialog" aria-modal="true" aria-label="Search logbook">
         <header className="srch-head">
           <div>
             <div className="srch-eyebrow">Search Logbook</div>
@@ -241,7 +242,7 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
             <button className="srch-pg" disabled={page === totalPages - 1} onClick={() => goToPage(page + 1)} aria-label="Next page">›</button>
           </nav>
         )}
-      </div>
+      </ChamferFrame>
     </>
   );
 }
@@ -253,8 +254,6 @@ const searchModalCss = `
   .srch-modal{
     position:fixed;top:9vh;left:50%;transform:translateX(-50%);
     width:600px;max-width:92vw;max-height:78vh;
-    background:var(--elb-bg2, #0d1520);border:1px solid var(--elb-border, #1e3a5f);border-radius:8px;
-    display:flex;flex-direction:column;box-shadow:0 30px 90px rgba(0,0,0,0.6);
     z-index:2100;
     font-family:'Courier New',monospace;color:var(--elb-txt, #c8d6e5);text-align:left;
   }

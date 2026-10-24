@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import GoogleSignInButton from "./GoogleSignInButton";
+import ChamferFrame from "./ChamferFrame";
 import { CHANGELOG } from "./changelog";
 import Changelog from "@brand/Changelog";
 import { useTransitionAnim } from "./useTransitionAnim";
@@ -199,7 +200,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
     <>
       <style>{settingsCss}</style>
       <div className={"sm-backdrop elb-fade" + exitCls} onClick={onClose} />
-      <div className={"sm-modal elb-pop" + exitCls} role="dialog" aria-modal="true" aria-label="Settings">
+      <ChamferFrame className={"sm-modal elb-pop" + exitCls} role="dialog" aria-modal="true" aria-label="Settings">
 
         {/* ── HEAD ── */}
         <header className="sm-head">
@@ -250,7 +251,7 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
             {tab !== "misc" && <button className="cb-btn-primary" onClick={handleSave}>Save</button>}
           </div>
         </footer>
-      </div>
+      </ChamferFrame>
     </>
   );
 }
@@ -1132,10 +1133,6 @@ const settingsCss = `
     width: 880px;
     max-width: 92vw;
     max-height: 88vh;
-    background: var(--cb-surface-1);
-    border: 1px solid var(--cb-line-2);
-    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-    display: flex; flex-direction: column;
     z-index: 2100;
     font-family: var(--cb-font-body);
     color: var(--cb-ink);
