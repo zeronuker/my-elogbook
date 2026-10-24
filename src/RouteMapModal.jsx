@@ -291,18 +291,13 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   const [exportError, setExportError] = useState("");
   const [exporting, setExporting] = useState(false);
   const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 520px)").matches);
-  const [isCompact, setIsCompact] = useState(() => window.matchMedia("(max-width: 720px)").matches);
 
   useEffect(() => {
     const mqNarrow = window.matchMedia("(max-width: 520px)");
-    const mqCompact = window.matchMedia("(max-width: 720px)");
     const onNarrow = e => setIsNarrow(e.matches);
-    const onCompact = e => setIsCompact(e.matches);
     mqNarrow.addEventListener("change", onNarrow);
-    mqCompact.addEventListener("change", onCompact);
     return () => {
       mqNarrow.removeEventListener("change", onNarrow);
-      mqCompact.removeEventListener("change", onCompact);
     };
   }, []);
 
@@ -439,6 +434,66 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
     }
   };
 
+  // Toolbar parts, built once and placed by whichever layout is showing.
+  const fieldStyle = isNarrow ? { ...inputStyle, width: "100%", minWidth: 0, boxSizing: "border-box" } : inputStyle;
+  const fromField = (
+    <Field label="FROM" stacked={isNarrow}>
+      <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={fieldStyle} />
+    </Field>
+  );
+  const toField = (
+    <Field label="TO" stacked={isNarrow}>
+      <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={fieldStyle} />
+    </Field>
+  );
+  const mapField = (
+    <Field label="MAP" stacked={isNarrow}>
+      <select value={basemap} onChange={e => setBasemap(e.target.value)} style={fieldStyle}>
+        {Object.entries(BASEMAPS).map(([key, cfg]) => (
+          <option key={key} value={key}>{cfg.label}</option>
+        ))}
+      </select>
+    </Field>
+  );
+  const kindSelect = (
+    <select value={exportKind} onChange={e => setExportKind(e.target.value)} aria-label="Export type" style={fieldStyle}>
+      {EXPORT_KINDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+    </select>
+  );
+  const sizeSelect = exportKind === "image" && (
+    <select value={imageSize} onChange={e => setImageSize(e.target.value)} aria-label="Image size" style={fieldStyle}>
+      {IMAGE_SIZE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+    </select>
+  );
+  const paperSelects = exportKind === "pdf" && (
+    <div style={isNarrow ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } : { display: "contents" }}>
+      <select value={paper} onChange={e => setPaper(e.target.value)} aria-label="Paper size" style={fieldStyle}>
+        {PAPER_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+      <select value={orient} onChange={e => setOrient(e.target.value)} aria-label="Orientation" style={fieldStyle}>
+        {ORIENT_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+    </div>
+  );
+  const statsToggle = (
+    <label style={{ display: "flex", alignItems: "center", gap: 6, color: THEME.textMuted, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
+      <input type="checkbox" checked={showStats} onChange={e => setShowStats(e.target.checked)} />
+      Include stats
+    </label>
+  );
+  const exportButton = (
+    <button
+      onClick={handleExport}
+      disabled={exporting}
+      style={{ ...btnStyle, opacity: exporting ? 0.5 : 1, whiteSpace: "nowrap", ...(isNarrow ? { width: "100%", padding: "9px 12px" } : { marginLeft: "auto" }) }}
+    >
+      {exporting ? "EXPORTING…" : "EXPORT"}
+    </button>
+  );
+  const errorLine = exportError && (
+    <span role="alert" style={{ color: "#ef4444", fontSize: 11, ...(!isNarrow && { flexBasis: "100%" }) }}>{exportError}</span>
+  );
+
   return (
     <div
       className={"elb-fade" + (closing ? " elb-closing" : "")}
@@ -466,64 +521,44 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
           >×</button>
         </div>
 
-        {/* Narrow: label + control grid; controls keep their natural width, export row spans the widest one */}
-        <div style={isNarrow ? {
-          display: "grid", gridTemplateColumns: "36px max-content", justifyContent: "start", alignItems: "center",
-          gap: 8, padding: "10px 16px", borderBottom: `1px solid ${THEME.border}`,
-        } : {
-          display: "flex", flexDirection: "row", alignItems: "center",
-          gap: 12, padding: "10px 16px", borderBottom: `1px solid ${THEME.border}`, flexWrap: "wrap",
-        }}>
-          <div style={fieldRowStyle(isNarrow)}>
-            <label style={labelStyle(isNarrow)}>FROM</label>
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={isNarrow ? narrowInputStyle : inputStyle} />
+        {isNarrow ? (
+          /* Phone: one field per line, labels above, dates side by side, full-width export button */
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "10px 16px", borderBottom: `1px solid ${THEME.border}`, maxHeight: "60%", overflowY: "auto", flexShrink: 0 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(118px, 1fr))", gap: 10 }}>
+              {fromField}
+              {toField}
+            </div>
+            {mapField}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, borderTop: `1px solid ${THEME.border}`, paddingTop: 10 }}>
+              <span style={groupLabelStyle}>EXPORT</span>
+              {kindSelect}
+              {sizeSelect}
+              {paperSelects}
+              {statsToggle}
+              {exportButton}
+              {errorLine}
+            </div>
           </div>
-          <div style={fieldRowStyle(isNarrow)}>
-            <label style={labelStyle(isNarrow)}>TO</label>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={isNarrow ? narrowInputStyle : inputStyle} />
+        ) : (
+          /* Wide: two labelled rows, VIEW and EXPORT */
+          <div style={{ display: "grid", gridTemplateColumns: "max-content 1fr", columnGap: 14, rowGap: 10, alignItems: "center", padding: "12px 16px", borderBottom: `1px solid ${THEME.border}` }}>
+            <span style={groupLabelStyle}>VIEW</span>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 16px" }}>
+              {fromField}
+              {toField}
+              {mapField}
+            </div>
+            <span style={groupLabelStyle}>EXPORT</span>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+              {kindSelect}
+              {sizeSelect}
+              {paperSelects}
+              {statsToggle}
+              {exportButton}
+              {errorLine}
+            </div>
           </div>
-          {/* Compact (wrapped) layout: order 1 pushes MAP after the export group, so export shares the date row */}
-          <div style={{ ...fieldRowStyle(isNarrow), order: isCompact && !isNarrow ? 1 : 0 }}>
-            <label style={labelStyle(isNarrow)}>MAP</label>
-            <select value={basemap} onChange={e => setBasemap(e.target.value)} style={isNarrow ? narrowInputStyle : inputStyle}>
-              {Object.entries(BASEMAPS).map(([key, cfg]) => (
-                <option key={key} value={key}>{cfg.label}</option>
-              ))}
-            </select>
-          </div>
-          <div style={isNarrow ? { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, gridColumn: 2, width: 0, minWidth: "100%" } : { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginLeft: "auto" }}>
-            <select value={exportKind} onChange={e => setExportKind(e.target.value)} aria-label="Export type" style={inputStyle}>
-              {EXPORT_KINDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-            {exportKind === "image" && (
-              <select value={imageSize} onChange={e => setImageSize(e.target.value)} aria-label="Image size" style={inputStyle}>
-                {IMAGE_SIZE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
-            )}
-            {exportKind === "pdf" && (
-              <>
-                <select value={paper} onChange={e => setPaper(e.target.value)} aria-label="Paper size" style={inputStyle}>
-                  {PAPER_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
-                <select value={orient} onChange={e => setOrient(e.target.value)} aria-label="Orientation" style={inputStyle}>
-                  {ORIENT_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
-              </>
-            )}
-            <label style={{ display: "flex", alignItems: "center", gap: 5, color: THEME.textMuted, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
-              <input type="checkbox" checked={showStats} onChange={e => setShowStats(e.target.checked)} />
-              STATS
-            </label>
-            <button
-              onClick={handleExport}
-              disabled={exporting}
-              style={{ ...btnStyle, opacity: exporting ? 0.5 : 1, whiteSpace: "nowrap" }}
-            >
-              {exporting ? "EXPORTING…" : "EXPORT"}
-            </button>
-            {exportError && <span role="alert" style={{ color: "#ef4444", fontSize: 11, flexBasis: "100%" }}>{exportError}</span>}
-          </div>
-        </div>
+        )}
 
         <div ref={mapElRef} style={{ flex: 1, background: mapColors.ocean }} />
       </ChamferFrame>
@@ -531,20 +566,23 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   );
 }
 
-const fieldRowStyle = isNarrow => isNarrow
-  ? { display: "contents" }
-  : { display: "flex", alignItems: "center", gap: 6 };
+// A labelled field: label beside the control on wide screens, above it on phones.
+function Field({ label, stacked, children }) {
+  return (
+    <label style={{ display: "flex", flexDirection: stacked ? "column" : "row", alignItems: stacked ? "stretch" : "center", gap: stacked ? 4 : 6, minWidth: 0 }}>
+      <span style={labelStyle}>{label}</span>
+      {children}
+    </label>
+  );
+}
 
-const labelStyle = isNarrow => ({
-  color: THEME.textMuted, fontSize: 11, width: isNarrow ? 36 : "auto", flexShrink: 0,
-});
+const labelStyle = { color: THEME.textMuted, fontSize: 11, flexShrink: 0, textAlign: "left" };
+const groupLabelStyle = { color: THEME.textMuted, fontSize: 10, letterSpacing: "0.16em", textAlign: "left" };
 
 const inputStyle = {
   background: THEME.bgInput, border: `1px solid ${THEME.border}`, color: THEME.text, borderRadius: 0,
   fontSize: 12, padding: "4px 8px", fontFamily: "inherit",
 };
-
-const narrowInputStyle = { ...inputStyle, justifySelf: "start" };
 
 const btnStyle = {
   backgroundImage: `linear-gradient(135deg, ${MINT}, #3B8DFF)`, border: 0, borderRadius: 0, color: "#0a0d12",
