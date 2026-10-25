@@ -231,8 +231,8 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
         </nav>
 
         {/* ── BODY ── */}
-        <div className="sm-body">
-          <div key={tab} className={tabAnim.className} style={tabAnim.style}>
+        <div key={tab} className="sm-body">
+          <div className={tabAnim.className} style={tabAnim.style}>
           {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} onReauthAndDeleteGoogle={onReauthAndDeleteGoogle} onReauthAndDeleteGooglePopup={onReauthAndDeleteGooglePopup} userProvider={userProvider} />}
           {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
           {tab === "preferences" && <PreferencesTab d={draft} upd={upd} dutyLogStatus={dutyLogStatus} />}
