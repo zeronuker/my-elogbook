@@ -1116,6 +1116,19 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     ? "Save failed — click to retry"
     : lastSaveTime ? `Saved to local storage — ${lastSaveTime}` : "Not saved yet";
 
+  // Wave — purely visual: while any visible chip is busy, every healthy visible chip blinks;
+  // once all are done, every healthy chip flashes ✓. A chip whose own operation failed keeps
+  // its real red state/✗. Real sync/save/Duty Log states above are never modified.
+  const waveChips = [
+    [saveChipState, saveChipFlash],
+    ...(isOnline ? [[cloudChipState, cloudChipFlash]] : []),
+    ...(isOnline && settings.dutyLogSyncCode ? [[dutyLogChipState, dutyLogFlash]] : []),
+  ];
+  const waveBusy = waveChips.some(([s]) => s === "busy");
+  const waveFlash = !waveBusy && waveChips.some(([, f]) => f);
+  const waveState = (s) => (s === "ok" && waveBusy ? "busy" : s);
+  const waveFlashFor = (s, f) => (s === "ok" ? waveFlash : f);
+
   // Sync status chips — shared between the phone-only chip row and the
   // desktop/tablet period row (where they sit right-aligned next to the
   // month/year picker) so there's one source of truth for both.
@@ -1123,8 +1136,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
       <ToolbarSyncChip
         index={0}
-        state={saveChipState}
-        flash={saveChipFlash}
+        state={waveState(saveChipState)}
+        flash={waveFlashFor(saveChipState, saveChipFlash)}
         identityColor="#22c55e"
         compact={saveChipCompact}
         full={saveChipFull}
@@ -1138,8 +1151,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       {isOnline && (
         <ToolbarSyncChip
           index={1}
-          state={cloudChipState}
-          flash={cloudChipFlash}
+          state={waveState(cloudChipState)}
+          flash={waveFlashFor(cloudChipState, cloudChipFlash)}
           identityColor="#3FE0C5"
           compact={cloudChipCompact}
           full={cloudChipFull}
@@ -1153,8 +1166,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       {isOnline && settings.dutyLogSyncCode && (
         <ToolbarSyncChip
           index={2}
-          state={dutyLogChipState}
-          flash={dutyLogFlash}
+          state={waveState(dutyLogChipState)}
+          flash={waveFlashFor(dutyLogChipState, dutyLogFlash)}
           identityColor="#fb923c"
           compact={dutyLogChipCompact}
           full={dutyLogChipFull}
