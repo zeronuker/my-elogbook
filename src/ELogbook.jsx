@@ -61,7 +61,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [summarySubTab, setSummarySubTab] = useState("annual"); // "annual" | "grand" — kept here so it survives switching main tabs
   const [saveStatus, setSaveStatus] = useState("idle");
   const [saveError, setSaveError] = useState(""); // stores last error message for display
-  const [lastSaveTime, setLastSaveTime] = useState(""); // Format: "DD MMM YYYY • HH:MM:SS"
+  const [lastSaveTime, setLastSaveTime] = useState(""); // Format: "DD MMM YYYY · HH:MM"
   const [refreshStatus] = useState("idle");
   const [syncStatus, setSyncStatus] = useState("idle"); // idle | syncing | synced | error
   const [lastSyncTime, setLastSyncTime] = useState("");
@@ -845,7 +845,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
       const now = new Date();
       const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-      const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
       setLastSaveTime(`${dateStr} · ${timeStr}`);
       return true;
     } catch (e) {
