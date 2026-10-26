@@ -1122,6 +1122,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const syncChipsGroup = (
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
       <ToolbarSyncChip
+        index={0}
         state={saveChipState}
         flash={saveChipFlash}
         identityColor="#22c55e"
@@ -1136,6 +1137,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       />
       {isOnline && (
         <ToolbarSyncChip
+          index={1}
           state={cloudChipState}
           flash={cloudChipFlash}
           identityColor="#3FE0C5"
@@ -1150,6 +1152,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       )}
       {isOnline && settings.dutyLogSyncCode && (
         <ToolbarSyncChip
+          index={2}
           state={dutyLogChipState}
           flash={dutyLogFlash}
           identityColor="#fb923c"

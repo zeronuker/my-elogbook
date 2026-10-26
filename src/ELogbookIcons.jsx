@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Toolbar sync-status chip — tap/click morphs between compact (time only) and
 // full (date + time, or failure reason) in place. No dropdown/popover/toast —
@@ -9,8 +9,18 @@ import { useState } from "react";
 // `identityColor`: while expanded (tapped open), the ICON alone recolors to
 // this — lets Cloud vs. Duty Log be told apart at a glance once tapped. Text
 // color is unaffected, still driven by state/flash as normal.
-export function ToolbarSyncChip({ icon, compact, full, state, flash, identityColor, onActivate }) {
+// `index`: chip position (0 = Save, 1 = Cloud, 2 = Duty Log). The chips take turns
+// instead of pulsing in lockstep — the busy blink starts 0.43s (a third of its cycle)
+// behind the previous chip, and the ✓/✗ flash lands 250ms after the previous chip's.
+// Cosmetic only; sync state and timing upstream are untouched.
+export function ToolbarSyncChip({ icon, compact, full, state, flash, identityColor, onActivate, index = 0 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showFlash, setShowFlash] = useState(false);
+  useEffect(() => {
+    if (!flash) { setShowFlash(false); return; }
+    const t = setTimeout(() => setShowFlash(true), index * 250);
+    return () => clearTimeout(t);
+  }, [flash, index]);
   const quietColor = state === "bad" ? "#ef4444" : state === "busy" ? "#7c87a3" : "#3a6a8a";
   const flashColor = state === "bad" ? "#ef4444" : "#22c55e";
   return (
@@ -20,16 +30,16 @@ export function ToolbarSyncChip({ icon, compact, full, state, flash, identityCol
         display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
         background: "none", border: "none", padding: "4px 2px", fontFamily: "inherit", cursor: "pointer",
         transition: "color 0.2s ease, font-size 0.2s ease",
-        color: flash ? flashColor : quietColor,
-        fontWeight: flash ? 700 : 400,
-        fontStyle: flash || state === "bad" ? "normal" : "italic",
-        letterSpacing: flash ? "0.1em" : "0.06em",
-        fontSize: flash ? 11 : 10,
-        animation: state === "busy" ? "blink 1.3s ease-in-out infinite" : "none",
+        color: showFlash ? flashColor : quietColor,
+        fontWeight: showFlash ? 700 : 400,
+        fontStyle: showFlash || state === "bad" ? "normal" : "italic",
+        letterSpacing: showFlash ? "0.1em" : "0.06em",
+        fontSize: showFlash ? 11 : 10,
+        animation: state === "busy" ? `blink 1.3s ease-in-out ${index * -0.43}s infinite` : "none",
       }}
     >
       <span style={{ display: "flex", color: expanded ? identityColor : "inherit" }}>{icon}</span>
-      {flash && (state === "bad" ? "✗ " : "✓ ")}
+      {showFlash && (state === "bad" ? "✗ " : "✓ ")}
       {expanded ? full : compact}
     </button>
   );
