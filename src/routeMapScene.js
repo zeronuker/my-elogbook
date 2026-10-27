@@ -52,7 +52,7 @@ export function panelRows(stats, routes, first, last, airportCount) {
     { k: "kv", a: "Busiest airport  " + stats.busiest.icao, b: stats.busiest.n + " movements" },
     ...(stats.countries.length ? [{ k: "head", s: "COUNTRIES VISITED  " + stats.countries.length }, { k: "wrap", s: stats.countries.join(", ") }] : []),
     { k: "head", s: "MOST FLOWN" },
-    ...top.map(r => ({ k: "kv", a: r.a + " - " + r.b, b: r.n + " flights  " + nf(Math.floor(r.mins / 60)) + " h" })),
+    ...top.map(r => ({ k: "kv", key: r.key, a: r.a + " - " + r.b, b: r.n + " flights  " + nf(Math.floor(r.mins / 60)) + " h" })),
     ...(stats.types.length ? [{ k: "head", s: "AIRCRAFT TYPES" }, ...stats.types.map(([t, m]) => ({ k: "kv", a: t, b: nf(Math.round(m / 60)) + " h" }))] : []),
     { k: "gap" },
     { k: "leg" },

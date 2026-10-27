@@ -147,7 +147,9 @@ function panelHtml(rows) {
     if (r.k === "head") return `<h4>${esc(r.s)}</h4>`;
     if (r.k === "num") return `<div class="num"><b>${esc(r.big)}</b><span>${esc(r.small)}</span></div>`;
     if (r.k === "bar") return `<div class="bar"><i style="flex:${r.day};background:${r.dayCol}"></i><i style="flex:${r.night};background:${r.nightCol}"></i></div><div class="row"><span>${esc(r.l)}</span><span>${esc(r.r)}</span></div>`;
-    if (r.k === "kv") return `<div class="row"><span>${esc(r.a)}</span><span>${esc(r.b)}</span></div>`;
+    if (r.k === "kv") return r.key
+      ? `<div class="row go" data-r="${esc(r.key)}" role="button" tabindex="0" title="Zoom to this route"><span>${esc(r.a)}</span><span>${esc(r.b)}</span></div>`
+      : `<div class="row"><span>${esc(r.a)}</span><span>${esc(r.b)}</span></div>`;
     if (r.k === "wrap") return `<div class="wr">${esc(r.s)}</div>`;
     return "";
   }).join("");
@@ -172,6 +174,13 @@ const VIEWER_CSS = `
 #ph{position:relative;padding-right:22px;cursor:pointer}#ph:focus-visible{outline:1px solid var(--line);outline-offset:4px}
 #pc{position:absolute;right:0;top:0;font-size:12px;color:var(--dim);transition:transform .15s}
 #plate.min #pc{transform:rotate(180deg)}#plate.min #pb{display:none}
+#plate .go{cursor:pointer}#plate .go:hover span:first-child{color:var(--line)}#plate .go:focus-visible{outline:1px solid var(--line)}
+#svg.nolab #labels{display:none}#svg.nogrid .gr{display:none}
+#sel{position:absolute;left:14px;top:14px;max-width:calc(100vw - 80px);display:none;align-items:center;gap:10px;background:var(--plate);border:1px solid var(--line);padding:7px 8px 7px 11px;font-size:12px;opacity:.94}#sel b{color:var(--line)}
+#sel button{background:none;border:0;color:var(--dim);font:700 16px 'Courier New',monospace;cursor:pointer;padding:0 4px;line-height:1}#sel button:hover{color:var(--ink)}
+.lw{position:relative}#lay{display:none;position:absolute;right:42px;top:0;flex-direction:column;gap:6px;background:var(--plate);border:1px solid var(--line);padding:8px 12px;font-size:12px;white-space:nowrap}#lay.open{display:flex}
+#lay label{display:flex;align-items:center;gap:8px;cursor:pointer}#lay input{accent-color:var(--line)}
+#btns .ic{display:flex;align-items:center;justify-content:center;padding:0}
 #tip{position:absolute;pointer-events:none;background:var(--plate);border:1px solid var(--line);padding:6px 9px;font-size:12px;display:none;white-space:nowrap}#tip b{color:var(--line)}
 #btns{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:6px}
 #btns button{width:34px;height:34px;white-space:nowrap;background:var(--plate);border:1px solid var(--line);color:var(--ink);font:700 16px 'Courier New',monospace;cursor:pointer}#btns button:hover{color:var(--line)}
@@ -181,6 +190,7 @@ const VIEWER_CSS = `
 // Runs in the saved file: pan, pinch and wheel zoom, hover details, labels that appear as there is room for them.
 const VIEWER_JS = `
 const svg=document.getElementById('svg'),lab=document.getElementById('labels'),tip=document.getElementById('tip');
+const selEl=document.getElementById('sel'),selTx=document.getElementById('seltx'),lay=document.getElementById('lay');
 let vb={x:0,y:0,w:W,h:H};const KMAX=40,NS='http://www.w3.org/2000/svg';
 const els=LABELS.map(function(L){const t=document.createElementNS(NS,'text');t.textContent=L.s;t.setAttribute('class','lb'+(L.bold?' b':''));lab.appendChild(t);return t});
 function aspect(){const r=svg.getBoundingClientRect();return r.width/r.height}
@@ -199,31 +209,56 @@ function layout(k){const sc=1.35/k,boxes=[];
 function pt(cx,cy){const p=svg.createSVGPoint();p.x=cx;p.y=cy;return p.matrixTransform(svg.getScreenCTM().inverse())}
 function zoomAt(cx,cy,f){const p=pt(cx,cy),nw=vb.w/f,r=nw/vb.w;vb.x=p.x-(p.x-vb.x)*r;vb.y=p.y-(p.y-vb.y)*r;vb.w=nw;apply()}
 svg.addEventListener('wheel',function(e){e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(-e.deltaY*(e.ctrlKey?.01:.0018)))},{passive:false});
-const ptrs=new Map();let last=0;
-svg.addEventListener('pointerdown',function(e){svg.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});svg.classList.add('drag');last=0});
+const ptrs=new Map();let last=0,down=null;
+svg.addEventListener('pointerdown',function(e){svg.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});svg.classList.add('drag');last=0;
+  down=ptrs.size===1?{x:e.clientX,y:e.clientY,t:e.target}:null});
 svg.addEventListener('pointermove',function(e){const p=ptrs.get(e.pointerId);if(!p){hover(e);return}
   const ox=p.x,oy=p.y;p.x=e.clientX;p.y=e.clientY;
   if(ptrs.size===1){const r=svg.getBoundingClientRect(),u=vb.w/r.width;vb.x-=(p.x-ox)*u;vb.y-=(p.y-oy)*u;apply()}
   else if(ptrs.size===2){const v=Array.from(ptrs.values()),d=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y);if(last)zoomAt((v[0].x+v[1].x)/2,(v[0].y+v[1].y)/2,d/last);last=d}});
-function up(e){ptrs.delete(e.pointerId);if(!ptrs.size)svg.classList.remove('drag');last=0}
+function up(e){if(e.type==='pointerup'&&down&&ptrs.size===1&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<6){select(describe(down.t));lay.classList.remove('open')}
+  down=null;ptrs.delete(e.pointerId);if(!ptrs.size)svg.classList.remove('drag');last=0}
 svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);
-function hover(e){if(e.pointerType==='touch')return;const t=e.target;let html='',key=null;
-  if(t.dataset&&t.dataset.a){html='<b>'+t.dataset.a+'</b>'+(AI?' &middot; '+AI[t.dataset.a]+' movement'+(AI[t.dataset.a]===1?'':'s'):'')}
-  else if(t.dataset&&t.dataset.r&&t.classList.contains('hit')){key=t.dataset.r;html='<b>'+key.replace('-',' - ')+'</b>';
-    if(RI){const r=RI[key];html+=' &middot; '+r.n+' flight'+(r.n===1?'':'s')+' &middot; '+r.h+' h '+String(r.m).padStart(2,'0')+' min'}}
-  svg.classList.toggle('hl',!!key);svg.querySelectorAll('.rg.on').forEach(function(n){n.classList.remove('on')});
-  if(key)svg.querySelectorAll('.rg[data-r="'+key+'"]').forEach(function(n){n.classList.add('on')});
-  if(html){tip.innerHTML=html;tip.style.display='block';tip.style.left=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8)+'px';tip.style.top=Math.max(8,e.clientY-34)+'px'}else tip.style.display='none'}
-svg.addEventListener('pointerleave',function(){tip.style.display='none'});
+let selK=null;
+function describe(t){if(!t||!t.dataset)return null;
+  if(t.dataset.a){const a=t.dataset.a;return{k:{k:'a',id:a},html:'<b>'+a+'</b>'+(AI?' &middot; '+AI[a]+' movement'+(AI[a]===1?'':'s'):'')}}
+  if(t.dataset.r&&t.classList.contains('hit')){const key=t.dataset.r;let html='<b>'+key.replace('-',' - ')+'</b>';
+    if(RI){const r=RI[key];html+=' &middot; '+r.n+' flight'+(r.n===1?'':'s')+' &middot; '+r.h+' h '+String(r.m).padStart(2,'0')+' min'}
+    return{k:{k:'r',id:key},html:html}}
+  return null}
+function setHl(k){svg.classList.toggle('hl',!!k);
+  svg.querySelectorAll('.rg').forEach(function(n){const id=n.dataset.r;n.classList.toggle('on',!!k&&(k.k==='r'?id===k.id:id.split('-').indexOf(k.id)>-1))})}
+function select(d){selK=d?d.k:null;setHl(selK);selEl.style.display=d?'flex':'none';if(d)selTx.innerHTML=d.html}
+function hover(e){if(e.pointerType==='touch')return;const d=describe(e.target);
+  setHl((d&&d.k.k==='r'?d.k:null)||selK);
+  if(d){tip.innerHTML=d.html;tip.style.display='block';tip.style.left=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8)+'px';tip.style.top=Math.max(8,e.clientY-34)+'px'}else tip.style.display='none'}
+svg.addEventListener('pointerleave',function(){tip.style.display='none';setHl(selK)});
 function mid(){const r=svg.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]}
 document.getElementById('zi').onclick=function(){const m=mid();zoomAt(m[0],m[1],1.6)};
 document.getElementById('zo').onclick=function(){const m=mid();zoomAt(m[0],m[1],1/1.6)};
-document.getElementById('zf').onclick=function(){vb={x:0,y:0,w:W,h:H};apply()};
+function fit(){vb={x:0,y:0,w:W,h:H};apply()}
+document.getElementById('zf').onclick=fit;
+function fitRoute(key){const b=RB[key];if(!b)return;const a=aspect(),bw=b[2]-b[0],bh=b[3]-b[1];
+  vb.w=Math.max(bw*1.35,bh*1.35*a);vb.h=vb.w/a;vb.x=(b[0]+b[2])/2-vb.w/2;vb.y=(b[1]+b[3])/2-vb.h/2;apply()}
+document.getElementById('selx').onclick=function(){select(null)};
+document.getElementById('lb').onclick=function(){lay.classList.toggle('open')};
+document.getElementById('tl').onchange=function(){svg.classList.toggle('nolab',!this.checked)};
+document.getElementById('tg').onchange=function(){svg.classList.toggle('nogrid',!this.checked)};
+const fs=document.getElementById('fs');
+if(document.fullscreenEnabled)fs.onclick=function(){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen()};else fs.style.display='none';
+addEventListener('keydown',function(e){if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key,m=mid();
+  if(k==='+'||k==='=')zoomAt(m[0],m[1],1.6);else if(k==='-'||k==='_')zoomAt(m[0],m[1],1/1.6);else if(k==='0')fit();
+  else if(k.indexOf('Arrow')===0){e.preventDefault();const s=vb.w*.1;vb.x+=k==='ArrowLeft'?-s:k==='ArrowRight'?s:0;vb.y+=k==='ArrowUp'?-s:k==='ArrowDown'?s:0;apply()}
+  else if(k==='Escape'){select(null);lay.classList.remove('open')}});
 const plate=document.getElementById('plate');
 if(plate){const ph=document.getElementById('ph');
   function tgl(){const m=plate.classList.toggle('min');ph.setAttribute('aria-expanded',String(!m))}
+  const narrow=function(){return matchMedia('(max-width:560px)').matches};
   ph.onclick=tgl;ph.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();tgl()}};
-  if(matchMedia('(max-width:560px)').matches)tgl()}
+  document.querySelectorAll('#plate .go').forEach(function(n){
+    function go(){const key=n.dataset.r;fitRoute(key);select(describe(svg.querySelector('.hit[data-r="'+key+'"]')));if(narrow()&&!plate.classList.contains('min'))tgl()}
+    n.onclick=go;n.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}}});
+  if(narrow())tgl()}
 addEventListener('resize',apply);apply();`;
 
 function buildHtml(scene) {
@@ -242,15 +277,24 @@ function buildHtml(scene) {
   const labels = scene.labels.map(l => ({ s: l.s, x: f2(l.x), y: f2(l.y), fs: l.fs, bold: l.bold, r: f2(l.r) }));
   const RI = showNums ? Object.fromEntries(scene.routes.map(r => [r.key, { n: r.n, h: Math.floor(r.mins / 60), m: r.mins % 60 }])) : null;
   const AI = showNums ? Object.fromEntries(scene.airports.map(a => [a.icao, a.n])) : null;
+  // bounding box per route, so a click on a "Most flown" row can zoom to it
+  const RB = Object.fromEntries(scene.routes.map(r => {
+    const xs = r.pts.map(p => p[0]), ys = r.pts.map(p => p[1]);
+    return [r.key, [f2(Math.min(...xs)), f2(Math.min(...ys)), f2(Math.max(...xs)), f2(Math.max(...ys))]];
+  }));
   const json = v => JSON.stringify(v).replace(/</g, "\\u003c");
   const vars = `--ocean:${c.ocean};--land:${c.land};--border:${c.border};--grid:${c.grid};--ink:${c.ink};--ink2:${c.ink2};--dim:${c.dim};--plate:${c.plate};--line:${c.plateLine};--dot:${c.dot};--ring:${c.ring}`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Route map</title><style>:root{${vars}}${VIEWER_CSS}</style></head><body>
 <svg id="svg" viewBox="0 0 ${scene.W} ${f2(scene.H)}" preserveAspectRatio="xMidYMid meet"><g id="world">${parts.join("")}${hits}</g><g id="labels"></g></svg>
-${scene.rows ? `<div id="plate"><div id="ph" role="button" tabindex="0" aria-expanded="true" aria-controls="pb" title="Show or hide stats">${panelHtml(scene.rows.slice(0, 2))}<span id="pc" aria-hidden="true">&#9662;</span></div><div id="pb">${panelHtml(scene.rows.slice(2))}<div class="st" style="margin-top:10px;color:var(--dim);font-size:10.5px">Scroll or pinch to zoom, drag to pan. Hover a route or airport for details.</div></div></div>` : ""}
-<div id="btns"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">-</button><button id="zf" aria-label="Fit all routes" style="font-size:10px">FIT</button></div>
+${scene.rows ? `<div id="plate"><div id="ph" role="button" tabindex="0" aria-expanded="true" aria-controls="pb" title="Show or hide stats">${panelHtml(scene.rows.slice(0, 3))}<span id="pc" aria-hidden="true">&#9662;</span></div><div id="pb">${panelHtml(scene.rows.slice(3))}<div class="st" style="margin-top:10px;color:var(--dim);font-size:10.5px">Scroll or pinch to zoom, drag to pan. Hover or tap a route or airport for details.</div></div></div>` : ""}
+<div id="sel"><span id="seltx"></span><button id="selx" aria-label="Clear selection">&times;</button></div>
+<div id="btns"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">-</button><button id="zf" aria-label="Fit all routes" style="font-size:10px">FIT</button>
+<button id="fs" class="ic" aria-label="Full screen"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9"/></svg></button>
+<div class="lw"><button id="lb" class="ic" aria-label="Map layers"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M7 1.5 1.5 4.5 7 7.5l5.5-3zM1.5 7 7 10l5.5-3M1.5 9.5 7 12.5l5.5-3"/></svg></button>
+<div id="lay"><label><input type="checkbox" id="tl" checked>Labels</label><label><input type="checkbox" id="tg" checked>Grid</label></div></div></div>
 <div id="tip"></div><div id="credit">Natural Earth via world-atlas (50 m)</div>
-<script>const W=${scene.W},H=${f2(scene.H)},LABELS=${json(labels)},RI=${json(RI)},AI=${json(AI)};${VIEWER_JS}</script></body></html>`;
+<script>const W=${scene.W},H=${f2(scene.H)},LABELS=${json(labels)},RI=${json(RI)},AI=${json(AI)},RB=${json(RB)};${VIEWER_JS}</script></body></html>`;
 }
 
 // ── entry point ──
