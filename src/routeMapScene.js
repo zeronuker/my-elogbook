@@ -52,7 +52,7 @@ export function panelRows(stats, routes, first, last, airportCount) {
     { k: "kv", a: "Busiest airport  " + stats.busiest.icao, b: stats.busiest.n + " movements" },
     ...(stats.countries.length ? [{ k: "head", s: "COUNTRIES VISITED  " + stats.countries.length }, { k: "wrap", s: stats.countries.join(", ") }] : []),
     { k: "head", s: "MOST FLOWN" },
-    ...top.map(r => ({ k: "kv", key: r.key, a: r.a + " - " + r.b, b: r.n + " flights  " + nf(Math.floor(r.mins / 60)) + " h" })),
+    ...top.map(r => ({ k: "kv", a: r.a + " - " + r.b, b: r.n + " flights  " + nf(Math.floor(r.mins / 60)) + " h" })),
     ...(stats.types.length ? [{ k: "head", s: "AIRCRAFT TYPES" }, ...stats.types.map(([t, m]) => ({ k: "kv", a: t, b: nf(Math.round(m / 60)) + " h" }))] : []),
     { k: "gap" },
     { k: "leg" },
@@ -206,7 +206,7 @@ export function buildScene({ flights, stats, geo, theme = "dark", aspect = W / 2
   for (const r of routes) {
     const N = r.pts.length, step = 6;
     for (let i = 0; i < N - 1; i += step) {
-      out.push({ t: "line", pts: r.pts.slice(i, Math.min(N, i + step + 1)), stroke: hex(mix(c.dep, c.arr, (i + step / 2) / (N - 1))), sw: r.w, round: true, route: r.key });
+      out.push({ t: "line", pts: r.pts.slice(i, Math.min(N, i + step + 1)), stroke: hex(mix(c.dep, c.arr, (i + step / 2) / (N - 1))), u: (i + step / 2) / (N - 1), sw: r.w, round: true, route: r.key });
     }
   }
   const dotR = a => 0.7 + 2.3 * Math.sqrt(a.n / apList[0].n);

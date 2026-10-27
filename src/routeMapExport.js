@@ -1,6 +1,7 @@
 // Route map export: one scene (routeMapScene.js), three writers. Loaded only when the user presses Export.
-import { buildScene, W } from "./routeMapScene.js";
-import { computeStats } from "./routeMapStats.js";
+import { buildScene, W, PAL } from "./routeMapScene.js";
+import { computeStats, greatCircleKm } from "./routeMapStats.js";
+import { countryOf } from "./icaoCountries.js";
 import { loadPdfFonts } from "./pdfFonts";
 
 export const IMAGE_SIZES = { wide: [3840, 2160], square: [2160, 2160], portrait: [2160, 2700] };
@@ -139,28 +140,19 @@ const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(
 const f2 = n => +n.toFixed(2);
 const pts2 = pts => pts.map(p => f2(p[0]) + "," + f2(p[1])).join(" ");
 
-function panelHtml(rows) {
-  return rows.map(r => {
-    if (r.k === "eb") return `<div class="eb">${esc(r.s)}</div>`;
-    if (r.k === "big") return `<div class="dt">${esc(r.s)}</div>`;
-    if (r.k === "txt") return `<div class="st">${esc(r.s)}</div>`;
-    if (r.k === "head") return `<h4>${esc(r.s)}</h4>`;
-    if (r.k === "num") return `<div class="num"><b>${esc(r.big)}</b><span>${esc(r.small)}</span></div>`;
-    if (r.k === "bar") return `<div class="bar"><i style="flex:${r.day};background:${r.dayCol}"></i><i style="flex:${r.night};background:${r.nightCol}"></i></div><div class="row"><span>${esc(r.l)}</span><span>${esc(r.r)}</span></div>`;
-    if (r.k === "kv") return r.key
-      ? `<div class="row go" data-r="${esc(r.key)}" role="button" tabindex="0" title="Zoom to this route"><span>${esc(r.a)}</span><span>${esc(r.b)}</span></div>`
-      : `<div class="row"><span>${esc(r.a)}</span><span>${esc(r.b)}</span></div>`;
-    if (r.k === "wrap") return `<div class="wr">${esc(r.s)}</div>`;
-    return "";
-  }).join("");
+// The stats window's title (label and date range). Its numbers are drawn in the viewer from the flight list, so they follow the filters and timeline.
+function panelHead(rows) {
+  return `<div class="eb">${esc(rows[0].s)}</div><div class="dt">${esc(rows[1].s)}</div>`;
 }
+
+const palVars = p => `--ocean:${p.ocean};--land:${p.land};--border:${p.border};--grid:${p.grid};--ink:${p.ink};--ink2:${p.ink2};--dim:${p.dim};--plate:${p.plate};--line:${p.plateLine};--dot:${p.dot};--ring:${p.ring};--dep:rgb(${p.dep});--arr:rgb(${p.arr})`;
 
 const VIEWER_CSS = `
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--ocean);color:var(--ink);font-family:'Courier New',monospace;overflow:hidden}
 #svg{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;--s:1}#svg.drag{cursor:grabbing}
 .land{fill:var(--land)}.coast{fill:none;stroke:var(--border);stroke-width:calc(.14px/var(--s));stroke-linejoin:round}
 .bd{fill:none;stroke:var(--border);stroke-width:calc(.1px/var(--s))}.gr{fill:none;stroke:var(--grid);stroke-width:calc(.15px/var(--s))}
-.rt{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:calc(var(--w)*1px/var(--s))}.rg{transition:opacity .15s}
+.rt{fill:none;stroke:color-mix(in srgb,var(--arr) calc(var(--u)*100%),var(--dep));stroke-linecap:round;stroke-linejoin:round;stroke-width:calc(var(--w)*1px/var(--s))}.rg{transition:opacity .15s}
 .hit{fill:none;stroke:transparent;stroke-width:calc(3px/var(--s));pointer-events:stroke}
 .ap{fill:var(--dot);stroke:var(--ring);stroke-width:calc(.25px/var(--s));r:calc(var(--r)*1px/var(--s));pointer-events:all}
 #svg.hl .rg{opacity:.12}#svg.hl .rg.on{opacity:1}
@@ -176,6 +168,10 @@ const VIEWER_CSS = `
 #pc{position:absolute;right:0;top:0;font-size:12px;color:var(--dim);transition:transform .15s}
 #plate.min #pc{transform:rotate(180deg)}#plate.min #pb{display:none}
 #plate .go{cursor:pointer}#plate .go:hover span:first-child{color:var(--line)}#plate .go:focus-visible{outline:1px solid var(--line)}
+#tlrow{display:flex;align-items:center;gap:10px;margin-top:10px}#tlb{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+#tp{flex:none;width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--line);color:var(--ink);cursor:pointer;padding:0}#tp:hover{color:var(--line)}
+#tp .pa,#tp.on .pl{display:none}#tp.on .pa{display:block}
+#ts{width:100%;margin:0;accent-color:var(--line)}#td{font-size:11px;color:var(--ink2)}
 #svg.nolab #labels{display:none}#svg.nogrid .gr{display:none}
 #sel{position:absolute;left:14px;top:14px;max-width:calc(100vw - 80px);max-height:38vh;overflow:auto;display:none;flex-direction:column;gap:6px;background:var(--plate);border:1px solid var(--line);padding:7px 8px 7px 11px;font-size:12px;opacity:.94}#sel b{color:var(--line)}
 #selh{display:flex;align-items:center;justify-content:space-between;gap:10px}#sell:empty{display:none}
@@ -231,7 +227,9 @@ function up(e){if(e.type==='pointerup'&&down&&ptrs.size===1&&Math.hypot(e.client
   down=null;ptrs.delete(e.pointerId);if(!ptrs.size)svg.classList.remove('drag');last=0}
 svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);
 let selK=null,R={},A={},maxC=1,maxA=1;
-function hm(m){return Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min'}
+function nfm(n){return Math.round(n).toLocaleString('en-GB')}
+function hm(m){return nfm(Math.floor(m/60))+' h '+String(m%60).padStart(2,'0')+' min'}
+function E(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
 function plural(n,w){return n+' '+w+(n===1?'':'s')}
 // R: filtered flights per route {c: count, d: day mins, t: night mins}; A: movements per airport. Both come from FL, when the file has it.
 function dk(k){
@@ -279,21 +277,57 @@ if(plate){const ph=document.getElementById('ph');
   function tgl(){const m=plate.classList.toggle('min');ph.setAttribute('aria-expanded',String(!m))}
   const narrow=function(){return matchMedia('(max-width:560px)').matches};
   ph.onclick=tgl;ph.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();tgl()}};
-  document.querySelectorAll('#plate .go').forEach(function(n){
-    function go(){goRoute(n.dataset.r);if(narrow()&&!plate.classList.contains('min'))tgl()}
-    n.onclick=go;n.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}}});
+  function go(n){goRoute(n.dataset.r);if(narrow()&&!plate.classList.contains('min'))tgl()}
+  const pb=document.getElementById('pb');
+  pb.addEventListener('click',function(e){const n=e.target.closest('.go');if(n)go(n)});
+  pb.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('go')){e.preventDefault();go(e.target)}});
   if(narrow())tgl()}
-// Filters: only in files made with stats, which carry FL = [routeKey, aircraft type, day mins, night mins] per flight.
+document.getElementById('th').onclick=function(){const r=document.documentElement;r.dataset.theme=r.dataset.theme==='light'?'dark':'light'};
+// Filters, timeline and the stats window's numbers: only in files made with stats, which carry
+// FL = [routeKey, aircraft type, day mins, night mins, day number (UTC), km] per flight, and AC = country per airport.
 if(FL){
-  const ST={ty:null,tm:'all',dn:false},fb=document.getElementById('fb'),ft=document.getElementById('ft'),flt=document.getElementById('flt'),sum=document.getElementById('fsum');
+  const ST={ty:null,tm:'all',dn:false,cut:null},fb=document.getElementById('fb'),ft=document.getElementById('ft'),flt=document.getElementById('flt'),sum=document.getElementById('fsum');
   const mins={};FL.forEach(function(f){mins[f[1]]=(mins[f[1]]||0)+f[2]+f[3]});
   const types=Object.keys(mins).sort(function(a,b){return mins[b]-mins[a]});
   types.forEach(function(t){const l=document.createElement('label'),i=document.createElement('input'),s=document.createElement('span');
     i.type='checkbox';i.checked=true;i.value=t;s.textContent=t||'No type';l.appendChild(i);l.appendChild(s);ft.appendChild(l)});
   if(types.length<2)document.getElementById('fa').style.display='none';
-  function passes(f){return(!ST.ty||ST.ty.has(f[1]))&&(ST.tm==='all'||(ST.tm==='day'?f[2]>0:f[3]>0))}
-  function recompute(){R={};A={};let nf=0,dm=0,nm=0;maxC=1;maxA=1;
-    FL.forEach(function(f){if(!passes(f))return;nf++;dm+=f[2];nm+=f[3];
+  const HINT='<div class="st" style="margin-top:10px;color:var(--dim);font-size:10.5px">Scroll or pinch to zoom, drag to pan. Hover or tap a route or airport for details.</div>';
+  const pcn=document.getElementById('pcn'),pb=document.getElementById('pb');
+  function row(a,b){return '<div class="row"><span>'+a+'</span><span>'+b+'</span></div>'}
+  function drawPlate(S){const rk=Object.keys(R),ak=Object.keys(A);
+    pcn.textContent=plural(S.nf,'flight')+'  |  '+plural(rk.length,'route')+'  |  '+plural(ak.length,'airport');
+    if(!S.nf){pb.innerHTML='<div class="st" style="margin-top:10px">No flights match.</div>'+HINT;return}
+    const cs={};ak.forEach(function(a){if(AC[a])cs[AC[a]]=1});const cl=Object.keys(cs).sort();
+    const top=ak.slice().sort(function(a,b){return A[b]-A[a]})[0];
+    let h='<h4>FLIGHT TIME</h4><div class="num"><b>'+hm(S.dm+S.nm)+'</b><span>total</span></div>'
+      +'<div class="bar"><i style="flex:'+S.dm+';background:#f5c542"></i><i style="flex:'+S.nm+';background:#3B8DFF"></i></div>'+row('Day '+nfm(S.dm/60)+' h','Night '+nfm(S.nm/60)+' h')
+      +'<h4>DISTANCE (APPROX., GREAT-CIRCLE)</h4><div class="num"><b>'+nfm(S.km/1.852)+' nm</b><span>'+nfm(S.km)+' km</span></div>'
+      +row('Longest route  '+S.lg.key.replace('-',' - '),nfm(S.lg.km/1.852)+' nm')+row('Busiest airport  '+top,plural(A[top],'movement'));
+    if(cl.length)h+='<h4>COUNTRIES VISITED  '+cl.length+'</h4><div class="wr">'+E(cl.join(', '))+'</div>';
+    h+='<h4>MOST FLOWN</h4>'+rk.sort(function(a,b){return R[b].c-R[a].c||R[b].d+R[b].t-R[a].d-R[a].t}).slice(0,6).map(function(k){const r=R[k];
+      return '<div class="row go" data-r="'+k+'" role="button" tabindex="0" title="Zoom to this route"><span>'+k.replace('-',' - ')+'</span><span>'+plural(r.c,'flight')+'  '+nfm(Math.floor((r.d+r.t)/60))+' h</span></div>'}).join('');
+    const tk=Object.keys(S.ty).filter(function(t){return S.ty[t]>0}).sort(function(a,b){return S.ty[b]-S.ty[a]});
+    if(tk.length)h+='<h4>AIRCRAFT TYPES</h4>'+tk.map(function(t){return row(E(t),nfm(Math.round(S.ty[t]/60))+' h')}).join('');
+    pb.innerHTML=h+HINT}
+  // timeline: show the flights up to a date; play runs it from the first date to the last in about 8 seconds
+  const tr=document.getElementById('tlrow'),ts=document.getElementById('ts'),td=document.getElementById('td'),tp=document.getElementById('tp');
+  const days=FL.map(function(f){return f[4]}).filter(function(d){return d!=null});
+  const d0=days.length?days.reduce(function(a,b){return Math.min(a,b)}):0,d1=days.length?days.reduce(function(a,b){return Math.max(a,b)}):0;
+  function dayName(n){return new Date(n*864e5).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}).toUpperCase()}
+  let tmr=null;
+  function stop(){if(tmr){clearInterval(tmr);tmr=null}tp.classList.remove('on');tp.setAttribute('aria-label','Play timeline')}
+  function setCut(v){ST.cut=v;ts.value=v;td.textContent='UP TO '+dayName(v);recompute()}
+  if(d1>d0){ts.min=d0;ts.max=d1;ts.step=1;ts.value=d1;td.textContent='UP TO '+dayName(d1);
+    ts.oninput=function(){stop();setCut(+ts.value)};
+    tp.onclick=function(){if(tmr){stop();return}
+      let pos=+ts.value>=d1?d0:+ts.value;const step=Math.max(.05,(d1-d0)/100);
+      tp.classList.add('on');tp.setAttribute('aria-label','Pause timeline');setCut(Math.round(pos));
+      tmr=setInterval(function(){pos+=step;if(pos>=d1){pos=d1;stop()}const v=Math.round(pos);if(v!==ST.cut)setCut(v)},80)}}
+  else tr.style.display='none';
+  function passes(f){return(!ST.ty||ST.ty.has(f[1]))&&(ST.tm==='all'||(ST.tm==='day'?f[2]>0:f[3]>0))&&(ST.cut==null||f[4]==null||f[4]<=ST.cut)}
+  function recompute(){R={};A={};let nf=0,dm=0,nm=0,km=0,lg=null;const ty={};maxC=1;maxA=1;
+    FL.forEach(function(f){if(!passes(f))return;nf++;dm+=f[2];nm+=f[3];km+=f[5];if(!lg||f[5]>lg.km)lg={km:f[5],key:f[0]};if(f[1])ty[f[1]]=(ty[f[1]]||0)+f[2]+f[3];
       const r=R[f[0]]||(R[f[0]]={c:0,d:0,t:0});r.c++;r.d+=f[2];r.t+=f[3];f[0].split('-').forEach(function(a){A[a]=(A[a]||0)+1})});
     Object.keys(R).forEach(function(k){maxC=Math.max(maxC,R[k].c)});Object.keys(A).forEach(function(k){maxA=Math.max(maxA,A[k])});
     svg.querySelectorAll('.rg').forEach(function(g){const r=R[g.dataset.r];g.classList.toggle('off',!r);if(!r)return;
@@ -305,7 +339,8 @@ if(FL){
     LABELS.forEach(function(L,i){const n=A[L.s]||0;L.on=n>0;L.r=.7+2.3*Math.sqrt(n/maxA);L.fs=n>100?3.6:n>25?2.7:2.2;L.bold=n>25;els[i].setAttribute('class','lb'+(L.bold?' b':''))});
     svg.classList.toggle('dn',ST.dn);document.getElementById('fk').style.display=ST.dn?'flex':'none';
     fb.classList.toggle('act',!!ST.ty||ST.tm!=='all'||ST.dn);
-    sum.innerHTML=nf+' of '+FL.length+' flights &middot; '+hm(dm+nm)+'<br>Day '+(dm/60).toFixed(1)+' h &middot; Night '+(nm/60).toFixed(1)+' h'+(nf!==FL.length?'<br><small>Stats window still shows all flights.</small>':'');
+    sum.innerHTML=nf+' of '+FL.length+' flights &middot; '+hm(dm+nm)+'<br>Day '+(dm/60).toFixed(1)+' h &middot; Night '+(nm/60).toFixed(1)+' h';
+    drawPlate({nf:nf,dm:dm,nm:nm,km:km,lg:lg,ty:ty});
     if(selK)select(dk(selK));
     apply()}
   function readUi(){const on=[].filter.call(ft.querySelectorAll('input'),function(b){return b.checked});
@@ -319,34 +354,43 @@ if(FL){
 addEventListener('resize',apply);apply();`;
 
 function buildHtml(scene, flights) {
-  const c = scene.pal, showNums = !!scene.stats;
+  const showNums = !!scene.stats;
   const groups = new Map(), parts = [];
   for (const i of scene.items.slice(0, scene.items.plateFrom)) {
     if (i.t === "poly") parts.push(`<polygon class="${i.fill ? "land" : "coast"}" points="${pts2(i.pts)}"/>`);
     else if (i.t === "line" && i.route) {
       if (!groups.has(i.route)) { groups.set(i.route, { w: i.sw, list: [] }); parts.push("@@" + i.route + "@@"); }
-      groups.get(i.route).list.push(`<polyline class="rt" style="stroke:${i.stroke}" points="${pts2(i.pts)}"/>`);
+      groups.get(i.route).list.push(`<polyline class="rt" style="--u:${+i.u.toFixed(3)}" points="${pts2(i.pts)}"/>`);
     } else if (i.t === "line") parts.push(`<polyline class="${i.sw === 0.1 ? "bd" : "gr"}" points="${pts2(i.pts)}"/>`);
     else if (i.t === "circle") parts.push(`<circle class="ap" data-a="${i.ap}" cx="${f2(i.x)}" cy="${f2(i.y)}" style="--r:${f2(i.r)}"/>`);
   }
   for (const [key, g] of groups) parts[parts.indexOf("@@" + key + "@@")] = `<g class="rg" data-r="${key}" style="--w:${f2(g.w)}">${g.list.join("")}</g>`;
   const hits = scene.routes.map(r => `<polyline class="hit" data-r="${r.key}" points="${pts2(r.pts)}"/>`).join("");
   const labels = scene.labels.map(l => ({ s: l.s, x: f2(l.x), y: f2(l.y), fs: l.fs, bold: l.bold, r: f2(l.r) }));
-  // One entry per flight (no dates), so the viewer can filter by aircraft type and day/night. Same route key as the scene's.
-  const FL = showNums ? flights.map(f => [f.dep < f.arr ? f.dep + "-" + f.arr : f.arr + "-" + f.dep, (f.type || "").trim().toUpperCase(), f.dayMins, f.nightMins]) : null;
+  // One entry per flight, so the viewer can filter, play a timeline and work out the stats itself. Same route key as the scene's.
+  const FL = showNums ? flights.map(f => [
+    f.dep < f.arr ? f.dep + "-" + f.arr : f.arr + "-" + f.dep, (f.type || "").trim().toUpperCase(), f.dayMins, f.nightMins,
+    f.date ? Math.floor(Date.parse(f.date + "T00:00:00Z") / 864e5) : null, Math.round(greatCircleKm(f.from, f.to)),
+  ]) : null;
+  const AC = {};
+  if (showNums) for (const f of flights) for (const code of [f.dep, f.arr]) { const k = countryOf(code); if (k) AC[code] = k; }
   // bounding box per route, so a click on a "Most flown" row can zoom to it
   const RB = Object.fromEntries(scene.routes.map(r => {
     const xs = r.pts.map(p => p[0]), ys = r.pts.map(p => p[1]);
     return [r.key, [f2(Math.min(...xs)), f2(Math.min(...ys)), f2(Math.max(...xs)), f2(Math.max(...ys))]];
   }));
   const json = v => JSON.stringify(v).replace(/</g, "\\u003c");
-  const vars = `--ocean:${c.ocean};--land:${c.land};--border:${c.border};--grid:${c.grid};--ink:${c.ink};--ink2:${c.ink2};--dim:${c.dim};--plate:${c.plate};--line:${c.plateLine};--dot:${c.dot};--ring:${c.ring}`;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Route map</title><style>:root{${vars}}${VIEWER_CSS}</style></head><body>
+  // both palettes ship in the file, the light/dark button just flips data-theme
+  const vars = `:root{${palVars(PAL.dark)};color-scheme:dark}:root[data-theme="light"]{${palVars(PAL.light)};color-scheme:light}`;
+  return `<!doctype html><html lang="en" data-theme="${scene.theme === "light" ? "light" : "dark"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Route map</title><style>${vars}${VIEWER_CSS}</style></head><body>
 <svg id="svg" viewBox="0 0 ${scene.W} ${f2(scene.H)}" preserveAspectRatio="xMidYMid meet"><g id="world">${parts.join("")}${hits}</g><g id="labels"></g></svg>
-${scene.rows ? `<div id="plate"><div id="ph" role="button" tabindex="0" aria-expanded="true" aria-controls="pb" title="Show or hide stats">${panelHtml(scene.rows.slice(0, 3))}<span id="pc" aria-hidden="true">&#9662;</span></div><div id="pb">${panelHtml(scene.rows.slice(3))}<div class="st" style="margin-top:10px;color:var(--dim);font-size:10.5px">Scroll or pinch to zoom, drag to pan. Hover or tap a route or airport for details.</div></div></div>` : ""}
+${scene.rows ? `<div id="plate"><div id="ph" role="button" tabindex="0" aria-expanded="true" aria-controls="pb" title="Show or hide stats">${panelHead(scene.rows)}<div class="st" id="pcn"></div><span id="pc" aria-hidden="true">&#9662;</span></div>
+<div id="tlrow"><button id="tp" aria-label="Play timeline"><svg class="pl" width="10" height="10" viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z" fill="currentColor"/></svg><svg class="pa" width="10" height="10" viewBox="0 0 10 10"><path d="M2 1h2v8H2zM6 1h2v8H6z" fill="currentColor"/></svg></button><div id="tlb"><input type="range" id="ts" aria-label="Show flights up to this date"><div id="td"></div></div></div>
+<div id="pb"></div></div>` : ""}
 <div id="sel"><div id="selh"><span id="seltx"></span><button id="selx" aria-label="Clear selection">&times;</button></div><div id="sell"></div></div>
 <div id="btns"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">-</button><button id="zf" aria-label="Fit all routes" style="font-size:10px">FIT</button>
+<button id="th" class="ic" aria-label="Switch light or dark map"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M7 1.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg></button>
 <button id="fs" class="ic" aria-label="Full screen"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9"/></svg></button>
 <div class="lw"><button id="lb" class="ic" aria-label="Map layers"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M7 1.5 1.5 4.5 7 7.5l5.5-3zM1.5 7 7 10l5.5-3M1.5 9.5 7 12.5l5.5-3"/></svg></button>
 <div id="lay" class="pop"><label><input type="checkbox" id="tl" checked>Labels</label><label><input type="checkbox" id="tg" checked>Grid</label></div></div>
@@ -357,7 +401,7 @@ ${showNums ? `<div class="lw"><button id="fb" class="ic" aria-label="Filters"><s
 <div class="key" id="fk" style="display:none"><span><i style="background:#f5c542"></i>Day</span><span><i style="background:#3B8DFF"></i>Night</span></div>
 <div id="fsum"></div><span id="frs" role="button" tabindex="0">Reset filters</span></div></div>` : ""}</div>
 <div id="tip"></div><div id="credit">Natural Earth via world-atlas (50 m)</div>
-<script>const W=${scene.W},H=${f2(scene.H)},LABELS=${json(labels)},FL=${json(FL)},RB=${json(RB)};${VIEWER_JS}</script></body></html>`;
+<script>const W=${scene.W},H=${f2(scene.H)},LABELS=${json(labels)},FL=${json(FL)},AC=${json(AC)},RB=${json(RB)};${VIEWER_JS}</script></body></html>`;
 }
 
 // ── entry point ──
@@ -379,7 +423,7 @@ export async function buildRouteMapFile(opts) {
   }
   // the page can be any shape, so keep extra land past the edges for when the window is wider than the map
   const scene = buildScene({ flights, stats, geo, theme, aspect: W / 297, geoMargin: 40 });
-  return { blob: new Blob([buildHtml(scene, flights)],{ type: "text/html" }), ext: "html" };
+  return { blob: new Blob([buildHtml(scene, flights)], { type: "text/html" }), ext: "html" };
 }
 
 export function downloadBlob(blob, name) {
