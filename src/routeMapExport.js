@@ -152,7 +152,8 @@ const VIEWER_CSS = `
 #svg{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;--s:1}#svg.drag{cursor:grabbing}
 .land{fill:var(--land)}.coast{fill:none;stroke:var(--border);stroke-width:calc(.14px/var(--s));stroke-linejoin:round}
 .bd{fill:none;stroke:var(--border);stroke-width:calc(.1px/var(--s))}.gr{fill:none;stroke:var(--grid);stroke-width:calc(.15px/var(--s))}
-.rt{fill:none;stroke:color-mix(in srgb,var(--arr) calc(var(--u)*100%),var(--dep));stroke-linecap:round;stroke-linejoin:round;stroke-width:calc(var(--w)*1px/var(--s))}.rg{transition:opacity .15s}
+.fd{fill:var(--ink);stroke:var(--dep);stroke-width:calc(.5px/var(--s));r:calc(1.3px/var(--s));pointer-events:none}
+.rt{fill:none;stroke-dasharray:1;stroke:color-mix(in srgb,var(--arr) calc(var(--u)*100%),var(--dep));stroke-linecap:round;stroke-linejoin:round;stroke-width:calc(var(--w)*1px/var(--s))}.rg{transition:opacity .15s}
 .hit{fill:none;stroke:transparent;stroke-width:calc(3px/var(--s));pointer-events:stroke}
 .ap{fill:var(--dot);stroke:var(--ring);stroke-width:calc(.25px/var(--s));r:calc(var(--r)*1px/var(--s));pointer-events:all}
 #svg.hl .rg{opacity:.12}#svg.hl .rg.on{opacity:1}
@@ -284,7 +285,7 @@ if(plate){const ph=document.getElementById('ph');
   if(narrow())tgl()}
 document.getElementById('th').onclick=function(){const r=document.documentElement;r.dataset.theme=r.dataset.theme==='light'?'dark':'light'};
 // Filters, timeline and the stats window's numbers: only in files made with stats, which carry
-// FL = [routeKey, aircraft type, day mins, night mins, day number (UTC), km] per flight, and AC = country per airport.
+// FL = [routeKey, aircraft type, day mins, night mins, day number (UTC), km, 1 if flown against the key's order] per flight, and AC = country per airport.
 if(FL){
   const ST={ty:null,tm:'all',dn:false,cut:null},fb=document.getElementById('fb'),ft=document.getElementById('ft'),flt=document.getElementById('flt'),sum=document.getElementById('fsum');
   const mins={};FL.forEach(function(f){mins[f[1]]=(mins[f[1]]||0)+f[2]+f[3]});
@@ -310,30 +311,75 @@ if(FL){
     const tk=Object.keys(S.ty).filter(function(t){return S.ty[t]>0}).sort(function(a,b){return S.ty[b]-S.ty[a]});
     if(tk.length)h+='<h4>AIRCRAFT TYPES</h4>'+tk.map(function(t){return row(E(t),nfm(Math.round(S.ty[t]/60))+' h')}).join('');
     pb.innerHTML=h+HINT}
-  // timeline: show the flights up to a date; play runs it from the first date to the last in about 8 seconds
+  // Route animation: a route grows from the airport the flight left, with a dot at the growing tip; later flights on a route
+  // that is already drawn send a dot along it. Growth time scales with distance (0.45 to 2 s). Skipped when the viewer asks for reduced motion.
+  const RM=matchMedia('(prefers-reduced-motion: reduce)').matches,FLY=document.getElementById('fly'),AN=[],RP={},GR={},KM={};
+  let lt=null,kmMax=1,DIR={},fresh={},pl=null;
+  FL.forEach(function(f){KM[f[0]]=f[5];kmMax=Math.max(kmMax,f[5])});
+  function dur(key){return 450+1550*Math.sqrt((KM[key]||0)/kmMax)}
+  function geo(key){if(RP[key])return RP[key];const h=svg.querySelector('.hit[data-r="'+key+'"]');if(!h)return null;
+    const p=h.getAttribute('points').split(' ').map(function(s){return s.split(',').map(Number)}),c=[0];
+    for(let i=1;i<p.length;i++)c.push(c[i-1]+Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]));
+    return RP[key]={p:p,c:c}}
+  function ptAt(key,s){const g=geo(key);if(!g)return null;if(g.p.length<2)return g.p[0];
+    const t=s*g.c[g.c.length-1];let i=1;while(i<g.c.length-1&&g.c[i]<t)i++;
+    const a=g.c[i-1],k=g.c[i]>a?(t-a)/(g.c[i]-a):0;return[g.p[i-1][0]+(g.p[i][0]-g.p[i-1][0])*k,g.p[i-1][1]+(g.p[i][1]-g.p[i-1][1])*k]}
+  // a route's pieces, each with the stretch of the route (lo..hi) it covers
+  function pieces(key){if(GR[key])return GR[key];const el=svg.querySelector('.rg[data-r="'+key+'"]');if(!el)return null;
+    const ps=[].map.call(el.children,function(c){return{el:c,u:parseFloat(c.style.getPropertyValue('--u')),q:-1}});
+    ps.forEach(function(s,i){s.lo=i?(ps[i-1].u+s.u)/2:0;s.hi=i<ps.length-1?(s.u+ps[i+1].u)/2:1});
+    return GR[key]={ps:ps}}
+  function setGrow(g,p,rev){g.ps.forEach(function(s){const a=rev?1-s.hi:s.lo,b=rev?1-s.lo:s.hi,q=Math.max(0,Math.min(1,(p-a)/(b-a)));
+    if(q===s.q&&(q===0||q===1))return;s.q=q;
+    if(q<=0)s.el.style.visibility='hidden';else{s.el.style.visibility='';s.el.style.strokeDashoffset=q>=1?'':String(rev?q-1:1-q)}})}
+  function cancel(key){for(let i=AN.length-1;i>=0;i--)if(AN[i].k===key&&AN[i].grow){AN[i].dot.remove();AN.splice(i,1)}
+    const g=GR[key];if(g)g.ps.forEach(function(s){s.q=-1;s.el.style.visibility='';s.el.style.strokeDashoffset=''})}
+  function newDot(){const c=document.createElementNS(NS,'circle');c.setAttribute('class','fd');FLY.appendChild(c);return c}
+  function startGrow(key,rev,delay){if(RM)return;const g=pieces(key);if(!g||!geo(key))return;cancel(key);setGrow(g,0,rev);
+    AN.push({k:key,g:g,rev:rev,t0:performance.now()+(delay||0),d:dur(key),dot:newDot(),grow:true});ensure()}
+  function startFly(key,rev){if(RM||!geo(key)||geo(key).p.length<2)return;AN.push({k:key,rev:rev,t0:performance.now(),d:dur(key),dot:newDot(),grow:false});ensure()}
+  function stepAnims(now){for(let i=AN.length-1;i>=0;i--){const a=AN[i];
+    if(now<a.t0){a.dot.style.display='none';continue}
+    const p=Math.min(1,(now-a.t0)/a.d);a.dot.style.display='';
+    if(a.grow)setGrow(a.g,p,a.rev);
+    const pt=ptAt(a.k,a.rev?1-p:p);if(pt){a.dot.setAttribute('cx',pt[0]);a.dot.setAttribute('cy',pt[1])}
+    if(p>=1){a.dot.remove();AN.splice(i,1)}}}
+  function ensure(){if(!lt)lt=setInterval(loop,25)}
+  function loop(){const now=performance.now();stepPlay(now);stepAnims(now);if(!AN.length&&!pl){clearInterval(lt);lt=null}}
+  // timeline: show the flights up to a date. Play runs from the first date to the last, about 1 s per 30 flights (6 to 40 s), firing each flight as its day passes
   const tr=document.getElementById('tlrow'),ts=document.getElementById('ts'),td=document.getElementById('td'),tp=document.getElementById('tp');
   const days=FL.map(function(f){return f[4]}).filter(function(d){return d!=null});
   const d0=days.length?days.reduce(function(a,b){return Math.min(a,b)}):0,d1=days.length?days.reduce(function(a,b){return Math.max(a,b)}):0;
+  const DUR=Math.max(6,Math.min(40,FL.length/30))*1000,BD={};
+  FL.forEach(function(f){if(f[4]!=null)(BD[f[4]]||(BD[f[4]]=[])).push(f)});
   function dayName(n){return new Date(n*864e5).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}).toUpperCase()}
-  let tmr=null;
-  function stop(){if(tmr){clearInterval(tmr);tmr=null}tp.classList.remove('on');tp.setAttribute('aria-label','Play timeline')}
-  function setCut(v){ST.cut=v;ts.value=v;td.textContent='UP TO '+dayName(v);recompute()}
+  function stopPlay(){pl=null;tp.classList.remove('on');tp.setAttribute('aria-label','Play timeline')}
+  function setCut(v,mode){ST.cut=v;ts.value=Math.max(v,d0);td.textContent='UP TO '+dayName(Math.max(v,d0));recompute(mode)}
+  // every 100 ms: move the date on, grow routes that just appeared, send a dot along each flight that day
+  function stepPlay(now){if(!pl||now-pl.last<100)return;pl.last=now;
+    const v=Math.min(d1,d0+(d1-d0)*(now-pl.t0)/DUR),c=Math.floor(v),prev=ST.cut;
+    if(c!==prev){fresh={};setCut(c,'play');for(let d=prev+1;d<=c;d++)(BD[d]||[]).forEach(function(f){if(passes(f)&&!fresh[f[0]])startFly(f[0],f[6]===1)})}
+    if(v>=d1)stopPlay()}
   if(d1>d0){ts.min=d0;ts.max=d1;ts.step=1;ts.value=d1;td.textContent='UP TO '+dayName(d1);
-    ts.oninput=function(){stop();setCut(+ts.value)};
-    tp.onclick=function(){if(tmr){stop();return}
-      let pos=+ts.value>=d1?d0:+ts.value;const step=Math.max(.05,(d1-d0)/100);
-      tp.classList.add('on');tp.setAttribute('aria-label','Pause timeline');setCut(Math.round(pos));
-      tmr=setInterval(function(){pos+=step;if(pos>=d1){pos=d1;stop()}const v=Math.round(pos);if(v!==ST.cut)setCut(v)},80)}}
+    ts.oninput=function(){stopPlay();setCut(+ts.value)};
+    tp.onclick=function(){if(pl){stopPlay();return}
+      if(+ts.value>=d1)setCut(d0-1);
+      pl={t0:performance.now()-(Math.max(ST.cut,d0)-d0)/(d1-d0)*DUR,last:0};
+      tp.classList.add('on');tp.setAttribute('aria-label','Pause timeline');ensure()}}
   else tr.style.display='none';
   function passes(f){return(!ST.ty||ST.ty.has(f[1]))&&(ST.tm==='all'||(ST.tm==='day'?f[2]>0:f[3]>0))&&(ST.cut==null||f[4]==null||f[4]<=ST.cut)}
-  function recompute(){R={};A={};let nf=0,dm=0,nm=0,km=0,lg=null;const ty={};maxC=1;maxA=1;
+  // mode: 'redraw' regrows every visible route (a filter changed), 'play' grows only routes that just appeared, none = instant
+  function recompute(mode){R={};A={};DIR={};let nf=0,dm=0,nm=0,km=0,lg=null,ri=0;const ty={},first={};maxC=1;maxA=1;
     FL.forEach(function(f){if(!passes(f))return;nf++;dm+=f[2];nm+=f[3];km+=f[5];if(!lg||f[5]>lg.km)lg={km:f[5],key:f[0]};if(f[1])ty[f[1]]=(ty[f[1]]||0)+f[2]+f[3];
-      const r=R[f[0]]||(R[f[0]]={c:0,d:0,t:0});r.c++;r.d+=f[2];r.t+=f[3];f[0].split('-').forEach(function(a){A[a]=(A[a]||0)+1})});
+      const r=R[f[0]]||(R[f[0]]={c:0,d:0,t:0}),dd=f[4]==null?1e9:f[4];r.c++;r.d+=f[2];r.t+=f[3];f[0].split('-').forEach(function(a){A[a]=(A[a]||0)+1});
+      if(!(f[0] in first)||dd<first[f[0]]){first[f[0]]=dd;DIR[f[0]]=f[6]===1}});
     Object.keys(R).forEach(function(k){maxC=Math.max(maxC,R[k].c)});Object.keys(A).forEach(function(k){maxA=Math.max(maxA,A[k])});
-    svg.querySelectorAll('.rg').forEach(function(g){const r=R[g.dataset.r];g.classList.toggle('off',!r);if(!r)return;
+    svg.querySelectorAll('.rg').forEach(function(g){const key=g.dataset.r,r=R[key],was=!g.classList.contains('off');g.classList.toggle('off',!r);if(!r){cancel(key);return}
       const tot=r.d+r.t,q=tot?r.t/tot:0;
       g.style.setProperty('--w',(.22+.95*Math.sqrt(r.c/maxC)).toFixed(3));
-      g.style.setProperty('--rc',tot?'rgb('+Math.round(245-186*q)+','+Math.round(197-56*q)+','+Math.round(66+189*q)+')':'var(--dim)')});
+      g.style.setProperty('--rc',tot?'rgb('+Math.round(245-186*q)+','+Math.round(197-56*q)+','+Math.round(66+189*q)+')':'var(--dim)');
+      if(mode==='redraw')startGrow(key,DIR[key],Math.min(600,ri++*10));
+      else if(mode==='play'&&!was){startGrow(key,DIR[key],0);fresh[key]=true}});
     svg.querySelectorAll('.hit').forEach(function(h){h.classList.toggle('off',!R[h.dataset.r])});
     svg.querySelectorAll('.ap').forEach(function(c){const n=A[c.dataset.a]||0;c.classList.toggle('off',!n);if(n)c.style.setProperty('--r',(.7+2.3*Math.sqrt(n/maxA)).toFixed(3))});
     LABELS.forEach(function(L,i){const n=A[L.s]||0;L.on=n>0;L.r=.7+2.3*Math.sqrt(n/maxA);L.fs=n>100?3.6:n>25?2.7:2.2;L.bold=n>25;els[i].setAttribute('class','lb'+(L.bold?' b':''))});
@@ -345,7 +391,7 @@ if(FL){
     apply()}
   function readUi(){const on=[].filter.call(ft.querySelectorAll('input'),function(b){return b.checked});
     ST.ty=on.length===types.length?null:new Set(on.map(function(b){return b.value}));
-    ST.tm=flt.querySelector('input[name=tm]:checked').value;ST.dn=flt.querySelector('input[name=cm]:checked').value==='dn';recompute()}
+    ST.tm=flt.querySelector('input[name=tm]:checked').value;ST.dn=flt.querySelector('input[name=cm]:checked').value==='dn';recompute('redraw')}
   function reset(){ft.querySelectorAll('input').forEach(function(b){b.checked=true});
     flt.querySelector('input[name=tm][value=all]').checked=true;flt.querySelector('input[name=cm][value=route]').checked=true;readUi()}
   flt.addEventListener('change',readUi);fb.onclick=function(){pop(flt)};
@@ -360,7 +406,7 @@ function buildHtml(scene, flights) {
     if (i.t === "poly") parts.push(`<polygon class="${i.fill ? "land" : "coast"}" points="${pts2(i.pts)}"/>`);
     else if (i.t === "line" && i.route) {
       if (!groups.has(i.route)) { groups.set(i.route, { w: i.sw, list: [] }); parts.push("@@" + i.route + "@@"); }
-      groups.get(i.route).list.push(`<polyline class="rt" style="--u:${+i.u.toFixed(3)}" points="${pts2(i.pts)}"/>`);
+      groups.get(i.route).list.push(`<path class="rt" pathLength="1" style="--u:${+i.u.toFixed(3)}" d="M${pts2(i.pts).replace(/ /g, "L")}"/>`);
     } else if (i.t === "line") parts.push(`<polyline class="${i.sw === 0.1 ? "bd" : "gr"}" points="${pts2(i.pts)}"/>`);
     else if (i.t === "circle") parts.push(`<circle class="ap" data-a="${i.ap}" cx="${f2(i.x)}" cy="${f2(i.y)}" style="--r:${f2(i.r)}"/>`);
   }
@@ -371,6 +417,7 @@ function buildHtml(scene, flights) {
   const FL = showNums ? flights.map(f => [
     f.dep < f.arr ? f.dep + "-" + f.arr : f.arr + "-" + f.dep, (f.type || "").trim().toUpperCase(), f.dayMins, f.nightMins,
     f.date ? Math.floor(Date.parse(f.date + "T00:00:00Z") / 864e5) : null, Math.round(greatCircleKm(f.from, f.to)),
+    f.dep < f.arr ? 0 : 1, // 1 = flown from the route key's second airport to its first, so the animation runs backwards
   ]) : null;
   const AC = {};
   if (showNums) for (const f of flights) for (const code of [f.dep, f.arr]) { const k = countryOf(code); if (k) AC[code] = k; }
@@ -384,7 +431,7 @@ function buildHtml(scene, flights) {
   const vars = `:root{${palVars(PAL.dark)};color-scheme:dark}:root[data-theme="light"]{${palVars(PAL.light)};color-scheme:light}`;
   return `<!doctype html><html lang="en" data-theme="${scene.theme === "light" ? "light" : "dark"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Route map</title><style>${vars}${VIEWER_CSS}</style></head><body>
-<svg id="svg" viewBox="0 0 ${scene.W} ${f2(scene.H)}" preserveAspectRatio="xMidYMid meet"><g id="world">${parts.join("")}${hits}</g><g id="labels"></g></svg>
+<svg id="svg" viewBox="0 0 ${scene.W} ${f2(scene.H)}" preserveAspectRatio="xMidYMid meet"><g id="world">${parts.join("")}${hits}<g id="fly"></g></g><g id="labels"></g></svg>
 ${scene.rows ? `<div id="plate"><div id="ph" role="button" tabindex="0" aria-expanded="true" aria-controls="pb" title="Show or hide stats">${panelHead(scene.rows)}<div class="st" id="pcn"></div><span id="pc" aria-hidden="true">&#9662;</span></div>
 <div id="tlrow"><button id="tp" aria-label="Play timeline"><svg class="pl" width="10" height="10" viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z" fill="currentColor"/></svg><svg class="pa" width="10" height="10" viewBox="0 0 10 10"><path d="M2 1h2v8H2zM6 1h2v8H6z" fill="currentColor"/></svg></button><div id="tlb"><input type="range" id="ts" aria-label="Show flights up to this date"><div id="td"></div></div></div>
 <div id="pb"></div></div>` : ""}
