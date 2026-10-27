@@ -1389,6 +1389,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-pageheader-period { display: none; }
           .elb-merged-phone { display: flex; }
           .elb-chiprow-phone { display: flex; }
+          /* While the ✓ wave plays the chips get wider; don't let that widen the right column,
+             or the header row wraps and the toolbar drops below the title (561–640px) */
+          .elb-chiprow-flash { contain: inline-size; }
           .elb-merged-phone button, .elb-iconrow-desktop button { padding: 4px 5px !important; }
           .elb-title-col { display: flex; flex-direction: column; gap: 10px; }
           .elb-title-text { font-size: clamp(28px, 9vw, 40px) !important; }
@@ -1514,7 +1517,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             {iconButtonsRow}
           </div>
           {/* PHONE-ONLY: sync chips stack under the icons (desktop/tablet render them inside the period row below) */}
-          <div className="elb-chiprow-phone" style={{ justifyContent: "flex-end", alignItems: "center" }}>
+          <div className={`elb-chiprow-phone${waveFlash ? " elb-chiprow-flash" : ""}`} style={{ justifyContent: "flex-end", alignItems: "center" }}>
             {syncChipsGroup}
           </div>
           <div className="elb-chiprow-phone" style={{ justifyContent: "flex-end", alignItems: "center" }}>

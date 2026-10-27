@@ -15,10 +15,11 @@ import { useState, useEffect } from "react";
 // Cosmetic only; sync state and timing upstream are untouched.
 export function ToolbarSyncChip({ icon, compact, full, state, flash, identityColor, onActivate, index = 0 }) {
   const [expanded, setExpanded] = useState(false);
-  const [showFlash, setShowFlash] = useState(false);
+  const [flashReady, setFlashReady] = useState(false);
+  const showFlash = flash && flashReady; // `flash &&` so the chip drops back in the same render the parent's flash ends
   useEffect(() => {
-    if (!flash) { setShowFlash(false); return; }
-    const t = setTimeout(() => setShowFlash(true), index * 250);
+    if (!flash) { setFlashReady(false); return; }
+    const t = setTimeout(() => setFlashReady(true), index * 250);
     return () => clearTimeout(t);
   }, [flash, index]);
   const quietColor = state === "bad" ? "#ef4444" : state === "busy" ? "#7c87a3" : "#3a6a8a";
