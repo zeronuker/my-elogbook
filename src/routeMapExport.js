@@ -169,6 +169,9 @@ const VIEWER_CSS = `
 #plate .row{display:flex;justify-content:space-between;gap:10px;padding:1px 0}#plate .row span:last-child{color:var(--ink2);text-align:right}
 #plate .num{display:flex;justify-content:space-between;align-items:baseline}#plate .num b{font-size:20px}#plate .num span{color:var(--ink2)}
 #plate .bar{display:flex;height:6px;margin:4px 0}#plate .bar i{display:block}#plate .wr{color:var(--ink2);line-height:1.5}
+#ph{position:relative;padding-right:22px;cursor:pointer}#ph:focus-visible{outline:1px solid var(--line);outline-offset:4px}
+#pc{position:absolute;right:0;top:0;font-size:12px;color:var(--dim);transition:transform .15s}
+#plate.min #pc{transform:rotate(180deg)}#plate.min #pb{display:none}
 #tip{position:absolute;pointer-events:none;background:var(--plate);border:1px solid var(--line);padding:6px 9px;font-size:12px;display:none;white-space:nowrap}#tip b{color:var(--line)}
 #btns{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:6px}
 #btns button{width:34px;height:34px;white-space:nowrap;background:var(--plate);border:1px solid var(--line);color:var(--ink);font:700 16px 'Courier New',monospace;cursor:pointer}#btns button:hover{color:var(--line)}
@@ -216,6 +219,11 @@ function mid(){const r=svg.getBoundingClientRect();return[r.left+r.width/2,r.top
 document.getElementById('zi').onclick=function(){const m=mid();zoomAt(m[0],m[1],1.6)};
 document.getElementById('zo').onclick=function(){const m=mid();zoomAt(m[0],m[1],1/1.6)};
 document.getElementById('zf').onclick=function(){vb={x:0,y:0,w:W,h:H};apply()};
+const plate=document.getElementById('plate');
+if(plate){const ph=document.getElementById('ph');
+  function tgl(){const m=plate.classList.toggle('min');ph.setAttribute('aria-expanded',String(!m))}
+  ph.onclick=tgl;ph.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();tgl()}};
+  if(matchMedia('(max-width:560px)').matches)tgl()}
 addEventListener('resize',apply);apply();`;
 
 function buildHtml(scene) {
@@ -239,7 +247,7 @@ function buildHtml(scene) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Route map</title><style>:root{${vars}}${VIEWER_CSS}</style></head><body>
 <svg id="svg" viewBox="0 0 ${scene.W} ${f2(scene.H)}" preserveAspectRatio="xMidYMid meet"><g id="world">${parts.join("")}${hits}</g><g id="labels"></g></svg>
-${scene.rows ? `<div id="plate">${panelHtml(scene.rows)}<div class="st" style="margin-top:10px;color:var(--dim);font-size:10.5px">Scroll or pinch to zoom, drag to pan. Hover a route or airport for details.</div></div>` : ""}
+${scene.rows ? `<div id="plate"><div id="ph" role="button" tabindex="0" aria-expanded="true" aria-controls="pb" title="Show or hide stats">${panelHtml(scene.rows.slice(0, 2))}<span id="pc" aria-hidden="true">&#9662;</span></div><div id="pb">${panelHtml(scene.rows.slice(2))}<div class="st" style="margin-top:10px;color:var(--dim);font-size:10.5px">Scroll or pinch to zoom, drag to pan. Hover a route or airport for details.</div></div></div>` : ""}
 <div id="btns"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">-</button><button id="zf" aria-label="Fit all routes" style="font-size:10px">FIT</button></div>
 <div id="tip"></div><div id="credit">Natural Earth via world-atlas (50 m)</div>
 <script>const W=${scene.W},H=${f2(scene.H)},LABELS=${json(labels)},RI=${json(RI)},AI=${json(AI)};${VIEWER_JS}</script></body></html>`;
