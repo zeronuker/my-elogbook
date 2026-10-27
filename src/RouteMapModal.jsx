@@ -292,10 +292,10 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   const [showStats, setShowStats] = useState(false);
   const [exportError, setExportError] = useState("");
   const [exporting, setExporting] = useState(false);
-  const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 520px)").matches);
+  const [isNarrow, setIsNarrow] = useState(() => window.matchMedia("(max-width: 720px)").matches);
 
   useEffect(() => {
-    const mqNarrow = window.matchMedia("(max-width: 520px)");
+    const mqNarrow = window.matchMedia("(max-width: 720px)");
     const onNarrow = e => setIsNarrow(e.matches);
     mqNarrow.addEventListener("change", onNarrow);
     return () => {
