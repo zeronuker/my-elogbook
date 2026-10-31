@@ -161,7 +161,6 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
       <ChamferFrame className={"srch-modal elb-pop" + exitCls} role="dialog" aria-modal="true" aria-label="Search logbook">
         <header className="srch-head">
           <div>
-            <div className="srch-eyebrow">Search Logbook</div>
             <h2 className="srch-title">Find a Flight</h2>
           </div>
           <button className="srch-close" onClick={onClose} aria-label="Close">✕</button>
@@ -256,10 +255,6 @@ const searchModalCss = `
     border-bottom:1px solid var(--elb-border, #1e3a5f);
     display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0;
     background:linear-gradient(180deg, rgba(63,224,197,0.05), transparent);
-  }
-  .srch-eyebrow{
-    font-family:'JetBrains Mono','Courier New',monospace;font-size:calc(10px * var(--fs));letter-spacing:0.24em;
-    text-transform:uppercase;color:#3FE0C5;margin-bottom:6px;font-weight:700;
   }
   .srch-title{
     font-family:'Tourney',system-ui,sans-serif;font-weight:700;font-size:calc(22px * var(--fs));

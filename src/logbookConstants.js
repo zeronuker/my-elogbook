@@ -69,21 +69,25 @@ export const FONT_FAMILIES = {
 
 export const ANIM_SPEED_MS = { normal: 260, slow: 420, slower: 650 };
 
+// Row density sets cell top/bottom padding; column density sets cell left/right padding.
 export const DENSITY_PAD = {
-  compact:  "3px 6px",
-  default:  "6px 8px",
-  relaxed:  "10px 8px",
+  compact:  "3px",
+  relaxed:  "10px",
+};
+
+export const COLUMN_PAD = {
+  narrow:  "4px",
+  wide:    "14px",
 };
 
 export const COLUMN_SCALE = {
   narrow:  0.75,
-  default: 1.0,
   wide:    1.35,
 };
 
 // Shared table header/cell styles — used by the Logbook and Flight Summary tabs.
 export const thStyle = {
-  padding: "7px 8px",
+  padding: "7px var(--elb-pad-x, 4px)",
   textAlign: "center",
   color: "var(--elb-txt-muted, #3a6a8a)",
   fontSize: "var(--elb-th-sz, 10px)",
@@ -105,7 +109,7 @@ export const thSubStyle = {
 };
 
 export const tdStyle = {
-  padding: "var(--elb-row-pad, 6px 8px)",
+  padding: "var(--elb-pad-y, 3px) var(--elb-pad-x, 4px)",
   borderBottom: "1px solid var(--elb-border3, #0f1820)",
   borderRight: "1px solid var(--elb-bg2, #0d1520)",
   whiteSpace: "nowrap",

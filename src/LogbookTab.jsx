@@ -66,7 +66,7 @@ export default function LogbookTab({
     if (!row.departure) updateCell(rowIdx, "departure", prevRow.arrival);
   };
 
-  const colScale = COLUMN_SCALE[settings.columnDensity] ?? COLUMN_SCALE.default;
+  const colScale = COLUMN_SCALE[settings.columnDensity] ?? COLUMN_SCALE.narrow;
   const cw = (base) => Math.round(base * colScale);
 
   const columns = [
@@ -296,8 +296,7 @@ export default function LogbookTab({
 
             const hasRemarks = row.remarks && row.remarks.trim().length > 0;
             const hasSignal = hasRemarks || row.autoland;
-            const baseRowBg = isEven ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)";
-            const rowBg = hasSignal ? "rgba(168,85,247,0.07)" : baseRowBg;
+            const rowBg = isEven ? "var(--elb-bg2, #0d1520)" : "var(--elb-bg3, #0a1018)";
             const rowTitle = hasRemarks && row.autoland ? "Has remarks · Autoland logged"
               : hasRemarks ? "Has remarks"
               : row.autoland ? "Autoland logged"
@@ -522,7 +521,7 @@ export default function LogbookTab({
                             ? (col.key === "total" ? "rgba(79,195,247,0.04)" : "transparent")
                             : "transparent",
                           cursor: isAutoCalc || isAfterSta ? "default" : "text",
-                          padding: isEditing ? "0" : "5px 7px",
+                          padding: isEditing ? "0" : tdStyle.padding,
                           minWidth: col.minWidth,
                           width: col.fixedWidth ? col.fixedWidth : undefined,
                           maxWidth: col.fixedWidth ? col.fixedWidth : undefined,

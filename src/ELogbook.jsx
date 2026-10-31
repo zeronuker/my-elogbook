@@ -21,7 +21,7 @@ import {
 } from "./logbookCalculations";
 import {
   DUTY_LOG_SYNC_URL, DUTY_LOG_CODE_RE, timeCols,
-  FTL_POPUPS,
+  FTL_POPUPS, ANIM_SPEED_MS,
 } from "./logbookConstants";
 import { ToolbarSyncChip, TabLogbookIcon, TabSummaryIcon, TabLimitsIcon } from "./ELogbookIcons";
 import { makeThemeCss } from "./theme";
@@ -88,6 +88,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [pulseRowId, setPulseRowId] = useState(null); // briefly highlights a row after a search jump
   const [newRowId, setNewRowId] = useState(null); // row just added via "+ add sector" — plays its enter animation
   const pulseTimerRef = useRef(null);
+  const jumpTimersRef = useRef([]); // pending steps of a search jump (tab → year + month → pulse)
   const [routeMapOpen, setRouteMapOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -890,7 +891,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [pulseRowId, selectedMonth, selectedYear]);
 
-  useEffect(() => () => { if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current); }, []);
+  useEffect(() => () => {
+    if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    jumpTimersRef.current.forEach(clearTimeout);
+  }, []);
 
   if (!user) {
     return (
@@ -1070,15 +1074,29 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const isLastPeriod = selectedYear === YEARS[YEARS.length - 1] && (yearOnly || selectedMonth === 11);
 
   // Jumps to a search result's month/year and briefly pulses its row.
+  // Steps through tab → year + month → row, each waiting for the previous
+  // animation; steps already satisfied are skipped. Animations off = instant.
   const handleSearchJump = (hit) => {
-    setSelectedMonth(hit.monthIdx);
-    setSelectedYear(hit.year);
+    jumpTimersRef.current.forEach(clearTimeout);
+    if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    setPulseRowId(null);
     setEditingCell(null);
     setExpandedRowIdx(null);
     setConfirmDeleteRowIdx(null);
-    if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
-    setPulseRowId(hit.row.id);
-    pulseTimerRef.current = setTimeout(() => setPulseRowId(null), 3500);
+
+    const animOn = settings.animEnabled !== false;
+    const gap = animOn ? (ANIM_SPEED_MS[settings.animSpeed] || ANIM_SPEED_MS.normal) + 150 : 0;
+    const steps = [];
+    if (activeTab !== "logbook") steps.push(() => setActiveTab("logbook"));
+    if (hit.year !== selectedYear || hit.monthIdx !== selectedMonth) {
+      steps.push(() => { setSelectedYear(hit.year); setSelectedMonth(hit.monthIdx); });
+    }
+    steps.push(() => {
+      setPulseRowId(hit.row.id);
+      pulseTimerRef.current = setTimeout(() => setPulseRowId(null), 3500);
+    });
+    // The search window is still closing; give it a moment before the first step.
+    jumpTimersRef.current = steps.map((fn, i) => setTimeout(fn, (animOn ? 250 : 0) + i * gap));
   };
 
   const settingsButtonTitle = update.needRefresh ? "Settings · update available" : "Settings";
@@ -1346,8 +1364,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         @keyframes blink     { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
         @keyframes cb-pulse  { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.75); } }
         @keyframes row-pulse { 0%, 100% { background-color: transparent; }
-                                15%, 55% { background-color: rgba(79,195,247,0.5); }
-                                35%, 75% { background-color: rgba(79,195,247,0.08); } }
+                                15%, 55% { background-color: rgba(255,138,0,0.5); }
+                                35%, 75% { background-color: rgba(255,138,0,0.08); } }
         ${themeCss}
         /* ── Topbar responsive ── */
         .elb-topbar {

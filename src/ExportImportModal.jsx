@@ -871,7 +871,6 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
         {/* ── HEAD ── */}
         <header className="eim-head">
           <div>
-            <div className="eim-eyebrow">// data</div>
             <h2 className="eim-title">Export / Import</h2>
           </div>
           <button className="eim-close" onClick={onClose} aria-label="Close">✕</button>
@@ -932,7 +931,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                     <div className="eim-field-meta"><span className="eim-field-label">Orientation</span></div>
                     <div className="eim-field-control"><Seg value={orient} options={[["landscape", "Landscape"], ["portrait", "Portrait"]]} onChange={setOrient} /></div>
                   </div>
-                  <p className="eim-help">Cover, profile page, then one page per month from your first flight to your last, with carry-forward hours included.</p>
+                  <p className="eim-help">Creates a printable copy of your logged flights, laid out as a paper logbook with a cover, profile and monthly pages.</p>
                 </div>
               )}
 
@@ -1019,7 +1018,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
             <div className="eim-pane">
               {persisted !== null && (
                 <div className={"eim-note " + (persisted ? "ok" : "warn")}>
-                  {persisted ? "Persistent storage granted — data protected from browser cleanup." : "Persistent storage not granted — data may be cleared under storage pressure."}
+                  {persisted ? "Storage protected — data safe from cleanup." : "Storage not protected — data may be cleared."}
                 </div>
               )}
 
@@ -1027,7 +1026,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
               <div className="eim-field">
                 <div className="eim-field-meta">
                   <span className="eim-field-label">Download backup</span>
-                  <div className="eim-field-hint">Saves flight data, settings and profile to one file you keep yourself.</div>
+                  <div className="eim-field-hint">Saves flight data, settings and profile.</div>
                 </div>
                 <div className="eim-field-control">
                   <button className="eim-btn-primary" style={{ width: "100%" }} onClick={handleBackupDownload}>Download .json</button>
@@ -1056,7 +1055,6 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
 
         {/* ── FOOT ── */}
         <footer className="eim-foot">
-          <div className="eim-foot-note">// changes apply immediately · no save needed</div>
           <div className="eim-foot-btns">
             <button className="eim-btn-ghost" onClick={onClose}>Close</button>
           </div>
@@ -1089,10 +1087,6 @@ const exportImportCss = `
     padding:20px 24px 16px;border-bottom:1px solid var(--cb-line);
     display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0;
     background:linear-gradient(180deg, rgba(63,224,197,0.04), transparent);
-  }
-  .eim-eyebrow{
-    font-family:var(--cb-font-mono);font-size:calc(10px * var(--fs));letter-spacing:0.26em;
-    text-transform:uppercase;color:var(--cb-mint);margin-bottom:6px;
   }
   .eim-title{
     font-family:var(--cb-font-display);font-weight:700;font-size:calc(24px * var(--fs));
@@ -1202,9 +1196,8 @@ const exportImportCss = `
   /* ── Footer ── */
   .eim-foot{
     padding:14px 24px;border-top:1px solid var(--cb-line);flex-shrink:0;
-    display:flex;justify-content:space-between;align-items:center;
+    display:flex;justify-content:flex-end;align-items:center;
   }
-  .eim-foot-note{font-family:var(--cb-font-mono);font-size:calc(9.5px * var(--fs));color:var(--cb-ink-dim);letter-spacing:0.14em;}
   .eim-foot-btns{display:flex;gap:8px;}
 
   /* ── Buttons ── */

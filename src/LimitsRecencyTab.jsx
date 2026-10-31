@@ -488,9 +488,6 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
               <div style={{ fontSize: 30, fontWeight: 700, lineHeight: 1, color: "#4fc3f7", fontFamily: "'Courier New',monospace", marginBottom: 3 }}>
                 {autoland6m}
               </div>
-              <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)" }}>
-                SEE ⓘ FOR THE RULE
-              </div>
             </div>
           </div>
         ) : (

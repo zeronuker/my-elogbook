@@ -509,7 +509,6 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
           borderBottom: `1px solid ${THEME.border}`, background: "linear-gradient(180deg, rgba(63,224,197,0.04), transparent)",
         }}>
           <div>
-            <div style={{ color: accent, fontSize: 10, letterSpacing: "0.2em", marginBottom: 4, textTransform: "uppercase" }}>// route map</div>
             <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 17, letterSpacing: "0.03em", color: THEME.text }}>Route map</div>
           </div>
           <button

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import GoogleSignInButton from "./GoogleSignInButton";
 import ChamferFrame from "@brand/ChamferFrame";
 import { CHANGELOG } from "./changelog";
@@ -16,26 +16,21 @@ import { useScrollLock } from "./useScrollLock";
 
 export const ACCENT_PRESETS = [
   { id: "gradient", name: "ClaudeBorne", colors: ["#3FE0C5", "#3B8DFF", "#5B6BFF"], single: "#3FE0C5" },
-  { id: "mint",     name: "Mint",        colors: ["#3FE0C5"],                        single: "#3FE0C5" },
-  { id: "blue",     name: "Blue",        colors: ["#3B8DFF"],                        single: "#3B8DFF" },
-  { id: "violet",   name: "Violet",      colors: ["#5B6BFF"],                        single: "#5B6BFF" },
-  { id: "amber",    name: "Amber",       colors: ["#FFB37C"],                        single: "#FFB37C" },
   { id: "emerald",  name: "Emerald",     colors: ["#10d983"],                        single: "#10d983" },
-  { id: "rose",     name: "Rose",        colors: ["#f43f5e"],                        single: "#f43f5e" },
-  { id: "cyan",     name: "Cyan",        colors: ["#06b6d4"],                        single: "#06b6d4" },
   { id: "gold",     name: "Gold",        colors: ["#eab308"],                        single: "#eab308" },
-  { id: "coral",    name: "Coral",       colors: ["#f97316"],                        single: "#f97316" },
+  { id: "rose",     name: "Rose",        colors: ["#f43f5e"],                        single: "#f43f5e" },
+  { id: "violet",   name: "Violet",      colors: ["#a855f7"],                        single: "#a855f7" },
 ];
 
 export const ACCENT_MIGRATION = {
-  "#4fc3f7": "mint",
-  "#f5c542": "amber",
-  "#22c55e": "mint",
+  "#4fc3f7": "gradient",
+  "#f5c542": "gold",
+  "#22c55e": "emerald",
   "#a78bfa": "violet",
-  "#fb923c": "amber",
-  "#f472b6": "violet",
-  "#ef4444": "amber",
-  "#2dd4bf": "mint",
+  "#fb923c": "gold",
+  "#f472b6": "rose",
+  "#ef4444": "rose",
+  "#2dd4bf": "gradient",
 };
 
 export const FONT_CHOICES = [
@@ -66,11 +61,11 @@ export const DEFAULT_SETTINGS = {
   // Appearance
   theme: "dark",
   fontSize: 14,
-  tableDensity: "default",
+  tableDensity: "compact",
   fontType: "courier",
   brightness: 100,
   accentPreset: "gradient",
-  columnDensity: "default",
+  columnDensity: "narrow",
   autoHideEmptyCols: true,
   panelExpandAnimation: true,
   animEnabled: true,
@@ -119,8 +114,8 @@ const TAB_DEFAULTS = {
   appearance: {
     theme: "dark",
     fontSize: 14,
-    tableDensity: "default",
-    columnDensity: "default",
+    tableDensity: "compact",
+    columnDensity: "narrow",
     autoHideEmptyCols: true,
     fontType: "courier",
     brightness: 100,
@@ -175,9 +170,23 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
 
   // Live preview — push draft to parent on every change so the app
   // re-renders with the new theme/font/density behind the modal
+  // The text size eases toward its target each frame so the app grows/shrinks
+  // smoothly while dragging; with animations off it applies instantly.
+  const shownSizeRef = useRef(null);
   useEffect(() => {
-    if (open && onPreview) onPreview(draft);
-  }, [draft]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!open || !onPreview) { shownSizeRef.current = null; return; }
+    const target = Number(draft.fontSize) || 14;
+    if (shownSizeRef.current == null || draft.animEnabled === false) shownSizeRef.current = target;
+    let raf;
+    const step = () => {
+      const diff = target - shownSizeRef.current;
+      shownSizeRef.current = Math.abs(diff) < 0.02 ? target : shownSizeRef.current + diff * 0.25;
+      onPreview({ ...draft, fontSize: shownSizeRef.current });
+      if (shownSizeRef.current !== target) raf = requestAnimationFrame(step);
+    };
+    step();
+    return () => cancelAnimationFrame(raf);
+  }, [draft, open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!mounted) return null;
 
@@ -185,10 +194,15 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
   const upd = (patch) => setDraft((prev) => ({ ...prev, ...patch }));
 
   const handleSave = async () => {
-    await onSave(draft);
+    await onSave({ ...draft, settingsSavedAt: new Date().toISOString() });
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 3000);
   };
+
+  const lastSaved = settings?.settingsSavedAt ? new Date(settings.settingsSavedAt) : null;
+  const lastSavedText = lastSaved
+    ? `Last saved — ${lastSaved.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} · ${lastSaved.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+    : "Not saved yet";
 
   const handleResetTab = () => {
     const defaults = TAB_DEFAULTS[tab];
@@ -207,7 +221,6 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
         {/* ── HEAD ── */}
         <header className="sm-head">
           <div>
-            <div className="sm-eyebrow">// settings</div>
             <h2 className="sm-title">Settings</h2>
           </div>
           <button className="sm-close" onClick={onClose} aria-label="Close">
@@ -243,7 +256,10 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
         {/* ── FOOT ── */}
         <footer className="sm-foot">
           <div className={`sm-foot-note${savedFlash ? " saved" : resetFlash ? " reset" : ""}`}>
-            {savedFlash ? "// ✓ saved" : resetFlash ? "// tab reset to defaults" : "// changes save to your account · synced across devices"}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+            </svg>
+            {savedFlash ? "✓ Saved" : resetFlash ? "Tab reset to defaults" : lastSavedText}
           </div>
           <div className="sm-foot-btns">
             {TAB_DEFAULTS[tab] && (
@@ -274,7 +290,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
   return (
     <div className="sm-tab-content">
 
-      <SmSectionHead title="Pilot" hint="// shown in header · used for SELF auto-fill" />
+      <SmSectionHead title="Pilot" />
 
       <SmField label="Full name">
         <SmInput
@@ -300,7 +316,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
         <SmInput value={userEmail || ""} readOnly />
       </SmField>
 
-      <SmSectionHead title="Licence" hint="// CAAM regulatory data" />
+      <SmSectionHead title="Licence" />
 
       <SmField label="Licence type">
         <SmSelect
@@ -317,7 +333,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
         />
       </SmField>
 
-      <SmSectionHead title="Operator" hint="// airline / organisation" />
+      <SmSectionHead title="Operator" />
 
       <SmField label="Airline">
         <SmInput
@@ -342,7 +358,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
         />
       </SmField>
 
-      <SmSectionHead title="Carry-forward hours" hint="// per aircraft type · prior totals" />
+      <SmSectionHead title="Carry-forward hours" />
       <div style={{ overflowX: "auto" }}>
         <table className="sm-cf-table">
           <thead>
@@ -430,7 +446,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
       </div>
 
       {/* ── DELETE ACCOUNT ── */}
-      <SmSectionHead title="Account" hint="// danger zone" />
+      <SmSectionHead title="Account" />
       {!confirmDelete ? (
         <button
           type="button"
@@ -595,7 +611,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
 function AppearanceTab({ d, upd }) {
   const theme      = d.theme        || "dark";
   const fontSize   = Math.min(18, Math.max(12, Number(d.fontSize) || 14));
-  const density    = d.tableDensity || "default";
+  const density    = d.tableDensity === "relaxed" ? "relaxed" : "compact";
   const fontType   = d.fontType     || "courier";
   const brightness = Number(d.brightness) || 100;
   const accentPreset = d.accentPreset || "gradient";
@@ -605,7 +621,7 @@ function AppearanceTab({ d, upd }) {
   return (
     <div className="sm-tab-content">
 
-      <SmSectionHead title="Theme" hint="// dark for cockpit / night ops · light for tarmac / daylight" />
+      <SmSectionHead title="Theme" />
       <SmRow>
         <SmSegmented
           value={theme}
@@ -634,7 +650,7 @@ function AppearanceTab({ d, upd }) {
         </div>
       )}
 
-      <SmSectionHead title="Accent" hint="// 10 curated brand presets" />
+      <SmSectionHead title="Accent" />
       <SmRow>
         <div className="sm-accent-grid">
           {ACCENT_PRESETS.map((p) => (
@@ -659,7 +675,7 @@ function AppearanceTab({ d, upd }) {
         </div>
       </SmRow>
 
-      <SmSectionHead title="Font family" hint="// 5 monospace choices · keeps tabular alignment" />
+      <SmSectionHead title="Font family" />
       <SmRow>
         <div className="sm-font-grid">
           {FONT_CHOICES.map((f) => (
@@ -675,10 +691,10 @@ function AppearanceTab({ d, upd }) {
         </div>
       </SmRow>
 
-      <SmSectionHead title="Text size" hint="// 12 – 18 px · scales table + body text" />
+      <SmSectionHead title="Text size" />
       <SmRow>
         <SmSlider
-          min={12} max={18} step={1}
+          min={12} max={18} step={0.1}
           value={fontSize}
           onChange={(v) => upd({ fontSize: v })}
           ticks={["12", "13", "14", "15", "16", "17", "18"]}
@@ -692,7 +708,7 @@ function AppearanceTab({ d, upd }) {
         WMKK → OMDB &nbsp;·&nbsp; STD 23:45 &nbsp;·&nbsp; B737 &nbsp;·&nbsp; 9M-XXX
       </div>
 
-      <SmSectionHead title="Table density" hint="// row height · column width" />
+      <SmSectionHead title="Table density" />
       <SmRow>
         <div className="sm-density-grid">
           <div className="sm-density-col">
@@ -702,7 +718,6 @@ function AppearanceTab({ d, upd }) {
               onChange={(v) => upd({ tableDensity: v })}
               options={[
                 { value: "compact", label: "Compact" },
-                { value: "default", label: "Default" },
                 { value: "relaxed", label: "Relaxed" },
               ]}
             />
@@ -710,11 +725,10 @@ function AppearanceTab({ d, upd }) {
           <div className="sm-density-col">
             <div className="sm-density-label">COLUMNS</div>
             <SmSegmented
-              value={d.columnDensity || "default"}
+              value={d.columnDensity === "wide" ? "wide" : "narrow"}
               onChange={(v) => upd({ columnDensity: v })}
               options={[
                 { value: "narrow",  label: "Narrow"  },
-                { value: "default", label: "Default" },
                 { value: "wide",    label: "Wide"    },
               ]}
             />
@@ -729,14 +743,7 @@ function AppearanceTab({ d, upd }) {
         />
       </SmField>
 
-      <SmField label="Animate row detail panel" hint="Smooth expand/collapse when opening a row's remarks & autoland panel. Turn off for instant open/close.">
-        <SmToggle
-          checked={d.panelExpandAnimation !== false}
-          onChange={(v) => upd({ panelExpandAnimation: v })}
-        />
-      </SmField>
-
-      <SmSectionHead title="Animation" hint="// tab, dialog and panel transitions across the app" />
+      <SmSectionHead title="Animation" />
       <SmField label="Enable animations" hint="Turn off for instant switching everywhere.">
         <SmToggle
           checked={d.animEnabled !== false}
@@ -745,6 +752,12 @@ function AppearanceTab({ d, upd }) {
       </SmField>
       {d.animEnabled !== false && (
         <>
+          <SmField label="Animate row detail panel" hint="Smooth expand/collapse when opening a row's remarks & autoland panel. Turn off for instant open/close.">
+            <SmToggle
+              checked={d.panelExpandAnimation !== false}
+              onChange={(v) => upd({ panelExpandAnimation: v })}
+            />
+          </SmField>
           <SmField label="Transition style" hint="How tab and settings pages appear. Dialogs always use a soft zoom.">
             <SmSegmented
               value={["slide", "rise", "stagger"].includes(d.animStyle) ? d.animStyle : "slide"}
@@ -769,7 +782,6 @@ function AppearanceTab({ d, upd }) {
           </SmField>
         </>
       )}
-
     </div>
   );
 }
@@ -813,7 +825,7 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
         />
       </SmField>
 
-      <SmSectionHead title="Day / Night calculation" hint="// civil twilight vs fixed UTC bands" />
+      <SmSectionHead title="Day / Night calculation" />
 
       <SmField label="Method">
         <SmSegmented
@@ -827,11 +839,11 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
       </SmField>
 
       <SmHint>
-        <b>Fixed</b> · Night = 11:30 – 23:30 UTC. Same boundaries everywhere.<br />
+        <b>Fixed Bands</b> · Night = 11:30 – 23:30 UTC. Same boundaries everywhere.<br />
         <b>Dynamic</b> · Night = civil twilight (−6°) tracked minute by minute along the route. Falls back to Fixed if either airport is unavailable.
       </SmHint>
 
-      <SmSectionHead title="Duty buffers" hint="// for FTL cumulative duty calculations" />
+      <SmSectionHead title="Duty buffers" />
 
       <SmField label="Apply standard formula" hint="Adds pre + post buffer to each sector. Turn off to set duty = flight time exactly.">
         <SmToggle
@@ -860,7 +872,7 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
         />
       </SmField>
 
-      <SmSectionHead title="Duty Log Link" hint="// pull crew & remark from Duty Log" />
+      <SmSectionHead title="Duty Log Link" />
 
       <SmField label="Sync code" hint="From Duty Log app → Backup. Matches sectors by date + departure/arrival, read-only." controlWidth={320}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: 6 }}>
@@ -901,7 +913,7 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
   return (
     <div className="sm-tab-content">
 
-      <SmSectionHead title="Support" hint="// guides · feedback · bugs" />
+      <SmSectionHead title="Support" />
       <div className="sm-misc-cards">
         {MISC_CARDS.map(card => (
           <button
@@ -928,7 +940,7 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
         </button>
       </div>
 
-      <SmSectionHead title="App Update" hint="// check for new version" />
+      <SmSectionHead title="App Update" />
       <div style={{ fontSize: 11, color: 'var(--elb-txt-muted, #7c87a3)', padding: '6px 0 0' }}>
         Current build: {currentBuildVersion}
       </div>
@@ -961,7 +973,7 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
         DISABLE AUTO-UPDATE
       </label>
 
-      <SmSectionHead title="Changelog" hint="// version history" />
+      <SmSectionHead title="Changelog" />
       <Changelog changelog={CHANGELOG} />
 
     </div>
@@ -972,11 +984,10 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
 //  Sub-components
 // ════════════════════════════════════════════════════════════════════
 
-function SmSectionHead({ title, hint }) {
+function SmSectionHead({ title }) {
   return (
     <div className="sm-sh">
       <h3 className="sm-sh-title">{title}</h3>
-      {hint && <span className="sm-sh-hint">{hint}</span>}
     </div>
   );
 }
@@ -1067,7 +1078,7 @@ function SmSlider({ min, max, step, value, onChange, ticks = [], unit = "" }) {
           {ticks.map((t) => <span key={t}>{t}</span>)}
         </div>
       )}
-      <div className="sm-slider-value">{value}{unit}</div>
+      <div className="sm-slider-value">{Math.round(value * 10) / 10}{unit}</div>
     </div>
   );
 }
@@ -1149,14 +1160,6 @@ const settingsCss = `
     display: flex; justify-content: space-between; align-items: flex-start;
     background: linear-gradient(180deg, rgba(63,224,197,0.04), transparent);
     flex-shrink: 0;
-  }
-  .sm-eyebrow {
-    font-family: var(--cb-font-mono);
-    font-size: calc(10px * var(--fs));
-    letter-spacing: 0.26em;
-    text-transform: uppercase;
-    color: var(--cb-mint);
-    margin-bottom: 6px;
   }
   .sm-title {
     font-family: var(--cb-font-display);
@@ -1240,14 +1243,6 @@ const settingsCss = `
     margin: 0;
     letter-spacing: 0.03em;
     color: var(--cb-ink);
-  }
-  .sm-sh-hint {
-    font-family: var(--cb-font-mono);
-    font-size: calc(10px * var(--fs));
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--cb-ink-dim);
-    white-space: nowrap;
   }
 
   .sm-section-inline {
@@ -1559,13 +1554,17 @@ const settingsCss = `
   }
   .sm-foot-note {
     font-family: var(--cb-font-mono);
+    display: flex; align-items: center; gap: 4px;
     font-size: calc(10px * var(--fs));
-    color: var(--cb-ink-dim);
-    letter-spacing: 0.16em;
+    font-style: italic;
+    color: #3a6a8a;
+    letter-spacing: 0.06em;
     transition: color 200ms;
   }
-  .sm-foot-note.saved { color: var(--cb-mint); }
-  .sm-foot-note.reset { color: var(--cb-ink-2); }
+  .sm-foot-note.saved {
+    color: #22c55e; font-style: normal; font-weight: 700;
+    font-size: calc(11px * var(--fs)); letter-spacing: 0.1em;
+  }
   .sm-foot-btns { display: flex; gap: 8px; }
 
   /* ── Buttons ────────────────────────────────────────────────────── */
@@ -1686,7 +1685,6 @@ const settingsCss = `
     .sm-foot-btns { justify-content: flex-end; }
     .sm-accent-grid { grid-template-columns: repeat(3, 1fr); }
     .sm-font-grid { grid-template-columns: repeat(3, 1fr); }
-    .sm-sh-hint { display: none; }
     .sm-sh-title { width: 100%; }
     /* 4 tabs don't fit in one row on a phone: 2×2 grid keeps every tab reachable */
     .sm-tabs { grid-template-columns: repeat(2, 1fr); }

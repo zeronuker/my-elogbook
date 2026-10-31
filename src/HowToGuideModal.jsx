@@ -254,7 +254,6 @@ function SearchMockup() {
   return (
     <div style={{ background: "#0d1520", border: `1px solid ${BDR}`, borderRadius: 8, margin: "14px 0 20px", overflow: "hidden" }}>
       <div style={{ padding: "16px 20px 12px", borderBottom: `1px solid ${BDR}`, background: "linear-gradient(180deg, rgba(63,224,197,0.05), transparent)" }}>
-        <div style={{ fontSize: 10, letterSpacing: "0.24em", color: A, fontWeight: 700, marginBottom: 5, fontFamily: F }}>SEARCH LOGBOOK</div>
         <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 18, color: "#e8f4fd" }}>Find a Flight</div>
       </div>
       <div style={{ padding: "12px 20px", borderBottom: `1px solid ${BDR}` }}>
@@ -280,7 +279,6 @@ function RouteMapMockup() {
   return (
     <div style={{ background: BG, border: `1px solid ${BDR}`, borderRadius: 6, overflow: "hidden", margin: "14px 0 20px" }}>
       <div style={{ background: BG2, borderBottom: `1px solid ${BDR}`, padding: "10px 16px", display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-        <span style={{ fontSize: 10, color: A, letterSpacing: "0.14em", fontFamily: F, fontWeight: 700 }}>// ROUTE MAP</span>
         <MockField label="FROM" value="01/01/2026" />
         <MockField label="TO" value="22/09/2026" />
         <div style={{ fontSize: 10, color: TXT, fontFamily: F, border: `1px solid ${BDR}`, borderRadius: 3, padding: "4px 10px" }}>CARTO DARK ▾</div>
@@ -1073,9 +1071,9 @@ const SECTIONS = [
         </ul>
         <h4>Appearance</h4>
         <ul>
-          <li><strong>Accent colour</strong> — choose from 10 presets: ClaudeBorne gradient, Mint, Blue, Violet, Amber, Emerald, Rose, Cyan, Gold, and Coral</li>
+          <li><strong>Accent colour</strong> — choose from 5 presets: ClaudeBorne gradient, Emerald, Gold, Rose, and Violet</li>
           <li><strong>Font</strong> — JetBrains Mono, IBM Plex Mono, Roboto Mono, Space Mono, or Courier New</li>
-          <li><strong>Table density</strong> — Compact, Default, or Relaxed row spacing</li>
+          <li><strong>Table density</strong> — Compact or Relaxed row spacing, and Narrow or Wide columns</li>
           <li><strong>Column visibility</strong> — hide columns you don't need. Hidden columns leave a narrow stub in the header; click the stub to restore them</li>
         </ul>
         <h4>Preferences</h4>

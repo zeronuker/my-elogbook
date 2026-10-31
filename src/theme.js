@@ -1,5 +1,5 @@
 import { ACCENT_PRESETS, ACCENT_MIGRATION } from "./SettingsModal";
-import { DENSITY_PAD, FONT_FAMILIES, ANIM_SPEED_MS } from "./logbookConstants";
+import { DENSITY_PAD, COLUMN_PAD, FONT_FAMILIES, ANIM_SPEED_MS } from "./logbookConstants";
 
 // ─── Theme CSS variable injection (v6 — aliases --elb-* to --cb-* tokens) ─────
 
@@ -29,7 +29,8 @@ export function hexToRgb(hex) {
 export function makeThemeCss(settings = {}) {
   const isDark   = (settings.theme || "dark") === "dark";
   const fontSize = Math.min(18, Math.max(12, Number(settings.fontSize) || 14));
-  const rowPad   = DENSITY_PAD[settings.tableDensity] || DENSITY_PAD.default;
+  const padY     = DENSITY_PAD[settings.tableDensity] || DENSITY_PAD.compact;
+  const padX     = COLUMN_PAD[settings.columnDensity] || COLUMN_PAD.narrow;
   const fontFamily = FONT_FAMILIES[settings.fontType] || FONT_FAMILIES.courier;
   const { accent, grad, dim } = resolveAccent(settings);
   const animOn = settings.animEnabled !== false;
@@ -58,7 +59,6 @@ export function makeThemeCss(settings = {}) {
       --cb-font-body:${fontFamily};
       --cb-font-mono:${fontFamily};
       --fs:${(fontSize / 14).toFixed(4)};
-      --cell-pad:${rowPad};
 
       /* ── Legacy --elb-* aliases → CB tokens ── */
       --elb-bg:var(--cb-surface-0);
@@ -96,7 +96,8 @@ export function makeThemeCss(settings = {}) {
       --elb-ths-sz:calc(${Math.max(9, fontSize - 2)}px * var(--fs,1));
       --elb-desc-sz:calc(${Math.max(11, fontSize)}px * var(--fs,1));
       --elb-hint-sz:calc(${Math.max(10, fontSize - 1)}px * var(--fs,1));
-      --elb-row-pad:${rowPad};
+      --elb-pad-y:${padY};
+      --elb-pad-x:${padX};
       /* Animation: off = 0ms so every duration-driven animation/transition becomes instant */
       --elb-dur:${animOn ? animMs : 0}ms;
       --elb-stagger:${animOn ? 45 : 0}ms;
