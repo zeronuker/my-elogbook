@@ -55,7 +55,7 @@ export const FTL_POPUPS = {
     para:  "CAGM 6008(III) LVO · PARA 4.4.6 & 4.6",
     title: "LVO / AUTOLAND CURRENCY",
     body:  `To maintain LVO currency, <strong style="color:#c8d6e5">recurrent checks are required as per CAD 6 para 4.11</strong> and may be combined with pilot proficiency checks. As a minimum, <span style="color:#4fc3f7">at least three LVO approaches should be conducted in an aircraft or FSTD</span> concurrent with the PPC checks (para 4.6).<br><br>The period of Category II/III certification is <span style="color:#4fc3f7">six months or up to the validity period of the PPC</span> (para 4.4.6).`,
-    note:  `Check the <span style="color:#4fc3f7">AUTOLAND checkbox</span> in the remarks window to mark sectors where a coupled autoland to touchdown was performed. The card shows what you have logged for reference. Currency itself depends on your recurrent check and PPC, which this app does not track.`,
+    note:  `Check the <span style="color:#4fc3f7">AUTOLAND checkbox</span> in the remarks window to mark sectors where a coupled autoland to touchdown was performed. The card shows what you have logged for reference. Currency depends on your recurrent check and PPC. This logbook does not track PPC.`,
   },
 };
 

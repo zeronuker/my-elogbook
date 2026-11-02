@@ -139,8 +139,9 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
     d ? d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase() : null;
 
   // ── Autoland Recency computation ──────────────────────────────────────────
+  const AUTOLAND_WINDOW_DAYS = 180;
   let lastAutolandDate = null;
-  const autolandDates = [];
+  const autolandEntries = [];
   Object.entries(data).forEach(([key, rows]) => {
     if (!Array.isArray(rows)) return;
     const parts = key.split("-");
@@ -155,7 +156,7 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
         const d = new Date(year, monthIdx, day);
         d.setHours(12, 0, 0, 0);
         if (d > today) return;
-        autolandDates.push(d);
+        autolandEntries.push({ d, airport: (row.arrival || "").trim().toUpperCase() });
         if (!lastAutolandDate || d > lastAutolandDate) {
           lastAutolandDate = d;
         }
@@ -163,15 +164,28 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
     });
   });
 
-  // Count autolands within last 6 months
+  // Autolands within last 6 months, newest first
   const cutoff6m = new Date(today);
-  cutoff6m.setDate(today.getDate() - 180);
+  cutoff6m.setDate(today.getDate() - AUTOLAND_WINDOW_DAYS);
   cutoff6m.setHours(0, 0, 0, 0);
-  const autoland6m = autolandDates.filter(d => d > cutoff6m).length;
+  const autolandsIn6m = autolandEntries.filter(e => e.d > cutoff6m).sort((a, b) => b.d - a.d);
+  const autoland6m = autolandsIn6m.length;
 
   const daysSinceAutoland = lastAutolandDate
     ? Math.floor((today - lastAutolandDate) / (1000 * 60 * 60 * 24))
     : null;
+
+  // The 6-month window runs out AUTOLAND_WINDOW_DAYS after the last autoland
+  const autolandDaysLeft = lastAutolandDate ? AUTOLAND_WINDOW_DAYS - daysSinceAutoland : null;
+  const autolandExpiry = lastAutolandDate ? new Date(lastAutolandDate) : null;
+  if (autolandExpiry) autolandExpiry.setDate(autolandExpiry.getDate() + AUTOLAND_WINDOW_DAYS);
+  const autolandCells = lastAutolandDate ? [
+    { label: "LAST AUTOLAND", value: daysSinceAutoland, unit: "DAYS AGO", color: "#4fc3f7" },
+    { label: "LOGGED · 6 MONTHS", value: autoland6m, unit: "AUTOLANDS", color: "#4fc3f7" },
+    autolandDaysLeft >= 0
+      ? { label: `EXPIRES · ${fmtRecencyDate(autolandExpiry)}`, value: autolandDaysLeft, unit: "DAYS LEFT", color: autolandDaysLeft <= 30 ? "#eab308" : "#4fc3f7" }
+      : { label: `EXPIRED · ${fmtRecencyDate(autolandExpiry)}`, value: "EXPIRED", unit: `${-autolandDaysLeft} DAYS AGO`, color: "#ef4444", small: true },
+  ] : [];
 
   // ── Render helper: FTL/Duty limit card ────────────────────────────────────
   const renderLimitCard = (l) => {
@@ -465,31 +479,39 @@ export default function LimitsRecencyTab({ data, settings, setActivePopup }) {
           </div>
         </div>
         {lastAutolandDate ? (
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12,
-          }}>
-            <div style={{
-              background: "var(--elb-bg3, #080b10)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))",
-              borderRadius: 3, padding: "12px 10px", textAlign: "center",
-            }}>
-              <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em", marginBottom: 6 }}>LAST AUTOLAND</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#4fc3f7", marginBottom: 3 }}>
-                {fmtRecencyDate(lastAutolandDate)}
-              </div>
-              <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.08em" }}>
-                {daysSinceAutoland} DAYS AGO
-              </div>
+          <>
+            <div className="elb-autoland-stats">
+              {autolandCells.map(c => (
+                <div key={c.label} style={{
+                  background: "var(--elb-bg3, #080b10)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))",
+                  borderRadius: 3, padding: "12px 10px", textAlign: "center", display: "grid", gap: 6, alignContent: "start",
+                }}>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em", display: "grid", alignItems: "center", minHeight: "2.6em" }}>{c.label}</div>
+                  <div style={{ fontSize: c.small ? 24 : 30, fontWeight: 700, lineHeight: 1, color: c.color, fontFamily: "'Courier New',monospace", padding: c.small ? "3px 0" : 0 }}>{c.value}</div>
+                  <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.08em" }}>{c.unit}</div>
+                </div>
+              ))}
             </div>
-            <div style={{
-              background: "var(--elb-bg3, #080b10)", border: "1px solid var(--cb-line, rgba(255,255,255,0.07))",
-              borderRadius: 3, padding: "12px 10px", textAlign: "center",
-            }}>
-              <div style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.1em", marginBottom: 6 }}>LOGGED · 6 MONTHS</div>
-              <div style={{ fontSize: 30, fontWeight: 700, lineHeight: 1, color: "#4fc3f7", fontFamily: "'Courier New',monospace", marginBottom: 3 }}>
-                {autoland6m}
-              </div>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, borderTop: "1px solid var(--cb-line, rgba(255,255,255,0.07))", marginTop: 12, paddingTop: 12 }}>
+              {autolandsIn6m.length ? (
+                <>
+                  <span style={{ fontSize: "var(--elb-hint-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.12em", marginRight: 4 }}>LOGGED</span>
+                  {autolandsIn6m.map((e, i) => (
+                    <span key={i} style={{
+                      display: "inline-flex", gap: 8, alignItems: "baseline", padding: "4px 9px", borderRadius: 2,
+                      border: "1px solid rgba(79,195,247,0.28)", background: "rgba(79,195,247,0.06)",
+                      fontSize: "var(--elb-desc-sz)", color: "#4fc3f7",
+                    }}>
+                      {fmtRecencyDate(e.d)}
+                      {e.airport && <b style={{ color: "#3FE0C5", letterSpacing: "0.06em" }}>{e.airport}</b>}
+                    </span>
+                  ))}
+                </>
+              ) : (
+                <span style={{ fontSize: "var(--elb-desc-sz)", color: "var(--elb-txt-muted, #4a6a8a)", letterSpacing: "0.06em" }}>NO AUTOLANDS IN THE LAST 6 MONTHS</span>
+              )}
             </div>
-          </div>
+          </>
         ) : (
           <div style={{
             background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.2)",

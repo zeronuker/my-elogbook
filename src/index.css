@@ -236,3 +236,9 @@ code {
 @media (max-width: 520px) {
   .elb-subtab { flex-direction: column; gap: 4px; font-size: 10px; letter-spacing: 0.04em; padding: 10px 4px; }
 }
+
+/* ── Compliance > Recency autoland card: three stat cells, one column on phones ── */
+.elb-autoland-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 560px) {
+  .elb-autoland-stats { grid-template-columns: 1fr; }
+}
