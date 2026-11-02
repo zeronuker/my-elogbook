@@ -99,7 +99,7 @@ const ScreenSignUp1 = memo(({ formData, updateFormData, passwordValidation, onSi
           <div className="onb-stitle">CREATE YOUR ACCOUNT</div>
           <div className="onb-ssub">Free forever. No credit card required.</div>
           {signupError && (
-            <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
+            <div className="elb-fade" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
               {signupError}
             </div>
           )}
@@ -276,7 +276,7 @@ const ScreenLogin = memo(({ onLogin, signupError, isLoading, onClearError, goTo,
           <div className="onb-stitle">WELCOME BACK</div>
           <div className="onb-ssub">Sign in to access your logbook from any device.</div>
           {signupError && (
-            <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
+            <div className="elb-fade" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
               {signupError}
             </div>
           )}
@@ -409,7 +409,7 @@ const ScreenForgotPassword = memo(({ onForgotPassword, goTo }) => {
             <>
               <div className="onb-ssub">Enter your account email and we'll send a reset link.</div>
               {fpState === 'error' && (
-                <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
+                <div className="elb-fade" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px 12px', borderRadius: '3px', fontSize: '11px', marginBottom: '14px' }}>
                   {fpError}
                 </div>
               )}

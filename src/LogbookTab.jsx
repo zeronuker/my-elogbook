@@ -384,7 +384,7 @@ export default function LogbookTab({
                     if (needsLongFlightWarning && firstAutoCalcVisible && col.key === firstAutoCalcVisible) {
                       skipAutoCalc = true;
                       cells.push(
-                        <td key="long-flight-warning" colSpan={autoCalcVisibleCount} style={{ ...tdStyle, background: "rgba(234,179,8,0.06)", borderLeft: "2px solid rgba(234,179,8,0.4)", textAlign: "center", color: "#eab308", fontSize: 11, letterSpacing: "0.05em", padding: "4px 10px", whiteSpace: "nowrap" }}>
+                        <td key="long-flight-warning" className="elb-fade" colSpan={autoCalcVisibleCount} style={{ ...tdStyle, background: "rgba(234,179,8,0.06)", borderLeft: "2px solid rgba(234,179,8,0.4)", textAlign: "center", color: "#eab308", fontSize: 11, letterSpacing: "0.05em", padding: "4px 10px", whiteSpace: "nowrap" }}>
                           ⚠ {toHHMM(rawFlightMins)} BLOCK TIME — IS THIS CORRECT?
                           <button
                             onClick={() => setConfirmedLongFlights(prev => new Set([...prev, row.id]))}

@@ -355,13 +355,13 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
         )}
 
         {periodWarning && (
-          <div style={{ fontSize: 11, color: "#eab308", letterSpacing: "0.04em", marginBottom: 14 }}>
+          <div className="elb-fade" style={{ fontSize: 11, color: "#eab308", letterSpacing: "0.04em", marginBottom: 14 }}>
             {periodWarning}
           </div>
         )}
 
         {periodTotals.length === 0 ? (
-          <div style={{ color: "#2a4a6a", fontSize: "var(--elb-desc-sz)", letterSpacing: "0.08em", padding: "16px 0" }}>
+          <div className="elb-fade" style={{ color: "#2a4a6a", fontSize: "var(--elb-desc-sz)", letterSpacing: "0.08em", padding: "16px 0" }}>
             No logbook entries{periodIncludeCF ? " or carry-forward hours" : ""} found in this period.
           </div>
         ) : (

@@ -592,7 +592,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
         </div>
       )}
       {deleteError && (
-        <div style={{
+        <div className="elb-fade" style={{
           marginTop: 10, padding: "8px 12px",
           background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.35)",
           borderRadius: 4, fontSize: "calc(11px * var(--fs))",
@@ -882,7 +882,7 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
             placeholder="e.g. 7K2Q-9XPL-4M1V"
           />
           {dlStatusText && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: dlStatusText.color }}>
+            <div className="elb-fade" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: dlStatusText.color }}>
               {dlStatus.state === "loading" && (
                 <span style={{ display: "inline-block", animation: "sm-spin 0.7s linear infinite", fontSize: 12, lineHeight: 1 }}>↻</span>
               )}

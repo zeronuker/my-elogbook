@@ -965,12 +965,12 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                   <label htmlFor="eim-import-file" className="eim-filebtn">Choose file</label>
                 </div>
               </div>
-              {file && <div className="eim-filename">{file.name}</div>}
+              {file && <div className="eim-filename elb-fade">{file.name}</div>}
 
               {importPreview && (
                 <>
-                  <div className="eim-sh"><h3 className="eim-sh-title">Preview</h3></div>
-                  <div className="eim-preview">
+                  <div className="eim-sh elb-fade"><h3 className="eim-sh-title">Preview</h3></div>
+                  <div className="eim-preview elb-fade">
                     {importPreview.errors.length > 0 && (
                       <div className="eim-errors">
                         <p className="eim-error-label">⚠ {importPreview.errors.length} errors:</p>
@@ -1044,7 +1044,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                   <label htmlFor="eim-backup-file" className="eim-filebtn">Choose file</label>
                 </div>
               </div>
-              {restoreFileName && <div className="eim-filename">{restoreFileName}</div>}
+              {restoreFileName && <div className="eim-filename elb-fade">{restoreFileName}</div>}
 
               {backupStatus?.error && <div className="eim-note error elb-fade">✗ {backupStatus.error}</div>}
               {backupStatus?.success && <div className="eim-note ok elb-fade">✓ Restored — reloading...</div>}

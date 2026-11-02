@@ -182,7 +182,7 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
         </div>
 
         {query.trim() && (
-          <div className="srch-meta">
+          <div className="srch-meta elb-fade">
             {results.length} result{results.length === 1 ? "" : "s"}
             {totalPages > 1 && <> · showing {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, results.length)}</>}
           </div>
@@ -190,10 +190,10 @@ export default function SearchModal({ open, onClose, monthData, dutyLogEntries, 
 
         <div className="srch-results" ref={listRef} onTouchStart={hideKeyboard}>
           {!query.trim() && (
-            <div className="srch-empty">Start typing to search every logged flight.</div>
+            <div className="srch-empty elb-fade">Start typing to search every logged flight.</div>
           )}
           {query.trim() !== "" && results.length === 0 && (
-            <div className="srch-empty">No flights match "{query.trim()}".</div>
+            <div className="srch-empty elb-fade">No flights match "{query.trim()}".</div>
           )}
           {results.slice(pageStart, pageStart + PAGE_SIZE).map((hit, n) => (
             <div

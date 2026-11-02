@@ -386,7 +386,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
                 )}
                 </div>
 
-                {error && <div className="fb-error">{error}</div>}
+                {error && <div className="fb-error elb-fade">{error}</div>}
               </div>
 
               {/* FOOTER */}
