@@ -1345,6 +1345,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     </>
   );
 
+  // Night-vision dimming: a black layer over everything. A CSS filter on the app root would
+  // re-anchor the position:fixed windows inside it (they'd centre on the page, not the screen).
+  const shown = previewSettings || settings;
+  const brightness = Number(shown.brightness);
+  const dimming = shown.theme === "dark" && brightness > 0 && brightness < 100 ? 1 - brightness / 100 : 0;
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
@@ -1354,9 +1360,6 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       overflowX: "hidden",
       fontFamily: "var(--elb-font, 'Courier New', Courier, monospace)",
       color: "var(--elb-txt, #c8d6e5)",
-      filter: ((previewSettings || settings).theme === "dark" && Number((previewSettings || settings).brightness) > 0 && Number((previewSettings || settings).brightness) < 100)
-        ? `brightness(${(previewSettings || settings).brightness}%)`
-        : undefined,
     }}>
       <style>{`
         @keyframes spin      { from { transform: rotate(0deg);   } to { transform: rotate(360deg); } }
@@ -2027,6 +2030,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         <span className="elb-footer-active-period">{MONTHS[selectedMonth].toUpperCase()} {selectedYear} ACTIVE</span>
       </div>
     </div>
+    {dimming > 0 && <div style={{ position: "fixed", inset: 0, background: "#000", opacity: dimming, pointerEvents: "none", zIndex: 6000 }} />}
     </>
   );
 }

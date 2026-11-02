@@ -640,7 +640,7 @@ function AppearanceTab({ d, upd }) {
             hint={`Filter applied to the entire app for night-vision adaptation. Currently ${brightness}%.`}
           >
             <SmSlider
-              min={60} max={100} step={5}
+              min={60} max={100} step={1}
               value={brightness}
               onChange={(v) => upd({ brightness: v })}
               ticks={["60", "70", "80", "90", "100"]}
