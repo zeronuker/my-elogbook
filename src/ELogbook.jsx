@@ -1348,7 +1348,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-    <div className="elb-app-root" style={{
+    <div className="elb-app-root elb-fade" style={{
       background: "var(--elb-bg, #0a0d12)",
       minHeight: "100vh",
       overflowX: "hidden",
