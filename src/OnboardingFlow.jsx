@@ -397,13 +397,13 @@ const ScreenForgotPassword = memo(({ onForgotPassword, goTo }) => {
           <div className="onb-stitle">RESET PASSWORD</div>
           {fpState === 'sent' ? (
             <>
-              <div className="onb-ssub">Reset link sent. Check your inbox (and spam folder).</div>
-              <div className="onb-email-box" style={{ marginTop: 16 }}>
+              <div className="onb-ssub elb-fade">Reset link sent. Check your inbox (and spam folder).</div>
+              <div className="onb-email-box elb-fade" style={{ marginTop: 16 }}>
                 <div className="onb-email-icon"><EnvelopeIcon size={40} /></div>
                 <div className="onb-email-addr">{fpEmail}</div>
                 <div className="onb-email-desc">Click the link in the email to set a new password. The link expires in 1 hour.</div>
               </div>
-              <button className="onb-btn onb-btn-p" style={{ marginTop: 20 }} onClick={() => goTo('login')}>BACK TO LOGIN →</button>
+              <button className="onb-btn onb-btn-p elb-fade" style={{ marginTop: 20 }} onClick={() => goTo('login')}>BACK TO LOGIN →</button>
             </>
           ) : (
             <>

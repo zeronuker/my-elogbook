@@ -450,7 +450,7 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
       {!confirmDelete ? (
         <button
           type="button"
-          className="sm-delete-trigger"
+          className="sm-delete-trigger elb-fade"
           onClick={() => { setConfirmDelete(true); setDeleteError(null); setNeedsPassword(false); setNeedsGoogleReauth(false); setPassword(''); }}
         >
           <span className="sm-delete-trigger-label">Delete account &amp; all data</span>
