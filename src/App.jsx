@@ -70,6 +70,7 @@ function App() {
   const [showAccountDeleted, setShowAccountDeleted] = useState(false)
   const accountDeletedRef = useRef(false) // set just before the deleteUser() that removes the account
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
+  const loadingExit = useExitAnim(showLoadingOverlay)
   const prevUserRef = useRef(null)
   const onboardingDoneRef = useRef(false)
   const prevIsSigningUpRef = useRef(false)
@@ -706,7 +707,7 @@ function App() {
           update={update}
           updateReady={updateReady}
         />
-        {showLoadingOverlay && <LoadingOverlay />}
+        {loadingExit.mounted && <LoadingOverlay closing={loadingExit.closing} />}
       </>
     )
   }
@@ -738,7 +739,7 @@ function App() {
         update={update}
         updateReady={updateReady}
       />
-      {showLoadingOverlay && <LoadingOverlay />}
+      {loadingExit.mounted && <LoadingOverlay closing={loadingExit.closing} />}
     </>
   )
 }

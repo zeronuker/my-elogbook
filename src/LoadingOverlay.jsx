@@ -1,8 +1,9 @@
-function LoadingOverlay() {
+function LoadingOverlay({ closing }) {
   const message = 'Setting up your logbook...'
 
   return (
     <div
+      className={'elb-fade' + (closing ? ' elb-closing' : '')}
       style={{
         position: 'fixed',
         top: 0,
