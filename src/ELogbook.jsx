@@ -1398,7 +1398,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         .elb-pageheader-period { display: flex; }
         .elb-merged-phone { display: none; }
         .elb-chiprow-phone { display: none; }
-        @media (max-width: 640px) {
+        @media (max-width: 639px) {
           .elb-topbar-caam { display: none; }
           .elb-topbar-username { max-width: min(100%, 180px); }
           .elb-pageheader-right { gap: 6px !important; }
@@ -1411,11 +1411,13 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
              or the header row wraps and the toolbar drops below the title (561–640px) */
           .elb-chiprow-flash { contain: inline-size; }
           .elb-merged-phone button, .elb-iconrow-desktop button { padding: 4px 5px !important; }
-          .elb-title-col { display: flex; flex-direction: column; gap: 10px; }
+          /* Header grid: title on row 1; picker left + icons right on row 2; sync/offline chips right below */
+          .elb-pageheader-top { display: grid !important; grid-template-columns: auto 1fr; align-items: center !important; }
+          .elb-title-col { display: contents; }
+          .elb-pageheader-right { display: contents !important; }
+          .elb-title-col > :first-child, .elb-chiprow-phone { grid-column: 1 / -1; }
           .elb-title-text { font-size: clamp(28px, 9vw, 40px) !important; }
-          /* Fit narrow phones (360px): icon column wraps under the title, top bar user chip shrinks */
-          .elb-pageheader-top { flex-wrap: wrap; }
-          .elb-pageheader-right { min-width: 0; margin-left: auto; }
+          /* Fit narrow phones (360px): top bar user chip shrinks */
           .elb-iconrow-desktop { flex-wrap: wrap; justify-content: flex-end; }
           .elb-topbar-right { flex: 1 1 0; min-width: 0; justify-content: flex-end; padding-right: 12px !important; }
           .elb-topbar-usertext { flex: 0 1 auto; }
@@ -1426,10 +1428,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           .elb-app-main { flex: 1; min-height: 0; }
           .elb-footer-active-period { display: none; }
         }
-        /* Narrow phones: stack the icon row under the month/year picker, left-aligned with it */
-        @media (max-width: 560px) {
-          .elb-pageheader-top { flex-direction: column; align-items: flex-start; }
-          .elb-pageheader-right { margin-left: 0; align-items: flex-start !important; }
+        /* Narrow phones: picker + icons don't fit one row, so the icon row (and chips) drop under the picker, left-aligned */
+        @media (max-width: 490px) {
+          .elb-iconrow-desktop { grid-column: 1 / -1; }
           .elb-iconrow-desktop, .elb-chiprow-phone { justify-content: flex-start !important; }
         }
         /* Narrow phones: the 3 main tabs share the row in equal thirds, icon above a small label */
