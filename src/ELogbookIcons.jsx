@@ -16,6 +16,8 @@ import { useState, useEffect } from "react";
 export function ToolbarSyncChip({ icon, compact, full, state, flash, identityColor, onActivate, index = 0 }) {
   const [expanded, setExpanded] = useState(false);
   const [flashReady, setFlashReady] = useState(false);
+  const [shown, setShown] = useState(false); // fades the chip in when it mounts (e.g. coming back online)
+  useEffect(() => { setShown(true); }, []);
   const showFlash = flash && flashReady; // `flash &&` so the chip drops back in the same render the parent's flash ends
   useEffect(() => {
     if (!flash) { setFlashReady(false); return; }
@@ -30,7 +32,8 @@ export function ToolbarSyncChip({ icon, compact, full, state, flash, identityCol
       style={{
         display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
         background: "none", border: "none", padding: "4px 2px", fontFamily: "inherit", cursor: "pointer",
-        transition: "color 0.2s ease, font-size 0.2s ease",
+        transition: "color 0.2s ease, font-size 0.2s ease, opacity var(--elb-dur, 200ms) ease",
+        opacity: shown ? 1 : 0,
         color: showFlash ? flashColor : quietColor,
         fontWeight: showFlash ? 700 : 400,
         fontStyle: showFlash || state === "bad" ? "normal" : "italic",

@@ -346,7 +346,7 @@ export default function LogbookTab({
                         color: "#e8ecf5", fontSize: 14,
                       }}>{rowIdx + 1}</span>
                       {dutyLogMatch?.uncertain && (
-                        <span style={{
+                        <span className="elb-fade" style={{
                           position: "absolute", top: -4, right: -4, width: 8, height: 8, borderRadius: "50%",
                           background: "#eab308", border: "1.5px solid var(--elb-bg, #0a0d12)",
                         }} />
