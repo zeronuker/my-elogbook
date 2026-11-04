@@ -16,7 +16,7 @@ const PALETTE = [
   "#2DD4BF", "#FB7185", "#60A5FA", "#FBBF24", "#C084FC", "#A3E635", "#FB923C",
   "#22D3EE", "#F472B6", "#FDE047", "#818CF8", "#4ADE80", "#EF4444", "#CBD5E1",
 ];
-const BAR_H = 20;     // chip height, px
+const BAR_H = 17;     // chip height, px
 const HEADER_H = 14;  // day-number row, px — fixed so a bar crossing into the next box stays level
 
 function useIsNarrow() {
@@ -154,7 +154,7 @@ export default function CalendarView({ data, settings, selectedMonth, selectedYe
         key={day}
         onClick={narrow && lines.length ? () => setPicked({ key: monthKey, day: isPicked ? null : day }) : undefined}
         style={{
-          minHeight: narrow ? 44 : 110, padding: narrow ? 4 : "5px 0", boxSizing: "border-box",
+          minHeight: narrow ? 44 : 110, padding: narrow ? 4 : "2px 0 5px", boxSizing: "border-box",
           background: isToday || isPicked ? "color-mix(in srgb, #3FE0C5 10%, var(--elb-bg2, #0d1520))" : "var(--elb-bg2, #0d1520)",
           boxShadow: isToday ? "inset 0 0 0 2px #3FE0C5" : "none",
           borderRadius: isToday ? 3 : 0,
@@ -175,7 +175,7 @@ export default function CalendarView({ data, settings, selectedMonth, selectedYe
         ) : (
           <>
             {/* always rendered, fixed height, so every box in a week has its chip row at the same level */}
-            <div style={{ position: "relative", height: BAR_H, flexShrink: 0 }}>
+            <div style={{ position: "relative", height: BAR_H, flexShrink: 0, marginTop: 3 }}>
               {(barsByDay[day] || []).map(bar)}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "0 5px", marginTop: 2 }}>
