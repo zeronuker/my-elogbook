@@ -1,4 +1,7 @@
+import { useScrollLock } from "./useScrollLock";
+
 function LoadingOverlay({ closing }) {
+  useScrollLock(true);
   const message = 'Setting up your logbook...'
 
   return (
