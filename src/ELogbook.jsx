@@ -1664,7 +1664,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             })}
           </div>
         )}
-        {activeTab === "logbook" && logbookView === "calendar" && (
+        {/* Keyed by the view, so switching LIST / CALENDAR fades the new one in. */}
+        {activeTab === "logbook" && <div key={logbookView} className="elb-fade">
+        {logbookView === "calendar" && (
           <CalendarView
             data={data}
             settings={settings}
@@ -1673,7 +1675,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             onSelectSector={handleCalendarSelect}
           />
         )}
-        {activeTab === "logbook" && logbookView === "list" && (
+        {logbookView === "list" && (
           <LogbookTab
             data={data}
             settings={settings}
@@ -1694,6 +1696,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             findDutyLogMatch={findDutyLogMatch}
           />
         )}
+        </div>}
 
         {/* ── SUMMARY TAB ── */}
         {activeTab === "summary" && (

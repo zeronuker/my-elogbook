@@ -202,7 +202,7 @@ export default function CalendarView({ data, settings, selectedMonth, selectedYe
 
       {/* Phone: sectors of the tapped day */}
       {narrow && pickedDay && (
-        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+        <div key={pickedDay} className="elb-fade" style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
           <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #3a6a8a)", letterSpacing: "0.1em" }}>
             {String(pickedDay).padStart(2, "0")} {MONTHS[selectedMonth].toUpperCase()}
             {totalByDay[pickedDay] > 0 && ` · ${toHHMM(totalByDay[pickedDay])}`}

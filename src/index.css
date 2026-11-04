@@ -254,6 +254,13 @@ html[data-kb] .srch-modal {
   max-height: calc(var(--kb-h) - 24px);
   transition: top 0.15s ease;
 }
+/* Full height spelled out (not inset: 0) so the move into the visible area can glide. */
+.fb-backdrop,
+.onb-container {
+  height: 100%;
+  box-sizing: border-box;
+  transition: top 0.15s ease, height 0.15s ease;
+}
 html[data-kb] .fb-backdrop,
 html[data-kb] .onb-container {
   top: var(--kb-top);
