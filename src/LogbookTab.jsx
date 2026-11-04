@@ -534,6 +534,9 @@ export default function LogbookTab({
                         {isEditing ? (
                           <input
                             autoFocus
+                            // size={1} + min-width 0: iPad Safari sizes the column from the input's default
+                            // width (about 20 characters) in an auto-layout table, so the cell would balloon.
+                            size={1}
                             defaultValue={row[col.key]}
                             inputMode={isNumericEntry ? "numeric" : undefined}
                             onChange={isTime ? (e => {
@@ -565,7 +568,7 @@ export default function LogbookTab({
                               if (e.key === "Escape") setEditingCell(null);
                             }}
                             style={{
-                              width: "100%", background: "var(--cb-surface-2, #1b2340)", border: "none",
+                              width: "100%", minWidth: 0, maxWidth: "100%", background: "var(--cb-surface-2, #1b2340)", border: "none",
                               borderBottom: "1px solid var(--cb-accent, #4fc3f7)", color: "var(--cb-ink, #e8ecf5)",
                               fontFamily: "var(--elb-font, 'Courier New', monospace)", fontSize: 13,
                               padding: "6px 8px", outline: "none", boxSizing: "border-box",
