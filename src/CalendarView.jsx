@@ -200,12 +200,6 @@ export default function CalendarView({ data, settings, selectedMonth, selectedYe
         {cells}
       </div>
 
-      {!narrow && (
-        <div style={{ marginTop: 8, fontSize: 11, color: "var(--elb-txt-muted, #3a6a8a)" }}>
-          Each chip row is 24 h UTC: left edge 00:00, right edge 24:00. Top right = hours of the sectors that land that day.
-        </div>
-      )}
-
       {/* Phone: sectors of the tapped day */}
       {narrow && pickedDay && (
         <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
