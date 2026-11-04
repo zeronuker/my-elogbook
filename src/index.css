@@ -242,3 +242,23 @@ code {
 @media (max-width: 560px) {
   .elb-autoland-stats { grid-template-columns: 1fr; }
 }
+
+/* ── On-screen keyboard up ────────────────────────────────────────────────────
+   keyboardArea.js sets html[data-kb] and --kb-top / --kb-h / --kb-mid (the area left visible above
+   the keyboard) only while a keyboard is open. Every window with a text field sits in the middle
+   of that area and scrolls inside if it is taller. Nothing here applies without a keyboard. */
+html[data-kb] .sm-modal,
+html[data-kb] .srch-modal {
+  top: var(--kb-mid);
+  transform: translate(-50%, -50%);
+  max-height: calc(var(--kb-h) - 24px);
+  transition: top 0.15s ease;
+}
+html[data-kb] .fb-backdrop,
+html[data-kb] .onb-container {
+  top: var(--kb-top);
+  bottom: auto;
+  height: var(--kb-h);
+  box-sizing: border-box; /* their padding must fit inside the visible height */
+}
+html[data-kb] .fb-modal { max-height: calc(var(--kb-h) - 40px); }
