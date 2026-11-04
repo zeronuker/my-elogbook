@@ -880,6 +880,13 @@ const SECTIONS = [
       <div className="htg-content">
         <p>The Logbook tab shows all flight sectors for the selected month. Each row is one sector. Tap any cell to start editing.</p>
         <LogbookTableMockup />
+        <h4>List and Calendar views</h4>
+        <ul>
+          <li>Use the <strong>LIST | CALENDAR</strong> switch above the table. The list is where you enter and edit sectors.</li>
+          <li>The calendar is view only: each day shows its sectors as colour-coded chips on a 24 h UTC timeline, with the route listed below. A sector that lands the next day runs across both days.</li>
+          <li>The total hours at the top right of a day are for the sectors that land that day.</li>
+          <li>Tap a chip or route to jump to that sector in the list. The week can start on Monday or Sunday in Settings → Preferences.</li>
+        </ul>
         <h4>Adding a flight</h4>
         <ul>
           <li>Navigate to the correct month using the period selector (top right)</li>

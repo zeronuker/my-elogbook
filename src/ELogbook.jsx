@@ -39,6 +39,7 @@ const CONTENT_ORDER = [...MONTH_KEYS.map(k => `logbook:${k}`), ...TAB_IDS.filter
 const closingCls = (exit) => (exit.closing ? " elb-closing" : "");
 import FlightSummaryTab from "./FlightSummaryTab";
 import LogbookTab from "./LogbookTab";
+import CalendarView from "./CalendarView";
 import LimitsRecencyTab from "./LimitsRecencyTab";
 
 // Single source of truth: the app's displayed version is always the newest
@@ -87,6 +88,14 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [searchOpen, setSearchOpen] = useState(false);
   const [pulseRowId, setPulseRowId] = useState(null); // briefly highlights a row after a search jump
   const [newRowId, setNewRowId] = useState(null); // row just added via "+ add sector" — plays its enter animation
+  // Logbook tab: row list (default, the place to enter data) or the view-only month calendar. Remembered per device.
+  const [logbookView, setLogbookView] = useState(() => {
+    try { return localStorage.getItem("elb_logbook_view") === "calendar" ? "calendar" : "list"; } catch { return "list"; }
+  });
+  const changeLogbookView = (v) => {
+    setLogbookView(v);
+    try { localStorage.setItem("elb_logbook_view", v); } catch { /* storage unavailable — view just isn't remembered */ }
+  };
   const pulseTimerRef = useRef(null);
   const jumpTimersRef = useRef([]); // pending steps of a search jump (tab → year + month → pulse)
   const [routeMapOpen, setRouteMapOpen] = useState(false);
@@ -1099,6 +1108,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
     jumpTimersRef.current = steps.map((fn, i) => setTimeout(fn, (animOn ? 250 : 0) + i * gap));
   };
 
+  // Tapping a sector in the calendar: back to the list view, then the same jump + pulse as a search result.
+  const handleCalendarSelect = (row, monthIdx = selectedMonth, year = selectedYear) => {
+    changeLogbookView("list");
+    handleSearchJump({ year, monthIdx, row });
+  };
+
   const settingsButtonTitle = update.needRefresh ? "Settings · update available" : "Settings";
 
 
@@ -1629,6 +1644,36 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
         {/* ── LOGBOOK TAB ── */}
         {activeTab === "logbook" && (
+          <div className="elb-viewtoggle" style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+            {[{ id: "list", label: "LIST" }, { id: "calendar", label: "CALENDAR" }].map(v => {
+              const on = logbookView === v.id;
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => changeLogbookView(v.id)}
+                  aria-pressed={on}
+                  style={{
+                    fontFamily: "inherit", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em",
+                    padding: "5px 12px", cursor: "pointer", borderRadius: 3,
+                    color: on ? "#3FE0C5" : "var(--elb-txt-muted, #3a6a8a)",
+                    background: on ? "rgba(63,224,197,0.10)" : "transparent",
+                    border: `1px solid ${on ? "rgba(63,224,197,0.45)" : "var(--elb-border2, #1a3050)"}`,
+                  }}
+                >{v.label}</button>
+              );
+            })}
+          </div>
+        )}
+        {activeTab === "logbook" && logbookView === "calendar" && (
+          <CalendarView
+            data={data}
+            settings={settings}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            onSelectSector={handleCalendarSelect}
+          />
+        )}
+        {activeTab === "logbook" && logbookView === "list" && (
           <LogbookTab
             data={data}
             settings={settings}

@@ -74,6 +74,7 @@ export const DEFAULT_SETTINGS = {
   // Preferences
   dateFormat: "D",
   rowsPerPage: 15,
+  weekStart: "monday",
   dayNightMethod: "fixed",
   useStandardFormula: true,
   preFlightBuffer: 75,
@@ -127,7 +128,8 @@ const TAB_DEFAULTS = {
   preferences: {
     dateFormat: "D",
     rowsPerPage: 15,
-      dayNightMethod: "fixed",
+    weekStart: "monday",
+    dayNightMethod: "fixed",
     useStandardFormula: true,
     preFlightBuffer: 75,
     postFlightBuffer: 15,
@@ -822,6 +824,17 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
           options={["10", "15", "20", "30", "50"]}
           labels={["10 rows", "15 rows (default)", "20 rows", "30 rows", "50 rows"]}
           onChange={(v) => upd({ rowsPerPage: Number(v) })}
+        />
+      </SmField>
+
+      <SmField label="Calendar week starts on" hint="First day of the week in the Logbook calendar view">
+        <SmSegmented
+          value={d.weekStart || "monday"}
+          onChange={(v) => upd({ weekStart: v })}
+          options={[
+            { value: "monday", label: "Monday" },
+            { value: "sunday", label: "Sunday" },
+          ]}
         />
       </SmField>
 
