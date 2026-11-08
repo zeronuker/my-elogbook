@@ -106,3 +106,5 @@
 @media (prefers-reduced-motion: reduce) {
   .mv *, .mv *::before, .mv *::after { animation-duration: 0.01ms !important; }
 }
+
+.mv-fit svg { vertical-align: middle; }

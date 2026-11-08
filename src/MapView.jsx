@@ -191,7 +191,7 @@ function layoutLabels(E) {
       const y0 = sn > 0.3 ? cy : sn < -0.3 ? cy - th : cy - th / 2;
       const x1 = x0 + tw, y1 = y0 + th;
       if (x0 < 4 || y0 < 4 || x1 > w - 4 || y1 > h - 4) continue;
-      if (x1 > w - 56 && y0 < 112) continue;                                      // zoom buttons
+      if (x1 > w - 56 && y0 < 150) continue;                                      // zoom and fit buttons
       if (rects.some(q => x0 < q[2] + 2 && x1 > q[0] - 2 && y0 < q[3] + 2 && y1 > q[1] - 2)) continue;
       if (dots.some(d => d[0] > x0 - 5 && d[0] < x1 + 5 && d[1] > y0 - 5 && d[1] < y1 + 5)) continue;
       if (near.some(s => segHit(s[0], s[1], s[2], s[3], x0 - 2, y0 - 2, x1 + 2, y1 + 2))) continue;
@@ -341,9 +341,9 @@ function frame(E, now) {
     camTo(E, T.u0 + (T.u - T.u0) * e, T.v0 + (T.v - T.v0) * e, T.z0 + (T.z - T.z0) * e);
     if (u >= 1) E.tween = null;
   } else followCam(E, now);
-  if (E.camMoved && now - E.lastLayout > 250) E.labelDirty = true;
+  if (E.camMoved && now - E.lastLayout > 600) E.labelDirty = true;
   draw(E, now);
-  if (!E.camMoved && E.camBusy) { E.camBusy = false; E.map._moveEnd(true); }
+  if (!E.camMoved && E.camBusy) { E.camBusy = false; E.map.fire("viewreset"); E.map._moveEnd(true); }   // viewreset: tiles settle on the final view and stale ones go
   E.inFrame = false;
   const ramping = E.animate && now - E.rampT0 < 600;
   if (E.pl || E.flyers.length || E.tween || E.camMoved || ramping || E.labelDirty) request(E);
@@ -429,6 +429,26 @@ export default function MapView({ data, year, monthIdx, theme, followStyle = "cr
     }).setView([20, 0], 2);
     createBasePanes(map);
     L.control.zoom({ position: "topright" }).addTo(map);
+    // fit all routes: a button under the zoom buttons
+    const Fit = L.Control.extend({
+      onAdd() {
+        const bar = L.DomUtil.create("div", "leaflet-bar leaflet-control");
+        const a = L.DomUtil.create("a", "mv-fit", bar);
+        a.href = "#";
+        a.title = "Fit all routes";
+        a.setAttribute("role", "button");
+        a.setAttribute("aria-label", "Fit all routes");
+        a.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9"/></svg>';
+        L.DomEvent.disableClickPropagation(bar);
+        L.DomEvent.on(a, "click", ev => {
+          L.DomEvent.preventDefault(ev);
+          E.idleUntil = performance.now() + HOLD_MS;
+          flyTo(E, fitView(E), E.animate);
+        });
+        return bar;
+      },
+    });
+    new Fit({ position: "topright" }).addTo(map);
     E.map = map;
     E.canvas = canvasEl.current;
     E.ctx = E.canvas.getContext("2d");
@@ -485,7 +505,8 @@ export default function MapView({ data, year, monthIdx, theme, followStyle = "cr
     return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
   }, []);
   const baseKey = online ? defaultBasemap(isLight) : "vector";
-  useEffect(() => mountBasemap(R.current.map, baseKey, colors), [baseKey, colors]);
+  // updateWhenZooming: false keeps the tile level steady while follow zooms, so tiles are not thrown away mid-flight
+  useEffect(() => mountBasemap(R.current.map, baseKey, colors, { updateWhenZooming: false }), [baseKey, colors]);
 
   // A new period: stop, clear what was in the air, fade the routes in and fly the camera to fit them.
   useEffect(() => {

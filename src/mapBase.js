@@ -103,7 +103,7 @@ export function createBasePanes(map) {
 // Puts the chosen basemap on the map and returns a function that takes it off again.
 // Tile providers require visible attribution per their terms; the vector
 // outline uses bundled public-domain data (Natural Earth) so it needs none.
-export function mountBasemap(map, key, mapColors) {
+export function mountBasemap(map, key, mapColors, tileOptions = {}) {
   const cfg = BASEMAPS[key];
   let layer = null, attribution = null, cancelled = false;
   const addAttribution = () => {
@@ -125,7 +125,7 @@ export function mountBasemap(map, key, mapColors) {
       addAttribution();
     });
   } else {
-    layer = L.tileLayer(cfg.url, { pane: "basePane", subdomains: cfg.subdomains || "abc", maxZoom: cfg.maxZoom }).addTo(map);
+    layer = L.tileLayer(cfg.url, { pane: "basePane", subdomains: cfg.subdomains || "abc", maxZoom: cfg.maxZoom, ...tileOptions }).addTo(map);
     addAttribution();
   }
   return () => {
