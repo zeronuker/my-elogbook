@@ -40,6 +40,7 @@ const closingCls = (exit) => (exit.closing ? " elb-closing" : "");
 import FlightSummaryTab from "./FlightSummaryTab";
 import LogbookTab from "./LogbookTab";
 import CalendarView from "./CalendarView";
+import MapView from "./MapView";
 import LimitsRecencyTab from "./LimitsRecencyTab";
 
 // Single source of truth: the app's displayed version is always the newest
@@ -88,9 +89,9 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [searchOpen, setSearchOpen] = useState(false);
   const [pulseRowId, setPulseRowId] = useState(null); // briefly highlights a row after a search jump
   const [newRowId, setNewRowId] = useState(null); // row just added via "+ add sector" — plays its enter animation
-  // Logbook tab: row list (default, the place to enter data) or the view-only month calendar. Remembered per device.
+  // Logbook tab: row list (default, the place to enter data), the view-only month calendar, or the map of where you flew. Remembered per device.
   const [logbookView, setLogbookView] = useState(() => {
-    try { return localStorage.getItem("elb_logbook_view") === "calendar" ? "calendar" : "list"; } catch { return "list"; }
+    try { const v = localStorage.getItem("elb_logbook_view"); return v === "calendar" || v === "map" ? v : "list"; } catch { return "list"; }
   });
   const changeLogbookView = (v) => {
     setLogbookView(v);
@@ -1644,7 +1645,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         {/* ── LOGBOOK TAB ── */}
         {activeTab === "logbook" && (
           <div className="elb-viewtoggle" style={{ display: "flex", gap: 4, marginBottom: 12 }}>
-            {[{ id: "list", label: "LIST" }, { id: "calendar", label: "CALENDAR" }].map(v => {
+            {[{ id: "list", label: "LIST" }, { id: "calendar", label: "CALENDAR" }, { id: "map", label: "MAP" }].map(v => {
               const on = logbookView === v.id;
               return (
                 <button
@@ -1672,6 +1673,17 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
             onSelectSector={handleCalendarSelect}
+          />
+        )}
+        {logbookView === "map" && (
+          <MapView
+            data={data}
+            year={selectedYear}
+            monthIdx={selectedMonth}
+            theme={(previewSettings || settings).theme}
+            followStyle={(previewSettings || settings).mapFollow}
+            animate={settings.animEnabled !== false}
+            onOpenSector={handleCalendarSelect}
           />
         )}
         {logbookView === "list" && (

@@ -75,6 +75,7 @@ export const DEFAULT_SETTINGS = {
   dateFormat: "D",
   rowsPerPage: 15,
   weekStart: "monday",
+  mapFollow: "cruise",
   dayNightMethod: "fixed",
   useStandardFormula: true,
   preFlightBuffer: 75,
@@ -129,6 +130,7 @@ const TAB_DEFAULTS = {
     dateFormat: "D",
     rowsPerPage: 15,
     weekStart: "monday",
+    mapFollow: "cruise",
     dayNightMethod: "fixed",
     useStandardFormula: true,
     preFlightBuffer: 75,
@@ -837,6 +839,24 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
           ]}
         />
       </SmField>
+
+      <SmSectionHead title="Map view" />
+
+      <SmField label="Follow the aircraft" hint="How the camera moves when you turn on Follow in the Logbook map view">
+        <SmSelect
+          value={d.mapFollow || "cruise"}
+          options={["cruise", "frame", "zoom", "pan"]}
+          labels={["Cruise (default)", "Frame", "Close", "Pan"]}
+          onChange={(v) => upd({ mapFollow: v })}
+        />
+      </SmField>
+
+      <SmHint>
+        <b>Cruise</b> · Close on the aircraft at take-off, pulls back en route, closes in again on approach.<br />
+        <b>Frame</b> · Fits each whole sector in view.<br />
+        <b>Close</b> · Stays zoomed in on the aircraft.<br />
+        <b>Pan</b> · Follows the aircraft at whatever zoom you set.
+      </SmHint>
 
       <SmSectionHead title="Day / Night calculation" />
 

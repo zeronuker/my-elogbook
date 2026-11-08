@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { feature } from "topojson-client";
-import landTopology from "world-atlas/land-110m.json";
 import { getCoords } from "./airportCoords";
 import { parseHHMM } from "./logbookCalculations";
 import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
 import { useScrollLock } from "./useScrollLock";
 import ChamferFrame from "@brand/ChamferFrame";
+import { MAP_COLORS, ROUTE_COLOR_ARR, BASEMAPS, defaultBasemap as pickBasemap, createBasePanes, mountBasemap, lerpColor } from "./mapBase";
+import { greatCirclePoints } from "./routeMapScene";
 
 // Modal chrome follows the app theme variables (dark fallbacks match the old values).
 const THEME = {
@@ -22,97 +22,6 @@ const THEME = {
 const MINT = "#3FE0C5";
 const MINT_LIGHT = "#0b8a78";  // readable on white
 const FONT_DISPLAY = "'Tourney', system-ui, sans-serif";
-
-// Map-area colors the CSS variables can't reach (vector basemap, canvas, markers).
-const MAP_COLORS = {
-  dark:  { ocean: "#060a10", landFill: "#16263b", landStroke: "#2a4a6a", dotRing: "#3FE0C5" },
-  light: { ocean: "#d6dde3", landFill: "#f3f4f6", landStroke: "#b9c3cf", dotRing: "#0b6b5d" },
-};
-const ROUTE_COLOR_DEP = [236, 72, 153];  // #ec4899 magenta — departure end
-const ROUTE_COLOR_ARR = { dark: [250, 204, 21], light: [245, 158, 11] };  // yellow / amber (yellow washes out on light maps)
-
-const BASEMAPS = {
-  carto:  { label: "CARTO DARK", type: "tile",
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_3i3x_1_c753f0b8edbf6bd3a0226da6",
-    subdomains: "abcd", maxZoom: 19, attribution: "© OpenStreetMap, © CARTO" },
-  cartoLight: { label: "CARTO LIGHT", type: "tile",
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_3i3x_1_c753f0b8edbf6bd3a0226da6",
-    subdomains: "abcd", maxZoom: 19, attribution: "© OpenStreetMap, © CARTO" },
-  cartoVector: { label: "CARTO VECTOR", type: "maplibre",
-    styleUrl: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
-    attribution: "© OpenStreetMap, © CARTO" },
-  stadia: { label: "STADIA DARK", type: "tile",
-    url: "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
-    maxZoom: 20, attribution: "© Stadia Maps, © OpenMapTiles, © OpenStreetMap" },
-  esri:   { label: "SATELLITE (ESRI)", type: "tile",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    maxZoom: 19, attribution: "© Esri" },
-  vector: { label: "VECTOR (NO WATERMARK)", type: "vector" },
-};
-
-// MapLibre (needed only for the CARTO Vector basemap) adds ~900KB to the
-// bundle, so it's loaded on demand instead of bundled into the main chunk.
-let maplibreGLPromise = null;
-function loadMaplibreGL() {
-  if (!maplibreGLPromise) {
-    maplibreGLPromise = Promise.all([
-      import("maplibre-gl"),
-      import("maplibre-gl/dist/maplibre-gl.css"),
-      import("@maplibre/maplibre-gl-leaflet"),
-    ]).then(([{ setWorkerUrl }, , { maplibreGL }]) => {
-      // Vite's dev-server transform injects an HMR-client import into every
-      // module it serves, including maplibre-gl's own worker bundle — which
-      // throws inside a Worker's global scope (no `document`). Point at a
-      // plain static copy of the same file (see vite.config.js) so it's
-      // served untouched instead.
-      setWorkerUrl("/maplibre-gl-worker.mjs");
-      return maplibreGL;
-    });
-  }
-  return maplibreGLPromise;
-}
-
-// Leaflet draws straight pixel lines between consecutive ring points — it
-// doesn't know a ring crosses the antimeridian. Natural Earth's land-110m
-// has a few rings that do (Russia's Chukotka peninsula, Antarctica's wrap),
-// which otherwise render as a long straight band cutting across the map.
-// Unwrapping keeps each ring's longitudes continuous (e.g. 179 -> 181
-// instead of 179 -> -179) so Leaflet draws the true shape instead of a cut.
-function unwrapAntimeridian(geojson) {
-  const unwrapRing = ring => {
-    let prevLon = ring[0][0];
-    const unwrapped = ring.map(([lon, lat], i) => {
-      if (i === 0) return [lon, lat];
-      let d = lon - prevLon;
-      while (d > 180) d -= 360;
-      while (d < -180) d += 360;
-      prevLon += d;
-      return [prevLon, lat];
-    });
-    // A single crossing shifts the *rest* of the ring by a full 360°, even
-    // though the ring as a whole doesn't need it (e.g. Eurasia's coastline
-    // touches the antimeridian once near Siberia, then the unwrap carries
-    // that -360 offset through the rest of Europe/Asia). Re-center the whole
-    // ring back onto its natural range so it lands where it actually is.
-    const avgLon = unwrapped.reduce((s, p) => s + p[0], 0) / unwrapped.length;
-    const shift = Math.round(avgLon / 360) * 360;
-    return shift ? unwrapped.map(([lon, lat]) => [lon - shift, lat]) : unwrapped;
-  };
-  geojson.features.forEach(f => {
-    const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
-    f.geometry.coordinates = f.geometry.type === "Polygon"
-      ? polys[0].map(unwrapRing)
-      : polys.map(rings => rings.map(unwrapRing));
-  });
-  return geojson;
-}
-
-function lerpColor(t, arr) {
-  const r = Math.round(ROUTE_COLOR_DEP[0] + (arr[0] - ROUTE_COLOR_DEP[0]) * t);
-  const g = Math.round(ROUTE_COLOR_DEP[1] + (arr[1] - ROUTE_COLOR_DEP[1]) * t);
-  const b = Math.round(ROUTE_COLOR_DEP[2] + (arr[2] - ROUTE_COLOR_DEP[2]) * t);
-  return `rgb(${r},${g},${b})`;
-}
 
 // Draws every route as one smooth gradient stroke on its own canvas. Leaflet's
 // own polylines round each vertex to a whole pixel, which makes zoomed-out
@@ -168,29 +77,6 @@ const RouteLayer = L.Layer.extend({
     });
   },
 });
-
-// Spherical interpolation between two lat/lon points — same slerp math used
-// for day/night route shading (ELogbook.jsx calcDayNightRoute).
-function greatCirclePoints(lat1, lon1, lat2, lon2, n = 256) {
-  const toRad = d => d * Math.PI / 180;
-  const toDeg = r => r * 180 / Math.PI;
-  const φ1 = toRad(lat1), λ1 = toRad(lon1), φ2 = toRad(lat2), λ2 = toRad(lon2);
-  const d = 2 * Math.asin(Math.sqrt(
-    Math.sin((φ2 - φ1) / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin((λ2 - λ1) / 2) ** 2
-  ));
-  if (d < 1e-9) return [[lat1, lon1]];
-  const pts = [];
-  for (let i = 0; i <= n; i++) {
-    const f = i / n;
-    const A = Math.sin((1 - f) * d) / Math.sin(d);
-    const B = Math.sin(f * d) / Math.sin(d);
-    const x = A * Math.cos(φ1) * Math.cos(λ1) + B * Math.cos(φ2) * Math.cos(λ2);
-    const y = A * Math.cos(φ1) * Math.sin(λ1) + B * Math.cos(φ2) * Math.sin(λ2);
-    const z = A * Math.sin(φ1) + B * Math.sin(φ2);
-    pts.push([toDeg(Math.atan2(z, Math.sqrt(x * x + y * y))), toDeg(Math.atan2(y, x))]);
-  }
-  return pts;
-}
 
 // Mirrors the date-range row matching in ExportImportModal.getRowsInDateRange.
 // Returns a UTC-midnight Date for a row, or null if its date can't be read.
@@ -277,13 +163,11 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   useScrollLock(mounted);
   const mapElRef = useRef(null);
   const mapRef = useRef(null);
-  const baseLayerRef = useRef(null);
   const routeLayerRef = useRef(null);
-  const attributionRef = useRef(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   // Online: CARTO for the current theme. Offline: the bundled vector outline, since tiles can't load.
-  const defaultBasemap = () => !navigator.onLine ? "vector" : isLight ? "cartoLight" : "carto";
+  const defaultBasemap = () => pickBasemap(isLight);
   const [basemap, setBasemap] = useState(defaultBasemap);
   const [exportKind, setExportKind] = useState("image");
   const [imageSize, setImageSize] = useState("wide");
@@ -324,57 +208,22 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
     // preferCanvas: markers draw to one canvas. The old screenshot export needed this; it is kept so the map looks the same.
     const map = L.map(mapElRef.current, { worldCopyJump: true, attributionControl: false, preferCanvas: true, zoomSnap: 0.25 }).setView([20, 0], 2);
     mapRef.current = map;
-    // Dedicated pane below the default overlayPane (where routes/markers
-    // live) so the basemap can never end up drawn on top of them, no
-    // matter what order layers get added/swapped in.
-    map.createPane("basePane").style.zIndex = 200;
-    // Routes sit above the basemap but below the airport markers (overlayPane, 400).
-    map.createPane("routesPane").style.zIndex = 350;
+    createBasePanes(map);
 
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
-        baseLayerRef.current = null;
         routeLayerRef.current = null;
-        attributionRef.current = null;
       }
     };
   }, [mounted]);
 
-  // Swap the base layer when the user picks a different basemap. Tile
-  // providers require visible attribution per their terms; the vector
-  // outline uses bundled public-domain data (Natural Earth) so it needs none.
+  // Swap the base layer when the user picks a different basemap.
   useEffect(() => {
     const map = mapRef.current;
     if (!mounted || !map) return;
-
-    if (baseLayerRef.current) { map.removeLayer(baseLayerRef.current); baseLayerRef.current = null; }
-    if (attributionRef.current) { map.removeControl(attributionRef.current); attributionRef.current = null; }
-
-    const cfg = BASEMAPS[basemap];
-    if (cfg.type === "vector") {
-      const land = unwrapAntimeridian(feature(landTopology, landTopology.objects.land));
-      baseLayerRef.current = L.geoJSON(land, {
-        pane: "basePane",
-        style: { fillColor: mapColors.landFill, fillOpacity: 1, color: mapColors.landStroke, weight: 0.6 },
-      }).addTo(map);
-    } else if (cfg.type === "maplibre") {
-      let cancelled = false;
-      loadMaplibreGL().then(maplibreGL => {
-        // Bail if the user switched away from this basemap (or closed the
-        // modal) while the chunk was still downloading.
-        if (cancelled) return;
-        baseLayerRef.current = maplibreGL({ style: cfg.styleUrl, pane: "basePane" }).addTo(map);
-        attributionRef.current = L.control.attribution({ prefix: false }).addTo(map);
-        attributionRef.current.addAttribution(cfg.attribution);
-      });
-      return () => { cancelled = true; };
-    } else {
-      baseLayerRef.current = L.tileLayer(cfg.url, { pane: "basePane", subdomains: cfg.subdomains || "abc", maxZoom: cfg.maxZoom }).addTo(map);
-      attributionRef.current = L.control.attribution({ prefix: false }).addTo(map);
-      attributionRef.current.addAttribution(cfg.attribution);
-    }
+    return mountBasemap(map, basemap, mapColors);
   }, [mounted, basemap, isLight]);
 
   // Redraw routes/markers whenever the date range or data changes
@@ -404,7 +253,7 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
     });
 
     routeLayerRef.current = new RouteLayer(
-      routes.map(({ dep, arr }) => greatCirclePoints(dep.lat, dep.lon, arr.lat, arr.lon)),
+      routes.map(({ dep, arr }) => greatCirclePoints(dep.lat, dep.lon, arr.lat, arr.lon, 256)),
       ROUTE_COLOR_ARR[isLight ? "light" : "dark"]
     ).addTo(map);
 
