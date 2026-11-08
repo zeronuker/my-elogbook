@@ -67,7 +67,7 @@ export const FONT_FAMILIES = {
   space:     "'Space Mono', monospace",
 };
 
-export const ANIM_SPEED_MS = { normal: 260, slow: 420, slower: 650 };
+export const ANIM_SPEED_MS = { normal: 260, slow: 600, slower: 1100 };
 
 // Row density sets cell top/bottom padding; column density sets cell left/right padding.
 export const DENSITY_PAD = {
