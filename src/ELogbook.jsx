@@ -17,7 +17,7 @@ import { currentVersion } from "@brand/Changelog";
 import {
   MONTHS, EMPTY_ROW, YEARS,
   getDaysInMonth, makeMonthRows, normalizeMonthRows, initialData,
-  calcFlightTimes, parseHHMM,
+  calcFlightTimes, parseHHMM, dutySectorDates,
 } from "./logbookCalculations";
 import {
   DUTY_LOG_SYNC_URL, DUTY_LOG_CODE_RE, timeCols,
@@ -550,9 +550,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         const logs = body?.logs || [];
         const flat = [];
         for (const log of logs) {
-          for (const sector of (log.sectors || [])) {
-            flat.push({ isoDate: log.date, sector, log });
-          }
+          const dates = dutySectorDates(log); // each sector's own UTC day: one that leaves after midnight is the next day
+          (log.sectors || []).forEach((sector, i) => flat.push({ isoDate: dates[i], sector, log }));
         }
         setDutyLogEntries(flat);
         if (user?.uid) localStorage.setItem(lsDutyLogDataKey(user.uid), JSON.stringify(flat));

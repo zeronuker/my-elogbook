@@ -97,6 +97,22 @@ export function parseHHMM(val) {
   return 0;
 }
 
+// A Duty Log duty has one date, but a logbook row is filed under the UTC day its sector left (off-block). Sectors leave
+// in order, so an off-block earlier than the previous sector's means the clock passed midnight: that sector is the next
+// day. A sector with no off-block time yet keeps the day of the one before it. Returns one ISO date per sector.
+export function dutySectorDates(log) {
+  const base = /^\d{4}-\d{2}-\d{2}$/.test(log.date || "") ? Date.parse(`${log.date}T00:00:00Z`) : null;
+  let days = 0, prev = null;
+  return (log.sectors || []).map(s => {
+    if (s.offBlk && s.offBlk.trim()) {
+      const t = parseHHMM(s.offBlk);
+      if (prev !== null && t < prev) days++;
+      prev = t;
+    }
+    return base === null ? log.date : new Date(base + days * 86400000).toISOString().slice(0, 10);
+  });
+}
+
 export function toHHMM(mins) {
   if (!mins && mins !== 0) return "";
   const h = Math.floor(mins / 60);
