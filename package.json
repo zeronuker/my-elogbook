@@ -1,7 +1,7 @@
 {
   "name": "my-elogbook",
   "private": true,
-  "version": "4.3.0",
+  "version": "4.5.0",
   "type": "module",
   "scripts": {
     "dev": "node brand-kit/scripts/write-build-info.mjs && vite",
