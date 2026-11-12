@@ -622,7 +622,6 @@ function AppearanceTab({ d, upd }) {
   const brightness = Number(d.brightness) || 100;
   const accentPreset = d.accentPreset || "gradient";
 
-  const fontCss = FONT_CHOICES.find((f) => f.id === fontType)?.css || "'Courier New', monospace";
 
   return (
     <div className="sm-tab-content">
@@ -643,7 +642,6 @@ function AppearanceTab({ d, upd }) {
         <div className="sm-section-inline">
           <SmField
             label="Brightness"
-            hint={`Filter applied to the entire app for night-vision adaptation. Currently ${brightness}%.`}
           >
             <SmSlider
               min={60} max={100} step={1}
@@ -707,12 +705,6 @@ function AppearanceTab({ d, upd }) {
           unit="px"
         />
       </SmRow>
-      <div
-        className="sm-font-preview"
-        style={{ fontFamily: fontCss, fontSize }}
-      >
-        WMKK → OMDB &nbsp;·&nbsp; STD 23:45 &nbsp;·&nbsp; B737 &nbsp;·&nbsp; 9M-XXX
-      </div>
 
       <SmSectionHead title="Table density" />
       <SmRow>
@@ -742,7 +734,7 @@ function AppearanceTab({ d, upd }) {
         </div>
       </SmRow>
 
-      <SmField label="Auto-hide empty DAY/NIGHT columns" hint="Collapses a DAY/NIGHT column to a slim marker for past months where it's completely empty. Turn off to always show every column.">
+      <SmField label="Auto-hide empty columns">
         <SmToggle
           checked={d.autoHideEmptyCols !== false}
           onChange={(v) => upd({ autoHideEmptyCols: v })}
@@ -750,7 +742,7 @@ function AppearanceTab({ d, upd }) {
       </SmField>
 
       <SmSectionHead title="Animation" />
-      <SmField label="Enable animations" hint="Turn off for instant switching everywhere.">
+      <SmField label="Enable animations">
         <SmToggle
           checked={d.animEnabled !== false}
           onChange={(v) => upd({ animEnabled: v })}
@@ -758,13 +750,13 @@ function AppearanceTab({ d, upd }) {
       </SmField>
       {d.animEnabled !== false && (
         <>
-          <SmField label="Animate row detail panel" hint="Smooth expand/collapse when opening a row's remarks & autoland panel. Turn off for instant open/close.">
+          <SmField label="Animate row detail panel">
             <SmToggle
               checked={d.panelExpandAnimation !== false}
               onChange={(v) => upd({ panelExpandAnimation: v })}
             />
           </SmField>
-          <SmField label="Transition style" hint="How tab and settings pages appear. Dialogs always use a soft zoom.">
+          <SmField label="Transition style">
             <SmSegmented
               value={["slide", "rise", "stagger"].includes(d.animStyle) ? d.animStyle : "slide"}
               onChange={(v) => upd({ animStyle: v })}
@@ -811,7 +803,7 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
 
       <SmSectionHead title="Logbook display" />
 
-      <SmField label="Date format" hint="Controls how the DATE column appears in the logbook">
+      <SmField label="Date format">
         <SmSegmented
           value={d.dateFormat || "D"}
           onChange={(v) => upd({ dateFormat: v })}
@@ -823,7 +815,7 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
         />
       </SmField>
 
-      <SmField label="Rows per page" hint="Minimum rows shown per month in logbook">
+      <SmField label="Rows per page">
         <SmSelect
           value={String(d.rowsPerPage || 15)}
           options={["10", "15", "20", "30", "50"]}
@@ -832,7 +824,7 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
         />
       </SmField>
 
-      <SmField label="Calendar week starts on" hint="First day of the week in the Logbook calendar view">
+      <SmField label="Calendar week starts on">
         <SmSegmented
           value={d.weekStart || "monday"}
           onChange={(v) => upd({ weekStart: v })}
@@ -845,7 +837,7 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
 
       <SmSectionHead title="Map view" />
 
-      <SmField label="Follow the aircraft" hint="How the camera moves when you turn on Follow in the Logbook map view">
+      <SmField label="Follow the aircraft">
         <SmSelect
           value={d.mapFollow || "cruise"}
           options={["cruise", "frame", "zoom", "pan"]}
@@ -853,13 +845,6 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
           onChange={(v) => upd({ mapFollow: v })}
         />
       </SmField>
-
-      <SmHint>
-        <b>Cruise</b> · Close on the aircraft at take-off, pulls back en route, closes in again on approach.<br />
-        <b>Frame</b> · Fits each whole sector in view.<br />
-        <b>Close</b> · Stays zoomed in on the aircraft.<br />
-        <b>Pan</b> · Follows the aircraft at whatever zoom you set.
-      </SmHint>
 
       <SmSectionHead title="Day / Night calculation" />
 
@@ -881,14 +866,14 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
 
       <SmSectionHead title="Duty buffers" />
 
-      <SmField label="Apply standard formula" hint="Adds pre + post buffer to each sector. Turn off to set duty = flight time exactly.">
+      <SmField label="Apply standard formula" hint="Adds pre + post buffer to each sector.">
         <SmToggle
           checked={!!d.useStandardFormula}
           onChange={(v) => upd({ useStandardFormula: v })}
         />
       </SmField>
 
-      <SmField label="Pre-flight buffer" hint="Default: 75 min (1 hr 15 min)">
+      <SmField label="Pre-flight buffer">
         <SmSelect
           value={String(d.preFlightBuffer ?? 75)}
           options={["60", "75", "90", "120"]}
@@ -898,7 +883,7 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
         />
       </SmField>
 
-      <SmField label="Post-flight buffer" hint="Default: 15 min">
+      <SmField label="Post-flight buffer">
         <SmSelect
           value={String(d.postFlightBuffer ?? 15)}
           options={["10", "15", "30", "45"]}
@@ -910,7 +895,7 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
 
       <SmSectionHead title="Duty Log Link" />
 
-      <SmField label="Sync code" hint="From Duty Log app → Backup. Matches sectors by date + departure/arrival, read-only.">
+      <SmField label="Sync code" hint="Enter sync code from Pilot Utility Suite App.">
         <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: 6 }}>
           <SmInput
             value={d.dutyLogSyncCode || ""}
@@ -1399,18 +1384,6 @@ const settingsCss = `
     text-align: center;
   }
   .sm-font.on .sm-font-name { color: var(--cb-mint); }
-
-  /* Font preview strip */
-  .sm-font-preview {
-    padding: 8px 12px;
-    background: var(--cb-surface-0);
-    border: 1px solid var(--cb-line);
-    color: var(--cb-ink-2);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 4px;
-  }
 
   /* ── Slider ─────────────────────────────────────────────────────── */
   .sm-slider-wrap { display: flex; flex-direction: column; gap: 6px; max-width: 480px; width: 100%; }

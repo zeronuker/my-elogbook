@@ -44,7 +44,7 @@ function Seg({ options, value, onChange, big }) {
   );
 }
 
-export default function ExportImportModal({ open, onClose, monthData, settings, user, onImport, computeFlightTimes }) {
+export default function ExportImportModal({ open, onClose, monthData, settings, user, onImport, computeFlightTimes, confirm }) {
   const [tab, setTab] = useState("export");
   const tabAnim = useTransitionAnim(tab, TAB_IDS, settings?.animStyle);
   const { mounted, closing } = useExitAnim(open);
@@ -100,6 +100,8 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
   const handleBackupRestore = async (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
+    const ok = await confirm("Restore backup?", "This overwrites your current data on this device and reloads the app.");
+    if (!ok) { e.target.value = ""; return; }
     setRestoreFileName(f.name);
     try {
       const backup = JSON.parse(await f.text());
@@ -959,7 +961,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
               <div className="eim-field">
                 <div className="eim-field-meta">
                   <span className="eim-field-label">Flights export</span>
-                  <div className="eim-field-hint">Reads the "Flights" sheet from a previously exported workbook.</div>
+                  <div className="eim-field-hint">Only Excel files previously exported from this app can be imported.</div>
                 </div>
                 <div className="eim-field-control">
                   <input type="file" id="eim-import-file" accept=".xlsx" className="eim-fileinput" onChange={handleFileSelect} />
@@ -1027,7 +1029,6 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
               <div className="eim-field">
                 <div className="eim-field-meta">
                   <span className="eim-field-label">Download backup</span>
-                  <div className="eim-field-hint">Saves flight data, settings and profile.</div>
                 </div>
                 <div className="eim-field-control">
                   <button className="eim-btn-primary" style={{ width: "100%" }} onClick={handleBackupDownload}>Download .json</button>
@@ -1038,7 +1039,6 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
               <div className="eim-field">
                 <div className="eim-field-meta">
                   <span className="eim-field-label">Restore from backup</span>
-                  <div className="eim-field-hint">Overwrites current local data and reloads the app.</div>
                 </div>
                 <div className="eim-field-control">
                   <input type="file" id="eim-backup-file" accept=".json" className="eim-fileinput" onChange={handleBackupRestore} />
