@@ -5,6 +5,7 @@ import { CHANGELOG } from "./changelog";
 import Changelog from "@brand/Changelog";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";
+import Select from "./Select";
 import { useEscClose } from "./useEscClose";
 import { useScrollLock } from "./useScrollLock";
 
@@ -1066,16 +1067,13 @@ function SmInputDate({ value, onChange }) {
 
 function SmSelect({ value, options, labels, onChange, disabled }) {
   return (
-    <select
+    <Select
       className="sm-select"
       value={value}
       disabled={disabled}
-      onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-    >
-      {options.map((o, i) => (
-        <option key={o} value={o}>{labels ? labels[i] : o}</option>
-      ))}
-    </select>
+      onChange={onChange}
+      options={options.map((o, i) => ({ value: o, label: labels ? labels[i] : o }))}
+    />
   );
 }
 

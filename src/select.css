@@ -1,0 +1,27 @@
+/* Themed dropdown (Select.jsx). The trigger gets its look from the caller's className/style, like the <select> it replaces. */
+:where(.cbsel-btn) { position: relative; display: block; box-sizing: border-box; font: inherit; text-align: left; color: inherit; cursor: pointer; }
+.cbsel-btn:disabled { cursor: not-allowed; }
+.cbsel-label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 18px; }
+.cbsel-cv {
+  position: absolute; right: 8px; top: 50%; width: 10px; height: 10px; margin-top: -5px; pointer-events: none;
+  color: var(--elb-txt-dim, #7c87a3); transition: transform 0.15s ease, color 0.15s;
+}
+.cbsel-btn[aria-expanded="true"] .cbsel-cv { transform: rotate(180deg); color: var(--elb-acc, #3FE0C5); }
+
+.cbsel-list {
+  position: fixed; z-index: 6000; margin: 0; padding: 4px 0; list-style: none; box-sizing: border-box;
+  width: max-content; max-width: calc(100vw - 16px); overflow-y: auto; overscroll-behavior: contain;
+  background: var(--elb-bg2, #141a2e); color: var(--elb-txt, #e8ecf5);
+  border: 1px solid color-mix(in srgb, var(--elb-acc, #3FE0C5) 45%, transparent);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+.cbsel-list li {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 6px 12px; cursor: pointer; white-space: nowrap; color: var(--elb-txt-muted, #b8c0d4);
+}
+.cbsel-list li.act { background: var(--elb-rowhover, #232c4d); color: var(--elb-txt, #e8ecf5); }
+.cbsel-list li[aria-selected="true"] { color: var(--elb-acc, #3FE0C5); }
+.cbsel-list li[aria-selected="true"]::after {
+  content: ""; flex: none; width: 9px; height: 5px;
+  border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg) translate(1px, -1px);
+}

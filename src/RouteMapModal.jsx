@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { getCoords } from "./airportCoords";
 import { parseHHMM } from "./logbookCalculations";
 import { useExitAnim } from "./useExitAnim";
+import Select from "./Select";
 import { useEscClose } from "./useEscClose";
 import { useScrollLock } from "./useScrollLock";
 import ChamferFrame from "@brand/ChamferFrame";
@@ -296,31 +297,20 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   );
   const mapField = (
     <Field label="MAP" stacked={isNarrow}>
-      <select value={basemap} onChange={e => setBasemap(e.target.value)} style={fieldStyle}>
-        {Object.entries(BASEMAPS).map(([key, cfg]) => (
-          <option key={key} value={key}>{cfg.label}</option>
-        ))}
-      </select>
+      <Select value={basemap} onChange={setBasemap} style={fieldStyle}
+        options={Object.entries(BASEMAPS).map(([value, cfg]) => ({ value, label: cfg.label }))} />
     </Field>
   );
   const kindSelect = (
-    <select value={exportKind} onChange={e => setExportKind(e.target.value)} aria-label="Export type" style={fieldStyle}>
-      {EXPORT_KINDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-    </select>
+    <Select value={exportKind} onChange={setExportKind} aria-label="Export type" style={fieldStyle} options={pairOptions(EXPORT_KINDS)} />
   );
   const sizeSelect = exportKind === "image" && (
-    <select value={imageSize} onChange={e => setImageSize(e.target.value)} aria-label="Image size" style={fieldStyle}>
-      {IMAGE_SIZE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-    </select>
+    <Select value={imageSize} onChange={setImageSize} aria-label="Image size" style={fieldStyle} options={pairOptions(IMAGE_SIZE_OPTIONS)} />
   );
   const paperSelects = exportKind === "pdf" && (
     <div style={isNarrow ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } : { display: "contents" }}>
-      <select value={paper} onChange={e => setPaper(e.target.value)} aria-label="Paper size" style={fieldStyle}>
-        {PAPER_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-      </select>
-      <select value={orient} onChange={e => setOrient(e.target.value)} aria-label="Orientation" style={fieldStyle}>
-        {ORIENT_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-      </select>
+      <Select value={paper} onChange={setPaper} aria-label="Paper size" style={fieldStyle} options={pairOptions(PAPER_OPTIONS)} />
+      <Select value={orient} onChange={setOrient} aria-label="Orientation" style={fieldStyle} options={pairOptions(ORIENT_OPTIONS)} />
     </div>
   );
   const statsToggle = (
@@ -426,6 +416,8 @@ function Field({ label, stacked, children }) {
 
 const labelStyle = { color: THEME.textMuted, fontSize: 11, flexShrink: 0, textAlign: "left" };
 const groupLabelStyle = { color: THEME.textMuted, fontSize: 10, letterSpacing: "0.16em", textAlign: "left" };
+
+const pairOptions = pairs => pairs.map(([value, label]) => ({ value, label }));
 
 const inputStyle = {
   background: THEME.bgInput, border: `1px solid ${THEME.border}`, color: THEME.text, borderRadius: 0,
