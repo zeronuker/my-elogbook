@@ -1643,7 +1643,8 @@ const settingsCss = `
   .cb-btn-danger:hover { background: rgba(239,68,68,0.22); }
 
   /* ── Misc tab ───────────────────────────────────────────────────── */
-  .sm-misc-cards { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; max-width: 400px; }
+  .sm-misc-cards { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+  .sm-misc-cards .sm-misc-card { flex: 1 1 240px; width: auto; min-width: 0; }
   .sm-misc-card {
     display: flex; align-items: center; gap: 14px;
     padding: 14px 16px;
