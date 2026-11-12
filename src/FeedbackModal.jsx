@@ -6,6 +6,7 @@ import { CHANGELOG } from "./changelog";
 import { currentVersion } from "@brand/Changelog";
 import { useExitAnim } from "./useExitAnim";
 import { useTransitionAnim } from "./useTransitionAnim";
+import AutoTextarea from "./AutoTextarea";
 import { useEscClose } from "./useEscClose";
 import { useScrollLock } from "./useScrollLock";
 
@@ -122,7 +123,6 @@ const css = `
     font-family: var(--elb-font, 'Courier New', monospace);
     font-size: 13px;
     padding: 10px 12px;
-    resize: vertical;
     width: 100%; box-sizing: border-box;
     line-height: 1.5;
     outline: none;
@@ -356,7 +356,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
                   <div className="fb-label">
                     {type === "bug" ? "What went wrong?" : type === "feature" ? "What would you like?" : "Your message"}
                   </div>
-                  <textarea
+                  <AutoTextarea
                     className="fb-textarea"
                     rows={4}
                     placeholder={
@@ -375,7 +375,7 @@ export default function FeedbackModal({ open, onClose, type: initialType = "bug"
                 {type === "bug" && (
                   <div className="fb-field">
                     <div className="fb-label">Steps to reproduce <span style={{ opacity: 0.5 }}>(optional)</span></div>
-                    <textarea
+                    <AutoTextarea
                       className="fb-textarea"
                       rows={3}
                       placeholder={"1. Go to...\n2. Click...\n3. See error"}

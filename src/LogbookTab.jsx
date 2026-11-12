@@ -10,6 +10,7 @@ import {
 } from "./logbookConstants";
 import { exitMs } from "./useExitAnim";
 import Select from "./Select";
+import AutoTextarea from "./AutoTextarea";
 
 const crewRankIndex = (position) => {
   const i = CREW_RANK_ORDER.indexOf((position || "").toUpperCase());
@@ -621,7 +622,7 @@ export default function LogbookTab({
                                   </div>
                                 </>
                               )}
-                              <textarea
+                              <AutoTextarea
                                 key={`remarks-${row.id}`}
                                 defaultValue={row.remarks}
                                 onBlur={e => { e.target.style.borderColor = "var(--elb-bdr, #1e3a5f)"; updateCell(rowIdx, "remarks", e.target.value.trim()); }}
@@ -631,7 +632,7 @@ export default function LogbookTab({
                                 style={{
                                   width: "100%", background: "var(--cb-surface-1, #141a2e)", border: "1px solid var(--elb-bdr, #1e3a5f)",
                                   borderRadius: 4, color: "var(--cb-ink, #e8ecf5)", fontFamily: "'Courier New',monospace",
-                                  fontSize: 12.5, padding: "9px 10px", resize: "vertical", outline: "none",
+                                  fontSize: 12.5, padding: "9px 10px", outline: "none",
                                   boxSizing: "border-box", lineHeight: 1.6, minHeight: hasRemarks ? 66 : 30,
                                   transition: "min-height 0.15s ease", marginBottom: 14,
                                 }}

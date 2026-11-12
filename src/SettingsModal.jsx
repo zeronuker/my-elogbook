@@ -1251,9 +1251,6 @@ const settingsCss = `
     padding: 24px 28px;
     min-height: 0; /* required: allows flex child to shrink below content size so footer stays visible */
   }
-  .sm-body::-webkit-scrollbar { width: 4px; }
-  .sm-body::-webkit-scrollbar-track { background: transparent; }
-  .sm-body::-webkit-scrollbar-thumb { background: var(--cb-line-2); border-radius: 2px; }
 
   .sm-tab-content { display: flex; flex-direction: column; gap: 4px; }
 

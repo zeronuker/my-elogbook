@@ -1118,9 +1118,6 @@ const exportImportCss = `
 
   /* ── Body ── */
   .eim-body{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:20px 24px;min-height:0;}
-  .eim-body::-webkit-scrollbar{width:4px;}
-  .eim-body::-webkit-scrollbar-track{background:transparent;}
-  .eim-body::-webkit-scrollbar-thumb{background:var(--cb-line-2);border-radius:2px;}
   .eim-pane{display:flex;flex-direction:column;gap:4px;}
 
   .eim-sh{margin-top:16px;margin-bottom:10px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;}

@@ -286,9 +286,6 @@ const searchModalCss = `
   }
 
   .srch-results{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:8px 10px 14px;min-height:0;}
-  .srch-results::-webkit-scrollbar{width:4px;}
-  .srch-results::-webkit-scrollbar-track{background:transparent;}
-  .srch-results::-webkit-scrollbar-thumb{background:var(--elb-border, #1e3a5f);border-radius:2px;}
 
   .srch-empty{padding:calc(24px * var(--fs)) calc(12px * var(--fs));text-align:center;font-size:calc(12px * var(--fs));color:var(--elb-txt-muted, #5a7a9a);}
 

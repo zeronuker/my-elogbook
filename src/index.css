@@ -286,3 +286,12 @@ html[data-kb] .fb-modal { max-height: calc(var(--kb-h) - 40px); }
 .cbchk:hover:not(:disabled) { border-color: var(--cbchk, var(--elb-acc, #3FE0C5)); }
 .cbchk:focus-visible { outline: 1px solid var(--cbchk, var(--elb-acc, #3FE0C5)); outline-offset: 2px; }
 .cbchk:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Scrollbars: one thin style everywhere (the -webkit rules are the fallback for browsers without scrollbar-width) ── */
+* { scrollbar-width: thin; scrollbar-color: var(--elb-border, rgba(255, 255, 255, 0.12)) transparent; }
+@supports not (scrollbar-width: thin) {
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--elb-border, rgba(255, 255, 255, 0.12)); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--elb-acc, #3FE0C5); }
+}

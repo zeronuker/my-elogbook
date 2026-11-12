@@ -1,0 +1,8 @@
+/* Resize grip for AutoTextarea.jsx */
+.cbta { position: relative; width: 100%; }
+.cbta-grip { position: absolute; right: 2px; bottom: 2px; width: 22px; height: 14px; display: grid; place-items: center; cursor: ns-resize; touch-action: none; }
+.cbta-grip::before {
+  content: ""; width: 10px; height: 4px; border-top: 1px solid var(--elb-txt-dim, #7c87a3); border-bottom: 1px solid var(--elb-txt-dim, #7c87a3);
+  transition: border-color 0.15s;
+}
+.cbta-grip:hover::before, .cbta-grip.drag::before { border-color: var(--elb-acc, #3FE0C5); }
