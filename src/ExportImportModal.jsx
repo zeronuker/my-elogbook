@@ -4,6 +4,7 @@ import ChamferFrame from "@brand/ChamferFrame";
 import { loadPdfFonts } from "./pdfFonts";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";
+import DatePicker from "./DatePicker";
 import { useEscClose } from "./useEscClose";
 import { useScrollLock } from "./useScrollLock";
 
@@ -911,11 +912,11 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
                     <div className="eim-daterow">
                       <div className="eim-datefield">
                         <label>From</label>
-                        <input type="date" className="eim-input" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+                        <DatePicker className="eim-input" value={dateFrom} onChange={setDateFrom} />
                       </div>
                       <div className="eim-datefield">
                         <label>To</label>
-                        <input type="date" className="eim-input" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                        <DatePicker className="eim-input" value={dateTo} onChange={setDateTo} />
                       </div>
                     </div>
                   )}

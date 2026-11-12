@@ -2,6 +2,7 @@ import { useState, useMemo, useRef } from "react";
 import { MONTHS, YEARS, calcFlightTimes, parseHHMM, toHHMM, makeMonthRows } from "./logbookCalculations";
 import { thStyle, thSubStyle, tdStyle } from "./logbookConstants";
 import { useTransitionAnim } from "./useTransitionAnim";
+import DatePicker from "./DatePicker";
 
 // Transition order: Annual Overview years in sequence, then Grand Total.
 const SUB_ORDER = [...YEARS.map(y => `annual-${y}`), "grand"];
@@ -321,33 +322,33 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
         <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 6 }}>
             <>
               <span style={{ fontSize: 11, letterSpacing: "0.1em", color: "var(--elb-txt-muted, #4a6a8a)" }}>FROM</span>
-              <input
-                type="date"
+              <DatePicker
                 value={periodCustomFrom}
                 min={earliestLogDateStr}
                 max={todayStr}
-                onChange={e => handlePeriodFromChange(e.target.value)}
+                onChange={handlePeriodFromChange}
+                size={15}
+                wrapStyle={{ display: "inline-flex" }}
                 style={{
                   background: "transparent", border: "none", borderBottom: "1px dashed #4fc3f7",
                   color: "#4fc3f7", fontFamily: "var(--elb-font, 'Courier New', monospace)",
                   fontSize: 13, letterSpacing: "0.1em", fontWeight: 700,
                   cursor: "pointer", padding: "0 0 2px 0", outline: "none",
-                  colorScheme: "dark",
                 }}
               />
               <span style={{ fontSize: 11, letterSpacing: "0.1em", color: "var(--elb-txt-muted, #4a6a8a)" }}>TO</span>
-              <input
-                type="date"
+              <DatePicker
                 value={periodCustomTo}
                 min={earliestLogDateStr}
                 max={todayStr}
-                onChange={e => handlePeriodToChange(e.target.value)}
+                onChange={handlePeriodToChange}
+                size={15}
+                wrapStyle={{ display: "inline-flex" }}
                 style={{
                   background: "transparent", border: "none", borderBottom: "1px dashed #4fc3f7",
                   color: "#4fc3f7", fontFamily: "var(--elb-font, 'Courier New', monospace)",
                   fontSize: 13, letterSpacing: "0.1em", fontWeight: 700,
                   cursor: "pointer", padding: "0 0 2px 0", outline: "none",
-                  colorScheme: "dark",
                 }}
               />
             </>

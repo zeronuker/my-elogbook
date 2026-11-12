@@ -5,6 +5,7 @@ import { getCoords } from "./airportCoords";
 import { parseHHMM } from "./logbookCalculations";
 import { useExitAnim } from "./useExitAnim";
 import Select from "./Select";
+import DatePicker from "./DatePicker";
 import { useEscClose } from "./useEscClose";
 import { useScrollLock } from "./useScrollLock";
 import ChamferFrame from "@brand/ChamferFrame";
@@ -288,11 +289,11 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
 
   // Toolbar parts, built once and placed by whichever layout is showing.
   const fieldStyle = isNarrow ? { ...inputStyle, width: "100%", minWidth: 0, boxSizing: "border-box" } : inputStyle;
-  const fromInput = <input id="route-map-from" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={fieldStyle} />;
+  const fromInput = <DatePicker id="route-map-from" value={dateFrom} onChange={setDateFrom} style={fieldStyle} />;
   const fromField = <Field label="FROM" stacked={isNarrow}>{fromInput}</Field>;
   const toField = (
     <Field label="TO" stacked={isNarrow}>
-      <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={fieldStyle} />
+      <DatePicker value={dateTo} onChange={setDateTo} style={fieldStyle} />
     </Field>
   );
   const mapField = (

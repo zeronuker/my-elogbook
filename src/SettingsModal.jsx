@@ -6,6 +6,7 @@ import Changelog from "@brand/Changelog";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";
 import Select from "./Select";
+import DatePicker from "./DatePicker";
 import { useEscClose } from "./useEscClose";
 import { useScrollLock } from "./useScrollLock";
 
@@ -1056,12 +1057,7 @@ function SmInput({ value, onChange, readOnly = false, placeholder = "" }) {
 
 function SmInputDate({ value, onChange }) {
   return (
-    <input
-      className="sm-input sm-input-date"
-      type="date"
-      value={value}
-      onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-    />
+    <DatePicker className="sm-input sm-input-date" value={value} onChange={onChange} />
   );
 }
 

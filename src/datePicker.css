@@ -1,0 +1,49 @@
+/* Themed date field + calendar (DatePicker.jsx). The text input takes the caller's className/style, like the <input type="date"> it replaces. */
+.cbdp { position: relative; display: flex; align-items: center; min-width: 0; }
+.cbdp > input { min-width: 0; }
+.cbdp-bad { box-shadow: 0 0 0 1px #ef4444; }
+.cbdp-ico {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 30px; display: grid; place-items: center; padding: 0;
+  background: transparent; border: 0; color: var(--elb-txt-dim, #7c87a3); cursor: pointer; transition: color 0.15s;
+}
+.cbdp-ico:hover, .cbdp-ico[aria-expanded="true"] { color: var(--elb-acc, #3FE0C5); }
+
+.cbdp-pop {
+  position: fixed; z-index: 6000; width: 272px; max-width: calc(100vw - 16px); box-sizing: border-box; padding: 10px;
+  font-family: var(--elb-font, 'Courier New', monospace); font-size: 12px;
+  background: var(--elb-bg2, #141a2e); color: var(--elb-txt, #e8ecf5);
+  border: 1px solid color-mix(in srgb, var(--elb-acc, #3FE0C5) 45%, transparent);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+.cbdp-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px; }
+.cbdp-sels { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.cbdp-sel {
+  padding: 3px 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  background: transparent; color: var(--elb-txt, #e8ecf5); border: 1px solid var(--elb-border2, rgba(255, 255, 255, 0.07)); transition: border-color 0.15s;
+}
+.cbdp-sel:hover { border-color: color-mix(in srgb, var(--elb-acc, #3FE0C5) 45%, transparent); }
+.cbdp-nav {
+  flex: none; width: 26px; height: 26px; display: grid; place-items: center; padding: 0; font-size: 16px; line-height: 1;
+  background: transparent; border: 1px solid var(--elb-border, rgba(255, 255, 255, 0.12)); color: var(--elb-acc, #3FE0C5); cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.cbdp-nav:hover:not(:disabled) { border-color: color-mix(in srgb, var(--elb-acc, #3FE0C5) 45%, transparent); background: color-mix(in srgb, var(--elb-acc, #3FE0C5) 12%, transparent); }
+.cbdp-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+.cbdp-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.cbdp-wd { padding: 4px 0; text-align: center; font-size: 10px; letter-spacing: 0.08em; color: var(--elb-txt-dim, #7c87a3); }
+.cbdp-d {
+  height: 34px; width: 100%; display: grid; place-items: center; padding: 0; font: inherit; color: var(--elb-txt, #e8ecf5);
+  background: transparent; border: 1px solid transparent; cursor: pointer; transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+}
+.cbdp-d:hover:not(:disabled) { background: var(--elb-rowhover, #232c4d); }
+.cbdp-d.out { color: var(--elb-txt-dim, #7c87a3); }
+.cbdp-d.today { border-color: color-mix(in srgb, var(--elb-acc, #3FE0C5) 45%, transparent); }
+.cbdp-d.sel {
+  font-weight: 700; color: var(--elb-acc, #3FE0C5); border-color: var(--elb-acc, #3FE0C5);
+  background: color-mix(in srgb, var(--elb-acc, #3FE0C5) 12%, transparent);
+}
+.cbdp-d:disabled { opacity: 0.28; cursor: not-allowed; }
+.cbdp-foot { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--elb-border2, rgba(255, 255, 255, 0.07)); }
+.cbdp-link { padding: 2px 0; font: inherit; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; border: 0; color: var(--elb-acc, #3FE0C5); cursor: pointer; }
+.cbdp-link:hover:not(:disabled) { text-decoration: underline; }
+.cbdp-link:disabled { opacity: 0.35; cursor: not-allowed; }
