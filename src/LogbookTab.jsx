@@ -446,14 +446,13 @@ export default function LogbookTab({
                         <td key={col.key} style={{ ...tdStyle, textAlign: "center", padding: "4px", minWidth: col.minWidth }}>
                           <input
                             type="checkbox"
+                            className="cbchk"
                             checked={isPF}
                             onChange={e => updateCell(rowIdx, "pilotFlying", e.target.checked ? "YES" : "")}
                             title="Pilot Flying (marks T/O & LDG for recency)"
                             style={{
-                              accentColor: "#4fc3f7",
+                              "--cbchk": "#4fc3f7",
                               width: 15, height: 15,
-                              cursor: "pointer",
-                              verticalAlign: "middle",
                             }}
                           />
                         </td>
@@ -640,9 +639,10 @@ export default function LogbookTab({
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 <input
                                   type="checkbox"
+                                  className="cbchk"
                                   checked={row.autoland || false}
                                   onChange={e => updateCell(rowIdx, "autoland", e.target.checked)}
-                                  style={{ width: 14, height: 14, cursor: "pointer", accentColor: "#a855f7" }}
+                                  style={{ width: 14, height: 14, "--cbchk": "#a855f7" }}
                                 />
                                 <label style={{ fontSize: 10.5, color: "#c8d6e5", letterSpacing: "0.08em", cursor: "pointer" }}>AUTOLAND</label>
                                 <button

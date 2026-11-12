@@ -316,7 +316,7 @@ export default function RouteMapModal({ open, onClose, monthData, theme = "dark"
   );
   const statsToggle = (
     <label style={{ display: "flex", alignItems: "center", gap: 6, color: THEME.textMuted, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
-      <input type="checkbox" checked={showStats} onChange={e => setShowStats(e.target.checked)} />
+      <input type="checkbox" className="cbchk" checked={showStats} onChange={e => setShowStats(e.target.checked)} />
       Include stats
     </label>
   );

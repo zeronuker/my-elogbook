@@ -308,9 +308,10 @@ export default function FlightSummaryTab({ data, settings, selectedMonth, select
           <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
             <input
               type="checkbox"
+              className="cbchk"
               checked={periodIncludeCF}
               onChange={e => setPeriodIncludeCF(e.target.checked)}
-              style={{ accentColor: "#4fc3f7", cursor: "pointer", margin: 0 }}
+              style={{ "--cbchk": "#4fc3f7" }}
             />
             <span style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.1em", color: periodIncludeCF ? "#4fc3f7" : "var(--elb-txt-muted, #4a6a8a)" }}>
               ADD CARRY FORWARD HOURS

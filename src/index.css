@@ -269,3 +269,20 @@ html[data-kb] .onb-container {
   box-sizing: border-box; /* their padding must fit inside the visible height */
 }
 html[data-kb] .fb-modal { max-height: calc(var(--kb-h) - 40px); }
+
+/* ── Checkbox: drawn by the app, not the browser. Set --cbchk on the input to change its colour. ── */
+.cbchk {
+  -webkit-appearance: none; appearance: none; flex: none; width: 16px; height: 16px; margin: 0;
+  display: inline-grid; place-content: center; vertical-align: middle; cursor: pointer;
+  background: var(--elb-bg, #0a1020); border: 1px solid var(--elb-border, rgba(255, 255, 255, 0.12));
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.cbchk::after {
+  content: ""; width: 4px; height: 8px; border: solid #0a1020; border-width: 0 2px 2px 0;
+  transform: translate(0, -1px) rotate(45deg) scale(0); transition: transform 0.15s ease;
+}
+.cbchk:checked { background: var(--cbchk, var(--elb-acc, #3FE0C5)); border-color: var(--cbchk, var(--elb-acc, #3FE0C5)); }
+.cbchk:checked::after { transform: translate(0, -1px) rotate(45deg) scale(1); }
+.cbchk:hover:not(:disabled) { border-color: var(--cbchk, var(--elb-acc, #3FE0C5)); }
+.cbchk:focus-visible { outline: 1px solid var(--cbchk, var(--elb-acc, #3FE0C5)); outline-offset: 2px; }
+.cbchk:disabled { opacity: 0.4; cursor: not-allowed; }

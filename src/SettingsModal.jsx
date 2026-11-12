@@ -1004,7 +1004,7 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
         )}
       </div>
       <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, letterSpacing: '0.06em', color: 'var(--elb-txt-muted, #7c87a3)', padding: '0 0 16px', cursor: 'pointer' }}>
-        <input type="checkbox" checked={autoUpdateDisabled} onChange={(e) => setAutoUpdateDisabled(e.target.checked)} />
+        <input type="checkbox" className="cbchk" checked={autoUpdateDisabled} onChange={(e) => setAutoUpdateDisabled(e.target.checked)} />
         DISABLE AUTO-UPDATE
       </label>
 
