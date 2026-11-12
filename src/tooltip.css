@@ -1,0 +1,8 @@
+/* Branded tooltip (Tooltip.jsx). */
+.cbtip {
+  position: fixed; top: 0; left: 0; z-index: 7000; max-width: 240px; box-sizing: border-box; padding: 5px 9px; pointer-events: none;
+  font-family: var(--elb-font, 'Courier New', monospace); font-size: 11px; letter-spacing: 0.04em; line-height: 1.4;
+  background: var(--elb-bg3, #1b2340); color: var(--elb-txt, #e8ecf5);
+  border: 1px solid color-mix(in srgb, var(--elb-acc, #3FE0C5) 45%, transparent);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
