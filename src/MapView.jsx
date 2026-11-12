@@ -7,6 +7,7 @@ import { MONTHS } from "./logbookCalculations";
 import { MAP_COLORS, ROUTE_COLOR_ARR, defaultBasemap, createBasePanes, mountBasemap, lerpColor } from "./mapBase";
 import { collectSectors, buildScene, posOn, countUpTo, ease, routeWidth, fromUnit } from "./mapViewData";
 import MapTimeline from "./MapTimeline";
+import { useExitAnim } from "./useExitAnim";
 
 // Logbook MAP view: where you flew in a month or a year. Leaflet draws the basemap; one canvas on top draws the routes,
 // airports, labels and the aircraft. The engine below (plain functions over one mutable object `E`) runs playback, the
@@ -525,9 +526,15 @@ export default function MapView({ data, year, monthIdx, theme, followStyle = "cr
   useEffect(() => { request(R.current); }, [theme, followStyle, selected]);
 
   // a selected item that is no longer on the map (scrubbed back) clears itself
-  const selItem = selected && (selected.t === "a" ? scene.airports.get(selected.k) : scene.routes.get(selected.k));
-  const selFlights = selItem ? selItem.flights.filter(f => f.si <= cut) : [];
-  if (selected && !selFlights.length) setSelected(null);
+  const selData = useMemo(() => {
+    const it = selected && (selected.t === "a" ? scene.airports.get(selected.k) : scene.routes.get(selected.k));
+    const flights = it ? it.flights.filter(f => f.si <= cut) : [];
+    return flights.length ? { selected, flights } : null;
+  }, [selected, scene, cut]);
+  if (selected && !selData) setSelected(null);
+  const selExit = useExitAnim(!!selData, selData); // keeps the panel (and its last content) mounted while it fades out
+  const toastExit = useExitAnim(!!toast, toast);
+  const sp = selExit.payload;
 
   const say = msg => {
     setToast(msg);
@@ -556,22 +563,22 @@ export default function MapView({ data, year, monthIdx, theme, followStyle = "cr
         <canvas ref={canvasEl} className="mv-canvas" />
         <div ref={tipEl} className="mv-tip" />
         {!sectors.length && (
-          <div className="mv-empty">
+          <div className="mv-empty elb-fade">
             <b>NO FLIGHTS</b>
             <span>{skipped ? `${skipped} sector${skipped === 1 ? "" : "s"} in ${period_} can't be drawn because an airport isn't in the list.` : `Nothing logged for ${period_}.`}</span>
           </div>
         )}
-        {selItem && (
-          <div className="mv-sel">
+        {selExit.mounted && (
+          <div className={"mv-sel" + (selExit.closing ? " elb-closing" : "")}>
             <header>
               <div>
-                <b>{selected.t === "a" ? selected.k : selected.k.replace("-", " - ")}</b>
-                <small>{selFlights.length} {selected.t === "a" ? "movement" : "flight"}{selFlights.length === 1 ? "" : "s"} · tap one to open it in the list</small>
+                <b>{sp.selected.t === "a" ? sp.selected.k : sp.selected.k.replace("-", " - ")}</b>
+                <small>{sp.flights.length} {sp.selected.t === "a" ? "movement" : "flight"}{sp.flights.length === 1 ? "" : "s"} · tap one to open it in the list</small>
               </div>
               <button onClick={() => setSelected(null)} aria-label="Close">{"×"}</button>
             </header>
             <ul>
-              {selFlights.map(f => (
+              {sp.flights.map(f => (
                 <li key={`${f.month}-${f.row.id}`}>
                   <button onClick={() => onOpenSector(f.row, f.month, f.year)}>
                     <span className="d">{pad2(f.day)} {MON3[f.month]}</span>
@@ -582,7 +589,7 @@ export default function MapView({ data, year, monthIdx, theme, followStyle = "cr
             </ul>
           </div>
         )}
-        {toast && <div className="mv-toast" role="status">{toast}</div>}
+        {toastExit.mounted && <div className={"mv-toast" + (toastExit.closing ? " elb-closing" : "")} role="status">{toastExit.payload}</div>}
       </div>
       <MapTimeline
         sectors={sectors} cut={cut} playing={playing} speed={speed} follow={follow} scope={scope} avail={avail}
