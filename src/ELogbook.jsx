@@ -83,6 +83,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const saveChipFadeRef     = useRef(null); // saved → fading (after 2 s display)
   const saveChipIdleRef     = useRef(null); // fading → idle (after 0.5 s fade)
   const [migrating, setMigrating] = useState(false); // true while pulling existing data from Firestore on first load
+  const [migStep, setMigStep] = useState(0); // 0 profile, 1 logbook download, 2 saving locally, 3 done
+  const [migYears, setMigYears] = useState(0); // year docs found in the cloud
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState(null); // null → SettingsModal defaults to "profile"
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
@@ -327,8 +329,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
       // No local data — first load or new device — pull from Firestore
       setMigrating(true);
+      setMigStep(0);
       const ref  = doc(db, "users", uid, "logbook", "data");
       const snap = await getDoc(ref);
+      setMigStep(1);
       dataLoadedRef.current = true;
       setDataLoaded(true);
       if (snap.exists()) {
@@ -341,6 +345,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           await pushYearsData(uid, docData.logbookData).catch(err => console.error("Year-split migration failed:", err));
           yearsData = docData.logbookData;
         }
+        setMigYears(new Set(Object.keys(yearsData).map(k => k.split("-")[1])).size);
+        setMigStep(2);
         applyDocData(docData, yearsData);
         // Persist to localStorage so future loads are instant
         if (Object.keys(yearsData).length > 0) localStorage.setItem(lsKey(uid), JSON.stringify(yearsData));
@@ -354,6 +360,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         localStorage.setItem(lsSyncDisplayKey(uid), displayStr);
         setLastSyncTime(displayStr);
         localDirtyRef.current = false;
+        setMigStep(3);
+        await new Promise(r => setTimeout(r, 600)); // let "all set" show before the overlay leaves
       }
       setMigrating(false);
     } catch (err) {
@@ -1380,6 +1388,32 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         @keyframes spin      { from { transform: rotate(0deg);   } to { transform: rotate(360deg); } }
         @keyframes fadeIn    { from { opacity: 0;                } to { opacity: 1;                } }
         @keyframes blink     { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+        @keyframes elb-mig-stripe { to { background-position: 28px 0; } }
+        @keyframes elb-mig-pulse  { 50% { opacity: 0.55; transform: scale(0.94); } }
+        @keyframes elb-mig-blink  { 50% { opacity: 0.25; } }
+        .elb-mig { width: min(420px, calc(100vw - 32px)); text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .elb-mig-logo { display: block; margin: 0 auto 14px; animation: elb-mig-pulse 2.2s ease-in-out infinite; }
+        .elb-mig-title { font-size: 13px; letter-spacing: 0.18em; margin-bottom: 8px; }
+        .elb-mig-sub { font-size: 11px; letter-spacing: 0.1em; color: #7c87a3; margin-bottom: 22px; }
+        .elb-mig-bar { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .elb-mig-seg { height: 6px; position: relative; overflow: hidden; background: var(--elb-bg3, #1b2340); border: 1px solid var(--elb-border, rgba(255,255,255,0.12)); }
+        .elb-mig-seg::before { content: ""; position: absolute; inset: 0; width: 0; background-image: var(--cb-grad, linear-gradient(135deg, #3FE0C5, #3B8DFF)); transition: width 0.45s ease; }
+        .elb-mig-seg.done::before { width: 100%; }
+        .elb-mig-seg.on::before {
+          width: 100%; background-size: 28px 100%; animation: elb-mig-stripe 0.8s linear infinite;
+          background-image: repeating-linear-gradient(115deg, var(--elb-acc, #3FE0C5) 0 10px, color-mix(in srgb, var(--elb-acc, #3FE0C5) 45%, transparent) 10px 20px);
+        }
+        .elb-mig-steps { width: 100%; list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+        .elb-mig-steps li { display: flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: 0.06em; color: #7c87a3; }
+        .elb-mig-steps li.on { color: var(--elb-txt, #e8ecf5); }
+        .elb-mig-steps li.done { color: var(--elb-txt-muted, #b8c0d4); }
+        .elb-mig-gl { flex: none; width: 16px; height: 16px; display: grid; place-items: center; border: 1px solid var(--elb-border, rgba(255,255,255,0.12)); font-size: 10px; line-height: 1; }
+        .on > .elb-mig-gl { border-color: var(--elb-acc, #3FE0C5); }
+        .on > .elb-mig-gl::after { content: ""; width: 6px; height: 6px; background: var(--elb-acc, #3FE0C5); animation: elb-mig-blink 1s ease-in-out infinite; }
+        .done > .elb-mig-gl { border-color: var(--elb-acc, #3FE0C5); background: var(--elb-acc, #3FE0C5); color: #0a1020; }
+        .done > .elb-mig-gl::after { content: "✓"; font-weight: 700; }
+        .elb-mig-fin { margin-top: 18px; font-size: 12px; letter-spacing: 0.12em; min-height: 18px; }
+        @media (prefers-reduced-motion: reduce) { .elb-mig-logo, .elb-mig-seg.on::before, .on > .elb-mig-gl::after { animation: none; } }
         @keyframes cb-pulse  { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.75); } }
         @keyframes row-pulse { 0%, 100% { background-color: transparent; }
                                 15%, 55% { background-color: rgba(255,138,0,0.5); }
@@ -2064,12 +2098,23 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           display: "flex", alignItems: "center", justifyContent: "center",
           fontFamily: "var(--elb-font, 'Courier New', monospace)",
         }}>
-          <div style={{ textAlign: "center", color: "var(--elb-acc, #3FE0C5)" }}>
-            <img src="/brand/icons/icon-72.png" alt="ClaudeBorne" width="40" height="40" style={{ display: "block", margin: "0 auto 14px" }} />
-            <div style={{ fontSize: 13, letterSpacing: "0.18em", marginBottom: 8 }}>MIGRATING YOUR DATA</div>
-            <div style={{ fontSize: 11, letterSpacing: "0.1em", color: "#7c87a3" }}>
-              One-time setup · Your logbook is moving to local storage
+          <div className="elb-mig" style={{ color: "var(--elb-acc, #3FE0C5)" }}>
+            <img className="elb-mig-logo" src="/brand/icons/icon-72.png" alt="ClaudeBorne" width="40" height="40" />
+            <div className="elb-mig-title">MIGRATING YOUR DATA</div>
+            <div className="elb-mig-sub">One-time setup · Your logbook is moving to local storage</div>
+            <div className="elb-mig-bar">
+              {[0, 1, 2].map(i => <div key={i} className={"elb-mig-seg" + (i < migStep ? " done" : i === migStep ? " on" : "")} />)}
             </div>
+            <ul className="elb-mig-steps">
+              {[
+                "Reading your profile",
+                migStep > 1 ? (migYears ? `Downloaded ${migYears} year${migYears === 1 ? "" : "s"} of flights` : "Downloaded your logbook") : "Downloading your logbook",
+                migStep >= 3 ? "Saved to this device" : "Saving to this device",
+              ].map((label, i) => (
+                <li key={i} className={i < migStep ? "done" : i === migStep ? "on" : ""}><span className="elb-mig-gl" />{label}</li>
+              ))}
+            </ul>
+            <div className="elb-mig-fin">{migStep >= 3 ? "✓ ALL SET · OPENING YOUR LOGBOOK" : ""}</div>
           </div>
         </div>
       )}
