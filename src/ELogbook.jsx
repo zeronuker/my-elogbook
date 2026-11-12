@@ -2117,7 +2117,7 @@ const selectStyle = {
   fontSize: 15,
   fontFamily: "'Courier New', monospace",
   fontWeight: 700,
-  padding: "6px 10px",
+  padding: "4px 10px", lineHeight: "16px",
   letterSpacing: "0.08em",
   cursor: "pointer",
   outline: "none",

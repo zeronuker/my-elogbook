@@ -422,7 +422,7 @@ const pairOptions = pairs => pairs.map(([value, label]) => ({ value, label }));
 
 const inputStyle = {
   background: THEME.bgInput, border: `1px solid ${THEME.border}`, color: THEME.text, borderRadius: 0,
-  fontSize: 12, padding: "4px 8px", fontFamily: "inherit",
+  fontSize: 12, padding: "4px 8px", lineHeight: "16px", fontFamily: "inherit",
 };
 
 const btnStyle = {

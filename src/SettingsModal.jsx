@@ -777,6 +777,7 @@ function AppearanceTab({ d, upd }) {
           </SmField>
           <SmField label="Speed">
             <SmSegmented
+              fill
               value={d.animSpeed || "normal"}
               onChange={(v) => upd({ animSpeed: v })}
               options={[
@@ -909,7 +910,7 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
 
       <SmSectionHead title="Duty Log Link" />
 
-      <SmField label="Sync code" hint="From Duty Log app → Backup. Matches sectors by date + departure/arrival, read-only." controlWidth={320}>
+      <SmField label="Sync code" hint="From Duty Log app → Backup. Matches sectors by date + departure/arrival, read-only.">
         <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: 6 }}>
           <SmInput
             value={d.dutyLogSyncCode || ""}
@@ -1027,14 +1028,14 @@ function SmSectionHead({ title }) {
   );
 }
 
-function SmField({ label, hint, children, controlWidth }) {
+function SmField({ label, hint, children }) {
   return (
     <div className="sm-field">
       <div className="sm-field-meta">
         <label className="sm-field-label">{label}</label>
         {hint && <div className="sm-field-hint">{hint}</div>}
       </div>
-      <div className="sm-field-control" style={controlWidth ? { width: controlWidth } : undefined}>{children}</div>
+      <div className="sm-field-control">{children}</div>
     </div>
   );
 }
@@ -1073,9 +1074,9 @@ function SmSelect({ value, options, labels, onChange, disabled }) {
   );
 }
 
-function SmSegmented({ value, onChange, options }) {
+function SmSegmented({ value, onChange, options, fill }) {
   return (
-    <div className="sm-seg">
+    <div className={"sm-seg" + (fill ? " fill" : "")}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -1307,6 +1308,7 @@ const settingsCss = `
 
   /* ── Inputs & selects ───────────────────────────────────────────── */
   .sm-input, .sm-select {
+    box-sizing: border-box; line-height: normal;
     background: var(--cb-surface-0);
     border: 1px solid var(--cb-line-2);
     color: var(--cb-ink);
@@ -1330,6 +1332,8 @@ const settingsCss = `
     padding: 3px;
     gap: 2px;
   }
+  .sm-seg.fill { display: flex; width: 100%; box-sizing: border-box; }
+  .sm-seg.fill .sm-seg-item { flex: 1; justify-content: center; }
   .sm-seg-item {
     background: transparent; border: 0;
     color: var(--cb-ink-2);
@@ -1639,7 +1643,7 @@ const settingsCss = `
   .cb-btn-danger:hover { background: rgba(239,68,68,0.22); }
 
   /* ── Misc tab ───────────────────────────────────────────────────── */
-  .sm-misc-cards { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .sm-misc-cards { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; max-width: 400px; }
   .sm-misc-card {
     display: flex; align-items: center; gap: 14px;
     padding: 14px 16px;

@@ -475,7 +475,7 @@ export default function LogbookTab({
                               fontFamily: "'Courier New', monospace",
                               fontSize: 13,
                               fontWeight: capStyle ? 700 : 400,
-                              width: "auto",
+                              width: "auto", margin: "0 auto",
                               cursor: "pointer",
                               outline: "none",
                               padding: "2px 6px",
