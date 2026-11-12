@@ -5,6 +5,7 @@ import BrandBanner from '@brand/BrandBanner';
 import { CHANGELOG } from './changelog';
 import { currentVersion } from '@brand/Changelog';
 import ChamferFrame from '@brand/ChamferFrame';
+import Select from './Select';
 
 const APP_VERSION = currentVersion(CHANGELOG);
 
@@ -197,12 +198,12 @@ const ScreenSignUp2 = memo(({ formData, updateFormData, isLoading, goTo }) => {
           <div className="onb-ssub">Quick setup. Update anytime in Settings.</div>
           <div className="onb-field">
             <label>LICENCE TYPE (DEFAULT: ATPL(A))</label>
-            <select value={formData.licenseType} onChange={(e) => updateFormData('licenseType', e.target.value)} disabled={isLoading}>
-              <option>ATPL(A)</option>
-              <option>CPL(A)</option>
-              <option>MPL</option>
-              <option>PPL(A)</option>
-            </select>
+            <Select
+              value={formData.licenseType}
+              onChange={(v) => updateFormData('licenseType', v)}
+              disabled={isLoading}
+              options={['ATPL(A)', 'CPL(A)', 'MPL', 'PPL(A)'].map((v) => ({ value: v, label: v }))}
+            />
           </div>
           <div className="onb-field">
             <label>LICENCE NUMBER (OPTIONAL)</label>
@@ -777,7 +778,7 @@ function OnboardingFlow({
     }
 
     .onb-field input,
-    .onb-field select {
+    .onb-field .cbsel-btn {
       width: 100%;
       background: var(--raised);
       border: 1px solid var(--border);
@@ -792,12 +793,11 @@ function OnboardingFlow({
     }
 
     .onb-field input:focus,
-    .onb-field select:focus {
+    .onb-field .cbsel-btn:focus {
       border-color: var(--accent);
     }
 
     .onb-field input::placeholder { color: var(--muted); }
-    .onb-field select option { background: var(--surface); }
 
     .onb-frow {
       display: grid;

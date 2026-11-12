@@ -4,6 +4,7 @@ import { useExitAnim } from "./useExitAnim";
 import { useEscClose } from "./useEscClose";
 import { useScrollLock } from "./useScrollLock";
 import { useTransitionAnim } from "./useTransitionAnim";
+import Select from "./Select";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const A   = "var(--elb-accent, #3FE0C5)";
@@ -1158,15 +1159,14 @@ export default function HowToGuideModal({ open, onClose, version, animStyle }) {
         </div>
 
         {/* Phone-only chapter picker (the sidebar is hidden at this width) */}
-        <select
+        <Select
           className="htg-select"
           value={active}
-          onChange={e => setActive(Number(e.target.value))}
+          onChange={setActive}
           aria-label="Chapter"
           style={{ margin: "10px 16px 0", padding: "8px 10px", background: "rgba(63,224,197,0.07)", border: `1px solid ${A}`, borderRadius: 0, color: A, fontSize: 12, letterSpacing: "0.08em", fontFamily: F }}
-        >
-          {SECTIONS.map((s, i) => <option key={s.id} value={i}>{s.title}</option>)}
-        </select>
+          options={SECTIONS.map((s, i) => ({ value: i, label: s.title }))}
+        />
 
         {/* Body */}
         <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
@@ -1229,8 +1229,6 @@ export default function HowToGuideModal({ open, onClose, version, animStyle }) {
         .htg-content li { margin-bottom: 7px; line-height: 1.65; font-size: 13px; color: #c8dce8; font-family: 'JetBrains Mono','Courier New',monospace; }
         .htg-content strong { color: #e2eef5; font-weight: 600; }
         .htg-select { display: none; }
-        .htg-select option { background: #0a0d12; color: #9bbcd4; }
-        .htg-select option:checked { background: #12304a; color: #3FE0C5; }
         @media (max-width: 560px) {
           .htg-side { display: none; }
           .htg-select { display: block; }

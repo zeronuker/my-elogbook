@@ -9,6 +9,7 @@ import {
   thStyle, thSubStyle, tdStyle,
 } from "./logbookConstants";
 import { exitMs } from "./useExitAnim";
+import Select from "./Select";
 
 const crewRankIndex = (position) => {
   const i = CREW_RANK_ORDER.indexOf((position || "").toUpperCase());
@@ -463,9 +464,9 @@ export default function LogbookTab({
                     if (col.key === "cap") {
                       cells.push(
                         <td key={col.key} style={{ ...tdStyle, background: "transparent", minWidth: col.minWidth, padding: "2px 4px", textAlign: "center" }}>
-                          <select
+                          <Select
                             value={row[col.key] || ""}
-                            onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+                            onChange={v => updateCell(rowIdx, col.key, v)}
                             style={{
                               background: capStyle ? capStyle.bg : "transparent",
                               border: capStyle ? `1px solid ${capStyle.border}` : "none",
@@ -479,13 +480,8 @@ export default function LogbookTab({
                               outline: "none",
                               padding: "2px 6px",
                             }}
-                          >
-                            {["","P1","P2","P1 U/S"].map(opt => (
-                              <option key={opt} value={opt} style={{ background: "var(--elb-bg2, #0d1520)", color: "var(--elb-txt, #c8d6e5)" }}>
-                                {opt || "—"}
-                              </option>
-                            ))}
-                          </select>
+                            options={["","P1","P2","P1 U/S"].map(opt => ({ value: opt, label: opt || "—" }))}
+                          />
                         </td>
                       );
                       continue;

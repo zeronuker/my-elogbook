@@ -41,6 +41,7 @@ import FlightSummaryTab from "./FlightSummaryTab";
 import LogbookTab from "./LogbookTab";
 import CalendarView from "./CalendarView";
 import MapView from "./MapView";
+import Select from "./Select";
 import LimitsRecencyTab from "./LimitsRecencyTab";
 
 // Single source of truth: the app's displayed version is always the newest
@@ -1222,13 +1223,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const renderMonthYearSelects = (abbreviateMonth) => (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
       {!yearOnly && (
-        <select value={selectedMonth} onChange={e => handleMonthChange(Number(e.target.value))} style={selectStyle}>
-          {MONTHS.map((m, i) => <option key={i} value={i}>{(abbreviateMonth ? m.slice(0, 3) : m).toUpperCase()}</option>)}
-        </select>
+        <Select value={selectedMonth} onChange={handleMonthChange} style={selectStyle}
+          options={MONTHS.map((m, i) => ({ value: i, label: (abbreviateMonth ? m.slice(0, 3) : m).toUpperCase() }))} />
       )}
-      <select value={selectedYear} onChange={e => handleYearChange(Number(e.target.value))} style={{ ...selectStyle, minWidth: 90 }}>
-        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-      </select>
+      <Select value={selectedYear} onChange={handleYearChange} style={{ ...selectStyle, minWidth: 90 }}
+        options={YEARS.map(y => ({ value: y, label: y }))} />
     </div>
   );
   const monthYearSelects = renderMonthYearSelects(false);
@@ -2123,6 +2122,5 @@ const selectStyle = {
   cursor: "pointer",
   outline: "none",
   minWidth: 140,
-  colorScheme: "dark",
 };
 
