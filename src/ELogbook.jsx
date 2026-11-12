@@ -1221,7 +1221,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   // `abbreviateMonth` shortens the option labels for the phone merged row,
   // where the full month name plus the icon toolbar doesn't fit one line.
   const renderMonthYearSelects = (abbreviateMonth) => (
-    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+    <div style={{ display: "flex", alignItems: "stretch", gap: 6 }}>
       {!yearOnly && (
         <Select value={selectedMonth} onChange={handleMonthChange} style={selectStyle}
           options={MONTHS.map((m, i) => ({ value: i, label: (abbreviateMonth ? m.slice(0, 3) : m).toUpperCase() }))} />
@@ -1543,7 +1543,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
           </div>
           {/* PHONE-ONLY: month/year selects + today sit right under the title (nav arrows dropped for space) */}
           <div className="elb-merged-phone" style={{ alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, visibility: pickerVis }}>{monthYearSelectsPhone}{todayBtn}</div>
+            <div style={{ display: "flex", alignItems: "stretch", gap: 4, visibility: pickerVis }}>{monthYearSelectsPhone}{todayBtn}</div>
           </div>
         </div>
 
@@ -1565,7 +1565,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
         {/* PERIOD ROW (desktop/tablet only): prev/next month + month/year selects + today, left; sync chips, right */}
         <div className="elb-pageheader-period" style={{ alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, visibility: pickerVis }}>
+          <div style={{ display: "flex", alignItems: "stretch", gap: 8, visibility: pickerVis }}>
             <button
               onClick={() => (yearOnly ? stepYear(-1) : stepMonth(-1))}
               disabled={isFirstPeriod}
