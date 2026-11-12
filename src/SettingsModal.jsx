@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import GoogleSignInButton from "./GoogleSignInButton";
 import ChamferFrame from "@brand/ChamferFrame";
 import { CHANGELOG } from "./changelog";
-import Changelog from "@brand/Changelog";
+import Changelog, { currentVersion } from "@brand/Changelog";
 import { useTransitionAnim } from "./useTransitionAnim";
 import { useExitAnim } from "./useExitAnim";
 import Select from "./Select";
@@ -977,37 +977,30 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
       </div>
 
       <SmSectionHead title="App Update" />
-      <div style={{ fontSize: 11, color: 'var(--elb-txt-muted, #7c87a3)', padding: '6px 0 0' }}>
-        Current build: {currentBuildVersion}
+      <div className="sm-upd">
+        <div className="sm-upd-top">
+          <div className="sm-upd-ver">Version {currentVersion(CHANGELOG)} - build {currentBuildVersion}</div>
+          {needRefresh ? (
+            <button className="sm-upd-btn go" onClick={() => updateServiceWorker(true)}>Update now</button>
+          ) : (
+            <button className="sm-upd-btn" onClick={checkForUpdate} disabled={checkingUpdate}>
+              {checkingUpdate ? "Checking..." : "Check for updates"}
+            </button>
+          )}
+        </div>
+        <div className="sm-upd-bot">
+          <div className={"sm-upd-status" + (needRefresh ? " new" : updateChecked ? " ok" : "")}>
+            {checkingUpdate ? <><span className="sm-upd-spin">↻</span> Checking...</>
+              : needRefresh ? "● New version available"
+              : updateChecked ? "✓ You have the latest version"
+              : " "}
+          </div>
+          <div className="sm-upd-auto">
+            Auto-update
+            <SmToggle checked={!autoUpdateDisabled} onChange={(v) => setAutoUpdateDisabled(!v)} />
+          </div>
+        </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 0 16px' }}>
-        {needRefresh ? (
-          <button
-            onClick={() => updateServiceWorker(true)}
-            style={{ background: 'var(--elb-acc)', color: '#0a0f1e', border: 'none', borderRadius: 4, padding: '6px 14px', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', cursor: 'pointer' }}
-          >
-            UPDATE NOW
-          </button>
-        ) : (
-          <button
-            onClick={checkForUpdate}
-            disabled={checkingUpdate}
-            style={{ background: 'transparent', color: checkingUpdate ? 'var(--elb-txt-muted)' : 'var(--elb-acc)', border: '1px solid currentColor', borderRadius: 4, padding: '6px 14px', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', cursor: checkingUpdate ? 'default' : 'pointer', opacity: checkingUpdate ? 0.6 : 1 }}
-          >
-            {checkingUpdate ? 'CHECKING...' : 'CHECK FOR UPDATES'}
-          </button>
-        )}
-        {updateChecked && !needRefresh && (
-          <span style={{ fontSize: 11, color: '#3FE0C5', letterSpacing: '0.06em' }}>✓ UP TO DATE</span>
-        )}
-        {needRefresh && !checkingUpdate && (
-          <span style={{ fontSize: 11, color: 'var(--elb-acc)', letterSpacing: '0.06em' }}>NEW VERSION AVAILABLE</span>
-        )}
-      </div>
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, letterSpacing: '0.06em', color: 'var(--elb-txt-muted, #7c87a3)', padding: '0 0 16px', cursor: 'pointer' }}>
-        <input type="checkbox" className="cbchk" checked={autoUpdateDisabled} onChange={(e) => setAutoUpdateDisabled(e.target.checked)} />
-        DISABLE AUTO-UPDATE
-      </label>
 
       <SmSectionHead title="Changelog" />
       <Changelog changelog={CHANGELOG} />
@@ -1643,6 +1636,27 @@ const settingsCss = `
   .cb-btn-danger:hover { background: rgba(239,68,68,0.22); }
 
   /* ── Misc tab ───────────────────────────────────────────────────── */
+  /* ── App update block ── */
+  .sm-upd { display: flex; flex-direction: column; gap: 8px; padding: 6px 0 16px; }
+  .sm-upd-top, .sm-upd-bot { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .sm-upd-ver { font-size: calc(12.5px * var(--fs)); color: var(--cb-ink); min-width: 0; }
+  .sm-upd-btn {
+    flex: none; width: 190px; padding: 8px 14px; cursor: pointer; font-family: inherit;
+    font-size: calc(11px * var(--fs)); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    background: transparent; color: var(--cb-mint); border: 1px solid color-mix(in srgb, var(--cb-mint) 45%, transparent);
+    transition: background-color 140ms, border-color 140ms, color 140ms;
+  }
+  .sm-upd-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--cb-mint) 12%, transparent); border-color: var(--cb-mint); }
+  .sm-upd-btn:disabled { color: var(--cb-ink-dim); border-color: var(--cb-line-2); cursor: default; }
+  .sm-upd-btn.go { background-image: var(--cb-grad); color: #0a1020; border: 0; padding: 9px 15px; }
+  .sm-upd-btn.go:hover { background-image: var(--cb-grad); filter: brightness(1.08); }
+  .sm-upd-status { font-size: calc(11.5px * var(--fs)); color: var(--cb-ink-dim); display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .sm-upd-status.ok { color: var(--cb-mint); }
+  .sm-upd-status.new { color: var(--cb-ink); }
+  .sm-upd-spin { display: inline-block; animation: sm-spin 0.7s linear infinite; }
+  .sm-upd-auto { flex: none; display: flex; align-items: center; gap: 8px; font-size: calc(11px * var(--fs)); letter-spacing: 0.08em; text-transform: uppercase; color: var(--cb-ink-2); }
+  @media (max-width: 400px) { .sm-upd-top, .sm-upd-bot { flex-wrap: wrap; } .sm-upd-btn { width: 100%; } }
+
   .sm-misc-cards { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
   .sm-misc-cards .sm-misc-card { flex: 1 1 240px; width: auto; min-width: 0; }
   .sm-misc-card {
