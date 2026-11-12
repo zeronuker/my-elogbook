@@ -5,7 +5,7 @@
 /* ── toolbar above the map ── */
 .mv-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 8px; }
 .mv-seg { display: flex; gap: 4px; }
-.mv-seg button { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; padding: 5px 12px; cursor: pointer; border-radius: 3px;
+.mv-seg button { transition: color 0.15s, background-color 0.15s, border-color 0.15s; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; padding: 5px 12px; cursor: pointer; border-radius: 3px;
   color: var(--elb-txt-muted, #7c87a3); background: transparent; border: 1px solid var(--elb-border2, #1a3050); }
 .mv-seg button[aria-pressed="true"] { color: var(--mv-acc); background: color-mix(in srgb, var(--mv-acc) 12%, transparent); border-color: color-mix(in srgb, var(--mv-acc) 45%, transparent); }
 .mv-meta { font-size: 11px; color: var(--elb-txt-muted, #7c87a3); letter-spacing: 0.04em; }
@@ -31,16 +31,16 @@
 .mv-sel header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--elb-border, rgba(255,255,255,0.12)); }
 .mv-sel header b { color: var(--mv-acc); font-size: 13px; }
 .mv-sel header small { display: block; color: var(--elb-txt-muted, #7c87a3); font-size: 11px; margin-top: 2px; }
-.mv-sel header button { background: transparent; border: 1px solid var(--elb-border, rgba(255,255,255,0.12)); color: var(--elb-txt-muted, #7c87a3); width: 24px; height: 24px; padding: 0; font-size: 14px; line-height: 1; cursor: pointer; flex: none; }
+.mv-sel header button { transition: color 0.15s, background-color 0.15s, border-color 0.15s; background: transparent; border: 1px solid var(--elb-border, rgba(255,255,255,0.12)); color: var(--elb-txt-muted, #7c87a3); width: 24px; height: 24px; padding: 0; font-size: 14px; line-height: 1; cursor: pointer; flex: none; }
 .mv-sel ul { list-style: none; margin: 0; padding: 4px 0; overflow-y: auto; }
-.mv-sel li button { width: 100%; display: grid; grid-template-columns: 4.4em 1fr; gap: 8px; align-items: baseline; text-align: left; background: transparent; border: 0; color: var(--elb-txt, #e8ecf5); padding: 5px 10px; font-size: 12px; cursor: pointer; }
+.mv-sel li button { transition: color 0.15s, background-color 0.15s, border-color 0.15s; width: 100%; display: grid; grid-template-columns: 4.4em 1fr; gap: 8px; align-items: baseline; text-align: left; background: transparent; border: 0; color: var(--elb-txt, #e8ecf5); padding: 5px 10px; font-size: 12px; cursor: pointer; }
 .mv-sel li button:hover { background: var(--elb-rowhover, rgba(255,255,255,0.06)); }
 .mv-sel li .d { color: var(--elb-txt-muted, #7c87a3); }
 
 /* ── timeline ── */
 .mv-tl { position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 8px 10px; border: 1px solid var(--elb-border, rgba(255,255,255,0.12)); border-top: 0; background: var(--elb-bg2, #141a2e); transition: opacity 0.2s; }
 .mv-tl.off { opacity: 0.4; pointer-events: none; }
-.mv-btn { flex: none; position: relative; overflow: hidden; height: 34px; background: transparent; border: 1px solid var(--elb-border, rgba(255,255,255,0.12)); color: var(--elb-txt-muted, #7c87a3); font-size: 11px; padding: 0; cursor: pointer;
+.mv-btn { transition: color 0.15s, background-color 0.15s, border-color 0.15s; flex: none; position: relative; overflow: hidden; height: 34px; background: transparent; border: 1px solid var(--elb-border, rgba(255,255,255,0.12)); color: var(--elb-txt-muted, #7c87a3); font-size: 11px; padding: 0; cursor: pointer;
   display: flex; align-items: center; justify-content: center; }
 .mv-btn:hover { color: var(--mv-acc); border-color: color-mix(in srgb, var(--mv-acc) 45%, transparent); }
 .mv-btn.sq { width: 34px; }

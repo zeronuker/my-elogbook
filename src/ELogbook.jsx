@@ -1377,6 +1377,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       color: "var(--elb-txt, #c8d6e5)",
     }}>
       <style>{`
+        .elb-dlgbtn { transition: color 0.15s, background-color 0.15s, border-color 0.15s; }
         @keyframes spin      { from { transform: rotate(0deg);   } to { transform: rotate(360deg); } }
         @keyframes fadeIn    { from { opacity: 0;                } to { opacity: 1;                } }
         @keyframes blink     { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
@@ -1633,6 +1634,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
               marginBottom: activeTab === tab.id ? "-1px" : 0,
               whiteSpace: "nowrap",
               flexShrink: 0,
+              transition: "color 0.15s, background-color 0.15s, border-color 0.15s",
             }}>{tab.icon}{tab.label}</button>
           ))}
         </div>
@@ -1658,6 +1660,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                     color: on ? "#3FE0C5" : "var(--elb-txt-muted, #3a6a8a)",
                     background: on ? "rgba(63,224,197,0.10)" : "transparent",
                     border: `1px solid ${on ? "rgba(63,224,197,0.45)" : "var(--elb-border2, #1a3050)"}`,
+                    transition: "color 0.15s, background-color 0.15s, border-color 0.15s",
                   }}
                 >{v.label}</button>
               );
@@ -1761,7 +1764,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                   <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "var(--cb-accent, #4fc3f7)", marginBottom: 5, textAlign: "left" }}>{p.para}</div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em", lineHeight: 1.45, textAlign: "left" }}>{p.title}</div>
                 </div>
-                <button
+                <button className="elb-dlgbtn"
                   onClick={() => setActivePopup(null)}
                   style={{
                     background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
@@ -1820,7 +1823,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 <div style={{ fontSize: "var(--elb-hint-sz)", letterSpacing: "0.16em", color: "#ef4444", marginBottom: 5 }}>SAVE ERROR</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cb-ink, #e8ecf5)", letterSpacing: "0.07em" }}>SAVE FAILED</div>
               </div>
-              <button
+              <button className="elb-dlgbtn"
                 onClick={() => { setSaveStatus("idle"); setSaveError(""); }}
                 style={{
                   background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 3,
@@ -1844,7 +1847,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             </div>
             {/* Action Buttons */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button
+              <button className="elb-dlgbtn"
                 onClick={() => { setSaveStatus("idle"); setSaveError(""); }}
                 style={{
                   background: "transparent", border: "1px solid var(--cb-line-2, #1e3a5f)", borderRadius: 4,
@@ -1854,7 +1857,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--cb-accent, #4fc3f7)"; e.currentTarget.style.color = "var(--cb-accent, #4fc3f7)"; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cb-line-2, #1e3a5f)"; e.currentTarget.style.color = "var(--cb-ink-dim, #7c87a3)"; }}
               >DISMISS</button>
-              <button
+              <button className="elb-dlgbtn"
                 onClick={() => { setSaveStatus("dirty"); saveData(data); }}
                 style={{
                   background: "rgba(239,68,68,0.10)", border: "1px solid #ef4444", borderRadius: 4,
