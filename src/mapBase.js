@@ -100,6 +100,14 @@ export function createBasePanes(map) {
   map.createPane("routesPane").style.zIndex = 350;
 }
 
+// Tile layer that also loads a margin of tiles around the screen (loadPad = fraction of the screen on each side),
+// so a fast-moving camera finds its tiles already there instead of grey gaps.
+const PaddedTileLayer = L.TileLayer.extend({
+  _getTiledPixelBounds(center) {
+    return L.TileLayer.prototype._getTiledPixelBounds.call(this, center).pad(this.options.loadPad || 0);
+  },
+});
+
 // Puts the chosen basemap on the map and returns a function that takes it off again.
 // Tile providers require visible attribution per their terms; the vector
 // outline uses bundled public-domain data (Natural Earth) so it needs none.
@@ -125,7 +133,7 @@ export function mountBasemap(map, key, mapColors, tileOptions = {}) {
       addAttribution();
     });
   } else {
-    layer = L.tileLayer(cfg.url, { pane: "basePane", subdomains: cfg.subdomains || "abc", maxZoom: cfg.maxZoom, ...tileOptions }).addTo(map);
+    layer = new PaddedTileLayer(cfg.url, { pane: "basePane", subdomains: cfg.subdomains || "abc", maxZoom: cfg.maxZoom, ...tileOptions }).addTo(map);
     addAttribution();
   }
   return () => {

@@ -507,7 +507,7 @@ export default function MapView({ data, year, monthIdx, theme, followStyle = "cr
   }, []);
   const baseKey = online ? defaultBasemap(isLight) : "vector";
   // updateWhenZooming: false keeps the tile level steady while follow zooms, so tiles are not thrown away mid-flight
-  useEffect(() => mountBasemap(R.current.map, baseKey, colors, { updateWhenZooming: false }), [baseKey, colors]);
+  useEffect(() => mountBasemap(R.current.map, baseKey, colors, { updateWhenZooming: false, loadPad: 0.5 }), [baseKey, colors]);
 
   // A new period: stop, clear what was in the air, fade the routes in and fly the camera to fit them.
   useEffect(() => {
