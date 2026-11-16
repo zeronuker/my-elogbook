@@ -1,5 +1,5 @@
-// Tap ripple on the sub-tab buttons (see .elb-ripple in oxygen.css). Installed once from main.jsx.
-const TARGETS = ".elb-subtab, .elb-viewtoggle button";
+// Tap ripple on the LIST/CALENDAR/MAP and MONTH/YEAR buttons (see .elb-ripple in oxygen.css). Installed once from main.jsx.
+const TARGETS = ".elb-viewtoggle button, .mv-seg button";
 
 export function installRipple() {
   document.addEventListener("pointerdown", e => {
