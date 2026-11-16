@@ -27,11 +27,14 @@
   transition: transform .4s var(--oxy-spring), box-shadow .3s var(--oxy-ease),
               background-color .25s var(--oxy-ease), border-color .25s var(--oxy-ease), color .25s var(--oxy-ease) !important;
 }
-@media (prefers-reduced-motion: no-preference) {
+/* Lift only where a pointer can hover, so a tap on iPad/phone doesn't leave a button stuck raised */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .elb-pageheader button:hover:not(:disabled),
   .elb-viewtoggle button:hover,
   .elb-subtab:hover,
   .cbsel-btn:hover { transform: translateY(-1px); box-shadow: var(--oxy-hi), var(--oxy-sh1); }
+}
+@media (prefers-reduced-motion: no-preference) {
   .elb-pageheader button:active:not(:disabled),
   .elb-viewtoggle button:active,
   .elb-subtab:active,
@@ -72,7 +75,7 @@
 
 /* ── Logbook rows: smoother fill, accent edge on hover ── */
 .elb-app-root tbody tr { transition: background-color .3s var(--oxy-ease), border-color .3s !important; }
-.elb-app-root tbody tr:hover > td:first-child { box-shadow: inset 2px 0 0 var(--cb-accent); }
+@media (hover: hover) { .elb-app-root tbody tr:hover > td:first-child { box-shadow: inset 2px 0 0 var(--cb-accent); } }
 .elb-app-root tbody td { transition: box-shadow .3s var(--oxy-ease); }
 
 /* ── Focus: soft glow ring ── */
