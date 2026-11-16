@@ -1,4 +1,5 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, Fragment } from "react";
+import RollingTime from "./RollingTime";
 import { getCoords } from "./airportCoords";
 import {
   MONTHS, EMPTY_ROW, makeMonthRows, DEFAULT_ROWS,
@@ -39,11 +40,41 @@ export default function LogbookTab({
 
   // Plays the row's exit animation, then deletes it. `deleteRow` is the instance from this
   // render, so it still targets this month even if the user navigates during the animation.
+  // The caller closes the row's detail panel at the same moment, so the row waits one step
+  // for that collapse, then slides out, then is deleted.
+  const removingRef = useRef(false);
   const removeRow = (rowIdx, rowId) => {
-    if (leavingRowId != null) return;
-    setLeavingRowId(rowId);
-    setTimeout(() => { deleteRow(rowIdx); setLeavingRowId(null); }, exitMs());
+    if (leavingRowId != null || removingRef.current) return;
+    removingRef.current = true;
+    // 1.8x --elb-dur: keep in step with the [data-removing] rules in oxygen.css
+    const step = exitMs() * 1.8;
+    const tbody = tbodyRef.current;
+    if (tbody) tbody.dataset.removing = "1";
+    setTimeout(() => {
+      setLeavingRowId(rowId);
+      setTimeout(() => {
+        deleteRow(rowIdx); setLeavingRowId(null); removingRef.current = false;
+        delete tbody?.dataset.removing;
+      }, step);
+    }, step);
   };
+
+  // New row: the totals bar glides down so the table looks like it grows open, and a new
+  // row below the fold is scrolled into view smoothly.
+  const tbodyRef = useRef(null);
+  useLayoutEffect(() => {
+    if (newRowId == null) return;
+    const row = tbodyRef.current?.querySelector(`[data-search-row="${newRowId}"]`);
+    const totals = tbodyRef.current?.lastElementChild;
+    const ms = exitMs();
+    if (!row || !totals || !ms) return;
+    const h = row.offsetHeight + (row.nextElementSibling?.offsetHeight || 0);
+    totals.animate([{ transform: `translateY(${-h}px)` }, { transform: "none" }], { duration: ms * 2.5, easing: "cubic-bezier(.22,1,.36,1)" });
+  }, [newRowId]);
+  useEffect(() => {
+    if (newRowId == null) return;
+    document.querySelector(`[data-search-row="${newRowId}"]`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [newRowId]);
 
   const monthKey = `${selectedMonth}-${selectedYear}`;
 
@@ -256,7 +287,7 @@ export default function LogbookTab({
           );
         })()}
 
-        <tbody>
+        <tbody ref={tbodyRef}>
           {rows.map((row, rowIdx) => {
             const isEven = rowIdx % 2 === 0;
             const hasStdSta = row.std && row.sta;
@@ -805,7 +836,7 @@ export default function LogbookTab({
                   fontWeight: 700,
                   fontSize: 14,
                 }}>
-                  {totalsRow[k]}
+                  <RollingTime value={totalsRow[k]} />
                 </td>
               ))}
           </tr>

@@ -28,6 +28,7 @@ export function ToolbarSyncChip({ icon, compact, full, state, flash, identityCol
   const flashColor = state === "bad" ? "#ef4444" : "#22c55e";
   return (
     <button
+      className={showFlash ? "elb-chip-pop" : undefined}
       onClick={() => { onActivate?.(); setExpanded(e => !e); }}
       style={{
         display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",

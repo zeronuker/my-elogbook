@@ -48,6 +48,11 @@ function LoadingOverlay({ closing }) {
         {message}
       </div>
 
+      {/* Logbook-shaped placeholder rows (shimmer styles in oxygen.css) */}
+      <div style={{ width: 'min(520px, 86vw)', display: 'flex', flexDirection: 'column', gap: '8px' }} aria-hidden="true">
+        {[0, 1, 2, 3].map(i => <div key={i} className="elb-skel" style={{ opacity: 1 - i * 0.2 }} />)}
+      </div>
+
       {/* CSS Animation */}
       <style>{`
         @keyframes spin {

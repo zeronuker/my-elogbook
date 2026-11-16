@@ -39,6 +39,7 @@ const CONTENT_ORDER = [...MONTH_KEYS.map(k => `logbook:${k}`), ...TAB_IDS.filter
 const closingCls = (exit) => (exit.closing ? " elb-closing" : "");
 import FlightSummaryTab from "./FlightSummaryTab";
 import LogbookTab from "./LogbookTab";
+import MainTabs from "./MainTabs";
 import CalendarView from "./CalendarView";
 import MapView from "./MapView";
 import Select from "./Select";
@@ -1639,39 +1640,15 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         </div>
 
         {/* ── TABS ── */}
-        {/* Scroll clipping lives on this outer wrapper only — the inner row (below)
-            needs to stay unclipped so the active tab's -1px bleed can actually
-            paint over the divider instead of being cut off by overflow. */}
-        <div style={{ overflowX: "auto", overflowY: "hidden" }}>
-        <div className="elb-maintabs" style={{ display: "flex", gap: 4, alignItems: "flex-end", borderBottom: "1px solid var(--elb-border, #1e3a5f)" }}>
-          {[
+        <MainTabs
+          active={activeTab}
+          onChange={setActiveTab}
+          tabs={[
             { id: "logbook",  icon: <TabLogbookIcon />, label: "LOGBOOK" },
             { id: "summary",  icon: <TabSummaryIcon />, label: "FLIGHT SUMMARY" },
             { id: "ftl",      icon: <TabLimitsIcon />,  label: "COMPLIANCE" },
-          ].map(tab => (
-            <button key={tab.id} className="elb-maintab" onClick={() => setActiveTab(tab.id)} style={{
-              display: "flex", alignItems: "center", gap: 6,
-              background: activeTab === tab.id ? "var(--elb-bg, #0a0d12)" : "transparent",
-              borderTop: activeTab === tab.id ? "2px solid var(--elb-acc, #4fc3f7)" : "1px solid var(--elb-border, #1e3a5f)",
-              borderLeft: "1px solid var(--elb-border, #1e3a5f)",
-              borderRight: "1px solid var(--elb-border, #1e3a5f)",
-              borderBottom: activeTab === tab.id ? "1px solid var(--elb-bg, #0a0d12)" : "1px solid var(--elb-border, #1e3a5f)",
-              borderRadius: "5px 5px 0 0",
-              color: activeTab === tab.id ? "var(--elb-acc, #4fc3f7)" : "var(--elb-txt-muted, #5a7a9a)",
-              padding: "7px 18px",
-              fontSize: 13,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              cursor: "pointer",
-              fontFamily: "var(--elb-font, 'Courier New', monospace)",
-              marginBottom: activeTab === tab.id ? "-1px" : 0,
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-              transition: "color 0.15s, background-color 0.15s, border-color 0.15s",
-            }}>{tab.icon}{tab.label}</button>
-          ))}
-        </div>
-        </div>
+          ]}
+        />
 
       {/* ── CONTENT ── */}
       <div style={{ padding: "18px 24px" }}>
