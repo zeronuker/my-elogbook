@@ -91,17 +91,17 @@ const run = async width => {
 
   await page.click('button[title^="Settings"]')
   await sleep(SETTLE_MS)
-  const tabs = await page.$$eval('.sm-tab', ts => ts.length)
+  const tabs = await page.$$eval('.cbs-tab', ts => ts.length)
   for (let i = 0; i < tabs; i++) {
-    await page.evaluate(n => document.querySelectorAll('.sm-tab')[n].click(), i)
+    await page.evaluate(n => document.querySelectorAll('.cbs-tab')[n].click(), i)
     await check(`settings tab ${i + 1}`)
   }
-  await click('.sm-tab', 'MISC')
+  await click('.cbs-tab', 'ABOUT')
   await sleep(SETTLE_MS)
-  await click('.sm-misc-card', '', 1) // feedback
+  await click('.cbs-btns .cbs-btn', 'FEEDBACK') // feedback
   await check('feedback')
   await esc()
-  await click('.sm-misc-card', '', 0) // how-to guide
+  await click('.cbs-btns .cbs-btn', 'GUIDE') // how-to guide
   await sleep(SETTLE_MS)
   const chapters = await page.$$eval('.htg-select option', o => o.length)
   for (let i = 0; i < chapters; i++) {

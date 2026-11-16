@@ -499,7 +499,7 @@ function RemarksPanelMockup() {
 function DayNightSettingMockup() {
   return (
     <div style={{ background: BG, border: `1px solid ${BDR}`, borderRadius: 6, padding: "16px 20px", margin: "14px auto 20px", maxWidth: 400 }}>
-      <div style={{ fontSize: 9, letterSpacing: "0.12em", color: DIM, marginBottom: 12, fontFamily: F }}>SETTINGS → PREFERENCES · DAY/NIGHT METHOD</div>
+      <div style={{ fontSize: 9, letterSpacing: "0.12em", color: DIM, marginBottom: 12, fontFamily: F }}>SETTINGS → LOGBOOK · DAY/NIGHT METHOD</div>
       {[
         { label: "Fixed bands",  desc: "Night: 11:30 – 23:30 UTC. Simple, consistent.", selected: false },
         { label: "Dynamic",      desc: "Sun below −6° along the great-circle route. Most accurate.", selected: true },
@@ -691,11 +691,11 @@ function CarryForwardMockup() {
       </div>
       {/* 4-tab bar */}
       <div style={{ display: "flex", borderBottom: `1px solid ${BDR}`, background: "#080f1a" }}>
-        {["PROFILE", "APPEARANCE", "PREFERENCES", "MISC"].map((t, i) => (
-          <div key={t} style={{ flex: 1, padding: "7px 4px", fontSize: 8, fontFamily: F, letterSpacing: "0.06em", color: i === 0 ? A : DIM, borderBottom: i === 0 ? `2px solid ${A}` : "none", textAlign: "center", fontWeight: i === 0 ? 700 : 400 }}>{t}</div>
+        {["PROFILE", "APPEARANCE", "LOGBOOK", "ABOUT"].map((t, i) => (
+          <div key={t} style={{ flex: 1, padding: "7px 4px", fontSize: 8, fontFamily: F, letterSpacing: "0.06em", color: i === 2 ? A : DIM, borderBottom: i === 2 ? `2px solid ${A}` : "none", textAlign: "center", fontWeight: i === 2 ? 700 : 400 }}>{t}</div>
         ))}
       </div>
-      {/* Profile tab content — carry forward sub-section */}
+      {/* Logbook tab content — carry forward sub-section */}
       <div style={{ padding: "14px 16px" }}>
         <div style={{ fontSize: 9, letterSpacing: "0.14em", color: A, fontWeight: 700, fontFamily: F, marginBottom: 12 }}>// CARRY-FORWARD HOURS · per aircraft type · prior to using this app</div>
         <div style={{ background: BG2, border: `1px solid ${BDR}`, borderRadius: 4, padding: "10px 12px", marginBottom: 10 }}>
@@ -718,11 +718,12 @@ function CarryForwardMockup() {
 // ── Section 10 mockups ────────────────────────────────────────────────────────
 
 function SettingsMockup() {
+  // The shared ClaudeBorne Settings window: tabs down the left, the chosen tab on the right.
   const tabs = [
-    { label: "PROFILE",     hint: "name · airline · licence" },
-    { label: "APPEARANCE",  hint: "theme · font · density" },
-    { label: "PREFERENCES", hint: "date · day/night" },
-    { label: "MISC",        hint: "help · changelog" },
+    { label: "PROFILE",    hint: "pilot · licence · airline" },
+    { label: "APPEARANCE", hint: "theme · text · table · motion" },
+    { label: "LOGBOOK",    hint: "display · hours · duty · sync" },
+    { label: "ABOUT",      hint: "help · update · changelog" },
   ];
   return (
     <div style={{ background: BG, border: `1px solid ${BDR}`, borderRadius: 6, overflow: "hidden", margin: "14px auto 20px" }}>
@@ -730,16 +731,18 @@ function SettingsMockup() {
         <div style={{ fontSize: 10, color: A, letterSpacing: "0.14em", fontFamily: F, fontWeight: 700 }}>SETTINGS</div>
         <span style={{ color: DIM, fontSize: 14 }}>✕</span>
       </div>
-      <div style={{ display: "flex", borderBottom: `1px solid ${BDR}`, background: "#080f1a" }}>
-        {tabs.map((t, i) => (
-          <div key={t.label} style={{ flex: 1, padding: "8px 4px", fontSize: 8, fontFamily: F, letterSpacing: "0.05em", color: i === 0 ? A : DIM, borderBottom: i === 0 ? `2px solid ${A}` : "none", textAlign: "center" }}>
-            <div style={{ fontWeight: i === 0 ? 700 : 400 }}>{t.label}</div>
-            <div style={{ fontSize: 7, color: i === 0 ? DIM : "#1a3050", marginTop: 2 }}>{t.hint}</div>
-          </div>
-        ))}
-      </div>
-      <div style={{ padding: "12px 16px", fontSize: 9, color: DIM, fontFamily: F, letterSpacing: "0.08em" }}>
-        Tap any tab to configure →
+      <div style={{ display: "flex" }}>
+        <div style={{ width: "42%", borderRight: `1px solid ${BDR}`, background: "#080f1a", padding: "6px 0" }}>
+          {tabs.map((t, i) => (
+            <div key={t.label} style={{ padding: "7px 12px", fontFamily: F, borderLeft: i === 0 ? `2px solid ${A}` : "2px solid transparent", background: i === 0 ? BG2 : "transparent" }}>
+              <div style={{ fontSize: 8, letterSpacing: "0.08em", color: i === 0 ? A : DIM, fontWeight: i === 0 ? 700 : 400 }}>{t.label}</div>
+              <div style={{ fontSize: 7, color: i === 0 ? DIM : "#1a3050", marginTop: 2 }}>{t.hint}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ flex: 1, padding: "12px 14px", fontSize: 9, color: DIM, fontFamily: F, letterSpacing: "0.08em", lineHeight: 1.7 }}>
+          ← Pick a tab · its settings show here.<br />Changes save as you go.
+        </div>
       </div>
     </div>
   );
@@ -839,7 +842,7 @@ const SECTIONS = [
           <li><strong>🔍 Search</strong> — find any logged flight by airport, markings, captain, crew, or remarks (see Section 4).</li>
           <li><strong>⬡ Export / Import</strong> — export your logbook to Excel or PDF, or import from a previous Excel export.</li>
           <li><strong>🧭 Route Map</strong> — plot your logged sectors on a world map (see Section 4).</li>
-          <li><strong>⚙ Settings</strong> — profile, appearance, preferences, and account management. A badge appears if you have hidden columns.</li>
+          <li><strong>⚙ Settings</strong> — profile, appearance, logbook options, and app help and updates. A badge appears if you have hidden columns.</li>
           <li><strong>⏻ Sign Out</strong> — sign out of your account.</li>
         </ul>
         <h4>Period selector</h4>
@@ -886,8 +889,8 @@ const SECTIONS = [
           <li>Use the <strong>LIST | CALENDAR | MAP</strong> switch above the table. The list is where you enter and edit sectors.</li>
           <li>The calendar is view only: each day shows its sectors as colour-coded chips on a 24 h UTC timeline, with the route listed below. A sector that lands the next day runs across both days.</li>
           <li>The total hours at the top right of a day are for the sectors that land that day.</li>
-          <li>Tap a chip or route to jump to that sector in the list. The week can start on Monday or Sunday in Settings → Preferences.</li>
-          <li>The map shows where you flew in the selected <strong>MONTH</strong> or <strong>YEAR</strong>. Press play to fly the sectors one at a time in the order you logged them, or drag the timeline to step through them. Tap the speed button to change the pace, and the crosshair to make the camera follow the aircraft (the style is in Settings → Preferences). Tap an airport or route to list its flights, then tap one to open it in the list.</li>
+          <li>Tap a chip or route to jump to that sector in the list. The week can start on Monday or Sunday in Settings → Logbook.</li>
+          <li>The map shows where you flew in the selected <strong>MONTH</strong> or <strong>YEAR</strong>. Press play to fly the sectors one at a time in the order you logged them, or drag the timeline to step through them. Tap the speed button to change the pace, and the crosshair to make the camera follow the aircraft (the style is in Settings → Logbook). Tap an airport or route to list its flights, then tap one to open it in the list.</li>
         </ul>
         <h4>Adding a flight</h4>
         <ul>
@@ -960,7 +963,7 @@ const SECTIONS = [
         </ul>
         <h4>How to change the method</h4>
         <ul>
-          <li>Go to <strong>Settings → Preferences</strong></li>
+          <li>Go to <strong>Settings → Logbook</strong></li>
           <li>Under <strong>Day/Night Calculation</strong>, select your preferred method</li>
         </ul>
         <DayNightSettingMockup />
@@ -1055,7 +1058,7 @@ const SECTIONS = [
         <p>Carry forward hours are your total flight hours accumulated before you started using ClaudeBorne eLogBook. Adding them ensures your grand totals and lifetime hours are correct.</p>
         <h4>Setting up carry forward hours</h4>
         <ul>
-          <li>Go to <strong>Settings → Profile</strong></li>
+          <li>Go to <strong>Settings → Logbook</strong></li>
           <li>Scroll down to the <strong>Carry-forward hours</strong> section</li>
           <li>Tap <strong>+ Add Aircraft Type</strong></li>
           <li>Enter the aircraft type and your previous hours for each category (Day P1, Day P1 U/S, Day P2, Night P1, Night P1 U/S, Night P2)</li>
@@ -1070,13 +1073,12 @@ const SECTIONS = [
     id: 11, icon: "⚙️", title: "Settings",
     Content: () => (
       <div className="htg-content">
-        <p>The Settings panel gives you control over your pilot profile, display, and app behaviour. Open it via the <strong>⚙ Settings</strong> icon in the toolbar.</p>
+        <p>The Settings window gives you control over your pilot profile, display, and app behaviour. Open it via the <strong>⚙ Settings</strong> icon in the toolbar. The tabs are down the left (a column of icons on a phone); the chosen tab's settings show on the right. Changes save as you go, and <strong>Restore defaults</strong> at the bottom of Appearance and Logbook puts that tab back as it came (it asks first).</p>
         <SettingsMockup />
         <h4>Profile</h4>
         <ul>
           <li>Update your full name, date of birth, staff ID, licence number, licence type, airline, home base, and default rank</li>
           <li>Set defaults for aircraft type, markings, and captain name — these pre-fill new rows automatically</li>
-          <li>Manage <strong>Carry Forward Hours</strong> per aircraft type (see Section 10)</li>
         </ul>
         <h4>Appearance</h4>
         <ul>
@@ -1085,14 +1087,15 @@ const SECTIONS = [
           <li><strong>Table density</strong> — Compact or Relaxed row spacing, and Narrow or Wide columns</li>
           <li><strong>Column visibility</strong> — hide columns you don't need. Hidden columns leave a narrow stub in the header; click the stub to restore them</li>
         </ul>
-        <h4>Preferences</h4>
+        <h4>Logbook</h4>
         <ul>
+          <li>Manage <strong>Carry Forward Hours</strong> per aircraft type (see Section 10)</li>
           <li><strong>Day/Night calculation method</strong> — Fixed bands or Dynamic (see Section 7)</li>
           <li><strong>Duty buffers</strong> — pre-flight and post-flight time added around each sector for cumulative duty (FTL) calculations. Toggle off to set duty = flight time exactly</li>
           <li><strong>Duty Log Link</strong> — enter a sync code from the companion Duty Log app (Duty Log → Backup) to pull in crew and remarks automatically. Matches sectors by date and departure/arrival, and is read-only — it never overwrites your own entries</li>
           <li><strong>Date format</strong> and <strong>rows per page</strong> defaults</li>
         </ul>
-        <h4>Misc</h4>
+        <h4>About</h4>
         <ul>
           <li>Access this How-To Guide</li>
           <li>Send feedback or report a bug</li>
@@ -1100,7 +1103,7 @@ const SECTIONS = [
         </ul>
         <h4>Deleting your account</h4>
         <ul>
-          <li>Go to <strong>Settings → Misc → Danger Zone</strong></li>
+          <li>Go to <strong>Settings → Profile → Account</strong></li>
           <li>Tap <strong>Delete Account</strong></li>
           <li>You will be asked to re-authenticate before anything is deleted — entering your password or re-confirming with Google</li>
           <li>If you cancel the authentication prompt, nothing is deleted</li>

@@ -357,7 +357,7 @@ export const CHANGELOG = [
     ],
   },
   {
-    v: "v4.5", date: "November 2026", current: true,
+    v: "v4.5", date: "November 2026",
     title: "Autoland card & brightness slider",
     notes: [
       "NEW: Autoland card shows days since the last autoland, the 6-month count and the expiry (last autoland + 180 days), with date chips and arrival airport.",
@@ -368,6 +368,17 @@ export const CHANGELOG = [
       "IMP: Phone header: the toolbar shares the month/year picker row (at 639px and below).",
       "IMP: Cleaner screens: removed the row tint for remarks/autoland, helper texts and modal eyebrow labels.",
       "IMP: Smooth fade-ins for the logbook after sign-in, loading overlay, sync chips, errors and status lines.",
+    ],
+  },
+  {
+    v: "v4.6", date: "November 2026", current: true,
+    title: "New Settings window",
+    notes: [
+      "IMP: Settings has the new ClaudeBorne layout shared by every app: tabs down the left, the chosen tab on the right; full screen on a phone with a slim icon column.",
+      "IMP: Settings now save as you go. The Save and Cancel buttons are gone.",
+      "IMP: Tabs renamed and tidied: Preferences is now Logbook and Misc is now About. Carry-forward hours moved from Profile to Logbook.",
+      "IMP: Reset tab is now Restore defaults and asks before it changes anything. It shows on Appearance and Logbook only.",
+      "IMP: On/off settings are switches; options that need another one on (animation, duty buffers, brightness) fold away and back.",
     ],
   },
 ]

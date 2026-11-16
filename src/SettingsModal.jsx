@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import GoogleSignInButton from "./GoogleSignInButton";
-import ChamferFrame from "@brand/ChamferFrame";
 import { CHANGELOG } from "./changelog";
 import Changelog, { currentVersion } from "@brand/Changelog";
-import { useTransitionAnim } from "./useTransitionAnim";
+import SettingsWindow, { SettingsSection, SettingsRow, Seg, Switch, Reveal } from "@brand/SettingsWindow";
 import { useExitAnim } from "./useExitAnim";
 import Select from "./Select";
 import DatePicker from "./DatePicker";
 import { useEscClose } from "./useEscClose";
 import { useScrollLock } from "./useScrollLock";
+import { ANIM_SPEED_MS } from "./logbookConstants";
 
 // ════════════════════════════════════════════════════════════════════
-//  ClaudeBorne · eLogbook — Settings Modal (v6 brand rewrite)
+//  ClaudeBorne · eLogbook — Settings (the brand kit's shared SettingsWindow)
 // ════════════════════════════════════════════════════════════════════
 
 // ── Exports ─────────────────────────────────────────────────────────
@@ -105,15 +105,18 @@ function cfRowTotal(row) {
 }
 
 // ── Tabs ─────────────────────────────────────────────────────────────
+// The standard ClaudeBorne Settings window: tabs on the left, the chosen tab on the right.
 const SETTINGS_TABS = [
-  { id: "profile",     label: "Profile",     hint: "name · airline · licence" },
-  { id: "appearance",  label: "Appearance",  hint: "theme · font · density" },
-  { id: "preferences", label: "Preferences", hint: "date · auto-save · day/night" },
-  { id: "misc",        label: "Misc",        hint: "help · changelog" },
+  { id: "profile",    label: "Profile",    hint: "pilot · licence · airline",     icon: "user" },
+  { id: "appearance", label: "Appearance", hint: "theme · text · table · motion", icon: "palette" },
+  { id: "logbook",    label: "Logbook",    hint: "display · hours · duty · sync", icon: "logbook" },
+  { id: "about",      label: "About",      hint: "help · update · changelog",     icon: "about" },
 ];
+// tab ids used before the Settings redesign
+const OLD_TAB_IDS = { preferences: "logbook", misc: "about" };
 
 
-// ── Per-tab reset defaults ────────────────────────────────────────────
+// ── Per-tab defaults, for RESTORE DEFAULTS (Profile and About have none) ──
 const TAB_DEFAULTS = {
   appearance: {
     theme: "dark",
@@ -124,11 +127,12 @@ const TAB_DEFAULTS = {
     fontType: "courier",
     brightness: 100,
     accentPreset: "gradient",
+    panelExpandAnimation: true,
     animEnabled: true,
     animStyle: "slide",
     animSpeed: "normal",
   },
-  preferences: {
+  logbook: {
     dateFormat: "D",
     rowsPerPage: 15,
     weekStart: "monday",
@@ -140,42 +144,68 @@ const TAB_DEFAULTS = {
   },
 };
 
+// A typed change (a name, a code) is saved once typing pauses; a click saves at once.
+const SAVE_DELAY_MS = 500;
+
 
 // ════════════════════════════════════════════════════════════════════
 //  Main component
 // ════════════════════════════════════════════════════════════════════
 export default function SettingsModal({ open, onClose, settings, onSave, onPreview, userEmail, onDeleteAccount, onReauthAndDelete, onReauthAndDeleteGoogle, onReauthAndDeleteGooglePopup, userProvider, onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion, autoUpdateDisabled, setAutoUpdateDisabled, initialTab, dutyLogStatus }) {
-  const [tab, setTab]               = useState(initialTab || "profile");
+  const startTab = OLD_TAB_IDS[initialTab] || initialTab || "profile";
+  const [tab, setTab]               = useState(startTab);
   const [draft, setDraft]           = useState(settings || DEFAULT_SETTINGS);
   const [savedFlash, setSavedFlash] = useState(false);
-  const [resetFlash, setResetFlash] = useState(false);
-  const tabAnim = useTransitionAnim(tab, SETTINGS_TABS.map((t) => t.id), draft.animStyle);
+  const [footState, setFootState]   = useState(null); // null | "ask" | "done" (RESTORE DEFAULTS)
   const { mounted, closing } = useExitAnim(open);
   useScrollLock(mounted);
+  const dirty = useRef(false);
+  const draftRef = useRef(draft);
+  useEffect(() => { draftRef.current = draft; }, [draft]);
 
-  // Reset tab/flash when modal opens. If a caller passed initialTab (e.g. the
-  // hidden-columns chip/badge), honour it on each open — otherwise default to profile.
+  // Reset tab/flash when Settings opens. If a caller passed initialTab, honour it on each open.
   useEffect(() => {
     if (open) {
-      setTab(initialTab || "profile");
+      setTab(OLD_TAB_IDS[initialTab] || initialTab || "profile");
       setSavedFlash(false);
+      setFootState(null);
     }
   }, [open, initialTab]);
 
-  // Sync draft from settings only when the modal opens — NOT on every settings
-  // reference change while open (auto-save writes settings to Firestore, the
-  // onSnapshot confirmation fires setSettings with a new object reference, which
-  // was resetting the draft mid-edit and discarding unsaved column/appearance changes).
+  // Sync draft from settings only when Settings opens — NOT on every settings
+  // reference change while open (the cloud save's onSnapshot confirmation fires
+  // setSettings with a new object reference, which would reset the draft mid-edit).
   useEffect(() => {
     if (open) {
       setDraft({ ...DEFAULT_SETTINGS, ...(settings || {}) });
+      dirty.current = false;
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEscClose(open, onClose);
+  // Save as you go: every change is saved shortly after it is made.
+  const save = () => {
+    if (!dirty.current) return;
+    dirty.current = false;
+    onSave({ ...draftRef.current, settingsSavedAt: new Date().toISOString() });
+    setSavedFlash(true);
+  };
+  useEffect(() => {
+    if (!open || !dirty.current) return undefined;
+    const t = setTimeout(save, SAVE_DELAY_MS);
+    return () => clearTimeout(t);
+  }, [draft, open]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!savedFlash) return undefined;
+    const t = setTimeout(() => setSavedFlash(false), 1800);
+    return () => clearTimeout(t);
+  }, [savedFlash]);
+
+  // Closing saves anything still waiting first.
+  const close = () => { save(); onClose(); };
+  useEscClose(open, close);
 
   // Live preview — push draft to parent on every change so the app
-  // re-renders with the new theme/font/density behind the modal
+  // re-renders with the new theme/font/density behind the window.
   // The text size eases toward its target each frame so the app grows/shrinks
   // smoothly while dragging; with animations off it applies instantly.
   const shownSizeRef = useRef(null);
@@ -196,86 +226,48 @@ export default function SettingsModal({ open, onClose, settings, onSave, onPrevi
 
   if (!mounted) return null;
 
-  const exitCls = closing ? " elb-closing" : "";
-  const upd = (patch) => setDraft((prev) => ({ ...prev, ...patch }));
+  const upd = (patch) => { dirty.current = true; setDraft((prev) => ({ ...prev, ...patch })); };
+  const changeTab = (id) => { setTab(id); setFootState(null); };
 
-  const handleSave = async () => {
-    await onSave({ ...draft, settingsSavedAt: new Date().toISOString() });
-    setSavedFlash(true);
-    setTimeout(() => setSavedFlash(false), 3000);
-  };
-
-  const lastSaved = settings?.settingsSavedAt ? new Date(settings.settingsSavedAt) : null;
-  const lastSavedText = lastSaved
-    ? `Last saved — ${lastSaved.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} · ${lastSaved.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
-    : "Not saved yet";
-
-  const handleResetTab = () => {
+  const restoreDefaults = () => {
     const defaults = TAB_DEFAULTS[tab];
     if (!defaults) return;
-    setDraft(prev => ({ ...prev, ...defaults }));
-    setResetFlash(true);
-    setTimeout(() => setResetFlash(false), 2000);
+    upd(defaults);
+    setFootState("done");
+    setTimeout(() => setFootState((s) => (s === "done" ? null : s)), 1800);
   };
+
+  const tabLabel = SETTINGS_TABS.find((t) => t.id === tab)?.label || "";
+  let footer = <span className={savedFlash ? "cbs-ok" : ""}>{savedFlash ? "✓ Saved" : "Changes save as you go"}</span>;
+  if (TAB_DEFAULTS[tab]) {
+    footer = footState === "ask" ? (
+      <div className="cbs-foot-btns">
+        <span className="cbs-ask">Put {tabLabel} back to defaults?</span>
+        <button type="button" className="cbs-btn" onClick={() => setFootState(null)}>Cancel</button>
+        <button type="button" className="cbs-btn primary" onClick={restoreDefaults}>Restore</button>
+      </div>
+    ) : footState === "done" ? (
+      <span className="cbs-ok">✓ Defaults restored</span>
+    ) : (
+      <div className="cbs-foot-btns">
+        {savedFlash && <span className="cbs-ok">✓ Saved</span>}
+        <button type="button" className="cbs-btn" onClick={() => setFootState("ask")}>Restore defaults</button>
+      </div>
+    );
+  }
+
+  const anim = { style: draft.animStyle === "stagger" ? "cascade" : draft.animStyle, ms: draft.animEnabled === false ? 0 : ANIM_SPEED_MS[draft.animSpeed] || ANIM_SPEED_MS.normal };
 
   return (
     <>
       <style>{settingsCss}</style>
-      <div className={"sm-backdrop elb-fade" + exitCls} onClick={onClose} />
-      <ChamferFrame className={"sm-modal elb-pop" + exitCls} role="dialog" aria-modal="true" aria-label="Settings">
-
-        {/* ── HEAD ── */}
-        <header className="sm-head">
-          <div>
-            <h2 className="sm-title">Settings</h2>
-          </div>
-          <button className="sm-close" onClick={onClose} aria-label="Close">
-            <SmCloseIcon />
-          </button>
-        </header>
-
-        {/* ── TABS ── */}
-        <nav className="sm-tabs">
-          {SETTINGS_TABS.map((st) => (
-            <button
-              key={st.id}
-              className={`sm-tab${tab === st.id ? " on" : ""}`}
-              onClick={() => setTab(st.id)}
-              style={{ position: "relative" }}
-            >
-              <span className="sm-tab-label">{st.label}</span>
-              <span className="sm-tab-hint">{st.hint}</span>
-            </button>
-          ))}
-        </nav>
-
-        {/* ── BODY ── */}
-        <div key={tab} className="sm-body">
-          <div className={tabAnim.className} style={tabAnim.style}>
-          {tab === "profile"     && <ProfileTab     d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} onReauthAndDeleteGoogle={onReauthAndDeleteGoogle} onReauthAndDeleteGooglePopup={onReauthAndDeleteGooglePopup} userProvider={userProvider} />}
-          {tab === "appearance"  && <AppearanceTab  d={draft} upd={upd} />}
-          {tab === "preferences" && <PreferencesTab d={draft} upd={upd} dutyLogStatus={dutyLogStatus} />}
-          {tab === "misc"        && <MiscTab onFeedback={onFeedback} onGuide={onGuide} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} currentBuildVersion={currentBuildVersion} autoUpdateDisabled={autoUpdateDisabled} setAutoUpdateDisabled={setAutoUpdateDisabled} />}
-          </div>
-        </div>
-
-        {/* ── FOOT ── */}
-        <footer className="sm-foot">
-          <div className={`sm-foot-note${savedFlash ? " saved" : resetFlash ? " reset" : ""}`}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-            </svg>
-            {savedFlash ? "✓ Saved" : resetFlash ? "Tab reset to defaults" : lastSavedText}
-          </div>
-          <div className="sm-foot-btns">
-            {TAB_DEFAULTS[tab] && (
-              <button className="cb-btn-reset" onClick={handleResetTab}>Reset tab</button>
-            )}
-            {tab !== "misc" && <button className="cb-btn-ghost" onClick={onClose}>Cancel</button>}
-            {tab !== "misc" && <button className="cb-btn-primary" onClick={handleSave}>Save</button>}
-          </div>
-        </footer>
-      </ChamferFrame>
+      <SettingsWindow appName="eLogbook" version={currentVersion(CHANGELOG)} tabs={SETTINGS_TABS} active={tab}
+        onTab={changeTab} onClose={close} closing={closing} anim={anim} footer={footer} zIndex={2090}>
+        {tab === "profile"    && <ProfileTab    d={draft} upd={upd} userEmail={userEmail} onDeleteAccount={onDeleteAccount} onReauthAndDelete={onReauthAndDelete} onReauthAndDeleteGoogle={onReauthAndDeleteGoogle} onReauthAndDeleteGooglePopup={onReauthAndDeleteGooglePopup} userProvider={userProvider} />}
+        {tab === "appearance" && <AppearanceTab d={draft} upd={upd} />}
+        {tab === "logbook"    && <LogbookTab    d={draft} upd={upd} dutyLogStatus={dutyLogStatus} />}
+        {tab === "about"      && <AboutTab onFeedback={onFeedback} onGuide={onGuide} needRefresh={needRefresh} updateServiceWorker={updateServiceWorker} checkForUpdate={checkForUpdate} checkingUpdate={checkingUpdate} updateChecked={updateChecked} currentBuildVersion={currentBuildVersion} autoUpdateDisabled={autoUpdateDisabled} setAutoUpdateDisabled={setAutoUpdateDisabled} />}
+      </SettingsWindow>
     </>
   );
 }
@@ -291,168 +283,54 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
   const [needsGoogleReauth, setNeedsGoogleReauth] = useState(false);
   const [password, setPassword]           = useState('');
   const isGoogle = userProvider === 'google.com';
-  const rows = d.carryForward || [CF_EMPTY()];
 
   return (
-    <div className="sm-tab-content">
+    <>
+      <SettingsSection title="Pilot">
+        <SettingsRow label="Full name" wide>
+          <TextInput value={d.fullName || ""} onChange={(v) => upd({ fullName: v })} placeholder="Your full name" />
+        </SettingsRow>
+        <SettingsRow label="Date of birth" wide>
+          <DatePicker className="cbs-input" value={d.dateOfBirth || ""} onChange={(v) => upd({ dateOfBirth: v })} />
+        </SettingsRow>
+        <SettingsRow label="Staff ID" wide>
+          <TextInput value={d.staffId || ""} onChange={(v) => upd({ staffId: v })} placeholder="e.g. AK-12345" />
+        </SettingsRow>
+        <SettingsRow label="Email address" hint="Linked to your account. Cannot be changed here." wide>
+          <TextInput value={userEmail || ""} readOnly />
+        </SettingsRow>
+      </SettingsSection>
 
-      <SmSectionHead title="Pilot" />
+      <SettingsSection title="Licence">
+        <SettingsRow label="Licence type" wide>
+          <Picker value={d.licenceType || "ATPL(A)"} options={["ATPL(A)", "CPL(A)", "MPL", "PPL(A)"]} onChange={(v) => upd({ licenceType: v })} />
+        </SettingsRow>
+        <SettingsRow label="Licence number" wide>
+          <TextInput value={d.licenceNumber || ""} onChange={(v) => upd({ licenceNumber: v })} placeholder="e.g. MY-ATPL-001234" />
+        </SettingsRow>
+      </SettingsSection>
 
-      <SmField label="Full name">
-        <SmInput
-          value={d.fullName || ""}
-          onChange={(v) => upd({ fullName: v })}
-          placeholder="Your full name"
-        />
-      </SmField>
-      <SmField label="Date of birth">
-        <SmInputDate
-          value={d.dateOfBirth || ""}
-          onChange={(v) => upd({ dateOfBirth: v })}
-        />
-      </SmField>
-      <SmField label="Staff ID">
-        <SmInput
-          value={d.staffId || ""}
-          onChange={(v) => upd({ staffId: v })}
-          placeholder="e.g. AK-12345"
-        />
-      </SmField>
-      <SmField label="Email address" hint="Linked to your account. Cannot be changed here.">
-        <SmInput value={userEmail || ""} readOnly />
-      </SmField>
-
-      <SmSectionHead title="Licence" />
-
-      <SmField label="Licence type">
-        <SmSelect
-          value={d.licenceType || "ATPL(A)"}
-          options={["ATPL(A)", "CPL(A)", "MPL", "PPL(A)"]}
-          onChange={(v) => upd({ licenceType: v })}
-        />
-      </SmField>
-      <SmField label="Licence number">
-        <SmInput
-          value={d.licenceNumber || ""}
-          onChange={(v) => upd({ licenceNumber: v })}
-          placeholder="e.g. MY-ATPL-001234"
-        />
-      </SmField>
-
-      <SmSectionHead title="Operator" />
-
-      <SmField label="Airline">
-        <SmInput
-          value={d.airline || ""}
-          onChange={(v) => upd({ airline: v })}
-          placeholder="e.g. Batik Air Malaysia"
-        />
-      </SmField>
-      <SmField label="Default rank" hint="Triggers auto-fill of SELF as captain when entering new sectors.">
-        <SmSelect
-          value={d.defaultRank || ""}
-          options={["", "Flight Examiner", "Flight Instructor", "Captain", "Senior First Officer", "First Officer", "Second Officer", "Cadet"]}
-          labels={["— Select rank —", "Flight Examiner", "Flight Instructor", "Captain", "Senior First Officer", "First Officer", "Second Officer", "Cadet"]}
-          onChange={(v) => upd({ defaultRank: v })}
-        />
-      </SmField>
-      <SmField label="Home base">
-        <SmInput
-          value={d.homeBase || ""}
-          onChange={(v) => upd({ homeBase: v })}
-          placeholder="e.g. WMKK · Kuala Lumpur"
-        />
-      </SmField>
-
-      <SmSectionHead title="Carry-forward hours" />
-      <div style={{ overflowX: "auto" }}>
-        <table className="sm-cf-table">
-          <thead>
-            <tr>
-              <th>Aircraft Type</th>
-              <th>Day P1</th>
-              <th>Day P1 U/S</th>
-              <th>Day P2</th>
-              <th>Night P1</th>
-              <th>Night P1 U/S</th>
-              <th>Night P2</th>
-              <th>Total</th>
-              <th style={{ width: 24 }} />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, i) => {
-              const setRow = (patch) => {
-                const next = rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r));
-                upd({ carryForward: next });
-              };
-              return (
-                <tr key={i}>
-                  <td>
-                    <input
-                      className="sm-cf-input sm-cf-input-type"
-                      type="text"
-                      value={row.type || ""}
-                      onChange={(e) => setRow({ type: e.target.value.toUpperCase() })}
-                      placeholder="B737"
-                    />
-                  </td>
-                  {CF_FIELDS.map((field) => (
-                    <td key={field}>
-                      <input
-                        className="sm-cf-input"
-                        type="text"
-                        value={row[field] || ""}
-                        onChange={(e) => setRow({ [field]: e.target.value })}
-                        placeholder="00:00"
-                      />
-                    </td>
-                  ))}
-                  <td className="sm-cf-total-cell">
-                    {cfRowTotal(row) || <span style={{ opacity: 0.3 }}>—</span>}
-                  </td>
-                  <td className="sm-cf-action-cell">
-                    {rows.length > 1 && (
-                      <button
-                        type="button"
-                        className="sm-cf-remove"
-                        title="Remove row"
-                        onClick={() => upd({ carryForward: rows.filter((_, idx) => idx !== i) })}
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-        <button
-          type="button"
-          className="sm-cf-add"
-          onClick={() => upd({ carryForward: [...rows, CF_EMPTY()] })}
-        >
-          + Add aircraft type
-        </button>
-        {rows.some((r) => !r.type) && (
-          <button
-            type="button"
-            className="sm-cf-add sm-cf-add-danger"
-            onClick={() => {
-              const filtered = rows.filter((r) => r.type);
-              upd({ carryForward: filtered.length ? filtered : [CF_EMPTY()] });
-            }}
-          >
-            ✕ Remove empty rows
-          </button>
-        )}
-      </div>
+      <SettingsSection title="Operator">
+        <SettingsRow label="Airline" wide>
+          <TextInput value={d.airline || ""} onChange={(v) => upd({ airline: v })} placeholder="e.g. Batik Air Malaysia" />
+        </SettingsRow>
+        <SettingsRow label="Default rank" hint="Fills in SELF as captain when you enter new sectors" wide>
+          <Picker
+            value={d.defaultRank || ""}
+            options={["", "Flight Examiner", "Flight Instructor", "Captain", "Senior First Officer", "First Officer", "Second Officer", "Cadet"]}
+            labels={["— Select rank —", "Flight Examiner", "Flight Instructor", "Captain", "Senior First Officer", "First Officer", "Second Officer", "Cadet"]}
+            onChange={(v) => upd({ defaultRank: v })}
+          />
+        </SettingsRow>
+        <SettingsRow label="Home base" wide>
+          <TextInput value={d.homeBase || ""} onChange={(v) => upd({ homeBase: v })} placeholder="e.g. WMKK · Kuala Lumpur" />
+        </SettingsRow>
+      </SettingsSection>
 
       {/* ── DELETE ACCOUNT ── */}
-      <SmSectionHead title="Account" />
+      <SettingsSection title="Account">
+        <SettingsRow full>
+          <div style={{ width: "100%" }}>
       {!confirmDelete ? (
         <button
           type="button"
@@ -607,7 +485,10 @@ function ProfileTab({ d, upd, userEmail, onDeleteAccount, onReauthAndDelete, onR
           ⚠ {deleteError}
         </div>
       )}
-    </div>
+          </div>
+        </SettingsRow>
+      </SettingsSection>
+    </>
   );
 }
 
@@ -621,174 +502,104 @@ function AppearanceTab({ d, upd }) {
   const fontType   = d.fontType     || "courier";
   const brightness = Number(d.brightness) || 100;
   const accentPreset = d.accentPreset || "gradient";
-
+  const animOn = d.animEnabled !== false;
 
   return (
-    <div className="sm-tab-content">
-
-      <SmSectionHead title="Theme" />
-      <SmRow>
-        <SmSegmented
-          value={theme}
-          onChange={(v) => upd({ theme: v })}
-          options={[
-            { value: "dark",  label: "Dark"  },
-            { value: "light", label: "Light" },
-          ]}
-        />
-      </SmRow>
-
-      {theme === "dark" && (
-        <div className="sm-section-inline">
-          <SmField
-            label="Brightness"
-          >
-            <SmSlider
-              min={60} max={100} step={1}
-              value={brightness}
-              onChange={(v) => upd({ brightness: v })}
-              ticks={["60", "70", "80", "90", "100"]}
-              unit="%"
-            />
-          </SmField>
-        </div>
-      )}
-
-      <SmSectionHead title="Accent" />
-      <SmRow>
-        <div className="sm-accent-grid">
-          {ACCENT_PRESETS.map((p) => (
-            <button
-              key={p.id}
-              className={`sm-accent${accentPreset === p.id ? " on" : ""}`}
-              onClick={() => upd({ accentPreset: p.id })}
-              aria-label={p.name}
-            >
-              <span
-                className="sm-accent-swatch"
-                style={{
-                  background:
-                    p.colors.length > 1
-                      ? `linear-gradient(135deg, ${p.colors.join(", ")})`
-                      : p.single,
-                }}
-              />
-              <span className="sm-accent-name">{p.name}</span>
-            </button>
-          ))}
-        </div>
-      </SmRow>
-
-      <SmSectionHead title="Font family" />
-      <SmRow>
-        <div className="sm-font-grid">
-          {FONT_CHOICES.map((f) => (
-            <button
-              key={f.id}
-              className={`sm-font${fontType === f.id ? " on" : ""}`}
-              onClick={() => upd({ fontType: f.id })}
-            >
-              <span className="sm-font-sample" style={{ fontFamily: f.css }}>{f.sample}</span>
-              <span className="sm-font-name">{f.name}</span>
-            </button>
-          ))}
-        </div>
-      </SmRow>
-
-      <SmSectionHead title="Text size" />
-      <SmRow>
-        <SmSlider
-          min={12} max={18} step={0.1}
-          value={fontSize}
-          onChange={(v) => upd({ fontSize: v })}
-          ticks={["12", "13", "14", "15", "16", "17", "18"]}
-          unit="px"
-        />
-      </SmRow>
-
-      <SmSectionHead title="Table density" />
-      <SmRow>
-        <div className="sm-density-grid">
-          <div className="sm-density-col">
-            <div className="sm-density-label">ROWS</div>
-            <SmSegmented
-              value={density}
-              onChange={(v) => upd({ tableDensity: v })}
-              options={[
-                { value: "compact", label: "Compact" },
-                { value: "relaxed", label: "Relaxed" },
-              ]}
-            />
+    <>
+      <SettingsSection title="Theme">
+        <SettingsRow label="Mode">
+          <Seg label="Theme" value={theme} onChange={(v) => upd({ theme: v })}
+            options={[{ value: "dark", label: "Dark" }, { value: "light", label: "Light" }]} />
+        </SettingsRow>
+        <Reveal open={theme === "dark"}>
+          <SettingsRow label="Brightness" hint="Dark theme only" full>
+            <SmSlider min={60} max={100} step={1} value={brightness} onChange={(v) => upd({ brightness: v })}
+              ticks={["60", "70", "80", "90", "100"]} unit="%" />
+          </SettingsRow>
+        </Reveal>
+        <SettingsRow label="Accent" full>
+          <div className="sm-accent-grid">
+            {ACCENT_PRESETS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className={`sm-accent${accentPreset === p.id ? " on" : ""}`}
+                onClick={() => upd({ accentPreset: p.id })}
+                aria-label={p.name}
+                aria-pressed={accentPreset === p.id}
+              >
+                <span
+                  className="sm-accent-swatch"
+                  style={{ background: p.colors.length > 1 ? `linear-gradient(135deg, ${p.colors.join(", ")})` : p.single }}
+                />
+                <span className="sm-accent-name">{p.name}</span>
+              </button>
+            ))}
           </div>
-          <div className="sm-density-col">
-            <div className="sm-density-label">COLUMNS</div>
-            <SmSegmented
-              value={d.columnDensity === "wide" ? "wide" : "narrow"}
-              onChange={(v) => upd({ columnDensity: v })}
-              options={[
-                { value: "narrow",  label: "Narrow"  },
-                { value: "wide",    label: "Wide"    },
-              ]}
-            />
+        </SettingsRow>
+      </SettingsSection>
+
+      <SettingsSection title="Text">
+        <SettingsRow label="Font family" full>
+          <div className="sm-font-grid">
+            {FONT_CHOICES.map((f) => (
+              <button key={f.id} type="button" className={`sm-font${fontType === f.id ? " on" : ""}`}
+                aria-pressed={fontType === f.id} onClick={() => upd({ fontType: f.id })}>
+                <span className="sm-font-sample" style={{ fontFamily: f.css }}>{f.sample}</span>
+                <span className="sm-font-name">{f.name}</span>
+              </button>
+            ))}
           </div>
-        </div>
-      </SmRow>
+        </SettingsRow>
+        <SettingsRow label="Text size" full>
+          <SmSlider min={12} max={18} step={0.1} value={fontSize} onChange={(v) => upd({ fontSize: v })}
+            ticks={["12", "13", "14", "15", "16", "17", "18"]} unit="px" />
+        </SettingsRow>
+      </SettingsSection>
 
-      <SmField label="Auto-hide empty columns">
-        <SmToggle
-          checked={d.autoHideEmptyCols !== false}
-          onChange={(v) => upd({ autoHideEmptyCols: v })}
-        />
-      </SmField>
+      <SettingsSection title="Table">
+        <SettingsRow label="Rows">
+          <Seg label="Row density" value={density} onChange={(v) => upd({ tableDensity: v })}
+            options={[{ value: "compact", label: "Compact" }, { value: "relaxed", label: "Relaxed" }]} />
+        </SettingsRow>
+        <SettingsRow label="Columns">
+          <Seg label="Column density" value={d.columnDensity === "wide" ? "wide" : "narrow"} onChange={(v) => upd({ columnDensity: v })}
+            options={[{ value: "narrow", label: "Narrow" }, { value: "wide", label: "Wide" }]} />
+        </SettingsRow>
+        <SettingsRow label="Auto-hide empty columns">
+          <Switch label="Auto-hide empty columns" on={d.autoHideEmptyCols !== false} onChange={(v) => upd({ autoHideEmptyCols: v })} />
+        </SettingsRow>
+      </SettingsSection>
 
-      <SmSectionHead title="Animation" />
-      <SmField label="Enable animations">
-        <SmToggle
-          checked={d.animEnabled !== false}
-          onChange={(v) => upd({ animEnabled: v })}
-        />
-      </SmField>
-      {d.animEnabled !== false && (
-        <>
-          <SmField label="Animate row detail panel">
-            <SmToggle
-              checked={d.panelExpandAnimation !== false}
-              onChange={(v) => upd({ panelExpandAnimation: v })}
-            />
-          </SmField>
-          <SmField label="Transition style">
-            <SmSegmented
+      <SettingsSection title="Animation">
+        <SettingsRow label="Enable animations" hint="Also off when your device has reduced motion turned on">
+          <Switch label="Enable animations" on={animOn} onChange={(v) => upd({ animEnabled: v })} />
+        </SettingsRow>
+        <Reveal open={animOn}>
+          <SettingsRow label="Animate row detail panel">
+            <Switch label="Animate row detail panel" on={d.panelExpandAnimation !== false} onChange={(v) => upd({ panelExpandAnimation: v })} />
+          </SettingsRow>
+          <SettingsRow label="Transition style" wide>
+            <Seg label="Transition style"
               value={["slide", "rise", "stagger"].includes(d.animStyle) ? d.animStyle : "slide"}
               onChange={(v) => upd({ animStyle: v })}
-              options={[
-                { value: "slide",   label: "Slide"   },
-                { value: "rise",    label: "Fade rise" },
-                { value: "stagger", label: "Cascade" },
-              ]}
-            />
-          </SmField>
-          <SmField label="Speed">
-            <SmSegmented
-              fill
-              value={d.animSpeed || "normal"}
-              onChange={(v) => upd({ animSpeed: v })}
-              options={[
-                { value: "normal", label: "Normal" },
-                { value: "slow",   label: "Slow"   },
-                { value: "slower", label: "Slower" },
-              ]}
-            />
-          </SmField>
-        </>
-      )}
-    </div>
+              options={[{ value: "slide", label: "Slide" }, { value: "rise", label: "Fade rise" }, { value: "stagger", label: "Cascade" }]} />
+          </SettingsRow>
+          <SettingsRow label="Speed" wide>
+            <Seg label="Animation speed" value={d.animSpeed || "normal"} onChange={(v) => upd({ animSpeed: v })}
+              options={[{ value: "normal", label: "Normal" }, { value: "slow", label: "Slow" }, { value: "slower", label: "Slower" }]} />
+          </SettingsRow>
+        </Reveal>
+      </SettingsSection>
+    </>
   );
 }
 
 // ════════════════════════════════════════════════════════════════════
-//  PREFERENCES TAB
+//  LOGBOOK TAB
 // ════════════════════════════════════════════════════════════════════
-function PreferencesTab({ d, upd, dutyLogStatus }) {
+function LogbookTab({ d, upd, dutyLogStatus }) {
+  const rows = d.carryForward || [CF_EMPTY()];
   const dlStatus = dutyLogStatus || { state: "idle" };
   const dlStatusText = {
     loading:   { text: "Checking…", color: "var(--elb-txt-muted, #7c87a3)" },
@@ -799,198 +610,205 @@ function PreferencesTab({ d, upd, dutyLogStatus }) {
   }[dlStatus.state];
 
   return (
-    <div className="sm-tab-content">
+    <>
+      <SettingsSection title="Display">
+        <SettingsRow label="Date format" wide>
+          <Seg label="Date format" value={d.dateFormat || "D"} onChange={(v) => upd({ dateFormat: v })}
+            options={[{ value: "D", label: "D" }, { value: "DD", label: "DD" }, { value: "DD MMM", label: "DD MMM" }]} />
+        </SettingsRow>
+        <SettingsRow label="Rows per page" wide>
+          <Picker value={String(d.rowsPerPage || 15)} options={["10", "15", "20", "30", "50"]}
+            labels={["10 rows", "15 rows (default)", "20 rows", "30 rows", "50 rows"]}
+            onChange={(v) => upd({ rowsPerPage: Number(v) })} />
+        </SettingsRow>
+        <SettingsRow label="Calendar week starts on">
+          <Seg label="Week starts on" value={d.weekStart || "monday"} onChange={(v) => upd({ weekStart: v })}
+            options={[{ value: "monday", label: "Monday" }, { value: "sunday", label: "Sunday" }]} />
+        </SettingsRow>
+        <SettingsRow label="Map: follow the aircraft" wide>
+          <Picker value={d.mapFollow || "cruise"} options={["cruise", "frame", "zoom", "pan"]}
+            labels={["Cruise (default)", "Frame", "Close", "Pan"]} onChange={(v) => upd({ mapFollow: v })} />
+        </SettingsRow>
+      </SettingsSection>
 
-      <SmSectionHead title="Logbook display" />
+      <SettingsSection title="Carry-forward hours">
+        <SettingsRow hint="Hours flown before this logbook, by aircraft type" full>
+          <div style={{ width: "100%" }}>
+      <div style={{ overflowX: "auto" }}>
+        <table className="sm-cf-table">
+          <thead>
+            <tr>
+              <th>Aircraft Type</th>
+              <th>Day P1</th>
+              <th>Day P1 U/S</th>
+              <th>Day P2</th>
+              <th>Night P1</th>
+              <th>Night P1 U/S</th>
+              <th>Night P2</th>
+              <th>Total</th>
+              <th style={{ width: 24 }} />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => {
+              const setRow = (patch) => {
+                const next = rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r));
+                upd({ carryForward: next });
+              };
+              return (
+                <tr key={i}>
+                  <td>
+                    <input
+                      className="sm-cf-input sm-cf-input-type"
+                      type="text"
+                      value={row.type || ""}
+                      onChange={(e) => setRow({ type: e.target.value.toUpperCase() })}
+                      placeholder="B737"
+                    />
+                  </td>
+                  {CF_FIELDS.map((field) => (
+                    <td key={field}>
+                      <input
+                        className="sm-cf-input"
+                        type="text"
+                        value={row[field] || ""}
+                        onChange={(e) => setRow({ [field]: e.target.value })}
+                        placeholder="00:00"
+                      />
+                    </td>
+                  ))}
+                  <td className="sm-cf-total-cell">
+                    {cfRowTotal(row) || <span style={{ opacity: 0.3 }}>—</span>}
+                  </td>
+                  <td className="sm-cf-action-cell">
+                    {rows.length > 1 && (
+                      <button
+                        type="button"
+                        className="sm-cf-remove"
+                        title="Remove row"
+                        onClick={() => upd({ carryForward: rows.filter((_, idx) => idx !== i) })}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+        <button
+          type="button"
+          className="sm-cf-add"
+          onClick={() => upd({ carryForward: [...rows, CF_EMPTY()] })}
+        >
+          + Add aircraft type
+        </button>
+        {rows.some((r) => !r.type) && (
+          <button
+            type="button"
+            className="sm-cf-add sm-cf-add-danger"
+            onClick={() => {
+              const filtered = rows.filter((r) => r.type);
+              upd({ carryForward: filtered.length ? filtered : [CF_EMPTY()] });
+            }}
+          >
+            ✕ Remove empty rows
+          </button>
+        )}
+      </div>
+          </div>
+        </SettingsRow>
+      </SettingsSection>
 
-      <SmField label="Date format">
-        <SmSegmented
-          value={d.dateFormat || "D"}
-          onChange={(v) => upd({ dateFormat: v })}
-          options={[
-            { value: "D",      label: "D"      },
-            { value: "DD",     label: "DD"     },
-            { value: "DD MMM", label: "DD MMM" },
-          ]}
-        />
-      </SmField>
+      <SettingsSection title="Day / night">
+        <SettingsRow label="Method" wide>
+          <Seg label="Day and night method" value={d.dayNightMethod || "fixed"} onChange={(v) => upd({ dayNightMethod: v })}
+            options={[{ value: "fixed", label: "Fixed bands" }, { value: "sunrise", label: "Dynamic" }]} />
+        </SettingsRow>
+        <SmHint>
+          <b>Fixed Bands</b> · Night = 11:30 – 23:30 UTC. Same boundaries everywhere.<br />
+          <b>Dynamic</b> · Night = civil twilight (−6°) tracked minute by minute along the route. Falls back to Fixed if either airport is unavailable.
+        </SmHint>
+      </SettingsSection>
 
-      <SmField label="Rows per page">
-        <SmSelect
-          value={String(d.rowsPerPage || 15)}
-          options={["10", "15", "20", "30", "50"]}
-          labels={["10 rows", "15 rows (default)", "20 rows", "30 rows", "50 rows"]}
-          onChange={(v) => upd({ rowsPerPage: Number(v) })}
-        />
-      </SmField>
+      <SettingsSection title="Duty buffers">
+        <SettingsRow label="Apply standard formula" hint="Adds a pre- and post-flight buffer to each sector">
+          <Switch label="Apply standard formula" on={!!d.useStandardFormula} onChange={(v) => upd({ useStandardFormula: v })} />
+        </SettingsRow>
+        <Reveal open={!!d.useStandardFormula}>
+          <SettingsRow label="Pre-flight buffer" wide>
+            <Picker value={String(d.preFlightBuffer ?? 75)} options={["60", "75", "90", "120"]}
+              labels={["60 min", "75 min (default)", "90 min", "120 min"]} onChange={(v) => upd({ preFlightBuffer: Number(v) })} />
+          </SettingsRow>
+          <SettingsRow label="Post-flight buffer" wide>
+            <Picker value={String(d.postFlightBuffer ?? 15)} options={["10", "15", "30", "45"]}
+              labels={["10 min", "15 min (default)", "30 min", "45 min"]} onChange={(v) => upd({ postFlightBuffer: Number(v) })} />
+          </SettingsRow>
+        </Reveal>
+      </SettingsSection>
 
-      <SmField label="Calendar week starts on">
-        <SmSegmented
-          value={d.weekStart || "monday"}
-          onChange={(v) => upd({ weekStart: v })}
-          options={[
-            { value: "monday", label: "Monday" },
-            { value: "sunday", label: "Sunday" },
-          ]}
-        />
-      </SmField>
-
-      <SmSectionHead title="Map view" />
-
-      <SmField label="Follow the aircraft">
-        <SmSelect
-          value={d.mapFollow || "cruise"}
-          options={["cruise", "frame", "zoom", "pan"]}
-          labels={["Cruise (default)", "Frame", "Close", "Pan"]}
-          onChange={(v) => upd({ mapFollow: v })}
-        />
-      </SmField>
-
-      <SmSectionHead title="Day / Night calculation" />
-
-      <SmField label="Method">
-        <SmSegmented
-          value={d.dayNightMethod || "fixed"}
-          onChange={(v) => upd({ dayNightMethod: v })}
-          options={[
-            { value: "fixed",   label: "Fixed bands"  },
-            { value: "sunrise", label: "Dynamic"  },
-          ]}
-        />
-      </SmField>
-
-      <SmHint>
-        <b>Fixed Bands</b> · Night = 11:30 – 23:30 UTC. Same boundaries everywhere.<br />
-        <b>Dynamic</b> · Night = civil twilight (−6°) tracked minute by minute along the route. Falls back to Fixed if either airport is unavailable.
-      </SmHint>
-
-      <SmSectionHead title="Duty buffers" />
-
-      <SmField label="Apply standard formula" hint="Adds pre + post buffer to each sector.">
-        <SmToggle
-          checked={!!d.useStandardFormula}
-          onChange={(v) => upd({ useStandardFormula: v })}
-        />
-      </SmField>
-
-      <SmField label="Pre-flight buffer">
-        <SmSelect
-          value={String(d.preFlightBuffer ?? 75)}
-          options={["60", "75", "90", "120"]}
-          labels={["60 min", "75 min (default)", "90 min", "120 min"]}
-          onChange={(v) => upd({ preFlightBuffer: Number(v) })}
-          disabled={!d.useStandardFormula}
-        />
-      </SmField>
-
-      <SmField label="Post-flight buffer">
-        <SmSelect
-          value={String(d.postFlightBuffer ?? 15)}
-          options={["10", "15", "30", "45"]}
-          labels={["10 min", "15 min (default)", "30 min", "45 min"]}
-          onChange={(v) => upd({ postFlightBuffer: Number(v) })}
-          disabled={!d.useStandardFormula}
-        />
-      </SmField>
-
-      <SmSectionHead title="Duty Log Link" />
-
-      <SmField label="Sync code" hint="Enter sync code from Pilot Utility Suite App.">
-        <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: 6 }}>
-          <SmInput
-            value={d.dutyLogSyncCode || ""}
-            onChange={(v) => upd({ dutyLogSyncCode: v.trim().toUpperCase() })}
-            placeholder="e.g. 7K2Q-9XPL-4M1V"
-          />
-          {dlStatusText && (
-            <div className="elb-fade" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: dlStatusText.color }}>
-              {dlStatus.state === "loading" && (
-                <span style={{ display: "inline-block", animation: "sm-spin 0.7s linear infinite", fontSize: 12, lineHeight: 1 }}>↻</span>
-              )}
-              <span>{dlStatusText.text}</span>
-            </div>
-          )}
-        </div>
-      </SmField>
-
-    </div>
+      <SettingsSection title="Duty log link">
+        <SettingsRow label="Sync code" hint="From the Pilot Utility Suite (SuperApp)" wide>
+          <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: 6 }}>
+            <TextInput value={d.dutyLogSyncCode || ""} onChange={(v) => upd({ dutyLogSyncCode: v.trim().toUpperCase() })} placeholder="e.g. 7K2Q-9XPL-4M1V" />
+            {dlStatusText && (
+              <div className="elb-fade" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: dlStatusText.color }}>
+                {dlStatus.state === "loading" && (
+                  <span style={{ display: "inline-block", animation: "sm-spin 0.7s linear infinite", fontSize: 12, lineHeight: 1 }}>↻</span>
+                )}
+                <span>{dlStatusText.text}</span>
+              </div>
+            )}
+          </div>
+        </SettingsRow>
+      </SettingsSection>
+    </>
   );
 }
 
 // ════════════════════════════════════════════════════════════════════
-//  MISC TAB
+//  ABOUT TAB
 // ════════════════════════════════════════════════════════════════════
-const MISC_CARDS = [
-  {
-    id: "guide",
-    icon: "📖",
-    title: "HOW-TO GUIDE",
-    desc: "Setup, features, and workflows",
-    href: "https://docs.claudeborne.my",
-  },
-];
-
-function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion, autoUpdateDisabled, setAutoUpdateDisabled }) {
+function AboutTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkForUpdate, checkingUpdate, updateChecked, currentBuildVersion, autoUpdateDisabled, setAutoUpdateDisabled }) {
   return (
-    <div className="sm-tab-content">
-
-      <SmSectionHead title="Support" />
-      <div className="sm-misc-cards">
-        {MISC_CARDS.map(card => (
-          <button
-            key={card.id}
-            onClick={onGuide}
-            className="sm-misc-card"
-          >
-            <span className="sm-misc-card-icon">{card.icon}</span>
-            <div className="sm-misc-card-body">
-              <div className="sm-misc-card-title">{card.title}</div>
-              <div className="sm-misc-card-desc">{card.desc}</div>
-            </div>
-            <span className="sm-misc-card-arrow">→</span>
-          </button>
-        ))}
-        {/* Single feedback banner */}
-        <button className="sm-misc-card" onClick={onFeedback}>
-          <span className="sm-misc-card-icon">💬</span>
-          <div className="sm-misc-card-body">
-            <div className="sm-misc-card-title">SEND FEEDBACK</div>
-            <div className="sm-misc-card-desc">Report a bug or suggest a feature</div>
+    <>
+      <SettingsSection title="Support">
+        <SettingsRow full>
+          <div className="cbs-btns">
+            <button type="button" className="cbs-btn" onClick={onGuide}>📖 How-to guide</button>
+            <button type="button" className="cbs-btn" onClick={onFeedback}>💬 Send feedback</button>
           </div>
-          <span className="sm-misc-card-arrow">→</span>
-        </button>
-      </div>
+        </SettingsRow>
+      </SettingsSection>
 
-      <SmSectionHead title="App Update" />
-      <div className="sm-upd">
-        <div className="sm-upd-top">
-          <div className="sm-upd-ver">Version {currentVersion(CHANGELOG)} - build {currentBuildVersion}</div>
+      <SettingsSection title="App update">
+        <SettingsRow label="Version"
+          hint={checkingUpdate ? "Checking…" : needRefresh ? "A new version is ready" : updateChecked ? "You have the latest version" : null}>
+          <span className={"cbs-value" + (needRefresh ? "" : " on")}>{currentVersion(CHANGELOG)} · build {currentBuildVersion}</span>
+        </SettingsRow>
+        <SettingsRow full>
           {needRefresh ? (
-            <button className="sm-upd-btn go" onClick={() => updateServiceWorker(true)}>Update now</button>
+            <button type="button" className="cbs-btn primary" onClick={() => updateServiceWorker(true)}>Update now</button>
           ) : (
-            <button className="sm-upd-btn" onClick={checkForUpdate} disabled={checkingUpdate}>
-              {checkingUpdate ? "Checking..." : "Check for updates"}
+            <button type="button" className="cbs-btn" onClick={checkForUpdate} disabled={checkingUpdate}>
+              {checkingUpdate ? "Checking…" : "Check for updates"}
             </button>
           )}
-        </div>
-        <div className="sm-upd-bot">
-          <div className={"sm-upd-status" + (needRefresh ? " new" : updateChecked ? " ok" : "")}>
-            {checkingUpdate ? <><span className="sm-upd-spin">↻</span> Checking...</>
-              : needRefresh ? "● New version available"
-              : updateChecked ? "✓ You have the latest version"
-              : " "}
-          </div>
-          <div className="sm-upd-auto">
-            Auto-update
-            <SmToggle checked={!autoUpdateDisabled} onChange={(v) => setAutoUpdateDisabled(!v)} />
-          </div>
-        </div>
-      </div>
+        </SettingsRow>
+        <SettingsRow label="Disable auto-update">
+          <Switch label="Disable auto-update" on={!!autoUpdateDisabled} onChange={setAutoUpdateDisabled} />
+        </SettingsRow>
+      </SettingsSection>
 
-      <SmSectionHead title="Changelog" />
-      <Changelog changelog={CHANGELOG} />
-
-    </div>
+      <SettingsSection title="Changelog">
+        <SettingsRow full>
+          <Changelog changelog={CHANGELOG} />
+        </SettingsRow>
+      </SettingsSection>
+    </>
   );
 }
 
@@ -998,34 +816,10 @@ function MiscTab({ onFeedback, onGuide, needRefresh, updateServiceWorker, checkF
 //  Sub-components
 // ════════════════════════════════════════════════════════════════════
 
-function SmSectionHead({ title }) {
-  return (
-    <div className="sm-sh">
-      <h3 className="sm-sh-title">{title}</h3>
-    </div>
-  );
-}
-
-function SmField({ label, hint, children }) {
-  return (
-    <div className="sm-field">
-      <div className="sm-field-meta">
-        <label className="sm-field-label">{label}</label>
-        {hint && <div className="sm-field-hint">{hint}</div>}
-      </div>
-      <div className="sm-field-control">{children}</div>
-    </div>
-  );
-}
-
-function SmRow({ children }) {
-  return <div className="sm-row">{children}</div>;
-}
-
-function SmInput({ value, onChange, readOnly = false, placeholder = "" }) {
+function TextInput({ value, onChange, readOnly = false, placeholder = "" }) {
   return (
     <input
-      className="sm-input"
+      className="cbs-input"
       value={value}
       readOnly={readOnly}
       placeholder={placeholder}
@@ -1034,38 +828,15 @@ function SmInput({ value, onChange, readOnly = false, placeholder = "" }) {
   );
 }
 
-function SmInputDate({ value, onChange }) {
-  return (
-    <DatePicker className="sm-input sm-input-date" value={value} onChange={onChange} />
-  );
-}
-
-function SmSelect({ value, options, labels, onChange, disabled }) {
+function Picker({ value, options, labels, onChange, disabled }) {
   return (
     <Select
-      className="sm-select"
+      className="cbs-select"
       value={value}
       disabled={disabled}
       onChange={onChange}
       options={options.map((o, i) => ({ value: o, label: labels ? labels[i] : o }))}
     />
-  );
-}
-
-function SmSegmented({ value, onChange, options, fill }) {
-  return (
-    <div className={"sm-seg" + (fill ? " fill" : "")}>
-      {options.map((o) => (
-        <button
-          key={o.value}
-          className={`sm-seg-item${value === o.value ? " on" : ""}`}
-          onClick={() => onChange && onChange(o.value)}
-        >
-          {o.label}
-          {o.note && <span className="sm-seg-note">· {o.note}</span>}
-        </button>
-      ))}
-    </div>
   );
 }
 
@@ -1089,259 +860,26 @@ function SmSlider({ min, max, step, value, onChange, ticks = [], unit = "" }) {
   );
 }
 
-function SmToggle({ checked, onChange }) {
-  return (
-    <div
-      className={`sm-toggle${checked ? " on" : ""}`}
-      onClick={() => onChange && onChange(!checked)}
-      role="switch"
-      aria-checked={checked}
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") onChange && onChange(!checked); }}
-    >
-      <div className="sm-toggle-knob" />
-    </div>
-  );
-}
-
 function SmHint({ children }) {
   return <div className="sm-hint">{children}</div>;
 }
 
-function SmCloseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-      <line x1="6" y1="6" x2="18" y2="18" />
-      <line x1="6" y1="18" x2="18" y2="6" />
-    </svg>
-  );
-}
-
 // ════════════════════════════════════════════════════════════════════
-//  Embedded CSS
+//  Embedded CSS — the Settings window itself is styled by brand.css (.cbs-*);
+//  these are the eLogbook-only pieces inside it.
 // ════════════════════════════════════════════════════════════════════
 const settingsCss = `
-  /* ── CB token layer ─────────────────────────────────────────────
-     Surface, ink, line, font, and fs tokens are intentionally NOT
-     set here — they inherit from :root which is managed by
-     makeThemeCss() in ELogbook.jsx. This allows the
-     settings modal to respond to the user's theme, font, and
-     font-size settings.
-  ── */
-  .sm-backdrop, .sm-modal {
-    --cb-mint:         #3FE0C5;
-    --cb-blue:         #3B8DFF;
-    --cb-violet:       #5B6BFF;
-    --cb-grad:         linear-gradient(135deg, #3FE0C5, #3B8DFF);
-    --cb-font-display: 'Tourney', system-ui, sans-serif;
-  }
+  /* The window follows the user's accent and font size */
+  .cbs, .cbs-scrim { --cbs-acc: var(--cb-accent, var(--cb-mint)); }
+  .cbs .cbs-input { width: 100%; }
+  .cbs .cbs-select { width: 100%; text-align: left; background-image: none; } /* Select draws its own arrow */
+  @container (min-width: 471px) { .cbs .cbs-row.wide .cbs-row-c { width: 260px; } }
 
-  /* ── Backdrop ───────────────────────────────────────────────────── */
-  .sm-backdrop {
-    position: fixed; inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(3px);
-    z-index: 2090;
-  }
 
-  /* ── Modal shell ────────────────────────────────────────────────── */
-  .sm-modal {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 880px;
-    max-width: 92vw;
-    max-height: 88vh;
-    z-index: 2100;
-    font-family: var(--cb-font-body);
-    color: var(--cb-ink);
-    font-size: 14px;
-  }
   @keyframes sm-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-  /* ── Header ─────────────────────────────────────────────────────── */
-  .sm-head {
-    padding: 22px 28px 18px;
-    border-bottom: 1px solid var(--cb-line);
-    display: flex; justify-content: space-between; align-items: flex-start;
-    background: linear-gradient(180deg, rgba(63,224,197,0.04), transparent);
-    flex-shrink: 0;
-  }
-  .sm-title {
-    font-family: var(--cb-font-display);
-    font-weight: 700;
-    font-size: calc(28px * var(--fs));
-    letter-spacing: 0.03em;
-    margin: 0;
-    line-height: 1;
-    color: var(--cb-ink);
-  }
-  .sm-close {
-    width: 32px; height: 32px; background: transparent;
-    border: 1px solid var(--cb-line-2);
-    color: var(--cb-ink-2);
-    cursor: pointer; display: grid; place-items: center;
-    flex-shrink: 0;
-    transition: color 120ms, border-color 120ms;
-  }
-  .sm-close:hover { color: var(--cb-mint); border-color: var(--cb-mint); }
-
-  /* ── Tab nav ────────────────────────────────────────────────────── */
-  .sm-tabs {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    background: var(--cb-surface-0);
-    border-bottom: 1px solid var(--cb-line);
-    flex-shrink: 0;
-  }
-  .sm-tab {
-    background: transparent; border: 0;
-    color: var(--cb-ink-2);
-    padding: 14px 18px;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    text-align: left;
-    transition: all 140ms;
-    display: flex; flex-direction: column; gap: 3px;
-  }
-  .sm-tab + .sm-tab { border-left: 1px solid var(--cb-line); }
-  .sm-tab:hover { color: var(--cb-ink); }
-  .sm-tab.on {
-    color: var(--cb-mint);
-    border-bottom-color: var(--cb-mint);
-    background: rgba(63,224,197,0.04);
-  }
-  .sm-tab-label {
-    font-family: var(--cb-font-display);
-    font-weight: 700;
-    font-size: calc(14px * var(--fs));
-    letter-spacing: 0.04em;
-  }
-  .sm-tab-hint {
-    font-family: var(--cb-font-mono);
-    font-size: calc(9px * var(--fs));
-    letter-spacing: 0.16em;
-    color: var(--cb-ink-dim);
-    text-transform: uppercase;
-  }
-
-  /* ── Body ───────────────────────────────────────────────────────── */
-  .sm-body {
-    flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain;
-    padding: 24px 28px;
-    min-height: 0; /* required: allows flex child to shrink below content size so footer stays visible */
-  }
-
-  .sm-tab-content { display: flex; flex-direction: column; gap: 4px; }
-
-  /* ── Section head ───────────────────────────────────────────────── */
-  .sm-sh {
-    margin-top: 18px; margin-bottom: 12px;
-    display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
-  }
-  .sm-sh:first-child { margin-top: 0; }
-  .sm-sh-title {
-    font-family: var(--cb-font-display);
-    font-weight: 700;
-    font-size: calc(16px * var(--fs));
-    margin: 0;
-    letter-spacing: 0.03em;
-    color: var(--cb-ink);
-  }
-
-  .sm-section-inline {
-    margin: 4px 0 8px;
-    padding: 14px 16px;
-    background: var(--cb-surface-0);
-    border: 1px dashed var(--cb-line-2);
-  }
-
-  /* ── Field row ──────────────────────────────────────────────────── */
-  .sm-field {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    padding: 10px 0;
-    border-bottom: 1px dashed var(--cb-line);
-    text-align: left;
-  }
-  .sm-field:last-child { border-bottom: 0; }
-  .sm-field-meta { flex: 1; min-width: 0; }
-  .sm-field-label {
-    font-size: calc(13px * var(--fs));
-    font-weight: 400;
-    color: var(--cb-ink);
-    display: block;
-    text-align: left;
-  }
-  .sm-field-hint {
-    font-size: calc(11.5px * var(--fs));
-    color: var(--cb-ink-dim);
-    line-height: 1.5;
-    margin-top: 3px;
-    text-align: justify;
-  }
-  .sm-field-control { flex-shrink: 0; display: flex; align-items: center; gap: 8px; width: 240px; }
-
-  .sm-row { padding: 4px 0 12px; }
-
-  /* ── Inputs & selects ───────────────────────────────────────────── */
-  .sm-input, .sm-select {
-    box-sizing: border-box; line-height: normal;
-    background: var(--cb-surface-0);
-    border: 1px solid var(--cb-line-2);
-    color: var(--cb-ink);
-    font-family: var(--cb-font-body);
-    font-size: calc(12.5px * var(--fs));
-    padding: 7px 12px;
-    width: 100%;
-    outline: none;
-    transition: border-color 120ms;
-  }
-  .sm-input:focus, .sm-select:focus { border-color: var(--cb-mint); }
-  .sm-input[readonly] { color: var(--cb-ink-2); opacity: 0.65; }
-  .sm-select { cursor: pointer; }
-  .sm-select:disabled { opacity: 0.45; cursor: not-allowed; }
-
-  /* ── Segmented control ──────────────────────────────────────────── */
-  .sm-seg {
-    display: inline-flex;
-    border: 1px solid var(--cb-line-2);
-    background: var(--cb-surface-0);
-    padding: 3px;
-    gap: 2px;
-  }
-  .sm-seg.fill { display: flex; width: 100%; box-sizing: border-box; }
-  .sm-seg.fill .sm-seg-item { flex: 1; justify-content: center; }
-  .sm-seg-item {
-    background: transparent; border: 0;
-    color: var(--cb-ink-2);
-    font-family: var(--cb-font-mono);
-    font-size: calc(11px * var(--fs));
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    padding: 7px 14px;
-    cursor: pointer;
-    transition: all 120ms;
-    display: inline-flex; align-items: center; gap: 6px;
-  }
-  .sm-seg-item:hover { color: var(--cb-ink); }
-  .sm-seg-item.on {
-    background-image: var(--cb-grad);
-    color: var(--cb-surface-0);
-    font-weight: 600;
-  }
-  .sm-seg-note {
-    font-size: calc(9px * var(--fs));
-    letter-spacing: 0.12em;
-    opacity: 0.7;
-    text-transform: none;
-  }
 
   /* ── Accent grid ────────────────────────────────────────────────── */
   .sm-accent-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-  .sm-density-grid { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start; }
-  .sm-density-col { display: flex; flex-direction: column; gap: 8px; }
-  .sm-density-label { font-family: var(--cb-font-mono); font-size: calc(10px * var(--fs)); letter-spacing: 0.2em; color: var(--cb-ink-dim); text-transform: uppercase; }
   .sm-accent {
     background: var(--cb-surface-0);
     border: 1px solid var(--cb-line-2);
@@ -1420,26 +958,6 @@ const settingsCss = `
     letter-spacing: 0.14em;
     text-align: right;
   }
-
-  /* ── Toggle ─────────────────────────────────────────────────────── */
-  .sm-toggle {
-    width: 40px; height: 22px;
-    background: var(--cb-surface-2);
-    border: 1px solid var(--cb-line-2);
-    border-radius: 12px;
-    position: relative; cursor: pointer;
-    transition: background 140ms;
-    flex-shrink: 0;
-  }
-  .sm-toggle.on { background-image: var(--cb-grad); border-color: transparent; }
-  .sm-toggle-knob {
-    position: absolute; top: 2px; left: 2px;
-    width: 16px; height: 16px;
-    background: var(--cb-ink);
-    border-radius: 50%;
-    transition: left 140ms;
-  }
-  .sm-toggle.on .sm-toggle-knob { left: 20px; background: var(--cb-surface-0); }
 
   /* ── Hint block ─────────────────────────────────────────────────── */
   .sm-hint {
@@ -1537,43 +1055,6 @@ const settingsCss = `
     color: var(--cb-ink-2); line-height: 1.7; margin-bottom: 14px;
   }
   .sm-delete-actions { display: flex; gap: 8px; justify-content: flex-end; }
-
-  /* ── Footer ─────────────────────────────────────────────────────── */
-  .sm-foot {
-    padding: 16px 28px;
-    border-top: 1px solid var(--cb-line);
-    display: flex; justify-content: space-between; align-items: center;
-    background: var(--cb-surface-1);
-    flex-shrink: 0;
-  }
-  .sm-foot-note {
-    font-family: var(--cb-font-mono);
-    display: flex; align-items: center; gap: 4px;
-    font-size: calc(10px * var(--fs));
-    font-style: italic;
-    color: #3a6a8a;
-    letter-spacing: 0.06em;
-    transition: color 200ms;
-  }
-  .sm-foot-note.saved {
-    color: #22c55e; font-style: normal; font-weight: 700;
-    font-size: calc(11px * var(--fs)); letter-spacing: 0.1em;
-  }
-  .sm-foot-btns { display: flex; gap: 8px; }
-
-  /* ── Buttons ────────────────────────────────────────────────────── */
-  .cb-btn-reset {
-    background: transparent;
-    border: 1px solid var(--cb-line-2);
-    color: var(--cb-ink-dim);
-    font-family: var(--cb-font-mono);
-    font-size: calc(10px * var(--fs));
-    letter-spacing: 0.18em; text-transform: uppercase;
-    padding: 8px 14px; cursor: pointer;
-    transition: color 120ms, border-color 120ms;
-    margin-right: 8px;
-  }
-  .cb-btn-reset:hover { color: var(--cb-ink-2); border-color: var(--cb-ink-2); }
   .cb-btn-ghost {
     background: transparent;
     border: 1px solid var(--cb-line-2);
@@ -1585,17 +1066,6 @@ const settingsCss = `
     transition: color 120ms, border-color 120ms;
   }
   .cb-btn-ghost:hover { color: var(--cb-mint); border-color: var(--cb-mint); }
-  .cb-btn-primary {
-    background-image: var(--cb-grad);
-    border: 0;
-    color: var(--cb-surface-0);
-    font-family: var(--cb-font-mono);
-    font-size: calc(10px * var(--fs));
-    letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600;
-    padding: 8px 18px; cursor: pointer;
-    transition: filter 120ms;
-  }
-  .cb-btn-primary:hover { filter: brightness(1.1); }
   .cb-btn-danger {
     background: rgba(239,68,68,0.12);
     border: 1px solid #ef4444;
@@ -1607,111 +1077,8 @@ const settingsCss = `
     transition: background 120ms;
   }
   .cb-btn-danger:hover { background: rgba(239,68,68,0.22); }
-
-  /* ── Misc tab ───────────────────────────────────────────────────── */
-  /* ── App update block ── */
-  .sm-upd { display: flex; flex-direction: column; gap: 8px; padding: 6px 0 16px; }
-  .sm-upd-top, .sm-upd-bot { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-  .sm-upd-ver { font-size: calc(12.5px * var(--fs)); color: var(--cb-ink); min-width: 0; }
-  .sm-upd-btn {
-    flex: none; width: 190px; padding: 8px 14px; cursor: pointer; font-family: inherit;
-    font-size: calc(11px * var(--fs)); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-    background: transparent; color: var(--cb-mint); border: 1px solid color-mix(in srgb, var(--cb-mint) 45%, transparent);
-    transition: background-color 140ms, border-color 140ms, color 140ms;
-  }
-  .sm-upd-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--cb-mint) 12%, transparent); border-color: var(--cb-mint); }
-  .sm-upd-btn:disabled { color: var(--cb-ink-dim); border-color: var(--cb-line-2); cursor: default; }
-  .sm-upd-btn.go { background-image: var(--cb-grad); color: #0a1020; border: 0; padding: 9px 15px; }
-  .sm-upd-btn.go:hover { background-image: var(--cb-grad); filter: brightness(1.08); }
-  .sm-upd-status { font-size: calc(11.5px * var(--fs)); color: var(--cb-ink-dim); display: flex; align-items: center; gap: 6px; min-width: 0; }
-  .sm-upd-status.ok { color: var(--cb-mint); }
-  .sm-upd-status.new { color: var(--cb-ink); }
-  .sm-upd-spin { display: inline-block; animation: sm-spin 0.7s linear infinite; }
-  .sm-upd-auto { flex: none; display: flex; align-items: center; gap: 8px; font-size: calc(11px * var(--fs)); letter-spacing: 0.08em; text-transform: uppercase; color: var(--cb-ink-2); }
-  @media (max-width: 400px) { .sm-upd-top, .sm-upd-bot { flex-wrap: wrap; } .sm-upd-btn { width: 100%; } }
-
-  .sm-misc-cards { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
-  .sm-misc-cards .sm-misc-card { flex: 1 1 240px; width: auto; min-width: 0; }
-  .sm-misc-card {
-    display: flex; align-items: center; gap: 14px;
-    padding: 14px 16px;
-    background: var(--cb-surface-0);
-    border: 1px solid var(--cb-line-2);
-    border-left: 3px solid var(--cb-mint);
-    text-decoration: none;
-    transition: background 120ms, border-left-color 120ms;
-    box-sizing: border-box; width: 100%;
-    cursor: pointer; text-align: left;
-    font-family: inherit; font-size: inherit;
-    line-height: inherit;
-    -webkit-appearance: none; appearance: none;
-    border-radius: 0;
-  }
-  .sm-misc-card:hover { background: var(--cb-surface-2); border-left-color: var(--cb-blue); }
-  .sm-misc-card-icon { font-size: 20px; flex-shrink: 0; line-height: 1; }
-  .sm-misc-card-body { flex: 1; min-width: 0; }
-  .sm-misc-card-title {
-    font-family: var(--cb-font-mono);
-    font-size: calc(11px * var(--fs));
-    letter-spacing: 0.16em;
-    color: var(--cb-ink);
-    font-weight: 600;
-    margin-bottom: 3px;
-    text-align: left;
-  }
-  .sm-misc-card-desc {
-    font-size: calc(11.5px * var(--fs));
-    color: var(--cb-ink-2);
-    letter-spacing: 0.02em;
-    text-align: left;
-  }
-  .sm-misc-card-split {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 0;
-    gap: 0;
-  }
-  .sm-misc-split-item {
-    display: flex; align-items: center; gap: 14px;
-    padding: 14px 16px;
-    text-decoration: none;
-    transition: background 120ms;
-    flex: 1;
-    text-align: left;
-    justify-content: flex-start;
-  }
-  .sm-misc-split-item:hover { background: var(--cb-surface-2); }
-  .sm-misc-split-divider {
-    height: 1px;
-    background: var(--cb-line);
-    margin: 0 16px;
-  }
-  .sm-misc-card-arrow {
-    font-size: 16px;
-    color: var(--cb-ink-dim);
-    flex-shrink: 0;
-  }
-
-  /* ── Responsive ─────────────────────────────────────────────────── */
-  @media (max-width: 600px) {
-    .sm-modal { max-height: 96vh; }
-    .sm-head { padding: 16px 18px 14px; }
-    .sm-body { padding: 16px 18px; }
-    .sm-foot { padding: 12px 18px; flex-direction: column; align-items: stretch; gap: 10px; }
-    .sm-foot-btns { justify-content: flex-end; }
+  @media (max-width: 640px) {
     .sm-accent-grid { grid-template-columns: repeat(3, 1fr); }
     .sm-font-grid { grid-template-columns: repeat(3, 1fr); }
-    .sm-sh-title { width: 100%; }
-    /* 4 tabs don't fit in one row on a phone: 2×2 grid keeps every tab reachable */
-    .sm-tabs { grid-template-columns: repeat(2, 1fr); }
-    .sm-tab { min-width: 0; padding: 12px 14px; }
-    .sm-tab:nth-child(odd) { border-left: 0; }
-    .sm-tab:nth-child(n+3) { border-top: 1px solid var(--cb-line); }
-    /* Label above control, control full width (fixed 240/320px controls overflowed the window) */
-    .sm-field { flex-direction: column; align-items: stretch; gap: 8px; }
-    .sm-field-control { width: 100% !important; flex-shrink: 1; min-width: 0; }
-    .sm-input, .sm-select, .sm-slider { box-sizing: border-box; }
-    /* Changelog's current-version highlight bleeds 18px each side, wider than the phone window */
-    .sm-tab-content article { margin: 0 !important; }
   }
 `;
