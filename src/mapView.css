@@ -22,10 +22,8 @@
   background: var(--elb-bg2, #141a2e); border: 1px solid var(--elb-border, rgba(255,255,255,0.12)); padding: 14px 20px; max-width: min(320px, calc(100% - 32px)); }
 .mv-empty b { display: block; letter-spacing: 0.14em; font-size: 12px; margin-bottom: 6px; }
 .mv-empty span { color: var(--elb-txt-muted, #7c87a3); font-size: 12px; line-height: 1.5; }
-.mv-toast { position: absolute; z-index: 700; left: 50%; bottom: 14px; transform: translateX(-50%); max-width: calc(100% - 32px); text-align: center; font-size: 12px;
-  background: var(--elb-bg3, #1b2340); border: 1px solid var(--mv-acc); padding: 6px 12px; animation: mv-sin 0.2s ease-out; }
 
-.mv-sel.elb-closing, .mv-toast.elb-closing { animation: elb-fade-out var(--elb-dur, 150ms) ease forwards; }
+.mv-sel.elb-closing { animation: elb-fade-out var(--elb-dur, 150ms) ease forwards; }
 /* ── selection panel ── */
 .mv-sel { position: absolute; z-index: 650; left: 12px; top: 12px; width: min(300px, calc(100% - 70px)); max-height: min(50%, 320px); display: flex; flex-direction: column;
   background: var(--elb-bg2, #141a2e); border: 1px solid var(--mv-acc); animation: mv-sin 0.18s ease-out; }
@@ -102,7 +100,6 @@
 @media (max-width: 640px) {
   .mv-info { order: 3; flex-basis: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
   .mv-sel { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 46%; border-width: 1px 0 0 0; }
-  .mv-toast { bottom: auto; top: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .mv *, .mv *::before, .mv *::after { animation-duration: 0.01ms !important; }

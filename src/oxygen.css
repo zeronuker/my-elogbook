@@ -41,6 +41,16 @@
   .cbsel-btn:active { transform: scale(.96); transition-duration: .1s !important; box-shadow: none; }
 }
 
+/* ── Sub-tab buttons: a soft ripple spreads from the tap point (see ripple.js) ── */
+.elb-subtab, .elb-viewtoggle button { position: relative; overflow: hidden; }
+@keyframes oxy-ripple { to { transform: scale(1); opacity: 0; } }
+.elb-ripple {
+  position: absolute; border-radius: 50%; pointer-events: none; transform: scale(0);
+  background: color-mix(in srgb, var(--cb-accent) 28%, transparent);
+  animation: oxy-ripple calc(var(--elb-dur, 260ms) * 3.5) var(--oxy-ease) forwards;
+}
+@media (prefers-reduced-motion: reduce) { .elb-ripple { display: none; } }
+
 /* ── Main tabs: highlight glides to the active tab (see MainTabs.jsx) ── */
 .elb-tabind {
   position: absolute; left: 0; top: 0; bottom: -1px; z-index: 0; pointer-events: none; box-sizing: border-box;

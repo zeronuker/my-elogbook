@@ -17,12 +17,6 @@ const MON3 = MONTHS.map(m => m.slice(0, 3).toUpperCase());
 const pad2 = n => String(n).padStart(2, "0");
 const PLANE = new Path2D("M8 0L-2 -1.6L-3 -6L-5 -6L-4 -1.4L-8 -1.2L-9 -3L-10.5 -3L-9.5 0L-10.5 3L-9 3L-8 1.2L-4 1.4L-5 6L-3 6L-2 1.6Z");
 const MINT = "#3FE0C5";
-const FOLLOW_SAY = {
-  cruise: "Follow: close at take-off, wide en route, close on approach",
-  frame: "Follow: frames each whole sector",
-  zoom: "Follow: close zoom on the aircraft",
-  pan: "Follow: keeps your zoom",
-};
 const SPEEDS = [0.25, 0.5, 1, 2];
 const HOLD_MS = 1000;   // after you stop touching the map, follow takes the camera back
 
@@ -392,9 +386,8 @@ export default function MapView({ data, year, monthIdx, theme, followStyle = "cr
   const [follow, setFollow] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [toast, setToast] = useState("");
   const [online, setOnline] = useState(() => navigator.onLine);
-  const mapEl = useRef(null), canvasEl = useRef(null), tipEl = useRef(null), toastTimer = useRef(0);
+  const mapEl = useRef(null), canvasEl = useRef(null), tipEl = useRef(null);
 
   const { sectors, skipped, scene } = useMemo(() => {
     const { sectors, skipped } = collectSectors(data, year, scope === "year" ? null : monthIdx, getCoords);
@@ -533,15 +526,7 @@ export default function MapView({ data, year, monthIdx, theme, followStyle = "cr
   }, [selected, scene, cut]);
   if (selected && !selData) setSelected(null);
   const selExit = useExitAnim(!!selData, selData); // keeps the panel (and its last content) mounted while it fades out
-  const toastExit = useExitAnim(!!toast, toast);
   const sp = selExit.payload;
-
-  const say = msg => {
-    setToast(msg);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(""), 2400);
-  };
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
 
   const changeScope = s => { setScope(s); store.set("elb_map_scope", s); };
   const avail = playing ? sectorMs({ sectors, speed }) : Infinity;
@@ -589,13 +574,12 @@ export default function MapView({ data, year, monthIdx, theme, followStyle = "cr
             </ul>
           </div>
         )}
-        {toastExit.mounted && <div className={"mv-toast" + (toastExit.closing ? " elb-closing" : "")} role="status">{toastExit.payload}</div>}
       </div>
       <MapTimeline
         sectors={sectors} cut={cut} playing={playing} speed={speed} follow={follow} scope={scope} avail={avail}
         onPlay={() => (R.current.pl ? stopPlay(R.current) : startPlay(R.current))}
         onSpeed={() => { const n = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]; setSpeed(n); store.set("elb_map_speed", String(n)); }}
-        onFollow={() => { const on = !follow; setFollow(on); R.current.idleUntil = 0; say(on ? FOLLOW_SAY[followStyle] : "Follow off"); request(R.current); }}
+        onFollow={() => { const on = !follow; setFollow(on); R.current.idleUntil = 0; request(R.current); }}
         onScrub={n => { const E = R.current; stopPlay(E); clearFlyers(E); setCut(E, n); }}
       />
     </div>

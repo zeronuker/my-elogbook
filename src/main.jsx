@@ -5,8 +5,10 @@ import './oxygen.css'
 import App from './App.jsx'
 import Tooltip from './Tooltip.jsx'
 import { installKeyboardArea } from './keyboardArea'
+import { installRipple } from './ripple'
 
 installKeyboardArea()
+installRipple()
 
 // Scroll depth in px for the frosted sticky header (see oxygen.css, --oxy-scroll)
 addEventListener('scroll', () => {

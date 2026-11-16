@@ -736,9 +736,6 @@ export default function LogbookTab({
                                         <span>STD/STA mismatch — verify sector.</span>
                                       </div>
                                     )}
-                                    <div style={{ marginTop: 12, fontSize: 10, color: "#4a6a8a" }}>
-                                      Sourced from Duty Log entry · {dutyLogMatch.isoDate} · sector remark + duty notes merge into Remarks, crew list is read-only display
-                                    </div>
                                   </>
                                 ) : (
                                   <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(124,135,163,0.05)", border: "1px dashed var(--elb-bdr, #1e3a5f)", borderRadius: 4, fontSize: 11, color: "#7c87a3" }}>
