@@ -91,7 +91,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const [previewSettings, setPreviewSettings] = useState(null); // live preview while settings modal is open
   const [exportImportOpen, setExportImportOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [pulseRowId, setPulseRowId] = useState(null); // briefly highlights a row after a search jump
+  const [pulseRowIds, setPulseRowIds] = useState(null); // ids of the rows briefly highlighted after a search / calendar jump
   const [newRowId, setNewRowId] = useState(null); // row just added via "+ add sector" — plays its enter animation
   // Logbook tab: row list (default, the place to enter data), the view-only month calendar, or the map of where you flew. Remembered per device.
   const [logbookView, setLogbookView] = useState(() => {
@@ -905,10 +905,10 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
 
   // Scrolls the pulsing row into view once its month has rendered.
   useEffect(() => {
-    if (pulseRowId == null) return;
-    const el = document.querySelector(`[data-search-row="${pulseRowId}"]`);
+    if (!pulseRowIds) return;
+    const el = document.querySelector(`[data-search-row="${pulseRowIds[0]}"]`);
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [pulseRowId, selectedMonth, selectedYear]);
+  }, [pulseRowIds, selectedMonth, selectedYear]);
 
   useEffect(() => () => {
     if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
@@ -1098,7 +1098,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const handleSearchJump = (hit) => {
     jumpTimersRef.current.forEach(clearTimeout);
     if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
-    setPulseRowId(null);
+    setPulseRowIds(null);
     setEditingCell(null);
     setExpandedRowIdx(null);
     setConfirmDeleteRowIdx(null);
@@ -1111,8 +1111,8 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       steps.push(() => { setSelectedYear(hit.year); setSelectedMonth(hit.monthIdx); });
     }
     steps.push(() => {
-      setPulseRowId(hit.row.id);
-      pulseTimerRef.current = setTimeout(() => setPulseRowId(null), 3500);
+      setPulseRowIds((hit.rows || [hit.row]).map(r => r.id));
+      pulseTimerRef.current = setTimeout(() => setPulseRowIds(null), 3500);
     });
     // The search window is still closing; give it a moment before the first step.
     jumpTimersRef.current = steps.map((fn, i) => setTimeout(fn, (animOn ? 250 : 0) + i * gap));
@@ -1122,6 +1122,11 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   const handleCalendarSelect = (row, monthIdx = selectedMonth, year = selectedYear) => {
     changeLogbookView("list");
     handleSearchJump({ year, monthIdx, row });
+  };
+  // Clicking a day in the calendar: the same, for every sector of that day's duty.
+  const handleCalendarDay = (rows, monthIdx, year) => {
+    changeLogbookView("list");
+    handleSearchJump({ year, monthIdx, rows });
   };
 
   const settingsButtonTitle = update.needRefresh ? "Settings · update available" : "Settings";
@@ -1686,6 +1691,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
             onSelectSector={handleCalendarSelect}
+            onSelectDay={handleCalendarDay}
           />
         )}
         {logbookView === "map" && (
@@ -1711,7 +1717,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
             setExpandedRowIdx={setExpandedRowIdx}
             confirmDeleteRowIdx={confirmDeleteRowIdx}
             setConfirmDeleteRowIdx={setConfirmDeleteRowIdx}
-            pulseRowId={pulseRowId}
+            pulseRowIds={pulseRowIds}
             newRowId={newRowId}
             setActivePopup={setActivePopup}
             updateCell={updateCell}

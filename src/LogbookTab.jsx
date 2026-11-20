@@ -30,7 +30,7 @@ export default function LogbookTab({
   editingCell, setEditingCell,
   expandedRowIdx, setExpandedRowIdx,
   confirmDeleteRowIdx, setConfirmDeleteRowIdx,
-  pulseRowId, newRowId, setActivePopup,
+  pulseRowIds, newRowId, setActivePopup,
   updateCell, deleteRow, addSector, findDutyLogMatch,
 }) {
   const [revealedAutoCols, setRevealedAutoCols] = useState(() => new Set());
@@ -348,7 +348,7 @@ export default function LogbookTab({
                   background: rowBg,
                   borderLeft: hasSignal ? "3px solid #a855f7" : "3px solid transparent",
                   transition: "background 0.15s, border-color 0.15s",
-                  animation: pulseRowId === row.id ? "row-pulse 3.5s ease-out" : undefined,
+                  animation: pulseRowIds?.includes(row.id) ? "row-pulse 3.5s ease-out" : undefined,
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = "var(--elb-rowhover, #122030)"}
                 onMouseLeave={e => e.currentTarget.style.background = rowBg}

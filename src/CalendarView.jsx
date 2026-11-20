@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { MONTHS, calcTotal, parseHHMM, toHHMM } from "./logbookCalculations";
+import { calcTotal, parseHHMM, toHHMM } from "./logbookCalculations";
 
 // Month calendar for the Logbook tab — view only. Sectors are entered in the list view;
-// tapping a sector hands its row to `onSelectSector`, which jumps back to the list.
+// tapping a sector hands its row to `onSelectSector`, and tapping a day hands that day's duty to `onSelectDay`;
+// both jump back to the list.
 //
 // Each day box is a 24 h UTC timeline (left edge 00:00, right edge 24:00): one row of chips at their real
 // time, then one route line per sector. Sectors never overlap and none lasts longer than 24 h, so a sector
@@ -16,7 +17,8 @@ const PALETTE = [
   "#2DD4BF", "#FB7185", "#60A5FA", "#FBBF24", "#C084FC", "#A3E635", "#FB923C",
   "#22D3EE", "#F472B6", "#FDE047", "#818CF8", "#4ADE80", "#EF4444", "#CBD5E1",
 ];
-const BAR_H = 17;     // chip height, px
+const CONT_GAP = 600; // minutes: a next-day sector leaving this soon after the last landing is the same duty (rest is longer)
+const BAR_H = 17;    // chip height, px
 const HEADER_H = 14;  // day-number row, px — fixed so a bar crossing into the next box stays level
 
 function useIsNarrow() {
@@ -39,10 +41,9 @@ const GRID_LINE = "color-mix(in srgb, var(--elb-txt, #e8f4fd) 24%, var(--elb-bg2
 const PAD_BG = "color-mix(in srgb, var(--elb-txt, #e8f4fd) 14%, var(--elb-bg2, #0d1520))"; // days outside the month
 const barBg = c => `color-mix(in srgb, ${c} 38%, var(--elb-bg2, #0d1520))`; // opaque, so overlapping halves never show a seam
 
-export default function CalendarView({ data, settings, selectedMonth, selectedYear, onSelectSector }) {
+export default function CalendarView({ data, settings, selectedMonth, selectedYear, onSelectSector, onSelectDay }) {
   const narrow = useIsNarrow();
   const monthKey = `${selectedMonth}-${selectedYear}`;
-  const [picked, setPicked] = useState({ key: monthKey, day: null }); // phone: day whose sectors are listed below
 
   const weekStart = settings.weekStart === "sunday" ? 0 : 1;
   const weekdays = weekStart === 1 ? WEEKDAYS_MON : ["SUN", ...WEEKDAYS_MON.slice(0, 6)];
@@ -102,8 +103,22 @@ export default function CalendarView({ data, settings, selectedMonth, selectedYe
 
   const now = new Date();
   const todayDay = now.getFullYear() === selectedYear && now.getMonth() === selectedMonth ? now.getDate() : null;
-  const pickedDay = picked.key === monthKey ? picked.day : null;
   const open = x => onSelectSector(x.row, x.month, x.year);
+  // The sectors that start on `day`, plus — when the last one lands the next day — the next-day sectors that carry on
+  // from it: each leaves from the airport the one before landed at, less than CONT_GAP after landing.
+  const dutyOf = day => {
+    const duty = sectors.filter(x => x.day === day);
+    let last = duty[duty.length - 1];
+    if (!last?.over) return duty;
+    for (const n of sectors.filter(x => x.day === day + 1)) {
+      const gap = toMins(n.row.std) - toMins(last.row.sta);   // NaN without times, so the chain stops
+      if (n.row.departure !== last.row.arrival || !(gap >= 0 && gap < CONT_GAP)) break;
+      duty.push(n);
+      if (n.over) break;
+      last = n;
+    }
+    return duty;
+  };
   const tip = x => `${routeOf(x.row)}${x.timed ? ` · ${x.row.std}–${x.row.sta} UTC` : ""}${x.total ? ` · ${x.total}` : ""}${x.over ? " · arrives next day" : ""} — open in list`;
 
   const bar = (b, i) => {
@@ -147,19 +162,19 @@ export default function CalendarView({ data, settings, selectedMonth, selectedYe
   for (let day = 1; day <= daysInMonth; day++) {
     const lines = linesByDay[day] || [];
     const isToday = day === todayDay;
-    const isPicked = day === pickedDay;
+    const starts = lines.some(l => !l.ghost); // a day only holding a sector that landed from yesterday has nothing to open
     const total = totalByDay[day];
     cells.push(
       <div
         key={day}
-        onClick={narrow && lines.length ? () => setPicked({ key: monthKey, day: isPicked ? null : day }) : undefined}
+        onClick={starts ? e => { if (!e.target.closest("button")) onSelectDay(dutyOf(day).map(x => x.row), selectedMonth, selectedYear); } : undefined}
         style={{
           minHeight: narrow ? 44 : 110, padding: narrow ? 4 : "2px 0 5px", boxSizing: "border-box",
-          background: isToday || isPicked ? "color-mix(in srgb, #3FE0C5 10%, var(--elb-bg2, #0d1520))" : "var(--elb-bg2, #0d1520)",
+          background: isToday ? "color-mix(in srgb, #3FE0C5 10%, var(--elb-bg2, #0d1520))" : "var(--elb-bg2, #0d1520)",
           boxShadow: isToday ? "inset 0 0 0 2px #3FE0C5" : "none",
           borderRadius: isToday ? 3 : 0,
           display: "flex", flexDirection: "column", gap: 3, minWidth: 0,
-          cursor: narrow && lines.length ? "pointer" : "default",
+          cursor: starts ? "pointer" : "default",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", height: HEADER_H, fontSize: 11, padding: narrow ? 0 : "0 5px" }}>
@@ -199,31 +214,6 @@ export default function CalendarView({ data, settings, selectedMonth, selectedYe
         ))}
         {cells}
       </div>
-
-      {/* Phone: sectors of the tapped day */}
-      {narrow && pickedDay && (
-        <div key={pickedDay} className="elb-fade" style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-          <div style={{ fontSize: 12, color: "var(--elb-txt-muted, #3a6a8a)", letterSpacing: "0.1em" }}>
-            {String(pickedDay).padStart(2, "0")} {MONTHS[selectedMonth].toUpperCase()}
-            {totalByDay[pickedDay] > 0 && ` · ${toHHMM(totalByDay[pickedDay])}`}
-          </div>
-          {(linesByDay[pickedDay] || []).map((l, i) => (
-            <button
-              key={`${l.ghost ? "g" : "s"}-${l.x.month}-${l.x.row.id}-${i}`}
-              onClick={() => open(l.x)}
-              style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8,
-                width: "100%", boxSizing: "border-box", padding: "8px 10px", cursor: "pointer", textAlign: "left",
-                fontFamily: "inherit", fontSize: 13, color: "var(--elb-txt, #e8f4fd)",
-                background: barBg(l.x.color), border: `1px solid ${l.x.color}`, borderRadius: 4, opacity: l.ghost ? 0.7 : 1,
-              }}
-            >
-              <span>{l.ghost ? "↳ " : ""}{routeOf(l.x.row)}</span>
-              {(l.ghost || !l.x.over) && l.x.total && <span style={{ color: "var(--elb-txt-muted, #3a6a8a)" }}>{l.x.total}</span>}
-            </button>
-          ))}
-        </div>
-      )}
 
       {undated > 0 && (
         <div style={{ marginTop: 10, fontSize: 11, color: "#eab308" }}>
