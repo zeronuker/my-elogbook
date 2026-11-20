@@ -126,7 +126,7 @@ export default function CalendarView({ data, settings, selectedMonth, selectedYe
     return (
       <button
         key={`${b.x.month}-${b.x.row.id}-${i}`}
-        onClick={() => open(b.x)}
+        onClick={b.flatL ? e => { e.stopPropagation(); open(b.x); } : undefined}   // the landing half of yesterday's sector opens that sector; every other click opens the day
         title={tip(b.x)}
         style={{
           position: "absolute", zIndex: 1, top: 0, bottom: 0, left: `${b.left}%`,
@@ -143,7 +143,7 @@ export default function CalendarView({ data, settings, selectedMonth, selectedYe
   const line = (l, i) => (
     <button
       key={`${l.ghost ? "g" : "s"}-${l.x.month}-${l.x.row.id}-${i}`}
-      onClick={() => open(l.x)}
+      onClick={l.ghost ? e => { e.stopPropagation(); open(l.x); } : undefined}
       title={tip(l.x)}
       style={{
         display: "flex", alignItems: "center", gap: 5, width: "100%", minWidth: 0,
@@ -167,7 +167,7 @@ export default function CalendarView({ data, settings, selectedMonth, selectedYe
     cells.push(
       <div
         key={day}
-        onClick={starts ? e => { if (!e.target.closest("button")) onSelectDay(dutyOf(day).map(x => x.row), selectedMonth, selectedYear); } : undefined}
+        onClick={starts ? () => onSelectDay(dutyOf(day).map(x => x.row), selectedMonth, selectedYear) : undefined}
         style={{
           minHeight: narrow ? 44 : 110, padding: narrow ? 4 : "2px 0 5px", boxSizing: "border-box",
           background: isToday ? "color-mix(in srgb, #3FE0C5 10%, var(--elb-bg2, #0d1520))" : "var(--elb-bg2, #0d1520)",
