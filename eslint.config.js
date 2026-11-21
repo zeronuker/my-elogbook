@@ -14,8 +14,14 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     languageOptions: {
-      globals: globals.browser,
+      // __COMMIT_SHA__ is injected at build time by `define` in vite.config.js
+      globals: { ...globals.browser, __COMMIT_SHA__: 'readonly' },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+  },
+  {
+    // Vite provides __dirname when it loads its own config file
+    files: ['vite.config.js'],
+    languageOptions: { globals: { __dirname: 'readonly' } },
   },
 ])
