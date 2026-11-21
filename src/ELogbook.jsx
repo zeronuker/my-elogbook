@@ -299,13 +299,18 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
       const localRaw      = localStorage.getItem(lsKey(uid));
       const localSettings = localStorage.getItem(lsSettingsKey(uid));
 
-      if (localRaw) {
+      // A damaged saved copy is treated as missing and loaded from the cloud instead: falling into
+      // the error handler below would leave an empty logbook that a later Sync pushes over the cloud.
+      let parsed = null;
+      try { parsed = localRaw ? JSON.parse(localRaw) : null; }
+      catch (e) { console.error("Saved logbook copy is damaged — loading from cloud:", e); }
+
+      if (parsed && typeof parsed === "object") {
         // Local data exists — use it directly (instant, no network)
-        const parsed = JSON.parse(localRaw);
-        applyDocData({
-          logbookData: parsed,
-          settings: localSettings ? JSON.parse(localSettings) : null,
-        });
+        let parsedSettings = null;
+        try { parsedSettings = localSettings ? JSON.parse(localSettings) : null; }
+        catch { /* damaged settings — the profile/cloud load fills them in */ }
+        applyDocData({ logbookData: parsed, settings: parsedSettings });
         dataLoadedRef.current = true;
         setDataLoaded(true);
 
@@ -689,8 +694,12 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
         const lastSyncedAt   = localStorage.getItem(lsSaveKey(user.uid));
         const lastSyncedMs   = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
 
-        if (cloudUpdatedAt > lastSyncedMs && cloudUpdatedAt > 0 && lastSyncedMs > 0) {
-          if (localDirtyRef.current) {
+        // No last-sync time means this device never synced (e.g. its cloud load failed and it is showing
+        // blank rows) while the cloud already has a logbook. Which side is right is unknowable, so always
+        // ask — pushing blindly here is how an empty logbook used to overwrite the cloud.
+        const noBaseline = lastSyncedMs === 0;
+        if (noBaseline || (cloudUpdatedAt > lastSyncedMs && cloudUpdatedAt > 0)) {
+          if (localDirtyRef.current || noBaseline) {
             // Cloud is newer AND local has unsaved changes — genuine conflict, let user decide.
             // Fetch the per-year data now so the Keep Cloud button has it ready.
             const cloudYearsData = await fetchAllYearsData(user.uid);
