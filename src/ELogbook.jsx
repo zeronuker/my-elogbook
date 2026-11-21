@@ -463,7 +463,7 @@ export default function ELogbook2026({ user, onLogout, onDeleteAccount, onReauth
   useEffect(() => {
     const theme = settings.theme || "dark";
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("cb-theme", theme);
+    try { localStorage.setItem("cb-theme", theme); } catch { /* storage blocked or full — the theme just isn't remembered for the pre-paint script */ }
   }, [settings.theme]);
 
   // ── One-time accent migration: legacy hex → preset id ──

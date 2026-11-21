@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useId, memo } from 'react';
+import { useState, useEffect, useId, memo } from 'react';
 import { auth } from './firebase';
 import GoogleSignInButton from './GoogleSignInButton';
 import BrandBanner from '@brand/BrandBanner';

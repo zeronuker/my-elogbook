@@ -92,9 +92,7 @@ function App() {
   // another PWA pushes the origin's storage over its quota).
   useEffect(() => {
     if (navigator.storage?.persist) {
-      navigator.storage.persist().then(granted => {
-        console.log(`Persistent storage ${granted ? 'granted' : 'denied'}`)
-      })
+      navigator.storage.persist()
     }
   }, [])
 

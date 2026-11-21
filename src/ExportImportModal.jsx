@@ -8,18 +8,6 @@ import DatePicker from "./DatePicker";
 import { useEscClose } from "./useEscClose";
 import { useScrollLock } from "./useScrollLock";
 
-const DARK_COCKPIT_THEME = {
-  bg:        "#0a0d12",
-  bg2:       "#0b1320",
-  bgInput:   "#0b1828",
-  accent:    "#4fc3f7",
-  border:    "#1e3a5f",
-  border2:   "#1a3050",
-  text:      "#ffffff",
-  textMuted: "#b8d6e5",
-  textDim:   "#7a9aaa",
-};
-
 const COLUMN_ORDER = [
   "date", "type", "markings", "captain", "cap", "pilotFlying",
   "departure", "arrival", "std", "sta", "dayP1", "dayP1US", "dayP2",
@@ -182,20 +170,6 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     });
 
     return rows;
-  };
-
-  const formatDateForExcel = (dateStr) => {
-    if (!dateStr) return "";
-    try {
-      const date = typeof dateStr === 'string' ? new Date(dateStr + 'T00:00:00Z') : new Date(dateStr);
-      const day = String(date.getUTCDate()).padStart(2, '0');
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const month = months[date.getUTCMonth()];
-      const year = date.getUTCFullYear();
-      return `${day}-${month}-${year}`;
-    } catch (e) {
-      return dateStr || "";
-    }
   };
 
   const dateToExcelSerial = (dateStr) => {
@@ -548,7 +522,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     setImportPreview(null);
     setImportStatus(null);
 
-    if (!selectedFile.name.endsWith(".xlsx")) {
+    if (!selectedFile.name.toLowerCase().endsWith(".xlsx")) {
       setImportStatus({ error: "Only .xlsx files are supported" });
       return;
     }
@@ -724,7 +698,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
           const monthNum = new Date(`${month} 1`).getMonth() + 1;
           normalizedDate = `${year}-${String(monthNum).padStart(2, '0')}-${day}`;
         }
-      } catch (e) {
+      } catch {
         // Keep original date if parsing fails
       }
 
@@ -804,7 +778,7 @@ export default function ExportImportModal({ open, onClose, monthData, settings, 
     let addedCount = 0;
 
     importPreview.validRows.forEach(row => {
-      const [dd, mm, yyyy] = row.date.split('/');
+      const [, mm, yyyy] = row.date.split('/');
       const monthIdx = parseInt(mm) - 1;
       const year = parseInt(yyyy);
       const key = `${monthIdx}-${year}`;
