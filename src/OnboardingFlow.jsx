@@ -592,7 +592,7 @@ function OnboardingFlow({
   useEffect(() => {
     if (user && authMode === 'emailVerification') {
       const interval = setInterval(async () => {
-        await user.reload()
+        try { await user.reload() } catch { return } // offline or throttled — try again on the next tick
         if (auth.currentUser?.emailVerified) {
           clearInterval(interval)
           goTo('signup2')
