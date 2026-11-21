@@ -1078,7 +1078,10 @@ const settingsCss = `
   }
   .cb-btn-danger:hover { background: rgba(239,68,68,0.22); }
   @media (max-width: 640px) {
-    .sm-accent-grid { grid-template-columns: repeat(3, 1fr); }
-    .sm-font-grid { grid-template-columns: repeat(3, 1fr); }
+    /* As many columns as fit (the side menu leaves ~185px at 320px wide); a fixed 3 pushed the last button off-screen. */
+    .sm-accent-grid, .sm-font-grid { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
+    .sm-accent { padding: 12px 6px; }
+    .sm-font { padding: 14px 6px; }
+    .sm-accent-name, .sm-font-name { letter-spacing: 0.06em; overflow-wrap: anywhere; text-align: center; }
   }
 `;
