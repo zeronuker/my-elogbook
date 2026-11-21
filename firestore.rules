@@ -2,13 +2,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow users to read/write their own data
+    // Allow users to read/write their own data.
+    // NOTE: Firestore allows a request if ANY matching rule allows it, so this wildcard also covers
+    // the logbook documents below and makes their extra write guards inactive (tested in the emulator).
+    // Narrowing this rule is NOT a safe quick fix: the guards below then deny deleting a year document,
+    // which would break account deletion. Test any change in the emulator first.
     match /users/{uid}/{document=**} {
       allow read, write: if request.auth.uid == uid;
     }
 
-    // Logbook data — tighter write rule overrides the wildcard above
-    // Prevents any write that would replace a non-empty logbookData map with {}
+    // Logbook data — intended to block any write that would replace a non-empty logbookData map
+    // with {}. Currently inactive: the wildcard above already allows these writes (see note there).
     match /users/{uid}/logbook/data {
       allow read: if request.auth.uid == uid;
 
@@ -26,9 +30,9 @@ service cloud.firestore {
 
     // Per-year logbook shards — sibling docs in the same `logbook` collection,
     // keyed by year (e.g. "2026"), alongside the legacy "data" doc above. Same
-    // anti-data-loss guard: a single year's flight rows can't be wiped by an
-    // incoming write that would replace non-empty months with none. Exists so no
-    // single document approaches Firestore's 1 MiB limit over a multi-decade career.
+    // intended anti-data-loss guard, equally inactive (see the note on the wildcard); it would
+    // also only catch an empty months map, while the app writes blank rows instead. The split
+    // exists so no single document approaches Firestore's 1 MiB limit over a multi-decade career.
     match /users/{uid}/logbook/{year} {
       allow read: if request.auth.uid == uid;
 
